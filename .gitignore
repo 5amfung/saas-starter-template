@@ -44,3 +44,9 @@ certificates
 
 # JetBrains IDEs
 /.idea
+
+# TanStack
+/.tanstack
+
+# Nitro
+/.nitro
