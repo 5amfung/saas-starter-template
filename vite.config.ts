@@ -5,7 +5,6 @@ import viteReact from '@vitejs/plugin-react';
 import viteTsConfigPaths from 'vite-tsconfig-paths';
 import tailwindcss from '@tailwindcss/vite';
 import { nitro } from 'nitro/vite';
-import { tanstackRouter } from '@tanstack/router-plugin/vite';
 
 const config = defineConfig({
   plugins: [
@@ -16,10 +15,11 @@ const config = defineConfig({
       projects: ['./tsconfig.json'],
     }),
     tailwindcss(),
-    tanstackStart(),
-    tanstackRouter({
-      semicolons: true,
-    }), // Must be before @vitejs/plugin-react
+    tanstackStart({
+      router: {
+        semicolons: true
+      }
+    }),
     viteReact(),
   ],
 });
