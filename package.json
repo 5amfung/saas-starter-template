@@ -3,13 +3,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bunx --bun vite dev --port 3000",
-    "build": "bunx --bun vite build",
-    "preview": "bunx --bun vite preview",
-    "test": "bunx --bun vitest run",
-    "lint": "bunx --bun eslint",
-    "lint:fix": "bunx --bun eslint --fix",
-    "format": "bunx --bun prettier --write ./src"
+    "dev": "vite dev --port 3000",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "format": "prettier --write ./src"
   },
   "dependencies": {
     "@base-ui/react": "^1.1.0",
