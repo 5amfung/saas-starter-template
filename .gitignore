@@ -50,3 +50,6 @@ certificates
 
 # Nitro
 /.nitro
+
+# Build
+/.output
