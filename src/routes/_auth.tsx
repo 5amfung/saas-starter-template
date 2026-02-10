@@ -1,10 +1,9 @@
 import { IconStack2 } from '@tabler/icons-react';
-import { createFileRoute } from '@tanstack/react-router';
-import { LoginForm } from '@/components/login-form';
+import { Outlet, createFileRoute } from '@tanstack/react-router';
 
-export const Route = createFileRoute('/')({ component: App });
+export const Route = createFileRoute('/_auth')({ component: AuthLayout });
 
-function App() {
+function AuthLayout() {
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
@@ -14,7 +13,7 @@ function App() {
           </div>
           Acme Inc.
         </a>
-        <LoginForm />
+        <Outlet />
       </div>
     </div>
   );

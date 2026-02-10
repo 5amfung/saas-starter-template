@@ -9,38 +9,93 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root';
+import { Route as DashboardRouteImport } from './routes/dashboard';
+import { Route as AuthRouteImport } from './routes/_auth';
 import { Route as IndexRouteImport } from './routes/index';
+import { Route as AuthSignupRouteImport } from './routes/_auth/signup';
+import { Route as AuthLoginRouteImport } from './routes/_auth/login';
 
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any);
+const AuthRoute = AuthRouteImport.update({
+  id: '/_auth',
+  getParentRoute: () => rootRouteImport,
+} as any);
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any);
+const AuthSignupRoute = AuthSignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => AuthRoute,
+} as any);
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => AuthRoute,
+} as any);
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute;
+  '/dashboard': typeof DashboardRoute;
+  '/login': typeof AuthLoginRoute;
+  '/signup': typeof AuthSignupRoute;
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute;
+  '/dashboard': typeof DashboardRoute;
+  '/login': typeof AuthLoginRoute;
+  '/signup': typeof AuthSignupRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   '/': typeof IndexRoute;
+  '/_auth': typeof AuthRouteWithChildren;
+  '/dashboard': typeof DashboardRoute;
+  '/_auth/login': typeof AuthLoginRoute;
+  '/_auth/signup': typeof AuthSignupRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: '/';
+  fullPaths: '/' | '/dashboard' | '/login' | '/signup';
   fileRoutesByTo: FileRoutesByTo;
-  to: '/';
-  id: '__root__' | '/';
+  to: '/' | '/dashboard' | '/login' | '/signup';
+  id:
+    | '__root__'
+    | '/'
+    | '/_auth'
+    | '/dashboard'
+    | '/_auth/login'
+    | '/_auth/signup';
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
+  AuthRoute: typeof AuthRouteWithChildren;
+  DashboardRoute: typeof DashboardRoute;
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/dashboard': {
+      id: '/dashboard';
+      path: '/dashboard';
+      fullPath: '/dashboard';
+      preLoaderRoute: typeof DashboardRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/_auth': {
+      id: '/_auth';
+      path: '';
+      fullPath: '/';
+      preLoaderRoute: typeof AuthRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/': {
       id: '/';
       path: '/';
@@ -48,11 +103,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    '/_auth/signup': {
+      id: '/_auth/signup';
+      path: '/signup';
+      fullPath: '/signup';
+      preLoaderRoute: typeof AuthSignupRouteImport;
+      parentRoute: typeof AuthRoute;
+    };
+    '/_auth/login': {
+      id: '/_auth/login';
+      path: '/login';
+      fullPath: '/login';
+      preLoaderRoute: typeof AuthLoginRouteImport;
+      parentRoute: typeof AuthRoute;
+    };
   }
 }
 
+interface AuthRouteChildren {
+  AuthLoginRoute: typeof AuthLoginRoute;
+  AuthSignupRoute: typeof AuthSignupRoute;
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthLoginRoute: AuthLoginRoute,
+  AuthSignupRoute: AuthSignupRoute,
+};
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren);
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRouteWithChildren,
+  DashboardRoute: DashboardRoute,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
