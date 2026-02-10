@@ -7,12 +7,11 @@ import { DataTable } from '@/components/data-table';
 import { SectionCards } from '@/components/section-cards';
 import data from './data.json';
 
-export const Route = createFileRoute('/dashboard')({
+export const Route = createFileRoute('/_protected/dashboard')({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  // return <div>Hello "/dashboard"!</div>;
   return (
     <SidebarProvider
       style={

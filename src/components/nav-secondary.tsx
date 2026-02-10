@@ -11,11 +11,11 @@ export function NavSecondary({
   items,
   ...props
 }: {
-  items: {
+  items: Array<{
     title: string;
     url: string;
     icon: React.ReactNode;
-  }[];
+  }>;
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   return (
     <SidebarGroup {...props}>

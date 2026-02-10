@@ -13,11 +13,11 @@ import {
 export function NavMain({
   items,
 }: {
-  items: {
+  items: Array<{
     title: string;
     url: string;
     icon?: React.ReactNode;
-  }[];
+  }>;
 }) {
   return (
     <SidebarGroup>
