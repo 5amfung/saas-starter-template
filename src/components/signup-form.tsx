@@ -1,4 +1,7 @@
-import { Link } from '@tanstack/react-router';
+import * as z from 'zod';
+import { useForm } from '@tanstack/react-form';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { IconLoader } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -10,12 +13,68 @@ import {
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { authClient } from '@/lib/auth-client';
+import { FormError } from '@/components/form-error';
+
+function toFieldErrorItem(error: unknown): { message: string } {
+  if (typeof error === 'string') return { message: error };
+  if (error && typeof error === 'object' && 'message' in error) {
+    return error as { message: string };
+  }
+  return { message: 'Validation error.' };
+}
+
+const signupSchema = z
+  .object({
+    email: z.email({ error: 'Please enter a valid email address.' }),
+    password: z
+      .string()
+      .min(8, { error: 'Password must be at least 8 characters.' }),
+    confirmPassword: z
+      .string()
+      .min(1, { error: 'Please confirm your password.' }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    error: 'Passwords do not match.',
+    path: ['confirmPassword'],
+  });
 
 export function SignupForm() {
+  const navigate = useNavigate();
+
+  const form = useForm({
+    defaultValues: {
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+    validators: {
+      onBlur: signupSchema,
+      onSubmit: signupSchema,
+    },
+    onSubmit: async ({ value, formApi }) => {
+      const { error } = await authClient.signUp.email({
+        email: value.email,
+        password: value.password,
+        name: value.email.split('@')[0] ?? '',
+      });
+      if (error) {
+        const message = error.message ?? 'Something went wrong.';
+        formApi.setErrorMap({
+          ...formApi.state.errorMap,
+          onSubmit: { form: message, fields: {} },
+        });
+        return;
+      }
+      navigate({ to: '/verify' });
+    },
+  });
+
   return (
     <>
       <Card>
@@ -26,40 +85,137 @@ export function SignupForm() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              form.handleSubmit();
+            }}
+          >
             <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="name">Full Name</FieldLabel>
-                <Input id="name" type="text" placeholder="John Doe" required />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                />
-              </Field>
+              <form.Field
+                name="email"
+                children={(field) => {
+                  const isInvalid =
+                    field.state.meta.isBlurred && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+                      <Input
+                        id={field.name}
+                        name={field.name}
+                        type="email"
+                        placeholder="m@example.com"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        aria-invalid={isInvalid}
+                        required
+                      />
+                      {isInvalid && (
+                        <FieldError
+                          errors={field.state.meta.errors.map(toFieldErrorItem)}
+                        />
+                      )}
+                    </Field>
+                  );
+                }}
+              />
               <Field>
                 <Field className="grid grid-cols-2 gap-4">
-                  <Field>
-                    <FieldLabel htmlFor="password">Password</FieldLabel>
-                    <Input id="password" type="password" required />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="confirm-password">
-                      Confirm Password
-                    </FieldLabel>
-                    <Input id="confirm-password" type="password" required />
-                  </Field>
+                  <form.Field
+                    name="password"
+                    children={(field) => {
+                      const isInvalid =
+                        field.state.meta.isBlurred && !field.state.meta.isValid;
+                      return (
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                          <Input
+                            id={field.name}
+                            name={field.name}
+                            type="password"
+                            value={field.state.value}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            aria-invalid={isInvalid}
+                            required
+                          />
+                          {isInvalid && (
+                            <FieldError
+                              errors={field.state.meta.errors.map(
+                                toFieldErrorItem,
+                              )}
+                            />
+                          )}
+                        </Field>
+                      );
+                    }}
+                  />
+                  <form.Field
+                    name="confirmPassword"
+                    validators={{
+                      onChangeListenTo: ['password'],
+                      onChange: ({ value, fieldApi }) => {
+                        if (value !== fieldApi.form.getFieldValue('password')) {
+                          return 'Passwords do not match.';
+                        }
+                        return undefined;
+                      },
+                    }}
+                    children={(field) => {
+                      const isInvalid =
+                        field.state.meta.isBlurred && !field.state.meta.isValid;
+                      return (
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel htmlFor={field.name}>
+                            Confirm Password
+                          </FieldLabel>
+                          <Input
+                            id={field.name}
+                            name={field.name}
+                            type="password"
+                            value={field.state.value}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            aria-invalid={isInvalid}
+                            required
+                          />
+                          {isInvalid && (
+                            <FieldError
+                              errors={field.state.meta.errors.map(
+                                toFieldErrorItem,
+                              )}
+                            />
+                          )}
+                        </Field>
+                      );
+                    }}
+                  />
                 </Field>
                 <FieldDescription>
                   Must be at least 8 characters long.
                 </FieldDescription>
               </Field>
+              <form.Subscribe
+                selector={(state) => state.errors}
+                children={(errors) => (
+                  <FormError
+                    errors={errors
+                      .flatMap((e) => (typeof e === 'string' ? [e] : []))
+                      .filter(Boolean)}
+                  />
+                )}
+              />
               <Field>
-                <Button type="submit">Create Account</Button>
+                <form.Subscribe
+                  selector={(state) => [state.isSubmitting]}
+                  children={([isSubmitting]) => (
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting && <IconLoader className="animate-spin" />}
+                      Create Account
+                    </Button>
+                  )}
+                />
                 <FieldDescription className="text-center">
                   Already have an account? <Link to="/login">Sign in</Link>
                 </FieldDescription>
