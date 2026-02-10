@@ -13,7 +13,9 @@ function AuthLayout() {
           </div>
           Acme Inc.
         </a>
-        <Outlet />
+        <div className="flex flex-col gap-6">
+          <Outlet />
+        </div>
       </div>
     </div>
   );

@@ -14,14 +14,10 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
 
-export function SignupForm({
-  className,
-  ...props
-}: React.ComponentProps<'div'>) {
+export function SignupForm() {
   return (
-    <div className={cn('flex flex-col gap-6', className)} {...props}>
+    <>
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Create your account</CardTitle>
@@ -76,6 +72,6 @@ export function SignupForm({
         By clicking continue, you agree to our <a href="#">Terms of Service</a>{' '}
         and <a href="#">Privacy Policy</a>.
       </FieldDescription>
-    </div>
+    </>
   );
 }
