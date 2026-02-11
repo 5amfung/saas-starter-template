@@ -1,5 +1,6 @@
 'use client';
 
+import { useNavigate } from '@tanstack/react-router';
 import {
   IconCreditCard,
   IconDotsVertical,
@@ -23,6 +24,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { authClient } from '@/lib/auth/auth-client';
 
 export function NavUser({
   user,
@@ -33,7 +35,18 @@ export function NavUser({
     avatar: string;
   };
 }) {
+  const navigate = useNavigate();
   const { isMobile } = useSidebar();
+
+  async function handleLogout() {
+    try {
+      await authClient.signOut();
+      navigate({ to: '/login' });
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  }
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -93,7 +106,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <IconLogout />
               Log out
             </DropdownMenuItem>
