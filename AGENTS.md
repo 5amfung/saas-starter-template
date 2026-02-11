@@ -77,7 +77,7 @@ TanStack Router with file-based routing in `src/routes/`.
 - `__root.tsx` — Root layout (HTML shell, meta tags, devtools).
 - `index.tsx` — Home page (`/`).
 - `_auth.tsx` — Pathless layout route wrapping auth pages.
-- `_auth/login.tsx` — Login page (`/login`).
+- `_auth/signin.tsx` — Login page (`/signin`).
 - `_auth/signup.tsx` — Signup page (`/signup`).
 - `_protected.tsx` - Pathless layout with authMiddleware. All children are protected.
 - `_protected/dashboard.tsx` — Dashboard page (`/dashboard`).
