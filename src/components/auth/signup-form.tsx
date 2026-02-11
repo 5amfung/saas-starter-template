@@ -18,7 +18,7 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { authClient } from '@/lib/auth-client';
+import { authClient } from '@/lib/auth/auth-client';
 import { FormError } from '@/components/auth/form-error';
 import { toFieldErrorItem } from '@/lib/form-utils';
 

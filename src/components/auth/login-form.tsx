@@ -1,4 +1,6 @@
-import { Link } from '@tanstack/react-router';
+import { useForm } from '@tanstack/react-form';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { IconLoader } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -10,13 +12,50 @@ import {
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { authClient } from '@/lib/auth/auth-client';
+import { loginSchema } from '@/lib/auth/schemas';
+import { FormError } from '@/components/auth/form-error';
+import { toFieldErrorItem } from '@/lib/form-utils';
 
 export function LoginForm() {
+  const navigate = useNavigate();
+
+  const form = useForm({
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+    validators: {
+      onBlur: loginSchema,
+      onSubmit: loginSchema,
+    },
+    onSubmit: async ({ value, formApi }) => {
+      const { error } = await authClient.signIn.email({
+        email: value.email,
+        password: value.password,
+      });
+      if (error) {
+        if (error.status === 403) {
+          navigate({ to: '/verify' });
+          return;
+        }
+        const message = error.message ?? 'Something went wrong.';
+        formApi.setErrorMap({
+          ...formApi.state.errorMap,
+          onSubmit: { form: message, fields: {} },
+        });
+        return;
+      }
+      navigate({ to: '/dashboard' });
+    },
+  });
+
   return (
     <>
       <Card>
@@ -27,7 +66,12 @@ export function LoginForm() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              form.handleSubmit();
+            }}
+          >
             <FieldGroup>
               <Field>
                 <Button variant="outline" type="button">
@@ -52,29 +96,89 @@ export function LoginForm() {
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 Or continue with
               </FieldSeparator>
+              <form.Field
+                name="email"
+                children={(field) => {
+                  const isInvalid =
+                    field.state.meta.isBlurred && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+                      <Input
+                        id={field.name}
+                        name={field.name}
+                        type="email"
+                        placeholder="m@example.com"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        aria-invalid={isInvalid}
+                        required
+                      />
+                      {isInvalid && (
+                        <FieldError
+                          errors={field.state.meta.errors.map(toFieldErrorItem)}
+                        />
+                      )}
+                    </Field>
+                  );
+                }}
+              />
+              <form.Field
+                name="password"
+                children={(field) => {
+                  const isInvalid =
+                    field.state.meta.isBlurred && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <div className="flex items-center">
+                        <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                        <a
+                          href="#"
+                          className="ml-auto text-sm underline-offset-4 hover:underline"
+                        >
+                          Forgot your password?
+                        </a>
+                      </div>
+                      <Input
+                        id={field.name}
+                        name={field.name}
+                        type="password"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        aria-invalid={isInvalid}
+                        required
+                      />
+                      {isInvalid && (
+                        <FieldError
+                          errors={field.state.meta.errors.map(toFieldErrorItem)}
+                        />
+                      )}
+                    </Field>
+                  );
+                }}
+              />
+              <form.Subscribe
+                selector={(state) => state.errors}
+                children={(errors) => (
+                  <FormError
+                    errors={errors
+                      .flatMap((e) => (typeof e === 'string' ? [e] : []))
+                      .filter(Boolean)}
+                  />
+                )}
+              />
               <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
+                <form.Subscribe
+                  selector={(state) => [state.isSubmitting]}
+                  children={([isSubmitting]) => (
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting && <IconLoader className="animate-spin" />}
+                      Login
+                    </Button>
+                  )}
                 />
-              </Field>
-              <Field>
-                <div className="flex items-center">
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <a
-                    href="#"
-                    className="ml-auto text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </a>
-                </div>
-                <Input id="password" type="password" required />
-              </Field>
-              <Field>
-                <Button type="submit">Login</Button>
                 <FieldDescription className="text-center">
                   Don&apos;t have an account? <Link to="/signup">Sign up</Link>
                 </FieldDescription>

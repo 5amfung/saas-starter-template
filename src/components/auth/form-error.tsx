@@ -2,7 +2,9 @@
 import { cn } from '@/lib/utils';
 
 export function FormError({
-  className, errors, ...props
+  className,
+  errors,
+  ...props
 }: React.ComponentProps<'div'> & {
   errors?: Array<string>;
 }) {
