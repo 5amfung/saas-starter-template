@@ -1,4 +1,3 @@
-import * as z from 'zod';
 import { useForm } from '@tanstack/react-form';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { IconLoader } from '@tabler/icons-react';
@@ -21,21 +20,7 @@ import { Input } from '@/components/ui/input';
 import { authClient } from '@/lib/auth/auth-client';
 import { FormError } from '@/components/auth/form-error';
 import { toFieldErrorItem } from '@/lib/form-utils';
-
-const signupSchema = z
-  .object({
-    email: z.email({ error: 'Please enter a valid email address.' }),
-    password: z
-      .string()
-      .min(8, { error: 'Password must be at least 8 characters.' }),
-    confirmPassword: z
-      .string()
-      .min(1, { error: 'Please confirm your password.' }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    error: 'Passwords do not match.',
-    path: ['confirmPassword'],
-  });
+import { signupSchema } from '@/lib/auth/schemas';
 
 export function SignupForm() {
   const navigate = useNavigate();
