@@ -23,8 +23,7 @@ export function InputOTPForm() {
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Verify your login</CardTitle>
           <CardDescription>
-            Enter the verification code we sent to your email address:{' '}
-            <span className="font-medium">m@example.com</span>.
+            Enter the verification code we sent to your email address.
           </CardDescription>
         </CardHeader>
         <CardContent>

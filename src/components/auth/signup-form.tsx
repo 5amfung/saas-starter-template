@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { authClient } from '@/lib/auth-client';
-import { FormError } from '@/components/form-error';
+import { FormError } from '@/components/auth/form-error';
 
 function toFieldErrorItem(error: unknown): { message: string } {
   if (typeof error === 'string') return { message: error };
