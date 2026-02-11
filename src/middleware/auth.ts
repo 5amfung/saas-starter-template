@@ -11,3 +11,12 @@ export const authMiddleware = createMiddleware().server(async ({ next }) => {
   }
   return await next();
 });
+
+export const guestMiddleware = createMiddleware().server(async ({ next }) => {
+  const headers = getRequestHeaders();
+  const session = await auth.api.getSession({ headers });
+  if (session?.user.emailVerified) {
+    throw redirect({ to: '/dashboard' });
+  }
+  return await next();
+});
