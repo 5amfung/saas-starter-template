@@ -1,6 +1,6 @@
 import { IconStack2 } from '@tabler/icons-react';
 import { createFileRoute } from '@tanstack/react-router';
-import { LoginForm } from '@/components/auth/login-form';
+import { SigninForm } from '@/components/auth/signin-form';
 
 export const Route = createFileRoute('/')({ component: App });
 
@@ -14,7 +14,7 @@ function App() {
           </div>
           Acme Inc.
         </a>
-        <LoginForm />
+        <SigninForm />
       </div>
     </div>
   );

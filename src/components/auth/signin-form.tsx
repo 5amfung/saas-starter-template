@@ -23,7 +23,7 @@ import { loginSchema } from '@/lib/auth/schemas';
 import { FormError } from '@/components/auth/form-error';
 import { toFieldErrorItem } from '@/lib/form-utils';
 
-export function LoginForm() {
+export function SigninForm() {
   const navigate = useNavigate();
 
   const form = useForm({

@@ -15,7 +15,7 @@ import { Route as IndexRouteImport } from './routes/index';
 import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard';
 import { Route as AuthVerifyRouteImport } from './routes/_auth/verify';
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup';
-import { Route as AuthLoginRouteImport } from './routes/_auth/login';
+import { Route as AuthSigninRouteImport } from './routes/_auth/signin';
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$';
 
 const ProtectedRoute = ProtectedRouteImport.update({
@@ -46,9 +46,9 @@ const AuthSignupRoute = AuthSignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => AuthRoute,
 } as any);
-const AuthLoginRoute = AuthLoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const AuthSigninRoute = AuthSigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
   getParentRoute: () => AuthRoute,
 } as any);
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -59,7 +59,7 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute;
-  '/login': typeof AuthLoginRoute;
+  '/signin': typeof AuthSigninRoute;
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
   '/dashboard': typeof ProtectedDashboardRoute;
@@ -67,7 +67,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute;
-  '/login': typeof AuthLoginRoute;
+  '/signin': typeof AuthSigninRoute;
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
   '/dashboard': typeof ProtectedDashboardRoute;
@@ -78,7 +78,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute;
   '/_auth': typeof AuthRouteWithChildren;
   '/_protected': typeof ProtectedRouteWithChildren;
-  '/_auth/login': typeof AuthLoginRoute;
+  '/_auth/signin': typeof AuthSigninRoute;
   '/_auth/signup': typeof AuthSignupRoute;
   '/_auth/verify': typeof AuthVerifyRoute;
   '/_protected/dashboard': typeof ProtectedDashboardRoute;
@@ -88,19 +88,19 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
     | '/'
-    | '/login'
+    | '/signin'
     | '/signup'
     | '/verify'
     | '/dashboard'
     | '/api/auth/$';
   fileRoutesByTo: FileRoutesByTo;
-  to: '/' | '/login' | '/signup' | '/verify' | '/dashboard' | '/api/auth/$';
+  to: '/' | '/signin' | '/signup' | '/verify' | '/dashboard' | '/api/auth/$';
   id:
     | '__root__'
     | '/'
     | '/_auth'
     | '/_protected'
-    | '/_auth/login'
+    | '/_auth/signin'
     | '/_auth/signup'
     | '/_auth/verify'
     | '/_protected/dashboard'
@@ -158,11 +158,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSignupRouteImport;
       parentRoute: typeof AuthRoute;
     };
-    '/_auth/login': {
-      id: '/_auth/login';
-      path: '/login';
-      fullPath: '/login';
-      preLoaderRoute: typeof AuthLoginRouteImport;
+    '/_auth/signin': {
+      id: '/_auth/signin';
+      path: '/signin';
+      fullPath: '/signin';
+      preLoaderRoute: typeof AuthSigninRouteImport;
       parentRoute: typeof AuthRoute;
     };
     '/api/auth/$': {
@@ -176,13 +176,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthRouteChildren {
-  AuthLoginRoute: typeof AuthLoginRoute;
+  AuthSigninRoute: typeof AuthSigninRoute;
   AuthSignupRoute: typeof AuthSignupRoute;
   AuthVerifyRoute: typeof AuthVerifyRoute;
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
-  AuthLoginRoute: AuthLoginRoute,
+  AuthSigninRoute: AuthSigninRoute,
   AuthSignupRoute: AuthSignupRoute,
   AuthVerifyRoute: AuthVerifyRoute,
 };
