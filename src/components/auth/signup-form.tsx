@@ -49,7 +49,7 @@ export function SignupForm() {
         });
         return;
       }
-      navigate({ to: '/verify' });
+      navigate({ to: '/verify', search: { email: value.email } });
     },
   });
 

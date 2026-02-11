@@ -19,3 +19,11 @@ export const signupSchema = z
     error: 'Passwords do not match.',
     path: ['confirmPassword'],
   });
+
+export const verifySchema = z.object({
+  otp: z.string().length(6, { error: 'Please enter the 6-digit code.' }),
+});
+
+export const verifySearchSchema = z.object({
+  email: z.email({ error: 'Invalid email.' }),
+});

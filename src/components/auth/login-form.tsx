@@ -42,7 +42,7 @@ export function LoginForm() {
       });
       if (error) {
         if (error.status === 403) {
-          navigate({ to: '/verify' });
+          navigate({ to: '/verify', search: { email: value.email } });
           return;
         }
         const message = error.message ?? 'Something went wrong.';
