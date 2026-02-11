@@ -136,7 +136,7 @@ function ChartTooltipContent({
     const value =
       !labelKey && typeof label === 'string'
         ? label in config
-          ? config[label].label ?? label
+          ? (config[label].label ?? label)
           : label
         : itemConfig?.label;
 

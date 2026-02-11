@@ -41,7 +41,7 @@ export function NavUser({
   async function handleLogout() {
     try {
       await authClient.signOut();
-      navigate({ to: '/login' });
+      navigate({ to: '/' });
     } catch (error) {
       console.error('Logout failed:', error);
     }

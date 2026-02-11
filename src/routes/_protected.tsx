@@ -18,7 +18,7 @@ function ProtectedLayout() {
 
   useEffect(() => {
     if (!isPending && !isAuthenticated) {
-      navigate({ to: '/login' });
+      navigate({ to: '/signin' });
     }
   }, [isAuthenticated, isPending, navigate]);
 
