@@ -20,14 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { authClient } from '@/lib/auth-client';
 import { FormError } from '@/components/auth/form-error';
-
-function toFieldErrorItem(error: unknown): { message: string } {
-  if (typeof error === 'string') return { message: error };
-  if (error && typeof error === 'object' && 'message' in error) {
-    return error as { message: string };
-  }
-  return { message: 'Validation error.' };
-}
+import { toFieldErrorItem } from '@/lib/form-utils';
 
 const signupSchema = z
   .object({
