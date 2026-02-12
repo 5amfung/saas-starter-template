@@ -17,10 +17,10 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { authClient } from '@/lib/auth/auth-client';
+import { authClient } from '@/auth/auth-client';
 import { FormError } from '@/components/auth/form-error';
 import { toFieldErrorItem } from '@/lib/form-utils';
-import { signupSchema } from '@/lib/auth/schemas';
+import { signupSchema } from '@/auth/schemas';
 
 export function SignupForm() {
   const navigate = useNavigate();

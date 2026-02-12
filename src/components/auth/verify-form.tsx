@@ -18,8 +18,8 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from '@/components/ui/input-otp';
-import { authClient } from '@/lib/auth/auth-client';
-import { verifySchema } from '@/lib/auth/schemas';
+import { authClient } from '@/auth/auth-client';
+import { verifySchema } from '@/auth/schemas';
 import { FormError } from '@/components/auth/form-error';
 import { toFieldErrorItem } from '@/lib/form-utils';
 

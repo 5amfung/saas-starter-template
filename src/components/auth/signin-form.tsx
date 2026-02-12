@@ -18,8 +18,8 @@ import {
   FieldSeparator,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { authClient } from '@/lib/auth/auth-client';
-import { loginSchema } from '@/lib/auth/schemas';
+import { authClient } from '@/auth/auth-client';
+import { loginSchema } from '@/auth/schemas';
 import { FormError } from '@/components/auth/form-error';
 import { toFieldErrorItem } from '@/lib/form-utils';
 

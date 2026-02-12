@@ -1,5 +1,5 @@
 import { betterAuth } from 'better-auth';
-import { emailOTP } from 'better-auth/plugins';
+import { admin, emailOTP } from 'better-auth/plugins';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { tanstackStartCookies } from 'better-auth/tanstack-start';
 import { db } from '@/db';
@@ -27,6 +27,11 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    admin({
+      adminUserIds: [
+        // Add admin user ID here.
+      ],
+    }),
     emailOTP({
       overrideDefaultEmailVerification: true,
       sendVerificationOnSignUp: true,

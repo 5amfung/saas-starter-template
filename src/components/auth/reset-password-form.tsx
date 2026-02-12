@@ -18,8 +18,8 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { authClient } from '@/lib/auth/auth-client';
-import { resetPasswordSchema } from '@/lib/auth/schemas';
+import { authClient } from '@/auth/auth-client';
+import { resetPasswordSchema } from '@/auth/schemas';
 import { FormError } from '@/components/auth/form-error';
 import { toFieldErrorItem } from '@/lib/form-utils';
 

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { IconStack2 } from '@tabler/icons-react';
 import { Outlet, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { authClient } from '@/lib/auth/auth-client';
+import { authClient } from '@/auth/auth-client';
 import { guestMiddleware } from '@/middleware/auth';
 
 export const Route = createFileRoute('/_auth')({

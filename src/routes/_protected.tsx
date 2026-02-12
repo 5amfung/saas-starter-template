@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Outlet, createFileRoute, useNavigate } from '@tanstack/react-router';
 import { authMiddleware } from '@/middleware/auth';
-import { authClient } from '@/lib/auth/auth-client';
+import { authClient } from '@/auth/auth-client';
 
 export const Route = createFileRoute('/_protected')({
   component: ProtectedLayout,
