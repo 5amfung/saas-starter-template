@@ -25,7 +25,7 @@ export const verifySchema = z.object({
 });
 
 export const verifySearchSchema = z.object({
-  email: z.email({ error: 'Invalid email.' }),
+  email: z.email({ error: 'Invalid email.' }).optional(),
 });
 
 export const forgotPasswordSchema = z.object({
