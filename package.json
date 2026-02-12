@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "check": "tsc --noEmit && eslint",
     "format": "prettier --write ./src",
+    "gen-auth-schema": "bunx @better-auth/cli generate --config ./src/auth/auth.server.ts --output ./src/db/schema.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
