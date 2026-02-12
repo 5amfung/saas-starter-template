@@ -11,6 +11,11 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
+    sendResetPassword: async ({ user, url, token }) => {
+      // TODO: Replace with actual email service.
+      console.log(`Reset password for ${user.email}: ${url}, token: ${token}`);
+      await Promise.resolve();
+    },
   },
   emailVerification: {
     sendOnSignIn: true,

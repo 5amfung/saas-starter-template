@@ -151,12 +151,12 @@ export function SigninForm() {
                     <Field data-invalid={isInvalid}>
                       <div className="flex items-center">
                         <FieldLabel htmlFor={field.name}>Password</FieldLabel>
-                        <a
-                          href="#"
+                        <Link
+                          to="/forgot-password"
                           className="ml-auto text-sm underline-offset-4 hover:underline"
                         >
                           Forgot your password?
-                        </a>
+                        </Link>
                       </div>
                       <Input
                         id={field.name}
