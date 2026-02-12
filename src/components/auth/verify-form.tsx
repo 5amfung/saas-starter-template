@@ -75,7 +75,7 @@ export function InputOTPForm({ email }: InputOTPFormProps) {
   return (
     <Card className="mx-auto max-w-md">
       <CardHeader className="text-center">
-        <CardTitle className="text-xl">Verify your login</CardTitle>
+        <CardTitle className="text-xl">Verify your account</CardTitle>
         <CardDescription>
           Enter the verification code we sent to your email address.
         </CardDescription>
