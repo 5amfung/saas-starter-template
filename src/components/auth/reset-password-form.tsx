@@ -196,7 +196,10 @@ export function ResetPasswordForm({ token, error }: ResetPasswordFormProps) {
                 )}
               />
               <FieldDescription className="text-center">
-                <Link to="/signin" className="underline-offset-4 hover:underline">
+                <Link
+                  to="/signin"
+                  className="underline-offset-4 hover:underline"
+                >
                   Back to sign in
                 </Link>
               </FieldDescription>
