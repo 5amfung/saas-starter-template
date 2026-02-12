@@ -9,6 +9,8 @@
     "test": "vitest run",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
+    "typecheck": "tsc --noEmit",
+    "check": "tsc --noEmit && eslint",
     "format": "prettier --write ./src",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
