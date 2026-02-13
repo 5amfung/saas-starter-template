@@ -1,3 +1,6 @@
+/**
+ *  Server-only: used when rendering emails; do not import from client code.
+ */
 import {
   Body,
   Button,
@@ -12,13 +15,20 @@ import {
   Text,
   pixelBasedPreset,
 } from '@react-email/components';
+import type { EmailRequestContext } from '@/email/email-request-context.server';
+import { EmailSecurityNotice } from './email-security-notice';
 
 export interface ResetPasswordEmailProps {
   appName: string;
   resetUrl: string;
+  requestContext: EmailRequestContext;
 }
 
-export function ResetPasswordEmail({ appName, resetUrl }: ResetPasswordEmailProps) {
+export function ResetPasswordEmail({
+  appName,
+  resetUrl,
+  requestContext,
+}: ResetPasswordEmailProps) {
   return (
     <Html lang="en" dir="ltr">
       <Head />
@@ -27,7 +37,10 @@ export function ResetPasswordEmail({ appName, resetUrl }: ResetPasswordEmailProp
         <Body className="bg-zinc-100 p-8 px-4 font-sans">
           <Container className="mx-auto max-w-[480px] overflow-hidden rounded-[10px] bg-white shadow-sm">
             <Section className="px-6 py-8">
-              <Heading as="h1" className="mb-4 text-xl font-semibold text-zinc-900">
+              <Heading
+                as="h1"
+                className="mb-4 text-xl font-semibold text-zinc-900"
+              >
                 Reset your password
               </Heading>
               <Text className="mb-6 text-[15px] leading-6 text-zinc-700">
@@ -52,9 +65,9 @@ export function ResetPasswordEmail({ appName, resetUrl }: ResetPasswordEmailProp
                 {resetUrl}
               </Link>
               <Text className="text-sm leading-5 text-zinc-500">
-                This link expires in 1 hour. If you didn&apos;t request a reset,
-                you can safely ignore this email.
+                This link expires in 10 minutes.
               </Text>
+              <EmailSecurityNotice requestContext={requestContext} />
             </Section>
             <Section className="border-t border-zinc-200 p-6">
               <Text className="text-xs text-zinc-400">{appName}</Text>
@@ -70,4 +83,10 @@ export default ResetPasswordEmail;
 ResetPasswordEmail.PreviewProps = {
   appName: 'My App',
   resetUrl: 'https://example.com/reset-password?token=abc123',
+  requestContext: {
+    requestedAtUtc: '13 February 2026, 21:11 UTC',
+    ip: '136.24.244.114',
+    city: 'San Francisco',
+    country: 'US',
+  },
 } satisfies ResetPasswordEmailProps;

@@ -3,16 +3,25 @@ import { Resend } from 'resend';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
+const RESEND_REPLY_TO_EMAIL = process.env.RESEND_REPLY_TO_EMAIL;
 const APP_NAME = process.env.VITE_APP_NAME ?? 'App';
 
-function ensureEmailConfig(): { apiKey: string; from: string } {
+function ensureEmailConfig(): {
+  apiKey: string;
+  from: string;
+  replyTo?: string;
+} {
   if (!RESEND_API_KEY || RESEND_API_KEY.trim() === '') {
     throw new Error('RESEND_API_KEY is required for sending emails.');
   }
   if (!RESEND_FROM_EMAIL || RESEND_FROM_EMAIL.trim() === '') {
     throw new Error('RESEND_FROM_EMAIL is required for sending emails.');
   }
-  return { apiKey: RESEND_API_KEY, from: RESEND_FROM_EMAIL };
+  const replyTo =
+    RESEND_REPLY_TO_EMAIL && RESEND_REPLY_TO_EMAIL.trim() !== ''
+      ? RESEND_REPLY_TO_EMAIL.trim()
+      : undefined;
+  return { apiKey: RESEND_API_KEY, from: RESEND_FROM_EMAIL, replyTo };
 }
 
 function prefixSubject(subject: string): string {
@@ -39,7 +48,7 @@ export interface SendEmailOptions {
 }
 
 export async function sendEmail({ to, subject, react }: SendEmailOptions) {
-  const { from } = ensureEmailConfig();
+  const { from, replyTo } = ensureEmailConfig();
   const prefixedSubject = prefixSubject(subject);
   const resend = getResendClient();
 
@@ -48,6 +57,7 @@ export async function sendEmail({ to, subject, react }: SendEmailOptions) {
     to,
     subject: prefixedSubject,
     react,
+    ...(replyTo && { replyTo }),
   });
 
   if (error) {
