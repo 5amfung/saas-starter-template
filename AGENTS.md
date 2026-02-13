@@ -25,15 +25,20 @@ SaaS starter template built with TanStack Start, React 19, and shadcn/ui. This i
 
 ```
 src/
-├── app/              # App-specific data and configuration
-├── components/       # Feature components (kebab-case filenames)
-│   └── ui/           # shadcn/ui primitives (do not manually edit)
-├── hooks/            # Custom React hooks
-├── lib/              # Utility functions (cn, etc.)
-├── routes/           # TanStack Router file-based routes
-├── router.tsx        # Router configuration
-├── routeTree.gen.ts  # Auto-generated route tree (do not edit)
-└── styles.css        # Global styles and CSS custom properties
+├── app/                 # App-specific data and configuration
+├── auth/                # Authentication service
+├── components/          # Feature components (kebab-case filenames)
+│   ├── auth             # Authentication components
+│   ├── email-template/  # Server-only React Email templates (do not import from client)
+│   └── ui/              # shadcn/ui primitives (do not manually edit)
+├── db/                  # Drizzle ORM client and database schema
+├── hooks/               # Custom React hooks
+├── lib/                 # Utility functions (cn, etc.)
+├── middleware/          # Middlewares
+├── routes/              # TanStack Router file-based routes
+├── router.tsx           # Router configuration
+├── routeTree.gen.ts     # Auto-generated route tree (do not edit)
+└── styles.css           # Global styles and CSS custom properties
 ```
 
 ## Conventions
@@ -53,6 +58,7 @@ src/
 ### Components
 
 - Functional components only — no class components.
+- `src/components/email-template/` — server-only; used when rendering transactional emails. Do not import these from client code (they depend on `*.server` modules).
 - Use `React.ComponentProps<'element'>` for extending HTML element props.
 - Use `cn()` from `@/lib/utils` for conditional class merging.
 - Use CVA (`class-variance-authority`) for component variants.
