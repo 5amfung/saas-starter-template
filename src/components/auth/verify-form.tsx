@@ -52,7 +52,7 @@ export function InputOTPForm({ email }: InputOTPFormProps) {
         });
         return;
       }
-      navigate({ to: '/dashboard' });
+      navigate({ to: '/signin' });
     },
   });
 

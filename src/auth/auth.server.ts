@@ -1,8 +1,12 @@
+import { createElement } from 'react';
 import { betterAuth } from 'better-auth';
 import { admin, emailOTP } from 'better-auth/plugins';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { tanstackStartCookies } from 'better-auth/tanstack-start';
 import { db } from '@/db';
+import { APP_NAME, sendEmail } from '@/email/resend.server';
+import { ResetPasswordEmail } from '@/components/email-template/reset-password-email';
+import { VerificationCodeEmail } from '@/components/email-template/verification-code-email';
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -11,10 +15,15 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
-    sendResetPassword: async ({ user, url, token }) => {
-      // TODO: Replace with actual email service.
-      console.log(`Reset password for ${user.email}: ${url}, token: ${token}`);
-      await Promise.resolve();
+    sendResetPassword: async ({ user, url }) => {
+      await sendEmail({
+        to: user.email,
+        subject: 'Reset your password',
+        react: createElement(ResetPasswordEmail, {
+          appName: APP_NAME,
+          resetUrl: url,
+        }),
+      });
     },
   },
   emailVerification: {
@@ -35,10 +44,15 @@ export const auth = betterAuth({
     emailOTP({
       overrideDefaultEmailVerification: true,
       sendVerificationOnSignUp: true,
-      async sendVerificationOTP({ email, otp, type }) {
-        // TODO: Replace with actual email service (e.g. await emailService.send(...)).
-        console.log(`[${type}] OTP for ${email}: ${otp}`);
-        await Promise.resolve();
+      async sendVerificationOTP({ email, otp }) {
+        await sendEmail({
+          to: email,
+          subject: 'Verify your account',
+          react: createElement(VerificationCodeEmail, {
+            appName: APP_NAME,
+            otp,
+          }),
+        });
       },
     }),
     tanstackStartCookies(),
