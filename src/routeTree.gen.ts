@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root';
+import { Route as PingRouteImport } from './routes/ping';
+import { Route as HealthRouteImport } from './routes/health';
 import { Route as ProtectedRouteImport } from './routes/_protected';
 import { Route as AuthRouteImport } from './routes/_auth';
 import { Route as IndexRouteImport } from './routes/index';
@@ -20,6 +22,16 @@ import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-pass
 import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-password';
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$';
 
+const PingRoute = PingRouteImport.update({
+  id: '/ping',
+  path: '/ping',
+  getParentRoute: () => rootRouteImport,
+} as any);
+const HealthRoute = HealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => rootRouteImport,
+} as any);
 const ProtectedRoute = ProtectedRouteImport.update({
   id: '/_protected',
   getParentRoute: () => rootRouteImport,
@@ -71,6 +83,8 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute;
+  '/health': typeof HealthRoute;
+  '/ping': typeof PingRoute;
   '/forgot-password': typeof AuthForgotPasswordRoute;
   '/reset-password': typeof AuthResetPasswordRoute;
   '/signin': typeof AuthSigninRoute;
@@ -81,6 +95,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute;
+  '/health': typeof HealthRoute;
+  '/ping': typeof PingRoute;
   '/forgot-password': typeof AuthForgotPasswordRoute;
   '/reset-password': typeof AuthResetPasswordRoute;
   '/signin': typeof AuthSigninRoute;
@@ -94,6 +110,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute;
   '/_auth': typeof AuthRouteWithChildren;
   '/_protected': typeof ProtectedRouteWithChildren;
+  '/health': typeof HealthRoute;
+  '/ping': typeof PingRoute;
   '/_auth/forgot-password': typeof AuthForgotPasswordRoute;
   '/_auth/reset-password': typeof AuthResetPasswordRoute;
   '/_auth/signin': typeof AuthSigninRoute;
@@ -106,6 +124,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
     | '/'
+    | '/health'
+    | '/ping'
     | '/forgot-password'
     | '/reset-password'
     | '/signin'
@@ -116,6 +136,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo;
   to:
     | '/'
+    | '/health'
+    | '/ping'
     | '/forgot-password'
     | '/reset-password'
     | '/signin'
@@ -128,6 +150,8 @@ export interface FileRouteTypes {
     | '/'
     | '/_auth'
     | '/_protected'
+    | '/health'
+    | '/ping'
     | '/_auth/forgot-password'
     | '/_auth/reset-password'
     | '/_auth/signin'
@@ -141,11 +165,27 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
   AuthRoute: typeof AuthRouteWithChildren;
   ProtectedRoute: typeof ProtectedRouteWithChildren;
+  HealthRoute: typeof HealthRoute;
+  PingRoute: typeof PingRoute;
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/ping': {
+      id: '/ping';
+      path: '/ping';
+      fullPath: '/ping';
+      preLoaderRoute: typeof PingRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/health': {
+      id: '/health';
+      path: '/health';
+      fullPath: '/health';
+      preLoaderRoute: typeof HealthRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/_protected': {
       id: '/_protected';
       path: '';
@@ -253,6 +293,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRouteWithChildren,
   ProtectedRoute: ProtectedRouteWithChildren,
+  HealthRoute: HealthRoute,
+  PingRoute: PingRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 };
 export const routeTree = rootRouteImport
