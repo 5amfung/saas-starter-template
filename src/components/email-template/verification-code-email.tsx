@@ -29,11 +29,14 @@ export function VerificationCodeEmail({
         <Body className="bg-zinc-100 p-8 px-4 font-sans">
           <Container className="mx-auto max-w-[480px] overflow-hidden rounded-[10px] bg-white shadow-sm">
             <Section className="px-6 py-8">
-              <Heading as="h1" className="mb-4 text-xl font-semibold text-zinc-900">
+              <Heading
+                as="h1"
+                className="mb-4 text-xl font-semibold text-zinc-900"
+              >
                 Verify your account
               </Heading>
               <Text className="mb-6 text-[15px] leading-6 text-zinc-700">
-                Enter the verification code we sent to your email address.
+                Enter the verification code we when prompted:
               </Text>
               <Section className="mb-6 rounded-lg bg-zinc-100 p-6">
                 <Text className="text-center text-[28px] font-semibold tracking-[8px] text-zinc-900">
@@ -41,8 +44,8 @@ export function VerificationCodeEmail({
                 </Text>
               </Section>
               <Text className="text-sm leading-5 text-zinc-500">
-                If you didn&apos;t request this code, you can safely ignore this
-                email.
+                To protect your account, do not share this code. If you
+                didn&apos;t request this code, you can safely ignore this email.
               </Text>
             </Section>
             <Section className="border-t border-zinc-200 p-6">
