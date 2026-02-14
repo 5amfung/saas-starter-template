@@ -25,9 +25,7 @@ export function DynamicBreadcrumb() {
                   <BreadcrumbLink
                     render={
                       <Link
-                        to={
-                          match.staticData.breadcrumbHref ?? match.fullPath
-                        }
+                        to={match.staticData.breadcrumbHref ?? match.fullPath}
                       />
                     }
                   >
