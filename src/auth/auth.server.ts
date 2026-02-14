@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 import { betterAuth } from 'better-auth';
-import { admin, emailOTP } from 'better-auth/plugins';
+import { admin, emailOTP, lastLoginMethod } from 'better-auth/plugins';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { tanstackStartCookies } from 'better-auth/tanstack-start';
 import { db } from '@/db';
@@ -41,6 +41,9 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    lastLoginMethod({
+      storeInDatabase: true,
+    }),
     admin({
       adminUserIds: [
         // Add admin user ID here.
