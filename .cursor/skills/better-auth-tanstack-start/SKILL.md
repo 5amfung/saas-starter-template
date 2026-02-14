@@ -1,6 +1,6 @@
 ---
 name: better-auth-tanstack-start
-description: Integrate Better Auth with TanStack Start using Drizzle + Postgres. Covers core auth (email/password + sessions), Admin plugin, Email OTP, and social sign-in (Google, Apple, Microsoft). Use when adding or updating Better Auth in TanStack Start apps, wiring /api/auth routes, protecting routes with middleware, or configuring Drizzle/Postgres adapters and OAuth providers.
+description: Integrate Better Auth with TanStack Start using Drizzle + Postgres. Covers core auth (email/password + sessions), Admin, Email OTP, Last Login Method, and social sign-in (Google, Apple, Microsoft). Use when adding or updating Better Auth in TanStack Start apps, wiring /api/auth routes, protecting routes with middleware, or configuring Drizzle/Postgres adapters and OAuth providers.
 ---
 
 # Better Auth + TanStack Start + Drizzle (Postgres)
@@ -48,6 +48,7 @@ Create `src/auth/auth.server.ts` using:
 - **Plugins**:
   - `admin()` for admin operations.
   - `emailOTP()` for verification codes and OTP-based flows.
+  - `lastLoginMethod()` to track the user’s last sign-in method (UI hints; optional DB persistence).
   - `tanstackStartCookies()` **last** for automatic cookie handling in TanStack Start.
 
 Also set:
@@ -110,6 +111,13 @@ See [email-otp.md](email-otp.md).
 
 See [admin.md](admin.md).
 
+### Track “last login method” (Last Login Method plugin)
+
+- Add `lastLoginMethod()` on the server and `lastLoginMethodClient()` on the client.
+- Optionally enable `storeInDatabase: true` to persist `session.user.lastLoginMethod` and migrate your DB.
+
+See [last-login-method.md](last-login-method.md).
+
 ### Keep Drizzle schema in sync
 
 - Better Auth + plugins may require additional fields/tables.
@@ -134,4 +142,5 @@ See [drizzle-postgres.md](drizzle-postgres.md).
 - Provider config (Google/Apple/Microsoft): [providers.md](providers.md)
 - Email OTP flows: [email-otp.md](email-otp.md)
 - Admin plugin: [admin.md](admin.md)
+- Last Login Method plugin: [last-login-method.md](last-login-method.md)
 - Drizzle + Postgres schema/migrations: [drizzle-postgres.md](drizzle-postgres.md)
