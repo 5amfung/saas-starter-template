@@ -2,12 +2,9 @@
 
 import * as React from 'react';
 import {
-  IconCamera,
   IconChartBar,
   IconDashboard,
   IconDatabase,
-  IconFileAi,
-  IconFileDescription,
   IconFileWord,
   IconFolder,
   IconHelp,
@@ -18,7 +15,7 @@ import {
   IconSettings,
   IconUsers,
 } from '@tabler/icons-react';
-import { NavDocuments } from '@/components/nav-documents';
+import { NavAdmin } from '@/components/nav-admin';
 import { NavMain } from '@/components/nav-main';
 import { NavSecondary } from '@/components/nav-secondary';
 import { NavUser } from '@/components/nav-user';
@@ -65,54 +62,6 @@ const data = {
       icon: <IconUsers />,
     },
   ],
-  navClouds: [
-    {
-      title: 'Capture',
-      icon: <IconCamera />,
-      isActive: true,
-      url: '#',
-      items: [
-        {
-          title: 'Active Proposals',
-          url: '#',
-        },
-        {
-          title: 'Archived',
-          url: '#',
-        },
-      ],
-    },
-    {
-      title: 'Proposal',
-      icon: <IconFileDescription />,
-      url: '#',
-      items: [
-        {
-          title: 'Active Proposals',
-          url: '#',
-        },
-        {
-          title: 'Archived',
-          url: '#',
-        },
-      ],
-    },
-    {
-      title: 'Prompts',
-      icon: <IconFileAi />,
-      url: '#',
-      items: [
-        {
-          title: 'Active Proposals',
-          url: '#',
-        },
-        {
-          title: 'Archived',
-          url: '#',
-        },
-      ],
-    },
-  ],
   navSecondary: [
     {
       title: 'Settings',
@@ -130,21 +79,16 @@ const data = {
       icon: <IconSearch />,
     },
   ],
-  documents: [
+  navAdmin: [
     {
-      name: 'Data Library',
-      url: '#',
-      icon: <IconDatabase />,
+      name: 'Dashboard',
+      url: '/admin/dashboard',
+      icon: <IconDashboard />,
     },
     {
-      name: 'Reports',
-      url: '#',
-      icon: <IconReport />,
-    },
-    {
-      name: 'Word Assistant',
-      url: '#',
-      icon: <IconFileWord />,
+      name: 'User',
+      url: '/admin/user',
+      icon: <IconUsers />,
     },
   ],
 };
@@ -166,7 +110,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
+        <NavAdmin items={data.navAdmin} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
