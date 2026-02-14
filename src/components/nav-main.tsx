@@ -1,5 +1,4 @@
-'use client';
-
+import { Link, useMatchRoute } from '@tanstack/react-router';
 import { IconCirclePlusFilled, IconMail } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +18,8 @@ export function NavMain({
     icon?: React.ReactNode;
   }>;
 }) {
+  const matchRoute = useMatchRoute();
+
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -44,7 +45,10 @@ export function NavMain({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
+              <SidebarMenuButton
+                isActive={!!matchRoute({ to: item.url, fuzzy: true })}
+                render={<Link to={item.url} />}
+              >
                 {item.icon}
                 <span>{item.title}</span>
               </SidebarMenuButton>

@@ -109,7 +109,7 @@ export function NavUser({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate({ to: '/account' })}>
                 <IconUserCircle />
                 Account
               </DropdownMenuItem>

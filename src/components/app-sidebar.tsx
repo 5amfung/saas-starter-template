@@ -29,31 +29,11 @@ import {
 
 const data = {
   navMain: [
-    {
-      title: 'Dashboard',
-      url: '#',
-      icon: <IconDashboard />,
-    },
-    {
-      title: 'Lifecycle',
-      url: '#',
-      icon: <IconListDetails />,
-    },
-    {
-      title: 'Analytics',
-      url: '#',
-      icon: <IconChartBar />,
-    },
-    {
-      title: 'Projects',
-      url: '#',
-      icon: <IconFolder />,
-    },
-    {
-      title: 'Team',
-      url: '#',
-      icon: <IconUsers />,
-    },
+    { title: 'Dashboard', url: '/dashboard', icon: <IconDashboard /> },
+    { title: 'Lifecycle', url: '/lifecycle', icon: <IconListDetails /> },
+    { title: 'Analytics', url: '/analytics', icon: <IconChartBar /> },
+    { title: 'Projects', url: '/projects', icon: <IconFolder /> },
+    { title: 'Team', url: '/team', icon: <IconUsers /> },
   ],
   navSecondary: [
     {
@@ -73,16 +53,8 @@ const data = {
     },
   ],
   navAdmin: [
-    {
-      name: 'Dashboard',
-      url: '/admin/dashboard',
-      icon: <IconDashboard />,
-    },
-    {
-      name: 'User',
-      url: '/admin/user',
-      icon: <IconUsers />,
-    },
+    { title: 'Dashboard', url: '/admin/dashboard', icon: <IconDashboard /> },
+    { title: 'User', url: '/admin/user', icon: <IconUsers /> },
   ],
 };
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

@@ -14,13 +14,21 @@ import { Route as HealthRouteImport } from './routes/health';
 import { Route as ProtectedRouteImport } from './routes/_protected';
 import { Route as AuthRouteImport } from './routes/_auth';
 import { Route as IndexRouteImport } from './routes/index';
+import { Route as ProtectedTeamRouteImport } from './routes/_protected/team';
+import { Route as ProtectedProjectsRouteImport } from './routes/_protected/projects';
+import { Route as ProtectedLifecycleRouteImport } from './routes/_protected/lifecycle';
 import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard';
+import { Route as ProtectedAnalyticsRouteImport } from './routes/_protected/analytics';
+import { Route as ProtectedAdminRouteImport } from './routes/_protected/admin';
+import { Route as ProtectedAccountRouteImport } from './routes/_protected/account';
 import { Route as AuthVerifyRouteImport } from './routes/_auth/verify';
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup';
 import { Route as AuthSigninRouteImport } from './routes/_auth/signin';
 import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-password';
 import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-password';
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$';
+import { Route as ProtectedAdminUserRouteImport } from './routes/_protected/admin/user';
+import { Route as ProtectedAdminDashboardRouteImport } from './routes/_protected/admin/dashboard';
 
 const PingRoute = PingRouteImport.update({
   id: '/ping',
@@ -45,9 +53,39 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any);
+const ProtectedTeamRoute = ProtectedTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => ProtectedRoute,
+} as any);
+const ProtectedProjectsRoute = ProtectedProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => ProtectedRoute,
+} as any);
+const ProtectedLifecycleRoute = ProtectedLifecycleRouteImport.update({
+  id: '/lifecycle',
+  path: '/lifecycle',
+  getParentRoute: () => ProtectedRoute,
+} as any);
 const ProtectedDashboardRoute = ProtectedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => ProtectedRoute,
+} as any);
+const ProtectedAnalyticsRoute = ProtectedAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => ProtectedRoute,
+} as any);
+const ProtectedAdminRoute = ProtectedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => ProtectedRoute,
+} as any);
+const ProtectedAccountRoute = ProtectedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => ProtectedRoute,
 } as any);
 const AuthVerifyRoute = AuthVerifyRouteImport.update({
@@ -80,6 +118,16 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any);
+const ProtectedAdminUserRoute = ProtectedAdminUserRouteImport.update({
+  id: '/user',
+  path: '/user',
+  getParentRoute: () => ProtectedAdminRoute,
+} as any);
+const ProtectedAdminDashboardRoute = ProtectedAdminDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => ProtectedAdminRoute,
+} as any);
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute;
@@ -90,7 +138,15 @@ export interface FileRoutesByFullPath {
   '/signin': typeof AuthSigninRoute;
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
+  '/account': typeof ProtectedAccountRoute;
+  '/admin': typeof ProtectedAdminRouteWithChildren;
+  '/analytics': typeof ProtectedAnalyticsRoute;
   '/dashboard': typeof ProtectedDashboardRoute;
+  '/lifecycle': typeof ProtectedLifecycleRoute;
+  '/projects': typeof ProtectedProjectsRoute;
+  '/team': typeof ProtectedTeamRoute;
+  '/admin/dashboard': typeof ProtectedAdminDashboardRoute;
+  '/admin/user': typeof ProtectedAdminUserRoute;
   '/api/auth/$': typeof ApiAuthSplatRoute;
 }
 export interface FileRoutesByTo {
@@ -102,7 +158,15 @@ export interface FileRoutesByTo {
   '/signin': typeof AuthSigninRoute;
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
+  '/account': typeof ProtectedAccountRoute;
+  '/admin': typeof ProtectedAdminRouteWithChildren;
+  '/analytics': typeof ProtectedAnalyticsRoute;
   '/dashboard': typeof ProtectedDashboardRoute;
+  '/lifecycle': typeof ProtectedLifecycleRoute;
+  '/projects': typeof ProtectedProjectsRoute;
+  '/team': typeof ProtectedTeamRoute;
+  '/admin/dashboard': typeof ProtectedAdminDashboardRoute;
+  '/admin/user': typeof ProtectedAdminUserRoute;
   '/api/auth/$': typeof ApiAuthSplatRoute;
 }
 export interface FileRoutesById {
@@ -117,7 +181,15 @@ export interface FileRoutesById {
   '/_auth/signin': typeof AuthSigninRoute;
   '/_auth/signup': typeof AuthSignupRoute;
   '/_auth/verify': typeof AuthVerifyRoute;
+  '/_protected/account': typeof ProtectedAccountRoute;
+  '/_protected/admin': typeof ProtectedAdminRouteWithChildren;
+  '/_protected/analytics': typeof ProtectedAnalyticsRoute;
   '/_protected/dashboard': typeof ProtectedDashboardRoute;
+  '/_protected/lifecycle': typeof ProtectedLifecycleRoute;
+  '/_protected/projects': typeof ProtectedProjectsRoute;
+  '/_protected/team': typeof ProtectedTeamRoute;
+  '/_protected/admin/dashboard': typeof ProtectedAdminDashboardRoute;
+  '/_protected/admin/user': typeof ProtectedAdminUserRoute;
   '/api/auth/$': typeof ApiAuthSplatRoute;
 }
 export interface FileRouteTypes {
@@ -131,7 +203,15 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/verify'
+    | '/account'
+    | '/admin'
+    | '/analytics'
     | '/dashboard'
+    | '/lifecycle'
+    | '/projects'
+    | '/team'
+    | '/admin/dashboard'
+    | '/admin/user'
     | '/api/auth/$';
   fileRoutesByTo: FileRoutesByTo;
   to:
@@ -143,7 +223,15 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/verify'
+    | '/account'
+    | '/admin'
+    | '/analytics'
     | '/dashboard'
+    | '/lifecycle'
+    | '/projects'
+    | '/team'
+    | '/admin/dashboard'
+    | '/admin/user'
     | '/api/auth/$';
   id:
     | '__root__'
@@ -157,7 +245,15 @@ export interface FileRouteTypes {
     | '/_auth/signin'
     | '/_auth/signup'
     | '/_auth/verify'
+    | '/_protected/account'
+    | '/_protected/admin'
+    | '/_protected/analytics'
     | '/_protected/dashboard'
+    | '/_protected/lifecycle'
+    | '/_protected/projects'
+    | '/_protected/team'
+    | '/_protected/admin/dashboard'
+    | '/_protected/admin/user'
     | '/api/auth/$';
   fileRoutesById: FileRoutesById;
 }
@@ -207,11 +303,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    '/_protected/team': {
+      id: '/_protected/team';
+      path: '/team';
+      fullPath: '/team';
+      preLoaderRoute: typeof ProtectedTeamRouteImport;
+      parentRoute: typeof ProtectedRoute;
+    };
+    '/_protected/projects': {
+      id: '/_protected/projects';
+      path: '/projects';
+      fullPath: '/projects';
+      preLoaderRoute: typeof ProtectedProjectsRouteImport;
+      parentRoute: typeof ProtectedRoute;
+    };
+    '/_protected/lifecycle': {
+      id: '/_protected/lifecycle';
+      path: '/lifecycle';
+      fullPath: '/lifecycle';
+      preLoaderRoute: typeof ProtectedLifecycleRouteImport;
+      parentRoute: typeof ProtectedRoute;
+    };
     '/_protected/dashboard': {
       id: '/_protected/dashboard';
       path: '/dashboard';
       fullPath: '/dashboard';
       preLoaderRoute: typeof ProtectedDashboardRouteImport;
+      parentRoute: typeof ProtectedRoute;
+    };
+    '/_protected/analytics': {
+      id: '/_protected/analytics';
+      path: '/analytics';
+      fullPath: '/analytics';
+      preLoaderRoute: typeof ProtectedAnalyticsRouteImport;
+      parentRoute: typeof ProtectedRoute;
+    };
+    '/_protected/admin': {
+      id: '/_protected/admin';
+      path: '/admin';
+      fullPath: '/admin';
+      preLoaderRoute: typeof ProtectedAdminRouteImport;
+      parentRoute: typeof ProtectedRoute;
+    };
+    '/_protected/account': {
+      id: '/_protected/account';
+      path: '/account';
+      fullPath: '/account';
+      preLoaderRoute: typeof ProtectedAccountRouteImport;
       parentRoute: typeof ProtectedRoute;
     };
     '/_auth/verify': {
@@ -256,6 +394,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    '/_protected/admin/user': {
+      id: '/_protected/admin/user';
+      path: '/user';
+      fullPath: '/admin/user';
+      preLoaderRoute: typeof ProtectedAdminUserRouteImport;
+      parentRoute: typeof ProtectedAdminRoute;
+    };
+    '/_protected/admin/dashboard': {
+      id: '/_protected/admin/dashboard';
+      path: '/dashboard';
+      fullPath: '/admin/dashboard';
+      preLoaderRoute: typeof ProtectedAdminDashboardRouteImport;
+      parentRoute: typeof ProtectedAdminRoute;
+    };
   }
 }
 
@@ -277,12 +429,38 @@ const AuthRouteChildren: AuthRouteChildren = {
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren);
 
+interface ProtectedAdminRouteChildren {
+  ProtectedAdminDashboardRoute: typeof ProtectedAdminDashboardRoute;
+  ProtectedAdminUserRoute: typeof ProtectedAdminUserRoute;
+}
+
+const ProtectedAdminRouteChildren: ProtectedAdminRouteChildren = {
+  ProtectedAdminDashboardRoute: ProtectedAdminDashboardRoute,
+  ProtectedAdminUserRoute: ProtectedAdminUserRoute,
+};
+
+const ProtectedAdminRouteWithChildren = ProtectedAdminRoute._addFileChildren(
+  ProtectedAdminRouteChildren,
+);
+
 interface ProtectedRouteChildren {
+  ProtectedAccountRoute: typeof ProtectedAccountRoute;
+  ProtectedAdminRoute: typeof ProtectedAdminRouteWithChildren;
+  ProtectedAnalyticsRoute: typeof ProtectedAnalyticsRoute;
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute;
+  ProtectedLifecycleRoute: typeof ProtectedLifecycleRoute;
+  ProtectedProjectsRoute: typeof ProtectedProjectsRoute;
+  ProtectedTeamRoute: typeof ProtectedTeamRoute;
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
+  ProtectedAccountRoute: ProtectedAccountRoute,
+  ProtectedAdminRoute: ProtectedAdminRouteWithChildren,
+  ProtectedAnalyticsRoute: ProtectedAnalyticsRoute,
   ProtectedDashboardRoute: ProtectedDashboardRoute,
+  ProtectedLifecycleRoute: ProtectedLifecycleRoute,
+  ProtectedProjectsRoute: ProtectedProjectsRoute,
+  ProtectedTeamRoute: ProtectedTeamRoute,
 };
 
 const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
