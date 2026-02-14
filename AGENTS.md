@@ -30,7 +30,7 @@ src/
 ├── components/          # Feature components (kebab-case filenames)
 │   ├── auth             # Authentication components
 │   ├── email-template/  # Server-only React Email templates (do not import from client)
-│   └── ui/              # shadcn/ui primitives (do not manually edit)
+│   └── ui/              # shadcn/ui primitives (do not edit without explicity from user)
 ├── db/                  # Drizzle ORM client and database schema
 ├── hooks/               # Custom React hooks
 ├── lib/                 # Utility functions (cn, etc.)
