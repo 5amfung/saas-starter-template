@@ -8,7 +8,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { formDevtoolsPlugin } from '@tanstack/react-form-devtools';
 import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools';
-import { ThemeProvider } from 'next-themes';
+import { ThemeProvider } from '@/components/theme-provider';
 import { NotFound } from '@/components/not-found';
 import { Toaster } from '@/components/ui/sonner';
 import appCss from '../styles.css?url';
@@ -50,12 +50,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <ThemeProvider defaultTheme="system" storageKey="app-theme">
           {children}
           <Toaster />
           <TanStackDevtools
