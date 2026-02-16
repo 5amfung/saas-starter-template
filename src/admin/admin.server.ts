@@ -73,16 +73,11 @@ export async function queryDashboardMetrics(timezoneOffset: number) {
   const rows = await db
     .select({
       totalUsers: sql<number>`count(*)::int`,
-      verifiedUsers:
-        sql<number>`count(*) filter (where ${userTable.emailVerified} = true)::int`,
-      unverifiedUsers:
-        sql<number>`count(*) filter (where ${userTable.emailVerified} = false)::int`,
-      signupsToday:
-        sql<number>`count(*) filter (where ${userTable.createdAt} >= ${todayStart} and ${userTable.createdAt} < ${todayEnd})::int`,
-      verifiedToday:
-        sql<number>`count(*) filter (where ${userTable.createdAt} >= ${todayStart} and ${userTable.createdAt} < ${todayEnd} and ${userTable.emailVerified} = true)::int`,
-      unverifiedToday:
-        sql<number>`count(*) filter (where ${userTable.createdAt} >= ${todayStart} and ${userTable.createdAt} < ${todayEnd} and ${userTable.emailVerified} = false)::int`,
+      verifiedUsers: sql<number>`count(*) filter (where ${userTable.emailVerified} = true)::int`,
+      unverifiedUsers: sql<number>`count(*) filter (where ${userTable.emailVerified} = false)::int`,
+      signupsToday: sql<number>`count(*) filter (where ${userTable.createdAt} >= ${todayStart} and ${userTable.createdAt} < ${todayEnd})::int`,
+      verifiedToday: sql<number>`count(*) filter (where ${userTable.createdAt} >= ${todayStart} and ${userTable.createdAt} < ${todayEnd} and ${userTable.emailVerified} = true)::int`,
+      unverifiedToday: sql<number>`count(*) filter (where ${userTable.createdAt} >= ${todayStart} and ${userTable.createdAt} < ${todayEnd} and ${userTable.emailVerified} = false)::int`,
     })
     .from(userTable);
 
@@ -123,10 +118,7 @@ export async function querySignupChartData(
   });
 }
 
-export async function queryMauChartData(
-  days: number,
-  timezoneOffset: number,
-) {
+export async function queryMauChartData(days: number, timezoneOffset: number) {
   const buckets = getDayBuckets(days, timezoneOffset);
   const earliestWindowStart = new Date(
     buckets[0].start.getTime() - MAU_WINDOW_DAYS * MILLISECONDS_PER_DAY,

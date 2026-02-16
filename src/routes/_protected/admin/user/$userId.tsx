@@ -74,11 +74,7 @@ function AdminUserDetailPage() {
     return (
       <div className="flex flex-col items-center gap-2 py-12">
         <p className="text-destructive text-sm">Failed to load user.</p>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => userQuery.refetch()}
-        >
+        <Button variant="outline" size="sm" onClick={() => userQuery.refetch()}>
           Retry
         </Button>
       </div>
