@@ -1,23 +1,32 @@
 import { relations } from 'drizzle-orm';
 import { boolean, index, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 
-export const user = pgTable('user', {
-  id: text('id').primaryKey(),
-  name: text('name').notNull(),
-  email: text('email').notNull().unique(),
-  emailVerified: boolean('email_verified').default(false).notNull(),
-  image: text('image'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at')
-    .$onUpdate(() => new Date())
-    .notNull(),
-  lastLoginMethod: text('last_login_method'),
-  role: text('role'),
-  banned: boolean('banned').default(false),
-  banReason: text('ban_reason'),
-  banExpires: timestamp('ban_expires'),
-  lastSignInAt: timestamp('last_sign_in_at'),
-});
+export const user = pgTable(
+  'user',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    email: text('email').notNull().unique(),
+    emailVerified: boolean('email_verified').default(false).notNull(),
+    image: text('image'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .$onUpdate(() => new Date())
+      .notNull(),
+    lastLoginMethod: text('last_login_method'),
+    role: text('role'),
+    banned: boolean('banned').default(false),
+    banReason: text('ban_reason'),
+    banExpires: timestamp('ban_expires'),
+    lastSignInAt: timestamp('last_sign_in_at'),
+  },
+  (table) => [
+    index('user_createdAt_idx').on(table.createdAt),
+    index('user_emailVerified_idx').on(table.emailVerified),
+    index('user_banned_idx').on(table.banned),
+    index('user_lastSignInAt_idx').on(table.lastSignInAt),
+  ],
+);
 
 export const session = pgTable(
   'session',

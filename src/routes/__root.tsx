@@ -8,7 +8,9 @@ import {
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { formDevtoolsPlugin } from '@tanstack/react-form-devtools';
 import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools';
+import { ThemeProvider } from 'next-themes';
 import { NotFound } from '@/components/not-found';
+import { Toaster } from '@/components/ui/sonner';
 import appCss from '../styles.css?url';
 
 interface RouterContext {
@@ -43,30 +45,38 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
       <body>
-        {children}
-        <TanStackDevtools
-          config={{
-            position: 'bottom-right',
-          }}
-          plugins={[
-            {
-              name: 'TanStack Query',
-              render: <ReactQueryDevtoolsPanel />,
-              defaultOpen: false,
-            },
-            {
-              name: 'Tanstack Router',
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-            formDevtoolsPlugin(),
-          ]}
-        />
-        <Scripts />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster />
+          <TanStackDevtools
+            config={{
+              position: 'bottom-right',
+            }}
+            plugins={[
+              {
+                name: 'TanStack Query',
+                render: <ReactQueryDevtoolsPanel />,
+                defaultOpen: false,
+              },
+              {
+                name: 'Tanstack Router',
+                render: <TanStackRouterDevtoolsPanel />,
+              },
+              formDevtoolsPlugin(),
+            ]}
+          />
+          <Scripts />
+        </ThemeProvider>
       </body>
     </html>
   );

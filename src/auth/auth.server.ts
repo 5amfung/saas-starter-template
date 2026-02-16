@@ -72,7 +72,7 @@ export const auth = betterAuth({
     }),
     admin({
       adminUserIds: [
-        // Add admin user ID here.
+        // Whitelist user ID as admin here.
       ],
     }),
     emailOTP({
