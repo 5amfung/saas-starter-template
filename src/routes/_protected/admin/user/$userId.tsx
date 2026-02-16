@@ -103,10 +103,12 @@ function AdminUserDetailPage() {
                 Permanently delete this user and all associated data.
               </p>
             </div>
-            <AdminDeleteUserDialog
-              userId={userQuery.data.id}
-              userEmail={userQuery.data.email}
-            />
+            <div className="flex justify-end">
+              <AdminDeleteUserDialog
+                userId={userQuery.data.id}
+                userEmail={userQuery.data.email}
+              />
+            </div>
           </div>
         </>
       )}

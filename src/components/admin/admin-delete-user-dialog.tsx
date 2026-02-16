@@ -60,7 +60,11 @@ export function AdminDeleteUserDialog({
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger
-        render={<Button variant="destructive">Delete User</Button>}
+        render={
+          <Button variant="destructive" className="w-fit">
+            Delete User
+          </Button>
+        }
       />
       <AlertDialogContent>
         <AlertDialogHeader>
