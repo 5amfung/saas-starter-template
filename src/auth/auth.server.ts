@@ -48,6 +48,7 @@ export const auth = betterAuth({
   emailVerification: {
     sendOnSignIn: true,
     expiresIn: 600, // in seconds
+    autoSignInAfterVerification: true,
   },
   socialProviders: {
     google: {
