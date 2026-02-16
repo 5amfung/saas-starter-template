@@ -20,6 +20,25 @@ export const Route = createFileRoute('/_protected/admin/user/$userId')({
   staticData: { title: 'User Details' },
 });
 
+const PAGE_LAYOUT_CLASS =
+  'mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6';
+
+function BackToUserListButton({ disabled }: { disabled?: boolean }) {
+  return (
+    <Button
+      nativeButton={false}
+      variant="ghost"
+      size="sm"
+      render={<Link to="/admin/user" />}
+      disabled={disabled}
+      aria-busy={disabled || undefined}
+    >
+      <IconArrowLeft className="size-4" />
+      Back
+    </Button>
+  );
+}
+
 function AdminUserDetailPage() {
   const { userId } = Route.useParams();
 
@@ -48,14 +67,6 @@ function AdminUserDetailPage() {
     retry: false,
   });
 
-  if (userQuery.isPending) {
-    return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6">
-        <AdminUserFormSkeleton />
-      </div>
-    );
-  }
-
   if (userQuery.isError) {
     // Re-throw during render so the router's CatchNotFound boundary shows 404.
     if (isNotFound(userQuery.error)) throw userQuery.error;
@@ -75,36 +86,30 @@ function AdminUserDetailPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6">
-      {/* Back button. */}
-      <div>
-        <Button
-          nativeButton={false}
-          variant="ghost"
-          size="sm"
-          render={<Link to="/admin/user" />}
-        >
-          <IconArrowLeft className="size-4" />
-          Back
-        </Button>
+    <div className={PAGE_LAYOUT_CLASS}>
+      <div className="self-start">
+        <BackToUserListButton disabled={userQuery.isPending} />
       </div>
-
-      <AdminUserForm user={userQuery.data} />
-
-      {/* Danger zone. */}
-      <Separator />
-      <div className="flex flex-col gap-4 rounded-lg border border-dashed border-destructive/30 p-4">
-        <div>
-          <h3 className="text-sm font-medium">Danger Zone</h3>
-          <p className="text-muted-foreground text-sm">
-            Permanently delete this user and all associated data.
-          </p>
-        </div>
-        <AdminDeleteUserDialog
-          userId={userQuery.data.id}
-          userEmail={userQuery.data.email}
-        />
-      </div>
+      {userQuery.isPending ? (
+        <AdminUserFormSkeleton />
+      ) : (
+        <>
+          <AdminUserForm user={userQuery.data} />
+          <Separator />
+          <div className="flex flex-col gap-4 rounded-lg border border-dashed border-destructive/30 p-4">
+            <div>
+              <h3 className="text-sm font-medium">Danger Zone</h3>
+              <p className="text-muted-foreground text-sm">
+                Permanently delete this user and all associated data.
+              </p>
+            </div>
+            <AdminDeleteUserDialog
+              userId={userQuery.data.id}
+              userEmail={userQuery.data.email}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }

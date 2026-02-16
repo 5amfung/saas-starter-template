@@ -2,7 +2,16 @@ import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { IconLoader2 } from '@tabler/icons-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Field,
@@ -18,11 +27,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { authClient } from '@/auth/auth-client';
 import { adminUserFormSchema } from '@/admin/schemas';
 import { toFieldErrorItem } from '@/lib/form-utils';
+import { cn } from '@/lib/utils';
 
 interface UserData {
   id: string;
@@ -45,6 +56,75 @@ interface AdminUserFormProps {
 }
 
 const ROLE_OPTIONS = ['user', 'admin'];
+
+const TWO_COLUMN_GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2';
+const THREE_COLUMN_GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-3';
+const READ_ONLY_INPUT_CLASS = 'bg-muted text-sm';
+const READ_ONLY_MONO_INPUT_CLASS = 'bg-muted font-mono text-sm';
+const CARD_FOOTER_CLASS = 'flex justify-end gap-2 pt-6';
+
+type AdminUserUpdatePayload = {
+  name: string;
+  email: string;
+  emailVerified: boolean;
+  image: string | null;
+  role: string | null;
+  banned: boolean;
+  banReason: string | null;
+  banExpires: string | null;
+};
+
+/** Derive 2-letter uppercase initials from name, falling back to email local-part. */
+function getInitials(name: string, email?: string): string {
+  const cleaned = name.trim();
+  if (cleaned.length >= 2) {
+    const parts = cleaned.split(/\s+/);
+    if (parts.length >= 2) {
+      const first = parts[0].charAt(0);
+      const last = parts[parts.length - 1].charAt(0);
+      return (first + last).toUpperCase() || '??';
+    }
+    return cleaned.slice(0, 2).toUpperCase();
+  }
+  if (email) {
+    const local = email.split('@')[0] ?? '';
+    const emailParts = local.split(/[._-]+/);
+    if (emailParts.length >= 2) {
+      const first = emailParts[0].charAt(0);
+      const last = emailParts[emailParts.length - 1].charAt(0);
+      return (first + last).toUpperCase() || '??';
+    }
+    if (local.length >= 2) {
+      return local.slice(0, 2).toUpperCase();
+    }
+  }
+  return '??';
+}
+
+function FormSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-4 pt-2">
+      <Separator className="my-6" />
+      <h3 className="text-sm font-medium">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function SkeletonField({ labelWidth = 'w-20' }: { labelWidth?: string }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Skeleton className={cn('h-4', labelWidth)} />
+      <Skeleton className="h-9 w-full" />
+    </div>
+  );
+}
 
 export function AdminUserForm({ user }: AdminUserFormProps) {
   const queryClient = useQueryClient();
@@ -84,16 +164,7 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
   });
 
   const mutation = useMutation({
-    mutationFn: async (values: {
-      name: string;
-      email: string;
-      emailVerified: boolean;
-      image: string | null;
-      role: string | null;
-      banned: boolean;
-      banReason: string | null;
-      banExpires: string | null;
-    }) => {
+    mutationFn: async (values: AdminUserUpdatePayload) => {
       const { error } = await authClient.admin.updateUser({
         userId: user.id,
         data: {
@@ -126,6 +197,9 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
     },
   });
 
+  const initials = getInitials(user.name, user.email);
+  const avatarSrc = user.image ?? undefined;
+
   return (
     <form
       onSubmit={(e) => {
@@ -133,245 +207,336 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
         form.handleSubmit();
       }}
     >
-      <FieldGroup>
-        {/* Read-only: ID. */}
-        <Field>
-          <FieldLabel htmlFor="user-id">ID</FieldLabel>
-          <Input
-            id="user-id"
-            value={user.id}
-            readOnly
-            className="bg-muted font-mono text-sm"
-          />
-        </Field>
-
-        {/* Name. */}
-        <form.Field
-          name="name"
-          children={(field) => {
-            const isInvalid =
-              field.state.meta.isBlurred && !field.state.meta.isValid;
-            return (
-              <Field data-invalid={isInvalid || undefined}>
-                <FieldLabel htmlFor={field.name}>Name</FieldLabel>
-                <Input
-                  id={field.name}
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-                {isInvalid && (
-                  <FieldError
-                    errors={field.state.meta.errors.map(toFieldErrorItem)}
-                  />
-                )}
-              </Field>
-            );
-          }}
-        />
-
-        {/* Email. */}
-        <form.Field
-          name="email"
-          children={(field) => {
-            const isInvalid =
-              field.state.meta.isBlurred && !field.state.meta.isValid;
-            return (
-              <Field data-invalid={isInvalid || undefined}>
-                <FieldLabel htmlFor={field.name}>Email</FieldLabel>
-                <Input
-                  id={field.name}
-                  type="email"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-                {isInvalid && (
-                  <FieldError
-                    errors={field.state.meta.errors.map(toFieldErrorItem)}
-                  />
-                )}
-              </Field>
-            );
-          }}
-        />
-
-        {/* Email Verified. */}
-        <form.Field
-          name="emailVerified"
-          children={(field) => (
-            <Field orientation="horizontal">
-              <Checkbox
-                id={field.name}
-                checked={field.state.value}
-                onCheckedChange={(checked) =>
-                  field.handleChange(checked === true)
-                }
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile</CardTitle>
+          <CardDescription>
+            Manage this user&apos;s profile information.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-8">
+          {/* Avatar preview. */}
+          <div className="flex items-center gap-4">
+            <Avatar className="size-20">
+              <AvatarImage
+                src={avatarSrc}
+                alt={user.name}
+                className="object-cover"
               />
-              <FieldLabel htmlFor={field.name}>Email Verified</FieldLabel>
-            </Field>
-          )}
-        />
+              <AvatarFallback className="text-xl font-semibold">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Profile Photo</p>
+              <p className="text-muted-foreground text-xs">
+                Avatar is displayed from the stored image URL.
+              </p>
+            </div>
+          </div>
 
-        {/* Image URL. */}
-        <form.Field
-          name="image"
-          children={(field) => (
-            <Field>
-              <FieldLabel htmlFor={field.name}>Image URL</FieldLabel>
-              <Input
-                id={field.name}
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-                placeholder="https://…"
-              />
-            </Field>
-          )}
-        />
-
-        {/* Role. */}
-        <form.Field
-          name="role"
-          children={(field) => (
-            <Field>
-              <FieldLabel htmlFor={field.name}>Role</FieldLabel>
-              <Select
-                value={field.state.value}
-                onValueChange={(v) => {
-                  if (v) field.handleChange(v);
+          <FieldGroup className="gap-6">
+            {/* Full Name + User ID — two-column. */}
+            <div className={TWO_COLUMN_GRID}>
+              <form.Field
+                name="name"
+                children={(field) => {
+                  const isInvalid =
+                    field.state.meta.isBlurred && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid || undefined}>
+                      <FieldLabel htmlFor={field.name}>Full Name</FieldLabel>
+                      <Input
+                        id={field.name}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                      />
+                      {isInvalid && (
+                        <FieldError
+                          errors={field.state.meta.errors.map(toFieldErrorItem)}
+                        />
+                      )}
+                    </Field>
+                  );
                 }}
-              >
-                <SelectTrigger id={field.name}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ROLE_OPTIONS.map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {role}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-          )}
-        />
-
-        {/* Banned. */}
-        <form.Field
-          name="banned"
-          children={(field) => (
-            <Field orientation="horizontal">
-              <Checkbox
-                id={field.name}
-                checked={field.state.value}
-                onCheckedChange={(checked) =>
-                  field.handleChange(checked === true)
-                }
               />
-              <FieldLabel htmlFor={field.name}>Banned</FieldLabel>
-            </Field>
-          )}
-        />
+              <Field>
+                <FieldLabel htmlFor="user-id">User ID</FieldLabel>
+                <Input
+                  id="user-id"
+                  value={user.id}
+                  readOnly
+                  className={READ_ONLY_MONO_INPUT_CLASS}
+                />
+              </Field>
+            </div>
 
-        {/* Ban Reason. */}
-        <form.Field
-          name="banReason"
-          children={(field) => (
-            <Field>
-              <FieldLabel htmlFor={field.name}>Ban Reason</FieldLabel>
-              <Textarea
-                id={field.name}
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-                rows={2}
+            {/* Email + Email Verified — two-column, aligned with Full Name + User ID. */}
+            <div className={TWO_COLUMN_GRID}>
+              <form.Field
+                name="email"
+                children={(field) => {
+                  const isInvalid =
+                    field.state.meta.isBlurred && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid || undefined}>
+                      <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+                      <Input
+                        id={field.name}
+                        type="email"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                      />
+                      {isInvalid && (
+                        <FieldError
+                          errors={field.state.meta.errors.map(toFieldErrorItem)}
+                        />
+                      )}
+                    </Field>
+                  );
+                }}
               />
-            </Field>
-          )}
-        />
-
-        {/* Ban Expires. */}
-        <form.Field
-          name="banExpires"
-          children={(field) => (
-            <Field>
-              <FieldLabel htmlFor={field.name}>Ban Expires</FieldLabel>
-              <Input
-                id={field.name}
-                type="datetime-local"
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
+              <form.Field
+                name="emailVerified"
+                children={(field) => (
+                  <Field className="flex items-center justify-center">
+                    <FieldLabel htmlFor={field.name}>Verified</FieldLabel>
+                    <div className="flex w-fit shrink-0 items-center">
+                      <Checkbox
+                        id={field.name}
+                        checked={field.state.value}
+                        onCheckedChange={(checked) =>
+                          field.handleChange(checked === true)
+                        }
+                      />
+                    </div>
+                  </Field>
+                )}
               />
-            </Field>
-          )}
-        />
+            </div>
 
-        {/* Read-only timestamps. */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Field>
-            <FieldLabel>Last Sign In</FieldLabel>
-            <Input
-              value={
-                user.lastSignInAt
-                  ? new Date(user.lastSignInAt).toLocaleString()
-                  : 'Never'
-              }
-              readOnly
-              className="bg-muted text-sm"
-            />
-          </Field>
-          <Field>
-            <FieldLabel>Created At</FieldLabel>
-            <Input
-              value={new Date(user.createdAt).toLocaleString()}
-              readOnly
-              className="bg-muted text-sm"
-            />
-          </Field>
-          <Field>
-            <FieldLabel>Updated At</FieldLabel>
-            <Input
-              value={new Date(user.updatedAt).toLocaleString()}
-              readOnly
-              className="bg-muted text-sm"
-            />
-          </Field>
-        </div>
+            {/* Administration — Role only. */}
+            <FormSection title="Administration">
+              <form.Field
+                name="role"
+                children={(field) => (
+                  <Field>
+                    <FieldLabel htmlFor={field.name}>Role</FieldLabel>
+                    <Select
+                      value={field.state.value}
+                      onValueChange={(v) => {
+                        if (v) field.handleChange(v);
+                      }}
+                    >
+                      <SelectTrigger id={field.name}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ROLE_OPTIONS.map((role) => (
+                          <SelectItem key={role} value={role}>
+                            {role}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                )}
+              />
+            </FormSection>
 
-        {/* Submit button. */}
-        <form.Subscribe
-          selector={(state) => [
-            state.isDirty,
-            state.isSubmitting,
-            state.canSubmit,
-          ]}
-          children={([isDirty, isSubmitting, canSubmit]) => (
-            <Button
-              type="submit"
-              disabled={!isDirty || !canSubmit || isSubmitting}
-            >
-              {isSubmitting && <IconLoader2 className="size-4 animate-spin" />}
-              Save
-            </Button>
-          )}
-        />
-      </FieldGroup>
+            {/* Ban User — banned checkbox, reason, expires. */}
+            <FormSection title="Ban User">
+              <p className="text-muted-foreground text-sm">
+                Check the box below to ban the user and prevent him from signing
+                in.
+              </p>
+              <div className="space-y-4">
+                <form.Field
+                  name="banned"
+                  children={(field) => (
+                    <Field orientation="horizontal">
+                      <Checkbox
+                        id={field.name}
+                        checked={field.state.value}
+                        onCheckedChange={(checked) =>
+                          field.handleChange(checked === true)
+                        }
+                      />
+                      <FieldLabel htmlFor={field.name}>Banned</FieldLabel>
+                    </Field>
+                  )}
+                />
+                <form.Field
+                  name="banReason"
+                  children={(field) => (
+                    <Field>
+                      <FieldLabel htmlFor={field.name}>Ban Reason</FieldLabel>
+                      <Textarea
+                        id={field.name}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        rows={2}
+                      />
+                    </Field>
+                  )}
+                />
+                <form.Field
+                  name="banExpires"
+                  children={(field) => (
+                    <Field>
+                      <FieldLabel htmlFor={field.name}>Ban Expires</FieldLabel>
+                      <Input
+                        id={field.name}
+                        type="datetime-local"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                      />
+                    </Field>
+                  )}
+                />
+              </div>
+            </FormSection>
+
+            {/* Activity — timestamps. */}
+            <FormSection title="Activity">
+              <div className={THREE_COLUMN_GRID}>
+                {[
+                  {
+                    label: 'Last Sign In',
+                    value: user.lastSignInAt
+                      ? new Date(user.lastSignInAt).toLocaleString()
+                      : 'Never',
+                  },
+                  {
+                    label: 'Created At',
+                    value: new Date(user.createdAt).toLocaleString(),
+                  },
+                  {
+                    label: 'Updated At',
+                    value: new Date(user.updatedAt).toLocaleString(),
+                  },
+                ].map(({ label, value }) => (
+                  <Field key={label}>
+                    <FieldLabel>{label}</FieldLabel>
+                    <Input
+                      value={value}
+                      readOnly
+                      className={READ_ONLY_INPUT_CLASS}
+                    />
+                  </Field>
+                ))}
+              </div>
+            </FormSection>
+          </FieldGroup>
+        </CardContent>
+        <CardFooter className={CARD_FOOTER_CLASS}>
+          <form.Subscribe
+            selector={(state) => [
+              state.isDirty,
+              state.isSubmitting,
+              state.canSubmit,
+            ]}
+            children={([isDirty, isSubmitting, canSubmit]) => (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => form.reset()}
+                  disabled={!isDirty || isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={!isDirty || !canSubmit || isSubmitting}
+                >
+                  {isSubmitting && (
+                    <IconLoader2 className="size-4 animate-spin" />
+                  )}
+                  Save Changes
+                </Button>
+              </>
+            )}
+          />
+        </CardFooter>
+      </Card>
     </form>
   );
 }
 
 export function AdminUserFormSkeleton() {
   return (
-    <div className="flex flex-col gap-6">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="flex flex-col gap-2">
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-9 w-full" />
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-5 w-24" />
+        <Skeleton className="mt-1 h-4 w-72" />
+      </CardHeader>
+      <CardContent className="space-y-8">
+        {/* Avatar row. */}
+        <div className="flex items-center gap-4">
+          <Skeleton className="size-20 rounded-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-3 w-40" />
+          </div>
         </div>
-      ))}
-    </div>
+
+        <div className="flex flex-col gap-6">
+          {/* Full Name + User ID — two-column. */}
+          <div className={TWO_COLUMN_GRID}>
+            <SkeletonField labelWidth="w-20" />
+            <SkeletonField labelWidth="w-20" />
+          </div>
+
+          {/* Email + Verified — two-column. */}
+          <div className={TWO_COLUMN_GRID}>
+            <SkeletonField labelWidth="w-16" />
+            <SkeletonField labelWidth="w-20" />
+          </div>
+
+          {/* Administration. */}
+          <div className="space-y-4 pt-2">
+            <Skeleton className="h-px w-full" />
+            <Skeleton className="h-4 w-28" />
+            <SkeletonField labelWidth="w-12" />
+          </div>
+
+          {/* Ban User. */}
+          <div className="space-y-4 pt-2">
+            <Skeleton className="h-px w-full" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-full max-w-md" />
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Skeleton className="size-4 rounded" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+              <SkeletonField labelWidth="w-24" />
+              <SkeletonField labelWidth="w-24" />
+            </div>
+          </div>
+
+          {/* Activity. */}
+          <div className="space-y-4 pt-2">
+            <Skeleton className="h-px w-full" />
+            <Skeleton className="h-4 w-20" />
+            <div className={THREE_COLUMN_GRID}>
+              <SkeletonField labelWidth="w-24" />
+              <SkeletonField labelWidth="w-20" />
+              <SkeletonField labelWidth="w-20" />
+            </div>
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter className={CARD_FOOTER_CLASS}>
+        <Skeleton className="h-9 w-20" />
+        <Skeleton className="h-9 w-24" />
+      </CardFooter>
+    </Card>
   );
 }
 
