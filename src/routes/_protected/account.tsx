@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { AccountProfileForm } from '@/components/account/account-profile-form';
 import { ChangeEmailDialog } from '@/components/account/change-email-dialog';
+import { ChangePasswordDialog } from '@/components/account/change-password-dialog';
 import {
   Card,
   CardContent,
@@ -60,6 +61,19 @@ function AccountPage() {
             />
           </Field>
           <ChangeEmailDialog currentEmail={user.email} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Password</CardTitle>
+          <CardDescription>
+            Update your sign-in password. Other active sessions will be signed
+            out when it changes.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-end">
+          <ChangePasswordDialog />
         </CardContent>
       </Card>
     </div>
