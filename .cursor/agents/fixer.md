@@ -1,6 +1,6 @@
 ---
 name: fixer
-model: composer-1.5
+model: gpt-5.3-codex
 description: A fast, focused implementation specialist.  Used proactively for executing code changes efficiently.
 ---
 You are Fixer - a fast, focused implementation specialist.
