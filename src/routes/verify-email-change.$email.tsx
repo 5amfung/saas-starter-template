@@ -3,6 +3,7 @@ import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
 import { authClient } from '@/auth/auth-client';
 import { AuthLayout } from '@/components/auth/auth-layout';
 import { CheckEmailCard } from '@/components/auth/check-email-card';
+import { getWebmailLinkForEmail } from '@/lib/email-provider';
 
 const SUCCESS_REDIRECT_DELAY_MS = 2000;
 
@@ -39,11 +40,6 @@ function VerifyEmailChangePage() {
         <CheckEmailCard
           title="Check your email"
           description="We sent a verification link to your new email address. Click the link to complete the change."
-          footer={
-            <Link to="/account" className="underline-offset-4 hover:underline">
-              Go to account settings
-            </Link>
-          }
         />
       </AuthLayout>
     );
@@ -84,6 +80,8 @@ function VerifyEmailChangePage() {
     );
   }
 
+  const webmail = getWebmailLinkForEmail(email);
+
   return (
     <AuthLayout>
       <CheckEmailCard
@@ -95,9 +93,16 @@ function VerifyEmailChangePage() {
           </>
         }
         footer={
-          <Link to="/account" className="underline-offset-4 hover:underline">
-            Go to account settings
-          </Link>
+          webmail ? (
+            <a
+              href={webmail.href}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="underline-offset-4 hover:underline"
+            >
+              Go to {webmail.label}
+            </a>
+          ) : undefined
         }
       />
     </AuthLayout>

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { authClient } from '@/auth/auth-client';
 import { CheckEmailCard } from '@/components/auth/check-email-card';
 import { verifySearchSchema } from '@/auth/schemas';
+import { getWebmailLinkForEmail } from '@/lib/email-provider';
 
 export const Route = createFileRoute('/_auth/verify')({
   component: VerifyPage,
@@ -29,6 +30,8 @@ function VerifyPage() {
       />
     );
   }
+
+  const webmail = getWebmailLinkForEmail(email);
 
   async function handleResend() {
     if (!email) return;
@@ -69,9 +72,16 @@ function VerifyPage() {
         </Button>
       }
       footer={
-        <Link to="/signin" className="underline-offset-4 hover:underline">
-          Back to sign in
-        </Link>
+        webmail ? (
+          <a
+            href={webmail.href}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="underline-offset-4 hover:underline"
+          >
+            Go to {webmail.label}
+          </a>
+        ) : undefined
       }
     />
   );
