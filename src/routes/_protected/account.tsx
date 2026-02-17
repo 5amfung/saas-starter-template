@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { ActiveSessionsList } from '@/components/account/active-sessions-list';
 import { AccountProfileForm } from '@/components/account/account-profile-form';
 import { ChangeEmailDialog } from '@/components/account/change-email-dialog';
 import { ChangePasswordDialog } from '@/components/account/change-password-dialog';
@@ -76,6 +77,8 @@ function AccountPage() {
           <ChangePasswordDialog />
         </CardContent>
       </Card>
+
+      <ActiveSessionsList />
     </div>
   );
 }

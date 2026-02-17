@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { authClient } from '@/auth/auth-client';
 
-export const SESSION_QUERY_KEY = ['session'] as const;
+export const SESSION_QUERY_KEY = ['current_session'] as const;
 
 export function useSessionQuery() {
   return useQuery({
