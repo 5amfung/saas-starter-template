@@ -16,8 +16,10 @@ import {
   IconArrowUp,
   IconArrowsSort,
   IconBan,
+  IconBolt,
   IconCircleCheckFilled,
   IconDotsVertical,
+  IconUser,
 } from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -161,7 +163,11 @@ export function AdminUserTable({
         header: 'Role',
         cell: ({ row }) =>
           row.original.role ? (
-            <Badge variant="secondary">{row.original.role}</Badge>
+            <Badge variant="secondary" className="gap-1">
+              {row.original.role === 'admin' && <IconBolt className="size-3" />}
+              {row.original.role === 'user' && <IconUser className="size-3" />}
+              {row.original.role}
+            </Badge>
           ) : null,
         enableHiding: true,
       },

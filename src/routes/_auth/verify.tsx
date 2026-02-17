@@ -1,13 +1,10 @@
+import { useState } from 'react';
+import { IconLoader } from '@tabler/icons-react';
 import { Link, createFileRoute } from '@tanstack/react-router';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { FieldDescription } from '@/components/ui/field';
-import { InputOTPForm } from '@/components/auth/verify-form';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { authClient } from '@/auth/auth-client';
+import { CheckEmailCard } from '@/components/auth/check-email-card';
 import { verifySearchSchema } from '@/auth/schemas';
 
 export const Route = createFileRoute('/_auth/verify')({
@@ -17,27 +14,65 @@ export const Route = createFileRoute('/_auth/verify')({
 
 function VerifyPage() {
   const { email } = Route.useSearch();
+  const [isResending, setIsResending] = useState(false);
 
   if (!email) {
     return (
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl">Email address required</CardTitle>
-          <CardDescription>
-            An email address is required to verify your account. Please sign in
-            or sign up to receive a verification code.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <FieldDescription className="flex flex-col gap-2 text-center">
-            <Link to="/signin" className="underline-offset-4 hover:underline">
-              Go to sign in
-            </Link>
-          </FieldDescription>
-        </CardContent>
-      </Card>
+      <CheckEmailCard
+        title="Email address required"
+        description="An email address is required to verify your account. Please sign in or sign up to receive a verification link."
+        footer={
+          <Link to="/signin" className="underline-offset-4 hover:underline">
+            Go to sign in
+          </Link>
+        }
+      />
     );
   }
 
-  return <InputOTPForm email={email} />;
+  async function handleResend() {
+    if (!email) return;
+    setIsResending(true);
+    try {
+      const { error } = await authClient.sendVerificationEmail({
+        email,
+        callbackURL: '/dashboard',
+      });
+      if (error) {
+        toast.error(error.message ?? 'Failed to resend verification email.');
+      } else {
+        toast.success('Verification email sent. Check your inbox.');
+      }
+    } finally {
+      setIsResending(false);
+    }
+  }
+
+  return (
+    <CheckEmailCard
+      title="Check your email"
+      description={
+        <>
+          We sent a verification link to <strong>{email}</strong>. Click the
+          link in that email to verify your account.
+        </>
+      }
+      actions={
+        <Button
+          variant="outline"
+          onClick={handleResend}
+          disabled={isResending}
+          className="w-full"
+        >
+          {isResending && <IconLoader className="animate-spin" />}
+          Resend verification email
+        </Button>
+      }
+      footer={
+        <Link to="/signin" className="underline-offset-4 hover:underline">
+          Back to sign in
+        </Link>
+      }
+    />
+  );
 }

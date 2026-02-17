@@ -3,10 +3,12 @@
  */
 import {
   Body,
+  Button,
   Container,
   Head,
   Heading,
   Html,
+  Link,
   Preview,
   Section,
   Tailwind,
@@ -16,22 +18,21 @@ import {
 import type { EmailRequestContext } from '@/email/email-request-context.server';
 import { EmailSecurityNotice } from './email-security-notice';
 
-export interface VerificationCodeEmailProps {
+export interface EmailVerificationEmailProps {
   appName: string;
-  otp: string;
+  verificationUrl: string;
   requestContext: EmailRequestContext;
-  type?: string;
 }
 
-export function VerificationCodeEmail({
+export function EmailVerificationEmail({
   appName,
-  otp,
+  verificationUrl,
   requestContext,
-}: VerificationCodeEmailProps) {
+}: EmailVerificationEmailProps) {
   return (
     <Html lang="en" dir="ltr">
       <Head />
-      <Preview>Your verification code is {otp}</Preview>
+      <Preview>Verify your email address</Preview>
       <Tailwind config={{ presets: [pixelBasedPreset] }}>
         <Body className="bg-zinc-100 p-8 px-4 font-sans">
           <Container className="mx-auto max-w-[480px] overflow-hidden rounded-[10px] bg-white shadow-sm">
@@ -40,19 +41,35 @@ export function VerificationCodeEmail({
                 as="h1"
                 className="mb-4 text-xl font-semibold text-zinc-900"
               >
-                Verify your account
+                Verify your email address
               </Heading>
               <Text className="mb-6 text-[15px] leading-6 text-zinc-700">
-                Enter the verification code we when prompted:
+                Click the button below to verify your email address and complete
+                setup.
               </Text>
-              <Section className="mb-6 rounded-lg bg-zinc-100 p-6">
-                <Text className="text-center text-[28px] font-semibold tracking-[8px] text-zinc-900">
-                  {otp}
-                </Text>
+              <Section className="mb-6">
+                <Button
+                  href={verificationUrl}
+                  className="inline-block rounded-lg bg-zinc-900 px-6 py-3 text-sm font-medium text-white no-underline"
+                >
+                  Verify email
+                </Button>
               </Section>
+              <Text className="mb-2 text-sm leading-5 text-zinc-500">
+                Or copy and paste this link into your browser:
+              </Text>
+              <Link
+                href={verificationUrl}
+                className="mb-6 block break-all text-sm text-blue-500"
+              >
+                {verificationUrl}
+              </Link>
+              <Text className="mb-6 text-sm leading-5 text-zinc-500">
+                After you click the link, you can sign in with this email
+                address.
+              </Text>
               <Text className="text-sm leading-5 text-zinc-500">
-                The code expires in 10 minutes. To protect your account, do not
-                share this code.
+                This link expires in 10 minutes.
               </Text>
               <EmailSecurityNotice requestContext={requestContext} />
             </Section>
@@ -66,14 +83,14 @@ export function VerificationCodeEmail({
   );
 }
 
-export default VerificationCodeEmail;
-VerificationCodeEmail.PreviewProps = {
+export default EmailVerificationEmail;
+EmailVerificationEmail.PreviewProps = {
   appName: 'My App',
-  otp: '123456',
+  verificationUrl: 'https://example.com/api/auth/verify-email?token=abc123',
   requestContext: {
     requestedAtUtc: '13 February 2026, 21:11 UTC',
     ip: '136.24.244.114',
     city: 'San Francisco',
     country: 'US',
   },
-} satisfies VerificationCodeEmailProps;
+} satisfies EmailVerificationEmailProps;

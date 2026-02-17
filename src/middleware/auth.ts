@@ -16,6 +16,7 @@ export const guestMiddleware = createMiddleware().server(async ({ next }) => {
   const headers = getRequestHeaders();
   const session = await auth.api.getSession({ headers });
   if (session?.user.emailVerified) {
+    // Redirect signed-in users away from signin, signup, and reset password.
     throw redirect({ to: '/dashboard' });
   }
   return await next();

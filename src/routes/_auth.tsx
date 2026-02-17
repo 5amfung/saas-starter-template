@@ -1,17 +1,17 @@
 import { useEffect } from 'react';
-import { IconStack2 } from '@tabler/icons-react';
 import { Outlet, createFileRoute, useNavigate } from '@tanstack/react-router';
 import { authClient } from '@/auth/auth-client';
+import { AuthLayout } from '@/components/auth/auth-layout';
 import { guestMiddleware } from '@/middleware/auth';
 
 export const Route = createFileRoute('/_auth')({
-  component: AuthLayout,
+  component: AuthPage,
   server: {
     middleware: [guestMiddleware],
   },
 });
 
-function AuthLayout() {
+function AuthPage() {
   const navigate = useNavigate();
   const { data: session, isPending } = authClient.useSession();
 
@@ -31,18 +31,8 @@ function AuthLayout() {
   }
 
   return (
-    <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
-      <div className="flex w-full max-w-sm flex-col gap-6">
-        <a href="/" className="flex items-center gap-2 self-center font-medium">
-          <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
-            <IconStack2 className="size-4" />
-          </div>
-          Acme Inc.
-        </a>
-        <div className="flex flex-col gap-6">
-          <Outlet />
-        </div>
-      </div>
-    </div>
+    <AuthLayout>
+      <Outlet />
+    </AuthLayout>
   );
 }

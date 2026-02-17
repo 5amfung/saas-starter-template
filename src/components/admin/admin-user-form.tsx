@@ -32,6 +32,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { authClient } from '@/auth/auth-client';
 import { adminUserFormSchema } from '@/admin/schemas';
+import { getInitials } from '@/lib/get-initials';
 import { toFieldErrorItem } from '@/lib/form-utils';
 import { cn } from '@/lib/utils';
 
@@ -73,33 +74,6 @@ type AdminUserUpdatePayload = {
   banReason: string | null;
   banExpires: string | null;
 };
-
-/** Derive 2-letter uppercase initials from name, falling back to email local-part. */
-function getInitials(name: string, email?: string): string {
-  const cleaned = name.trim();
-  if (cleaned.length >= 2) {
-    const parts = cleaned.split(/\s+/);
-    if (parts.length >= 2) {
-      const first = parts[0].charAt(0);
-      const last = parts[parts.length - 1].charAt(0);
-      return (first + last).toUpperCase() || '??';
-    }
-    return cleaned.slice(0, 2).toUpperCase();
-  }
-  if (email) {
-    const local = email.split('@')[0] ?? '';
-    const emailParts = local.split(/[._-]+/);
-    if (emailParts.length >= 2) {
-      const first = emailParts[0].charAt(0);
-      const last = emailParts[emailParts.length - 1].charAt(0);
-      return (first + last).toUpperCase() || '??';
-    }
-    if (local.length >= 2) {
-      return local.slice(0, 2).toUpperCase();
-    }
-  }
-  return '??';
-}
 
 function FormSection({
   title,
@@ -158,7 +132,6 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
         banExpires: value.banExpires || null,
       });
 
-      // Treat the current values as the new baseline so the form is no longer dirty.
       form.reset(value);
     },
   });
@@ -185,7 +158,26 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
         );
       }
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      queryClient.setQueryData(
+        ['admin', 'user', user.id],
+        (prev: UserData | undefined) =>
+          prev
+            ? {
+                ...prev,
+                name: variables.name,
+                email: variables.email,
+                emailVerified: variables.emailVerified,
+                image: variables.image,
+                role: variables.role,
+                banned: variables.banned,
+                banReason: variables.banReason,
+                banExpires: variables.banExpires
+                  ? new Date(variables.banExpires)
+                  : null,
+              }
+            : prev,
+      );
       toast.success('User updated successfully.');
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
       queryClient.invalidateQueries({

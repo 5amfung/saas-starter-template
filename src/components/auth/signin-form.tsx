@@ -39,6 +39,7 @@ export function SigninForm() {
       const { error } = await authClient.signIn.email({
         email: value.email,
         password: value.password,
+        callbackURL: '/dashboard',
       });
       if (error) {
         if (error.status === 403) {
@@ -52,7 +53,6 @@ export function SigninForm() {
         });
         return;
       }
-      navigate({ to: '/dashboard' });
     },
   });
 

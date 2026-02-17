@@ -14,6 +14,7 @@ import { Route as HealthRouteImport } from './routes/health';
 import { Route as ProtectedRouteImport } from './routes/_protected';
 import { Route as AuthRouteImport } from './routes/_auth';
 import { Route as IndexRouteImport } from './routes/index';
+import { Route as VerifyEmailChangeEmailRouteImport } from './routes/verify-email-change.$email';
 import { Route as ProtectedTeamRouteImport } from './routes/_protected/team';
 import { Route as ProtectedProjectsRouteImport } from './routes/_protected/projects';
 import { Route as ProtectedLifecycleRouteImport } from './routes/_protected/lifecycle';
@@ -53,6 +54,11 @@ const AuthRoute = AuthRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any);
+const VerifyEmailChangeEmailRoute = VerifyEmailChangeEmailRouteImport.update({
+  id: '/verify-email-change/$email',
+  path: '/verify-email-change/$email',
   getParentRoute: () => rootRouteImport,
 } as any);
 const ProtectedTeamRoute = ProtectedTeamRouteImport.update({
@@ -158,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/lifecycle': typeof ProtectedLifecycleRoute;
   '/projects': typeof ProtectedProjectsRoute;
   '/team': typeof ProtectedTeamRoute;
+  '/verify-email-change/$email': typeof VerifyEmailChangeEmailRoute;
   '/admin/dashboard': typeof ProtectedAdminDashboardRoute;
   '/admin/user': typeof ProtectedAdminUserRouteWithChildren;
   '/api/auth/$': typeof ApiAuthSplatRoute;
@@ -180,6 +187,7 @@ export interface FileRoutesByTo {
   '/lifecycle': typeof ProtectedLifecycleRoute;
   '/projects': typeof ProtectedProjectsRoute;
   '/team': typeof ProtectedTeamRoute;
+  '/verify-email-change/$email': typeof VerifyEmailChangeEmailRoute;
   '/admin/dashboard': typeof ProtectedAdminDashboardRoute;
   '/api/auth/$': typeof ApiAuthSplatRoute;
   '/admin/user/$userId': typeof ProtectedAdminUserUserIdRoute;
@@ -204,6 +212,7 @@ export interface FileRoutesById {
   '/_protected/lifecycle': typeof ProtectedLifecycleRoute;
   '/_protected/projects': typeof ProtectedProjectsRoute;
   '/_protected/team': typeof ProtectedTeamRoute;
+  '/verify-email-change/$email': typeof VerifyEmailChangeEmailRoute;
   '/_protected/admin/dashboard': typeof ProtectedAdminDashboardRoute;
   '/_protected/admin/user': typeof ProtectedAdminUserRouteWithChildren;
   '/api/auth/$': typeof ApiAuthSplatRoute;
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
     | '/lifecycle'
     | '/projects'
     | '/team'
+    | '/verify-email-change/$email'
     | '/admin/dashboard'
     | '/admin/user'
     | '/api/auth/$'
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/lifecycle'
     | '/projects'
     | '/team'
+    | '/verify-email-change/$email'
     | '/admin/dashboard'
     | '/api/auth/$'
     | '/admin/user/$userId'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/_protected/lifecycle'
     | '/_protected/projects'
     | '/_protected/team'
+    | '/verify-email-change/$email'
     | '/_protected/admin/dashboard'
     | '/_protected/admin/user'
     | '/api/auth/$'
@@ -286,6 +298,7 @@ export interface RootRouteChildren {
   ProtectedRoute: typeof ProtectedRouteWithChildren;
   HealthRoute: typeof HealthRoute;
   PingRoute: typeof PingRoute;
+  VerifyEmailChangeEmailRoute: typeof VerifyEmailChangeEmailRoute;
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
 }
 
@@ -324,6 +337,13 @@ declare module '@tanstack/react-router' {
       path: '/';
       fullPath: '/';
       preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/verify-email-change/$email': {
+      id: '/verify-email-change/$email';
+      path: '/verify-email-change/$email';
+      fullPath: '/verify-email-change/$email';
+      preLoaderRoute: typeof VerifyEmailChangeEmailRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     '/_protected/team': {
@@ -523,6 +543,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProtectedRoute: ProtectedRouteWithChildren,
   HealthRoute: HealthRoute,
   PingRoute: PingRoute,
+  VerifyEmailChangeEmailRoute: VerifyEmailChangeEmailRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 };
 export const routeTree = rootRouteImport

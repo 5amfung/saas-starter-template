@@ -20,10 +20,6 @@ export const signupSchema = z
     path: ['confirmPassword'],
   });
 
-export const verifySchema = z.object({
-  otp: z.string().length(6, { error: 'Please enter the 6-digit code.' }),
-});
-
 export const verifySearchSchema = z.object({
   email: z.email({ error: 'Invalid email.' }).optional(),
 });
