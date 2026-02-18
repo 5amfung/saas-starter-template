@@ -6,6 +6,7 @@ import {
   IconDashboard,
   IconFolder,
   IconHelp,
+  IconHome,
   IconInnerShadowTop,
   IconListDetails,
   IconSearch,
@@ -42,14 +43,20 @@ const data = {
       icon: <IconSettings />,
     },
     {
+      title: 'Search',
+      url: '#',
+      icon: <IconSearch />,
+    },
+    {
       title: 'Get Help',
       url: '#',
       icon: <IconHelp />,
     },
     {
-      title: 'Search',
-      url: '#',
-      icon: <IconSearch />,
+      title: 'Home Page',
+      url: 'https://github.com/5amfung/sass-starter-template',
+      icon: <IconHome />,
+      newTab: true,
     },
   ],
   navAdmin: [

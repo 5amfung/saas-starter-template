@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { IconBrightness } from '@tabler/icons-react';
+import { IconBrightness, IconExternalLink } from '@tabler/icons-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +26,7 @@ export function NavSecondary({
     title: string;
     url: string;
     icon: React.ReactNode;
+    newTab?: boolean;
   }>;
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   const { setTheme } = useTheme();
@@ -60,9 +61,21 @@ export function NavSecondary({
           </SidebarMenuItem>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton render={<a href={item.url} />}>
+              <SidebarMenuButton
+                render={
+                  <a
+                    href={item.url}
+                    target={item.newTab ? '_blank' : undefined}
+                    rel={item.newTab ? 'noreferrer noopener' : undefined}
+                  />
+                }
+              >
                 {item.icon}
                 <span>{item.title}</span>
+                {item.newTab ? <IconExternalLink className="size-4" /> : null}
+                {item.newTab ? (
+                  <span className="sr-only">(opens in a new tab)</span>
+                ) : null}
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
