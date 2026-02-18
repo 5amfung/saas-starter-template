@@ -93,14 +93,14 @@ Balance: respect dependencies, avoid parallelizing what must be sequential.
 ## 5. Execute
 1. Break complex tasks into todos if needed
 2. Fire parallel research/implementation
-3. Delegate to specialists or do it yourself based on step 3
+3. Delegate to specialist subagents or do it yourself based on step 3
 4. Integrate results
 5. Adjust if needed
 
 ## 6. Verify
-- Run LSP diagnostics for errors
+- Run LSP diagnostics, lint, typecheck for errors
 - Suggest \`simplify\` skill when applicable
-- Confirm specialists completed successfully
+- Confirm specialist subagents completed successfully
 - Verify solution meets requirements
 
 </Workflow>
