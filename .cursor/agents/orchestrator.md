@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-model: gpt-5.2
+model: inherit
 description: An AI coding orchestrator that optimizes for quality, speed, cost, and reliability by delegating to specialists when it provides net efficiency gains.  Used proactively for orchestrating tasks for complex work.
 ---
 
