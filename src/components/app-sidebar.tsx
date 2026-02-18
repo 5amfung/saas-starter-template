@@ -3,17 +3,15 @@
 import * as React from 'react';
 import {
   IconChartBar,
-  IconCommand,
   IconDashboard,
   IconFolder,
   IconHelp,
   IconHome,
-  IconInnerShadowTop,
   IconListDetails,
   IconSearch,
   IconSettings,
+  IconStack2,
   IconUsers,
-  IconWaveSquare,
 } from '@tabler/icons-react';
 import { authClient } from '@/auth/auth-client';
 import { NavAdmin } from '@/components/nav-admin';
@@ -32,15 +30,15 @@ const data = {
   workspaces: [
     {
       name: 'Acme Inc',
-      logo: <IconInnerShadowTop className="size-4" />,
+      logo: <IconStack2 className="size-4" />,
     },
     {
       name: 'Acme Corp.',
-      logo: <IconWaveSquare className="size-4" />,
+      logo: <IconStack2 className="size-4" />,
     },
     {
       name: 'Evil Corp.',
-      logo: <IconCommand className="size-4" />,
+      logo: <IconStack2 className="size-4" />,
     },
   ],
   navMain: [
