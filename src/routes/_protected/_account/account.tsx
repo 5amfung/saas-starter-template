@@ -61,7 +61,9 @@ function AccountPage() {
               className={READ_ONLY_INPUT_CLASS}
             />
           </Field>
-          <ChangeEmailDialog currentEmail={user.email} />
+          <div className="self-end sm:self-auto">
+            <ChangeEmailDialog currentEmail={user.email} />
+          </div>
         </CardContent>
       </Card>
 
