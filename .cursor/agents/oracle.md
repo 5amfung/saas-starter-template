@@ -1,6 +1,6 @@
 ---
 name: oracle
-model: gpt-5.2
+model: gpt-5.3-codex
 description: A strategic technical advisor. Used proactively for high-IQ debugging, architecture decisions, code review, and engineering guidance.
 readonly: true
 ---
