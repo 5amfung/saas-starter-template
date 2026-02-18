@@ -17,13 +17,10 @@ import { Route as IndexRouteImport } from './routes/index';
 import { Route as VerifyEmailChangeEmailRouteImport } from './routes/verify-email-change.$email';
 import { Route as ProtectedTeamRouteImport } from './routes/_protected/team';
 import { Route as ProtectedProjectsRouteImport } from './routes/_protected/projects';
-import { Route as ProtectedNotificationsRouteImport } from './routes/_protected/notifications';
 import { Route as ProtectedLifecycleRouteImport } from './routes/_protected/lifecycle';
 import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard';
-import { Route as ProtectedBillingRouteImport } from './routes/_protected/billing';
 import { Route as ProtectedAnalyticsRouteImport } from './routes/_protected/analytics';
 import { Route as ProtectedAdminRouteImport } from './routes/_protected/admin';
-import { Route as ProtectedAccountRouteImport } from './routes/_protected/account';
 import { Route as AuthVerifyRouteImport } from './routes/_auth/verify';
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup';
 import { Route as AuthSigninRouteImport } from './routes/_auth/signin';
@@ -32,6 +29,9 @@ import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-pa
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$';
 import { Route as ProtectedAdminUserRouteImport } from './routes/_protected/admin/user';
 import { Route as ProtectedAdminDashboardRouteImport } from './routes/_protected/admin/dashboard';
+import { Route as ProtectedAccountNotificationsRouteImport } from './routes/_protected/_account/notifications';
+import { Route as ProtectedAccountBillingRouteImport } from './routes/_protected/_account/billing';
+import { Route as ProtectedAccountAccountRouteImport } from './routes/_protected/_account/account';
 import { Route as ProtectedAdminUserIndexRouteImport } from './routes/_protected/admin/user/index';
 import { Route as ProtectedAdminUserUserIdRouteImport } from './routes/_protected/admin/user/$userId';
 
@@ -73,11 +73,6 @@ const ProtectedProjectsRoute = ProtectedProjectsRouteImport.update({
   path: '/projects',
   getParentRoute: () => ProtectedRoute,
 } as any);
-const ProtectedNotificationsRoute = ProtectedNotificationsRouteImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => ProtectedRoute,
-} as any);
 const ProtectedLifecycleRoute = ProtectedLifecycleRouteImport.update({
   id: '/lifecycle',
   path: '/lifecycle',
@@ -88,11 +83,6 @@ const ProtectedDashboardRoute = ProtectedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => ProtectedRoute,
 } as any);
-const ProtectedBillingRoute = ProtectedBillingRouteImport.update({
-  id: '/billing',
-  path: '/billing',
-  getParentRoute: () => ProtectedRoute,
-} as any);
 const ProtectedAnalyticsRoute = ProtectedAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -101,11 +91,6 @@ const ProtectedAnalyticsRoute = ProtectedAnalyticsRouteImport.update({
 const ProtectedAdminRoute = ProtectedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
-  getParentRoute: () => ProtectedRoute,
-} as any);
-const ProtectedAccountRoute = ProtectedAccountRouteImport.update({
-  id: '/account',
-  path: '/account',
   getParentRoute: () => ProtectedRoute,
 } as any);
 const AuthVerifyRoute = AuthVerifyRouteImport.update({
@@ -148,6 +133,22 @@ const ProtectedAdminDashboardRoute = ProtectedAdminDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => ProtectedAdminRoute,
 } as any);
+const ProtectedAccountNotificationsRoute =
+  ProtectedAccountNotificationsRouteImport.update({
+    id: '/_account/notifications',
+    path: '/notifications',
+    getParentRoute: () => ProtectedRoute,
+  } as any);
+const ProtectedAccountBillingRoute = ProtectedAccountBillingRouteImport.update({
+  id: '/_account/billing',
+  path: '/billing',
+  getParentRoute: () => ProtectedRoute,
+} as any);
+const ProtectedAccountAccountRoute = ProtectedAccountAccountRouteImport.update({
+  id: '/_account/account',
+  path: '/account',
+  getParentRoute: () => ProtectedRoute,
+} as any);
 const ProtectedAdminUserIndexRoute = ProtectedAdminUserIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -169,16 +170,16 @@ export interface FileRoutesByFullPath {
   '/signin': typeof AuthSigninRoute;
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
-  '/account': typeof ProtectedAccountRoute;
   '/admin': typeof ProtectedAdminRouteWithChildren;
   '/analytics': typeof ProtectedAnalyticsRoute;
-  '/billing': typeof ProtectedBillingRoute;
   '/dashboard': typeof ProtectedDashboardRoute;
   '/lifecycle': typeof ProtectedLifecycleRoute;
-  '/notifications': typeof ProtectedNotificationsRoute;
   '/projects': typeof ProtectedProjectsRoute;
   '/team': typeof ProtectedTeamRoute;
   '/verify-email-change/$email': typeof VerifyEmailChangeEmailRoute;
+  '/account': typeof ProtectedAccountAccountRoute;
+  '/billing': typeof ProtectedAccountBillingRoute;
+  '/notifications': typeof ProtectedAccountNotificationsRoute;
   '/admin/dashboard': typeof ProtectedAdminDashboardRoute;
   '/admin/user': typeof ProtectedAdminUserRouteWithChildren;
   '/api/auth/$': typeof ApiAuthSplatRoute;
@@ -194,16 +195,16 @@ export interface FileRoutesByTo {
   '/signin': typeof AuthSigninRoute;
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
-  '/account': typeof ProtectedAccountRoute;
   '/admin': typeof ProtectedAdminRouteWithChildren;
   '/analytics': typeof ProtectedAnalyticsRoute;
-  '/billing': typeof ProtectedBillingRoute;
   '/dashboard': typeof ProtectedDashboardRoute;
   '/lifecycle': typeof ProtectedLifecycleRoute;
-  '/notifications': typeof ProtectedNotificationsRoute;
   '/projects': typeof ProtectedProjectsRoute;
   '/team': typeof ProtectedTeamRoute;
   '/verify-email-change/$email': typeof VerifyEmailChangeEmailRoute;
+  '/account': typeof ProtectedAccountAccountRoute;
+  '/billing': typeof ProtectedAccountBillingRoute;
+  '/notifications': typeof ProtectedAccountNotificationsRoute;
   '/admin/dashboard': typeof ProtectedAdminDashboardRoute;
   '/api/auth/$': typeof ApiAuthSplatRoute;
   '/admin/user/$userId': typeof ProtectedAdminUserUserIdRoute;
@@ -221,16 +222,16 @@ export interface FileRoutesById {
   '/_auth/signin': typeof AuthSigninRoute;
   '/_auth/signup': typeof AuthSignupRoute;
   '/_auth/verify': typeof AuthVerifyRoute;
-  '/_protected/account': typeof ProtectedAccountRoute;
   '/_protected/admin': typeof ProtectedAdminRouteWithChildren;
   '/_protected/analytics': typeof ProtectedAnalyticsRoute;
-  '/_protected/billing': typeof ProtectedBillingRoute;
   '/_protected/dashboard': typeof ProtectedDashboardRoute;
   '/_protected/lifecycle': typeof ProtectedLifecycleRoute;
-  '/_protected/notifications': typeof ProtectedNotificationsRoute;
   '/_protected/projects': typeof ProtectedProjectsRoute;
   '/_protected/team': typeof ProtectedTeamRoute;
   '/verify-email-change/$email': typeof VerifyEmailChangeEmailRoute;
+  '/_protected/_account/account': typeof ProtectedAccountAccountRoute;
+  '/_protected/_account/billing': typeof ProtectedAccountBillingRoute;
+  '/_protected/_account/notifications': typeof ProtectedAccountNotificationsRoute;
   '/_protected/admin/dashboard': typeof ProtectedAdminDashboardRoute;
   '/_protected/admin/user': typeof ProtectedAdminUserRouteWithChildren;
   '/api/auth/$': typeof ApiAuthSplatRoute;
@@ -248,16 +249,16 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/verify'
-    | '/account'
     | '/admin'
     | '/analytics'
-    | '/billing'
     | '/dashboard'
     | '/lifecycle'
-    | '/notifications'
     | '/projects'
     | '/team'
     | '/verify-email-change/$email'
+    | '/account'
+    | '/billing'
+    | '/notifications'
     | '/admin/dashboard'
     | '/admin/user'
     | '/api/auth/$'
@@ -273,16 +274,16 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/verify'
-    | '/account'
     | '/admin'
     | '/analytics'
-    | '/billing'
     | '/dashboard'
     | '/lifecycle'
-    | '/notifications'
     | '/projects'
     | '/team'
     | '/verify-email-change/$email'
+    | '/account'
+    | '/billing'
+    | '/notifications'
     | '/admin/dashboard'
     | '/api/auth/$'
     | '/admin/user/$userId'
@@ -299,16 +300,16 @@ export interface FileRouteTypes {
     | '/_auth/signin'
     | '/_auth/signup'
     | '/_auth/verify'
-    | '/_protected/account'
     | '/_protected/admin'
     | '/_protected/analytics'
-    | '/_protected/billing'
     | '/_protected/dashboard'
     | '/_protected/lifecycle'
-    | '/_protected/notifications'
     | '/_protected/projects'
     | '/_protected/team'
     | '/verify-email-change/$email'
+    | '/_protected/_account/account'
+    | '/_protected/_account/billing'
+    | '/_protected/_account/notifications'
     | '/_protected/admin/dashboard'
     | '/_protected/admin/user'
     | '/api/auth/$'
@@ -384,13 +385,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedProjectsRouteImport;
       parentRoute: typeof ProtectedRoute;
     };
-    '/_protected/notifications': {
-      id: '/_protected/notifications';
-      path: '/notifications';
-      fullPath: '/notifications';
-      preLoaderRoute: typeof ProtectedNotificationsRouteImport;
-      parentRoute: typeof ProtectedRoute;
-    };
     '/_protected/lifecycle': {
       id: '/_protected/lifecycle';
       path: '/lifecycle';
@@ -405,13 +399,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedDashboardRouteImport;
       parentRoute: typeof ProtectedRoute;
     };
-    '/_protected/billing': {
-      id: '/_protected/billing';
-      path: '/billing';
-      fullPath: '/billing';
-      preLoaderRoute: typeof ProtectedBillingRouteImport;
-      parentRoute: typeof ProtectedRoute;
-    };
     '/_protected/analytics': {
       id: '/_protected/analytics';
       path: '/analytics';
@@ -424,13 +411,6 @@ declare module '@tanstack/react-router' {
       path: '/admin';
       fullPath: '/admin';
       preLoaderRoute: typeof ProtectedAdminRouteImport;
-      parentRoute: typeof ProtectedRoute;
-    };
-    '/_protected/account': {
-      id: '/_protected/account';
-      path: '/account';
-      fullPath: '/account';
-      preLoaderRoute: typeof ProtectedAccountRouteImport;
       parentRoute: typeof ProtectedRoute;
     };
     '/_auth/verify': {
@@ -488,6 +468,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/dashboard';
       preLoaderRoute: typeof ProtectedAdminDashboardRouteImport;
       parentRoute: typeof ProtectedAdminRoute;
+    };
+    '/_protected/_account/notifications': {
+      id: '/_protected/_account/notifications';
+      path: '/notifications';
+      fullPath: '/notifications';
+      preLoaderRoute: typeof ProtectedAccountNotificationsRouteImport;
+      parentRoute: typeof ProtectedRoute;
+    };
+    '/_protected/_account/billing': {
+      id: '/_protected/_account/billing';
+      path: '/billing';
+      fullPath: '/billing';
+      preLoaderRoute: typeof ProtectedAccountBillingRouteImport;
+      parentRoute: typeof ProtectedRoute;
+    };
+    '/_protected/_account/account': {
+      id: '/_protected/_account/account';
+      path: '/account';
+      fullPath: '/account';
+      preLoaderRoute: typeof ProtectedAccountAccountRouteImport;
+      parentRoute: typeof ProtectedRoute;
     };
     '/_protected/admin/user/': {
       id: '/_protected/admin/user/';
@@ -552,27 +553,27 @@ const ProtectedAdminRouteWithChildren = ProtectedAdminRoute._addFileChildren(
 );
 
 interface ProtectedRouteChildren {
-  ProtectedAccountRoute: typeof ProtectedAccountRoute;
   ProtectedAdminRoute: typeof ProtectedAdminRouteWithChildren;
   ProtectedAnalyticsRoute: typeof ProtectedAnalyticsRoute;
-  ProtectedBillingRoute: typeof ProtectedBillingRoute;
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute;
   ProtectedLifecycleRoute: typeof ProtectedLifecycleRoute;
-  ProtectedNotificationsRoute: typeof ProtectedNotificationsRoute;
   ProtectedProjectsRoute: typeof ProtectedProjectsRoute;
   ProtectedTeamRoute: typeof ProtectedTeamRoute;
+  ProtectedAccountAccountRoute: typeof ProtectedAccountAccountRoute;
+  ProtectedAccountBillingRoute: typeof ProtectedAccountBillingRoute;
+  ProtectedAccountNotificationsRoute: typeof ProtectedAccountNotificationsRoute;
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
-  ProtectedAccountRoute: ProtectedAccountRoute,
   ProtectedAdminRoute: ProtectedAdminRouteWithChildren,
   ProtectedAnalyticsRoute: ProtectedAnalyticsRoute,
-  ProtectedBillingRoute: ProtectedBillingRoute,
   ProtectedDashboardRoute: ProtectedDashboardRoute,
   ProtectedLifecycleRoute: ProtectedLifecycleRoute,
-  ProtectedNotificationsRoute: ProtectedNotificationsRoute,
   ProtectedProjectsRoute: ProtectedProjectsRoute,
   ProtectedTeamRoute: ProtectedTeamRoute,
+  ProtectedAccountAccountRoute: ProtectedAccountAccountRoute,
+  ProtectedAccountBillingRoute: ProtectedAccountBillingRoute,
+  ProtectedAccountNotificationsRoute: ProtectedAccountNotificationsRoute,
 };
 
 const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(

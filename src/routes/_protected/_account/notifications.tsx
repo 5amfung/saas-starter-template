@@ -16,7 +16,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 
-export const Route = createFileRoute('/_protected/notifications')({
+export const Route = createFileRoute('/_protected/_account/notifications')({
   component: NotificationsPage,
   staticData: { title: 'Notifications' },
 });

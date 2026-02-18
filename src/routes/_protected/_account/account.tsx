@@ -14,7 +14,7 @@ import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { useSessionQuery } from '@/hooks/use-session-query';
 
-export const Route = createFileRoute('/_protected/account')({
+export const Route = createFileRoute('/_protected/_account/account')({
   component: AccountPage,
   staticData: { title: 'Account' },
 });
