@@ -1,6 +1,6 @@
 ---
 name: oracle
-model: claude-4.6-opus-high-thinking
+model: gpt-5.2
 description: A strategic technical advisor. Used proactively for high-IQ debugging, architecture decisions, code review, and engineering guidance.
 readonly: true
 ---
