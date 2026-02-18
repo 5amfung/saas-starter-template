@@ -39,7 +39,7 @@ export function WorkspaceSwitcher({
               />
             }
           >
-            <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg border">
               {activeWorkspace.logo}
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight">
