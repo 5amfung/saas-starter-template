@@ -22,7 +22,6 @@ export function WorkspaceSwitcher({
   workspaces: Array<{
     name: string;
     logo: React.ReactNode;
-    plan: string;
   }>;
 }) {
   const { isMobile } = useSidebar();
@@ -44,15 +43,16 @@ export function WorkspaceSwitcher({
               {activeWorkspace.logo}
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">{activeWorkspace.name}</span>
-              <span className="truncate text-xs">{activeWorkspace.plan}</span>
+              <span className="truncate font-medium">
+                {activeWorkspace.name}
+              </span>
             </div>
             <IconSelector className="ml-auto" />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="min-w-56 rounded-lg"
             align="start"
-            side={isMobile ? "bottom" : "right"}
+            side={isMobile ? 'bottom' : 'right'}
             sideOffset={4}
           >
             <DropdownMenuGroup>
