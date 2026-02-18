@@ -3,6 +3,7 @@
 import * as React from 'react';
 import {
   IconChartBar,
+  IconCommand,
   IconDashboard,
   IconFolder,
   IconHelp,
@@ -12,23 +13,39 @@ import {
   IconSearch,
   IconSettings,
   IconUsers,
+  IconWaveSquare,
 } from '@tabler/icons-react';
 import { authClient } from '@/auth/auth-client';
 import { NavAdmin } from '@/components/nav-admin';
 import { NavMain } from '@/components/nav-main';
 import { NavSecondary } from '@/components/nav-secondary';
+import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 import { NavUser, NavUserSkeleton } from '@/components/nav-user';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
 } from '@/components/ui/sidebar';
 
 const data = {
+  workspaces: [
+    {
+      name: 'Acme Inc',
+      logo: <IconInnerShadowTop className="size-4" />,
+      plan: 'Enterprise',
+    },
+    {
+      name: 'Acme Corp.',
+      logo: <IconWaveSquare className="size-4" />,
+      plan: 'Startup',
+    },
+    {
+      name: 'Evil Corp.',
+      logo: <IconCommand className="size-4" />,
+      plan: 'Free',
+    },
+  ],
   navMain: [
     { title: 'Dashboard', url: '/dashboard', icon: <IconDashboard /> },
     { title: 'Lifecycle', url: '/lifecycle', icon: <IconListDetails /> },
@@ -78,17 +95,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
-              render={<a href="#" />}
-            >
-              <IconInnerShadowTop className="size-5!" />
-              <span className="text-base font-semibold">Acme Inc.</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <WorkspaceSwitcher workspaces={data.workspaces} />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
