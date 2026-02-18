@@ -1,6 +1,6 @@
 ---
 name: better-auth-tanstack-start
-description: Integrate Better Auth with TanStack Start using Drizzle + Postgres. Covers core auth (email/password + sessions), Admin, Email OTP, Last Login Method, and social sign-in (Google, Apple, Microsoft). Use when adding or updating Better Auth in TanStack Start apps, wiring /api/auth routes, protecting routes with middleware, or configuring Drizzle/Postgres adapters and OAuth providers.
+description: Integrate Better Auth with TanStack Start using Drizzle + Postgres. Covers core auth (email/password + sessions), Admin, Organization (Multi-tenant), Stripe (Subscriptions + Payments), Email OTP, Last Login Method, and social sign-in (Google, Apple, Microsoft). Use when adding or updating Better Auth in TanStack Start apps, wiring /api/auth routes, protecting routes with middleware, or configuring Drizzle/Postgres adapters and OAuth providers.
 ---
 
 # Better Auth + TanStack Start + Drizzle (Postgres)
@@ -46,6 +46,8 @@ Create `src/auth/auth.server.ts` using:
 - **Drizzle adapter** with Postgres provider.
 - **Core**: `emailAndPassword` + `emailVerification` (optional but typical).
 - **Plugins**:
+  - `organization()` for multi-tenant teams.
+  - `stripe()` for subscriptions and payments.
   - `admin()` for admin operations.
   - `emailOTP()` for verification codes and OTP-based flows.
   - `lastLoginMethod()` to track the user’s last sign-in method (UI hints; optional DB persistence).
@@ -74,6 +76,8 @@ Create `src/auth/auth-client.ts`:
 
 - Use `createAuthClient` from `better-auth/react`.
 - Add plugin clients for features you use:
+  - `organizationClient()` (for teams/orgs).
+  - `stripeClient()` (for subscriptions/payments).
   - `emailOTPClient()` (for OTP endpoints).
   - `adminClient()` (for admin endpoints).
 
@@ -95,6 +99,22 @@ See [tanstack-start.md](tanstack-start.md).
 - For Apple, add `https://appleid.apple.com` to `trustedOrigins`.
 
 See [providers.md](providers.md).
+
+### Enable Organization (Multi-tenant) Support
+
+- Add `organization()` plugin on server and `organizationClient()` on client.
+- Run migrations to create organization tables.
+- Use `authClient.organization` methods to create orgs and invite members.
+
+See [organization.md](organization.md).
+
+### Enable Stripe (Subscriptions & Payments)
+
+- Install `@better-auth/stripe` and `stripe`.
+- Add `stripe()` plugin on server and `stripeClient()` on client.
+- Configure webhooks and environment variables.
+
+See [stripe.md](stripe.md).
 
 ### Enable Email OTP verification codes
 
@@ -139,6 +159,8 @@ See [drizzle-postgres.md](drizzle-postgres.md).
 ## Additional resources
 
 - TanStack Start patterns (server route handler, session helpers, middleware): [tanstack-start.md](tanstack-start.md)
+- Organization (Multi-tenant) patterns: [organization.md](organization.md)
+- Stripe (Subscriptions) patterns: [stripe.md](stripe.md)
 - Provider config (Google/Apple/Microsoft): [providers.md](providers.md)
 - Email OTP flows: [email-otp.md](email-otp.md)
 - Admin plugin: [admin.md](admin.md)
