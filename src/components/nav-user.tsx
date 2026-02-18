@@ -113,11 +113,13 @@ export function NavUser({
                 <IconUserCircle />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate({ to: '/billing' })}>
                 <IconCreditCard />
                 Billing
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => navigate({ to: '/notifications' })}
+              >
                 <IconNotification />
                 Notifications
               </DropdownMenuItem>

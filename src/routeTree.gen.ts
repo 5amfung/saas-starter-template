@@ -17,8 +17,10 @@ import { Route as IndexRouteImport } from './routes/index';
 import { Route as VerifyEmailChangeEmailRouteImport } from './routes/verify-email-change.$email';
 import { Route as ProtectedTeamRouteImport } from './routes/_protected/team';
 import { Route as ProtectedProjectsRouteImport } from './routes/_protected/projects';
+import { Route as ProtectedNotificationsRouteImport } from './routes/_protected/notifications';
 import { Route as ProtectedLifecycleRouteImport } from './routes/_protected/lifecycle';
 import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard';
+import { Route as ProtectedBillingRouteImport } from './routes/_protected/billing';
 import { Route as ProtectedAnalyticsRouteImport } from './routes/_protected/analytics';
 import { Route as ProtectedAdminRouteImport } from './routes/_protected/admin';
 import { Route as ProtectedAccountRouteImport } from './routes/_protected/account';
@@ -71,6 +73,11 @@ const ProtectedProjectsRoute = ProtectedProjectsRouteImport.update({
   path: '/projects',
   getParentRoute: () => ProtectedRoute,
 } as any);
+const ProtectedNotificationsRoute = ProtectedNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => ProtectedRoute,
+} as any);
 const ProtectedLifecycleRoute = ProtectedLifecycleRouteImport.update({
   id: '/lifecycle',
   path: '/lifecycle',
@@ -79,6 +86,11 @@ const ProtectedLifecycleRoute = ProtectedLifecycleRouteImport.update({
 const ProtectedDashboardRoute = ProtectedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => ProtectedRoute,
+} as any);
+const ProtectedBillingRoute = ProtectedBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
   getParentRoute: () => ProtectedRoute,
 } as any);
 const ProtectedAnalyticsRoute = ProtectedAnalyticsRouteImport.update({
@@ -160,8 +172,10 @@ export interface FileRoutesByFullPath {
   '/account': typeof ProtectedAccountRoute;
   '/admin': typeof ProtectedAdminRouteWithChildren;
   '/analytics': typeof ProtectedAnalyticsRoute;
+  '/billing': typeof ProtectedBillingRoute;
   '/dashboard': typeof ProtectedDashboardRoute;
   '/lifecycle': typeof ProtectedLifecycleRoute;
+  '/notifications': typeof ProtectedNotificationsRoute;
   '/projects': typeof ProtectedProjectsRoute;
   '/team': typeof ProtectedTeamRoute;
   '/verify-email-change/$email': typeof VerifyEmailChangeEmailRoute;
@@ -183,8 +197,10 @@ export interface FileRoutesByTo {
   '/account': typeof ProtectedAccountRoute;
   '/admin': typeof ProtectedAdminRouteWithChildren;
   '/analytics': typeof ProtectedAnalyticsRoute;
+  '/billing': typeof ProtectedBillingRoute;
   '/dashboard': typeof ProtectedDashboardRoute;
   '/lifecycle': typeof ProtectedLifecycleRoute;
+  '/notifications': typeof ProtectedNotificationsRoute;
   '/projects': typeof ProtectedProjectsRoute;
   '/team': typeof ProtectedTeamRoute;
   '/verify-email-change/$email': typeof VerifyEmailChangeEmailRoute;
@@ -208,8 +224,10 @@ export interface FileRoutesById {
   '/_protected/account': typeof ProtectedAccountRoute;
   '/_protected/admin': typeof ProtectedAdminRouteWithChildren;
   '/_protected/analytics': typeof ProtectedAnalyticsRoute;
+  '/_protected/billing': typeof ProtectedBillingRoute;
   '/_protected/dashboard': typeof ProtectedDashboardRoute;
   '/_protected/lifecycle': typeof ProtectedLifecycleRoute;
+  '/_protected/notifications': typeof ProtectedNotificationsRoute;
   '/_protected/projects': typeof ProtectedProjectsRoute;
   '/_protected/team': typeof ProtectedTeamRoute;
   '/verify-email-change/$email': typeof VerifyEmailChangeEmailRoute;
@@ -233,8 +251,10 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin'
     | '/analytics'
+    | '/billing'
     | '/dashboard'
     | '/lifecycle'
+    | '/notifications'
     | '/projects'
     | '/team'
     | '/verify-email-change/$email'
@@ -256,8 +276,10 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin'
     | '/analytics'
+    | '/billing'
     | '/dashboard'
     | '/lifecycle'
+    | '/notifications'
     | '/projects'
     | '/team'
     | '/verify-email-change/$email'
@@ -280,8 +302,10 @@ export interface FileRouteTypes {
     | '/_protected/account'
     | '/_protected/admin'
     | '/_protected/analytics'
+    | '/_protected/billing'
     | '/_protected/dashboard'
     | '/_protected/lifecycle'
+    | '/_protected/notifications'
     | '/_protected/projects'
     | '/_protected/team'
     | '/verify-email-change/$email'
@@ -360,6 +384,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedProjectsRouteImport;
       parentRoute: typeof ProtectedRoute;
     };
+    '/_protected/notifications': {
+      id: '/_protected/notifications';
+      path: '/notifications';
+      fullPath: '/notifications';
+      preLoaderRoute: typeof ProtectedNotificationsRouteImport;
+      parentRoute: typeof ProtectedRoute;
+    };
     '/_protected/lifecycle': {
       id: '/_protected/lifecycle';
       path: '/lifecycle';
@@ -372,6 +403,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard';
       fullPath: '/dashboard';
       preLoaderRoute: typeof ProtectedDashboardRouteImport;
+      parentRoute: typeof ProtectedRoute;
+    };
+    '/_protected/billing': {
+      id: '/_protected/billing';
+      path: '/billing';
+      fullPath: '/billing';
+      preLoaderRoute: typeof ProtectedBillingRouteImport;
       parentRoute: typeof ProtectedRoute;
     };
     '/_protected/analytics': {
@@ -517,8 +555,10 @@ interface ProtectedRouteChildren {
   ProtectedAccountRoute: typeof ProtectedAccountRoute;
   ProtectedAdminRoute: typeof ProtectedAdminRouteWithChildren;
   ProtectedAnalyticsRoute: typeof ProtectedAnalyticsRoute;
+  ProtectedBillingRoute: typeof ProtectedBillingRoute;
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute;
   ProtectedLifecycleRoute: typeof ProtectedLifecycleRoute;
+  ProtectedNotificationsRoute: typeof ProtectedNotificationsRoute;
   ProtectedProjectsRoute: typeof ProtectedProjectsRoute;
   ProtectedTeamRoute: typeof ProtectedTeamRoute;
 }
@@ -527,8 +567,10 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedAccountRoute: ProtectedAccountRoute,
   ProtectedAdminRoute: ProtectedAdminRouteWithChildren,
   ProtectedAnalyticsRoute: ProtectedAnalyticsRoute,
+  ProtectedBillingRoute: ProtectedBillingRoute,
   ProtectedDashboardRoute: ProtectedDashboardRoute,
   ProtectedLifecycleRoute: ProtectedLifecycleRoute,
+  ProtectedNotificationsRoute: ProtectedNotificationsRoute,
   ProtectedProjectsRoute: ProtectedProjectsRoute,
   ProtectedTeamRoute: ProtectedTeamRoute,
 };
