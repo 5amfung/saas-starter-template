@@ -33,17 +33,14 @@ const data = {
     {
       name: 'Acme Inc',
       logo: <IconInnerShadowTop className="size-4" />,
-      plan: 'Enterprise',
     },
     {
       name: 'Acme Corp.',
       logo: <IconWaveSquare className="size-4" />,
-      plan: 'Startup',
     },
     {
       name: 'Evil Corp.',
       logo: <IconCommand className="size-4" />,
-      plan: 'Free',
     },
   ],
   navMain: [
@@ -68,6 +65,7 @@ const data = {
       title: 'Get Help',
       url: '#',
       icon: <IconHelp />,
+      newTab: true,
     },
     {
       title: 'Home Page',
