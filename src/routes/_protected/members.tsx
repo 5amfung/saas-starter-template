@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-export const Route = createFileRoute('/_protected/team')({
+export const Route = createFileRoute('/_protected/members')({
   component: MembersPage,
   staticData: { title: 'Members' },
 });

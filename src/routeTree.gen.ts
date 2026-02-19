@@ -15,9 +15,9 @@ import { Route as ProtectedRouteImport } from './routes/_protected';
 import { Route as AuthRouteImport } from './routes/_auth';
 import { Route as IndexRouteImport } from './routes/index';
 import { Route as VerifyEmailChangeEmailRouteImport } from './routes/verify-email-change.$email';
-import { Route as ProtectedTeamRouteImport } from './routes/_protected/team';
 import { Route as ProtectedSettingsRouteImport } from './routes/_protected/settings';
 import { Route as ProtectedProjectsRouteImport } from './routes/_protected/projects';
+import { Route as ProtectedMembersRouteImport } from './routes/_protected/members';
 import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard';
 import { Route as ProtectedAdminRouteImport } from './routes/_protected/admin';
 import { Route as AuthVerifyRouteImport } from './routes/_auth/verify';
@@ -62,11 +62,6 @@ const VerifyEmailChangeEmailRoute = VerifyEmailChangeEmailRouteImport.update({
   path: '/verify-email-change/$email',
   getParentRoute: () => rootRouteImport,
 } as any);
-const ProtectedTeamRoute = ProtectedTeamRouteImport.update({
-  id: '/team',
-  path: '/team',
-  getParentRoute: () => ProtectedRoute,
-} as any);
 const ProtectedSettingsRoute = ProtectedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -75,6 +70,11 @@ const ProtectedSettingsRoute = ProtectedSettingsRouteImport.update({
 const ProtectedProjectsRoute = ProtectedProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
+  getParentRoute: () => ProtectedRoute,
+} as any);
+const ProtectedMembersRoute = ProtectedMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
   getParentRoute: () => ProtectedRoute,
 } as any);
 const ProtectedDashboardRoute = ProtectedDashboardRouteImport.update({
@@ -166,9 +166,9 @@ export interface FileRoutesByFullPath {
   '/verify': typeof AuthVerifyRoute;
   '/admin': typeof ProtectedAdminRouteWithChildren;
   '/dashboard': typeof ProtectedDashboardRoute;
+  '/members': typeof ProtectedMembersRoute;
   '/projects': typeof ProtectedProjectsRoute;
   '/settings': typeof ProtectedSettingsRoute;
-  '/team': typeof ProtectedTeamRoute;
   '/verify-email-change/$email': typeof VerifyEmailChangeEmailRoute;
   '/account': typeof ProtectedAccountAccountRoute;
   '/billing': typeof ProtectedAccountBillingRoute;
@@ -190,9 +190,9 @@ export interface FileRoutesByTo {
   '/verify': typeof AuthVerifyRoute;
   '/admin': typeof ProtectedAdminRouteWithChildren;
   '/dashboard': typeof ProtectedDashboardRoute;
+  '/members': typeof ProtectedMembersRoute;
   '/projects': typeof ProtectedProjectsRoute;
   '/settings': typeof ProtectedSettingsRoute;
-  '/team': typeof ProtectedTeamRoute;
   '/verify-email-change/$email': typeof VerifyEmailChangeEmailRoute;
   '/account': typeof ProtectedAccountAccountRoute;
   '/billing': typeof ProtectedAccountBillingRoute;
@@ -216,9 +216,9 @@ export interface FileRoutesById {
   '/_auth/verify': typeof AuthVerifyRoute;
   '/_protected/admin': typeof ProtectedAdminRouteWithChildren;
   '/_protected/dashboard': typeof ProtectedDashboardRoute;
+  '/_protected/members': typeof ProtectedMembersRoute;
   '/_protected/projects': typeof ProtectedProjectsRoute;
   '/_protected/settings': typeof ProtectedSettingsRoute;
-  '/_protected/team': typeof ProtectedTeamRoute;
   '/verify-email-change/$email': typeof VerifyEmailChangeEmailRoute;
   '/_protected/_account/account': typeof ProtectedAccountAccountRoute;
   '/_protected/_account/billing': typeof ProtectedAccountBillingRoute;
@@ -242,9 +242,9 @@ export interface FileRouteTypes {
     | '/verify'
     | '/admin'
     | '/dashboard'
+    | '/members'
     | '/projects'
     | '/settings'
-    | '/team'
     | '/verify-email-change/$email'
     | '/account'
     | '/billing'
@@ -266,9 +266,9 @@ export interface FileRouteTypes {
     | '/verify'
     | '/admin'
     | '/dashboard'
+    | '/members'
     | '/projects'
     | '/settings'
-    | '/team'
     | '/verify-email-change/$email'
     | '/account'
     | '/billing'
@@ -291,9 +291,9 @@ export interface FileRouteTypes {
     | '/_auth/verify'
     | '/_protected/admin'
     | '/_protected/dashboard'
+    | '/_protected/members'
     | '/_protected/projects'
     | '/_protected/settings'
-    | '/_protected/team'
     | '/verify-email-change/$email'
     | '/_protected/_account/account'
     | '/_protected/_account/billing'
@@ -359,13 +359,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VerifyEmailChangeEmailRouteImport;
       parentRoute: typeof rootRouteImport;
     };
-    '/_protected/team': {
-      id: '/_protected/team';
-      path: '/team';
-      fullPath: '/team';
-      preLoaderRoute: typeof ProtectedTeamRouteImport;
-      parentRoute: typeof ProtectedRoute;
-    };
     '/_protected/settings': {
       id: '/_protected/settings';
       path: '/settings';
@@ -378,6 +371,13 @@ declare module '@tanstack/react-router' {
       path: '/projects';
       fullPath: '/projects';
       preLoaderRoute: typeof ProtectedProjectsRouteImport;
+      parentRoute: typeof ProtectedRoute;
+    };
+    '/_protected/members': {
+      id: '/_protected/members';
+      path: '/members';
+      fullPath: '/members';
+      preLoaderRoute: typeof ProtectedMembersRouteImport;
       parentRoute: typeof ProtectedRoute;
     };
     '/_protected/dashboard': {
@@ -536,9 +536,9 @@ const ProtectedAdminRouteWithChildren = ProtectedAdminRoute._addFileChildren(
 interface ProtectedRouteChildren {
   ProtectedAdminRoute: typeof ProtectedAdminRouteWithChildren;
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute;
+  ProtectedMembersRoute: typeof ProtectedMembersRoute;
   ProtectedProjectsRoute: typeof ProtectedProjectsRoute;
   ProtectedSettingsRoute: typeof ProtectedSettingsRoute;
-  ProtectedTeamRoute: typeof ProtectedTeamRoute;
   ProtectedAccountAccountRoute: typeof ProtectedAccountAccountRoute;
   ProtectedAccountBillingRoute: typeof ProtectedAccountBillingRoute;
   ProtectedAccountNotificationsRoute: typeof ProtectedAccountNotificationsRoute;
@@ -547,9 +547,9 @@ interface ProtectedRouteChildren {
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedAdminRoute: ProtectedAdminRouteWithChildren,
   ProtectedDashboardRoute: ProtectedDashboardRoute,
+  ProtectedMembersRoute: ProtectedMembersRoute,
   ProtectedProjectsRoute: ProtectedProjectsRoute,
   ProtectedSettingsRoute: ProtectedSettingsRoute,
-  ProtectedTeamRoute: ProtectedTeamRoute,
   ProtectedAccountAccountRoute: ProtectedAccountAccountRoute,
   ProtectedAccountBillingRoute: ProtectedAccountBillingRoute,
   ProtectedAccountNotificationsRoute: ProtectedAccountNotificationsRoute,
