@@ -2,12 +2,10 @@
 
 import * as React from 'react';
 import {
-  IconChartBar,
   IconDashboard,
   IconFolder,
   IconHelp,
   IconHome,
-  IconListDetails,
   IconSearch,
   IconSettings,
   IconStack2,
@@ -42,18 +40,12 @@ const data = {
     },
   ],
   navMain: [
-    { title: 'Dashboard', url: '/dashboard', icon: <IconDashboard /> },
-    { title: 'Lifecycle', url: '/lifecycle', icon: <IconListDetails /> },
-    { title: 'Analytics', url: '/analytics', icon: <IconChartBar /> },
     { title: 'Projects', url: '/projects', icon: <IconFolder /> },
     { title: 'Team', url: '/team', icon: <IconUsers /> },
+    { title: 'Settings', url: '/settings', icon: <IconSettings /> },
+    { title: 'Dashboard', url: '/dashboard', icon: <IconDashboard /> },
   ],
   navSecondary: [
-    {
-      title: 'Settings',
-      url: '#',
-      icon: <IconSettings />,
-    },
     {
       title: 'Search',
       url: '#',
