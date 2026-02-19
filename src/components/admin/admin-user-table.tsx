@@ -26,6 +26,7 @@ import {
   IconDotsVertical,
   IconLayoutColumns,
   IconUser,
+  IconX,
 } from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -80,6 +81,8 @@ interface AdminUserTableProps {
   filter: string;
   sorting: SortingState;
   onSearchChange: (search: string) => void;
+  onSearchSubmit: (search?: string) => void;
+  onSearchClear: () => void;
   onFilterChange: (filter: string) => void;
   onSortingChange: (sorting: SortingState) => void;
   onPageChange: (page: number) => void;
@@ -100,6 +103,8 @@ export function AdminUserTable({
   filter,
   sorting,
   onSearchChange,
+  onSearchSubmit,
+  onSearchClear,
   onFilterChange,
   onSortingChange,
   onPageChange,
@@ -113,6 +118,7 @@ export function AdminUserTable({
       banExpires: false,
       updatedAt: false,
     });
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   const columns = React.useMemo<Array<ColumnDef<UserRow>>>(
     () => [
@@ -345,13 +351,41 @@ export function AdminUserTable({
           <TabsTrigger value="banned">Banned</TabsTrigger>
         </TabsList>
         <div className="flex items-center gap-2">
-          <Input
-            placeholder="Search by email..."
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="h-8 w-40 sm:w-56 lg:w-72"
-            disabled={isLoading}
-          />
+          <div className="relative">
+            <Input
+              ref={searchInputRef}
+              placeholder="Search by email..."
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  onSearchSubmit(e.currentTarget.value);
+                }
+                if (e.key === 'Escape' && search.length > 0) {
+                  e.preventDefault();
+                  onSearchClear();
+                  requestAnimationFrame(() => searchInputRef.current?.focus());
+                }
+              }}
+              className="h-8 w-40 pr-8 sm:w-56 lg:w-72"
+            />
+            {search.length > 0 ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  onSearchClear();
+                  requestAnimationFrame(() => searchInputRef.current?.focus());
+                }}
+                className="text-muted-foreground hover:text-foreground absolute top-1/2 right-1 size-6 -translate-y-1/2"
+                aria-label="Clear search"
+              >
+                <IconX className="size-3.5" />
+              </Button>
+            ) : null}
+          </div>
           <ColumnVisibilityDropdown table={table} />
         </div>
       </div>

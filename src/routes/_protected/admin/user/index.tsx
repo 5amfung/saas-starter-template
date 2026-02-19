@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { SortingState } from '@tanstack/react-table';
 import { AdminUserTable } from '@/components/admin/admin-user-table';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ export const Route = createFileRoute('/_protected/admin/user/')({
 });
 
 const DEFAULT_PAGE_SIZE = 10;
-const SEARCH_DEBOUNCE_MS = 300;
+const SEARCH_DEBOUNCE_MS = 450;
 
 type FilterTab = 'all' | 'verified' | 'unverified' | 'banned';
 
@@ -49,6 +49,22 @@ function AdminUserListPage() {
   const [filter, setFilter] = React.useState('all');
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
+  const handleSearchSubmit = React.useCallback(
+    (value?: string) => {
+      const nextSearch = value ?? search;
+      setSearch(nextSearch);
+      setDebouncedSearch(nextSearch);
+      setPage(1);
+    },
+    [search],
+  );
+
+  const handleSearchClear = React.useCallback(() => {
+    setSearch('');
+    setDebouncedSearch('');
+    setPage(1);
+  }, []);
+
   // Debounce search input.
   React.useEffect(() => {
     const timer = setTimeout(
@@ -81,6 +97,7 @@ function AdminUserListPage() {
       sortBy,
       sortDirection,
     ],
+    placeholderData: keepPreviousData,
     queryFn: async () => {
       const filterParams = getFilterParams(filter as FilterTab);
       const { data, error } = await authClient.admin.listUsers({
@@ -141,11 +158,13 @@ function AdminUserListPage() {
         filter={filter}
         sorting={sorting}
         onSearchChange={setSearch}
+        onSearchSubmit={handleSearchSubmit}
+        onSearchClear={handleSearchClear}
         onFilterChange={setFilter}
         onSortingChange={setSorting}
         onPageChange={setPage}
         onPageSizeChange={setPageSize}
-        isLoading={usersQuery.isPending}
+        isLoading={usersQuery.isPending && !usersQuery.data}
       />
     </div>
   );

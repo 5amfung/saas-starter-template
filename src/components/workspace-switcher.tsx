@@ -1,5 +1,5 @@
-import * as React from "react";
-import { IconPlus, IconSelector } from "@tabler/icons-react";
+import * as React from 'react';
+import { IconPlus, IconSelector } from '@tabler/icons-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,13 +8,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar';
 
 export function WorkspaceSwitcher({
   workspaces,
