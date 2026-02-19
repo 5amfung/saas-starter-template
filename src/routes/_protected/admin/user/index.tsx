@@ -2,10 +2,7 @@ import * as React from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import type { SortingState } from '@tanstack/react-table';
-import {
-  AdminUserTable,
-  AdminUserTableSkeleton,
-} from '@/components/admin/admin-user-table';
+import { AdminUserTable } from '@/components/admin/admin-user-table';
 import { Button } from '@/components/ui/button';
 import { authClient } from '@/auth/auth-client';
 
@@ -113,15 +110,7 @@ function AdminUserListPage() {
     },
   });
 
-  if (usersQuery.isPending) {
-    return (
-      <div className="flex flex-col gap-4 px-4 py-4 md:py-6 lg:px-6">
-        <AdminUserTableSkeleton />
-      </div>
-    );
-  }
-
-  if (usersQuery.isError) {
+  if (usersQuery.isError && !usersQuery.data) {
     return (
       <div className="flex flex-col items-center gap-2 py-12">
         <p className="text-destructive text-sm">Failed to load users.</p>
@@ -136,10 +125,12 @@ function AdminUserListPage() {
     );
   }
 
-  const { users, total, totalPages } = usersQuery.data;
+  const users = usersQuery.data?.users ?? [];
+  const total = usersQuery.data?.total ?? 0;
+  const totalPages = usersQuery.data?.totalPages ?? 1;
 
   return (
-    <div className="flex flex-col gap-4 px-4 py-4 md:py-6 lg:px-6">
+    <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
       <AdminUserTable
         data={users}
         total={total}
@@ -154,6 +145,7 @@ function AdminUserListPage() {
         onSortingChange={setSorting}
         onPageChange={setPage}
         onPageSizeChange={setPageSize}
+        isLoading={usersQuery.isPending}
       />
     </div>
   );

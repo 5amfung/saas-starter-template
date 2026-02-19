@@ -17,8 +17,14 @@ import {
   IconArrowsSort,
   IconBan,
   IconBolt,
+  IconChevronDown,
+  IconChevronLeft,
+  IconChevronRight,
+  IconChevronsLeft,
+  IconChevronsRight,
   IconCircleCheckFilled,
   IconDotsVertical,
+  IconLayoutColumns,
   IconUser,
 } from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +37,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -77,9 +84,11 @@ interface AdminUserTableProps {
   onSortingChange: (sorting: SortingState) => void;
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
+  isLoading?: boolean;
 }
 
 const PAGE_SIZE_OPTIONS = ['10', '50', '100'];
+const MAX_SKELETON_ROWS = 10;
 
 export function AdminUserTable({
   data,
@@ -95,6 +104,7 @@ export function AdminUserTable({
   onSortingChange,
   onPageChange,
   onPageSizeChange,
+  isLoading = false,
 }: AdminUserTableProps) {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({
@@ -129,6 +139,7 @@ export function AdminUserTable({
           </Link>
         ),
         enableHiding: true,
+        enableSorting: true,
       },
       {
         accessorKey: 'email',
@@ -145,6 +156,7 @@ export function AdminUserTable({
           </Link>
         ),
         enableHiding: false,
+        enableSorting: true,
       },
       {
         accessorKey: 'emailVerified',
@@ -157,6 +169,7 @@ export function AdminUserTable({
             </Badge>
           ) : null,
         enableHiding: true,
+        enableSorting: false,
       },
       {
         accessorKey: 'role',
@@ -170,6 +183,7 @@ export function AdminUserTable({
             </Badge>
           ) : null,
         enableHiding: true,
+        enableSorting: false,
       },
       {
         accessorKey: 'banned',
@@ -182,6 +196,7 @@ export function AdminUserTable({
             </Badge>
           ) : null,
         enableHiding: true,
+        enableSorting: false,
       },
       {
         accessorKey: 'banReason',
@@ -192,6 +207,7 @@ export function AdminUserTable({
           </span>
         ),
         enableHiding: true,
+        enableSorting: false,
       },
       {
         accessorKey: 'banExpires',
@@ -201,6 +217,7 @@ export function AdminUserTable({
             ? new Date(row.original.banExpires).toLocaleDateString()
             : null,
         enableHiding: true,
+        enableSorting: false,
       },
       {
         accessorKey: 'createdAt',
@@ -209,6 +226,7 @@ export function AdminUserTable({
         ),
         cell: ({ row }) => formatDate(row.original.createdAt),
         enableHiding: true,
+        enableSorting: true,
       },
       {
         accessorKey: 'updatedAt',
@@ -217,18 +235,26 @@ export function AdminUserTable({
         ),
         cell: ({ row }) => formatDate(row.original.updatedAt),
         enableHiding: true,
+        enableSorting: true,
       },
       {
         id: 'actions',
+        enableHiding: false,
+        enableSorting: false,
         cell: ({ row }) => (
           <DropdownMenu>
             <DropdownMenuTrigger
-              render={
-                <Button variant="ghost" size="icon-xs">
+              render={(props) => (
+                <Button
+                  {...props}
+                  variant="ghost"
+                  className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
+                  size="icon"
+                >
                   <IconDotsVertical className="size-4" />
                   <span className="sr-only">Actions</span>
                 </Button>
-              }
+              )}
             />
             <DropdownMenuContent align="end">
               <DropdownMenuItem
@@ -259,6 +285,9 @@ export function AdminUserTable({
     manualPagination: true,
     pageCount: totalPages,
   });
+  const totalPagesSafe = Math.max(totalPages, 1);
+  const visibleColumnCount = table.getVisibleLeafColumns().length;
+  const skeletonRowCount = Math.min(pageSize, MAX_SKELETON_ROWS);
 
   // Map internal sorting state to parent handler.
   const handleHeaderSort = React.useCallback(
@@ -279,166 +308,212 @@ export function AdminUserTable({
   );
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Filter tabs. */}
-      <Tabs value={filter} onValueChange={onFilterChange}>
-        <TabsList variant="line">
+    <Tabs
+      value={filter}
+      onValueChange={onFilterChange}
+      className="w-full flex-col justify-start gap-6"
+    >
+      <div className="flex items-center justify-between px-4 lg:px-6">
+        <Label htmlFor="admin-user-filter-selector" className="sr-only">
+          User filter
+        </Label>
+        <Select
+          value={filter}
+          onValueChange={(value) => {
+            if (!value) return;
+            onFilterChange(value);
+          }}
+        >
+          <SelectTrigger
+            className="flex w-fit @4xl/main:hidden"
+            size="sm"
+            id="admin-user-filter-selector"
+          >
+            <SelectValue placeholder="Select filter" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="verified">Verified</SelectItem>
+            <SelectItem value="unverified">Unverified</SelectItem>
+            <SelectItem value="banned">Banned</SelectItem>
+          </SelectContent>
+        </Select>
+        <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="verified">Verified</TabsTrigger>
           <TabsTrigger value="unverified">Unverified</TabsTrigger>
           <TabsTrigger value="banned">Banned</TabsTrigger>
         </TabsList>
-      </Tabs>
-
-      {/* Search + column visibility. */}
-      <div className="flex items-center gap-2">
-        <Input
-          placeholder="Search by email…"
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="max-w-sm"
-        />
-        <ColumnVisibilityDropdown table={table} />
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder="Search by email..."
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="h-8 w-40 sm:w-56 lg:w-72"
+            disabled={isLoading}
+          />
+          <ColumnVisibilityDropdown table={table} />
+        </div>
       </div>
 
-      {/* Table. */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    onClick={
-                      header.column.getCanSort()
-                        ? () => handleHeaderSort(header.id)
-                        : undefined
-                    }
-                    className={
-                      header.column.getCanSort()
-                        ? 'cursor-pointer select-none'
-                        : undefined
-                    }
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
+      <div className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6">
+        <div className="overflow-hidden rounded-lg border">
+          <Table>
+            <TableHeader className="bg-muted sticky top-0 z-10">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead
+                      key={header.id}
+                      onClick={
+                        header.column.getCanSort()
+                          ? () => handleHeaderSort(header.id)
+                          : undefined
+                      }
+                      className={
+                        header.column.getCanSort()
+                          ? 'cursor-pointer select-none'
+                          : undefined
+                      }
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  {search || filter !== 'all'
-                    ? 'No results. Clear filters.'
-                    : 'No users found.'}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination. */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-muted-foreground text-sm">
-          {total} user{total !== 1 ? 's' : ''} total
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm">Rows per page</span>
-          <Select
-            value={String(pageSize)}
-            onValueChange={(v) => onPageSizeChange(Number(v))}
-          >
-            <SelectTrigger className="w-18" size="sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PAGE_SIZE_OPTIONS.map((opt) => (
-                <SelectItem key={opt} value={opt}>
-                  {opt}
-                </SelectItem>
               ))}
-            </SelectContent>
-          </Select>
-          <span className="text-sm">
-            Page {page} of {totalPages || 1}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page <= 1}
-            onClick={() => onPageChange(page - 1)}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page >= totalPages}
-            onClick={() => onPageChange(page + 1)}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function AdminUserTableSkeleton() {
-  return (
-    <div className="flex flex-col gap-4">
-      <Skeleton className="h-9 w-72" />
-      <Skeleton className="h-9 w-64" />
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {Array.from({ length: 6 }).map((_, i) => (
-                <TableHead key={i}>
-                  <Skeleton className="h-4 w-16" />
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Array.from({ length: 5 }).map((_, rowIdx) => (
-              <TableRow key={rowIdx}>
-                {Array.from({ length: 6 }).map((__, colIdx) => (
-                  <TableCell key={colIdx}>
-                    <Skeleton className="h-4 w-24" />
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                Array.from({ length: skeletonRowCount }).map((_, rowIdx) => (
+                  <TableRow key={`loading-row-${rowIdx}`}>
+                    {Array.from({ length: visibleColumnCount }).map(
+                      (__, colIdx) => (
+                        <TableCell key={`loading-cell-${rowIdx}-${colIdx}`}>
+                          <Skeleton className="h-4 w-24" />
+                        </TableCell>
+                      ),
+                    )}
+                  </TableRow>
+                ))
+              ) : table.getRowModel().rows.length > 0 ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    {search || filter !== 'all'
+                      ? 'No results. Clear filters.'
+                      : 'No users found.'}
                   </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        <div className="flex items-center justify-between px-4">
+          <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
+            {isLoading ? (
+              <Skeleton className="h-4 w-24" />
+            ) : (
+              `${total} user${total !== 1 ? 's' : ''} total`
+            )}
+          </div>
+          <div className="flex w-full items-center gap-8 lg:w-fit">
+            <div className="hidden items-center gap-2 lg:flex">
+              <Label htmlFor="rows-per-page" className="text-sm font-medium">
+                Rows per page
+              </Label>
+              <Select
+                value={String(pageSize)}
+                onValueChange={(value) => {
+                  if (!value) return;
+                  onPageSizeChange(Number(value));
+                }}
+                disabled={isLoading}
+              >
+                <SelectTrigger size="sm" className="w-20" id="rows-per-page">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {PAGE_SIZE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt} value={opt}>
+                      {opt}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex w-fit items-center justify-center text-sm font-medium">
+              {isLoading ? (
+                <Skeleton className="h-4 w-24" />
+              ) : (
+                `Page ${page} of ${totalPagesSafe}`
+              )}
+            </div>
+            <div className="ml-auto flex items-center gap-2 lg:ml-0">
+              <Button
+                variant="outline"
+                className="hidden h-8 w-8 p-0 lg:flex"
+                onClick={() => onPageChange(1)}
+                disabled={isLoading || page <= 1}
+              >
+                <span className="sr-only">Go to first page</span>
+                <IconChevronsLeft className="size-4" />
+              </Button>
+              <Button
+                variant="outline"
+                className="size-8"
+                size="icon"
+                disabled={isLoading || page <= 1}
+                onClick={() => onPageChange(page - 1)}
+              >
+                <span className="sr-only">Go to previous page</span>
+                <IconChevronLeft className="size-4" />
+              </Button>
+              <Button
+                variant="outline"
+                className="size-8"
+                size="icon"
+                disabled={isLoading || page >= totalPagesSafe}
+                onClick={() => onPageChange(page + 1)}
+              >
+                <span className="sr-only">Go to next page</span>
+                <IconChevronRight className="size-4" />
+              </Button>
+              <Button
+                variant="outline"
+                className="hidden size-8 lg:flex"
+                size="icon"
+                disabled={isLoading || page >= totalPagesSafe}
+                onClick={() => onPageChange(totalPagesSafe)}
+              >
+                <span className="sr-only">Go to last page</span>
+                <IconChevronsRight className="size-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </Tabs>
   );
 }
 
@@ -476,18 +551,22 @@ function ColumnVisibilityDropdown({ table }: { table: ReactTable<UserRow> }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={
-          <Button variant="outline" size="sm">
-            Columns
+        render={(props) => (
+          <Button {...props} variant="outline" size="sm">
+            <IconLayoutColumns />
+            <span className="hidden lg:inline">Customize Columns</span>
+            <span className="lg:hidden">Columns</span>
+            <IconChevronDown />
           </Button>
-        }
+        )}
       />
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="w-56">
         {toggleableColumns.map((column) => (
           <DropdownMenuCheckboxItem
             key={column.id}
+            className="capitalize"
             checked={column.getIsVisible()}
-            onClick={() => column.toggleVisibility()}
+            onCheckedChange={(value) => column.toggleVisibility(!!value)}
           >
             {column.id}
           </DropdownMenuCheckboxItem>
