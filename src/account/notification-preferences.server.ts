@@ -28,10 +28,10 @@ export async function getNotificationPreferencesForUser(
 ): Promise<NotificationPreferences> {
   const row = (
     await db
-    .select({ marketingEmails: notificationPreferences.marketingEmails })
-    .from(notificationPreferences)
-    .where(eq(notificationPreferences.userId, userId))
-    .limit(1)
+      .select({ marketingEmails: notificationPreferences.marketingEmails })
+      .from(notificationPreferences)
+      .where(eq(notificationPreferences.userId, userId))
+      .limit(1)
   ).at(0);
 
   return {

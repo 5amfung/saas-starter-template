@@ -29,7 +29,10 @@ import {
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSessionQuery } from '@/hooks/use-session-query';
-import { SESSIONS_QUERY_KEY, useSessionsQuery } from '@/hooks/use-sessions-query';
+import {
+  SESSIONS_QUERY_KEY,
+  useSessionsQuery,
+} from '@/hooks/use-sessions-query';
 
 interface SessionItem {
   id: string;
@@ -76,7 +79,8 @@ function getBrowserFamily(userAgent?: string | null) {
   if (/firefox\//i.test(userAgent)) return 'Firefox';
   if (/opr\/|opera/i.test(userAgent)) return 'Opera';
   if (/chrome\//i.test(userAgent) && !/edg\//i.test(userAgent)) return 'Chrome';
-  if (/safari\//i.test(userAgent) && !/chrome\//i.test(userAgent)) return 'Safari';
+  if (/safari\//i.test(userAgent) && !/chrome\//i.test(userAgent))
+    return 'Safari';
   return 'Unknown browser';
 }
 
@@ -84,9 +88,8 @@ export function ActiveSessionsList() {
   const queryClient = useQueryClient();
   const { data: currentSessionData } = useSessionQuery();
   const { data: sessions, isPending, error, refetch } = useSessionsQuery();
-  const [selectedSession, setSelectedSession] = React.useState<SessionItem | null>(
-    null,
-  );
+  const [selectedSession, setSelectedSession] =
+    React.useState<SessionItem | null>(null);
 
   const revokeSessionMutation = useMutation({
     mutationFn: async (token: string) => {
@@ -109,7 +112,8 @@ export function ActiveSessionsList() {
     const safeSessions = (sessions ?? []) as Array<SessionItem>;
     return [...safeSessions].sort(
       (firstSession, secondSession) =>
-        toTimestamp(secondSession.updatedAt) - toTimestamp(firstSession.updatedAt),
+        toTimestamp(secondSession.updatedAt) -
+        toTimestamp(firstSession.updatedAt),
     );
   }, [sessions]);
 
@@ -150,7 +154,9 @@ export function ActiveSessionsList() {
           )}
 
           {!isPending && !error && sortedSessions.length === 0 && (
-            <p className="text-muted-foreground text-sm">No active sessions found.</p>
+            <p className="text-muted-foreground text-sm">
+              No active sessions found.
+            </p>
           )}
 
           {!isPending &&

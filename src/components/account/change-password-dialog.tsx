@@ -15,7 +15,12 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { authClient } from '@/auth/auth-client';
 import { changePasswordSchema } from '@/account/schemas';
@@ -25,7 +30,10 @@ export function ChangePasswordDialog() {
   const [open, setOpen] = React.useState(false);
 
   const mutation = useMutation({
-    mutationFn: async (payload: { currentPassword: string; newPassword: string }) => {
+    mutationFn: async (payload: {
+      currentPassword: string;
+      newPassword: string;
+    }) => {
       const { error } = await authClient.changePassword({
         currentPassword: payload.currentPassword,
         newPassword: payload.newPassword,
@@ -105,7 +113,9 @@ export function ChangePasswordDialog() {
                   field.state.meta.isBlurred && !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid || undefined}>
-                    <FieldLabel htmlFor={field.name}>Current password</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>
+                      Current password
+                    </FieldLabel>
                     <Input
                       id={field.name}
                       type="password"
@@ -157,7 +167,9 @@ export function ChangePasswordDialog() {
                   field.state.meta.isBlurred && !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid || undefined}>
-                    <FieldLabel htmlFor={field.name}>Confirm password</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>
+                      Confirm password
+                    </FieldLabel>
                     <Input
                       id={field.name}
                       type="password"
@@ -179,7 +191,9 @@ export function ChangePasswordDialog() {
         </form>
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={mutation.isPending}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={mutation.isPending}>
+            Cancel
+          </AlertDialogCancel>
           <form.Subscribe
             selector={(state) => [state.canSubmit, state.isSubmitting]}
             children={([canSubmit, isSubmitting]) => (
