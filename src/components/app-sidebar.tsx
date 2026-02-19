@@ -41,7 +41,7 @@ const data = {
   ],
   navMain: [
     { title: 'Projects', url: '/projects', icon: <IconFolder /> },
-    { title: 'Team', url: '/team', icon: <IconUsers /> },
+    { title: 'Members', url: '/members', icon: <IconUsers /> },
     { title: 'Settings', url: '/settings', icon: <IconSettings /> },
     { title: 'Dashboard', url: '/dashboard', icon: <IconDashboard /> },
   ],
