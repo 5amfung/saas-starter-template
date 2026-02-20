@@ -22,6 +22,7 @@ import { Route as AuthSignupRouteImport } from './routes/_auth/signup';
 import { Route as AuthSigninRouteImport } from './routes/_auth/signin';
 import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-password';
 import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-password';
+import { Route as ProtectedWsIndexRouteImport } from './routes/_protected/ws/index';
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$';
 import { Route as ProtectedWsWorkspaceIdRouteImport } from './routes/_protected/ws/$workspaceId';
 import { Route as ProtectedAdminUserRouteImport } from './routes/_protected/admin/user';
@@ -98,6 +99,11 @@ const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
   getParentRoute: () => AuthRoute,
+} as any);
+const ProtectedWsIndexRoute = ProtectedWsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProtectedWsRoute,
 } as any);
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
@@ -190,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/admin/user': typeof ProtectedAdminUserRouteWithChildren;
   '/ws/$workspaceId': typeof ProtectedWsWorkspaceIdRouteWithChildren;
   '/api/auth/$': typeof ApiAuthSplatRoute;
+  '/ws/': typeof ProtectedWsIndexRoute;
   '/admin/user/$userId': typeof ProtectedAdminUserUserIdRoute;
   '/ws/$workspaceId/dashboard': typeof ProtectedWsWorkspaceIdDashboardRoute;
   '/ws/$workspaceId/members': typeof ProtectedWsWorkspaceIdMembersRoute;
@@ -207,7 +214,6 @@ export interface FileRoutesByTo {
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
   '/admin': typeof ProtectedAdminRouteWithChildren;
-  '/ws': typeof ProtectedWsRouteWithChildren;
   '/verify-email-change/$email': typeof VerifyEmailChangeEmailRoute;
   '/account': typeof ProtectedAccountAccountRoute;
   '/billing': typeof ProtectedAccountBillingRoute;
@@ -215,6 +221,7 @@ export interface FileRoutesByTo {
   '/admin/dashboard': typeof ProtectedAdminDashboardRoute;
   '/ws/$workspaceId': typeof ProtectedWsWorkspaceIdRouteWithChildren;
   '/api/auth/$': typeof ApiAuthSplatRoute;
+  '/ws': typeof ProtectedWsIndexRoute;
   '/admin/user/$userId': typeof ProtectedAdminUserUserIdRoute;
   '/ws/$workspaceId/dashboard': typeof ProtectedWsWorkspaceIdDashboardRoute;
   '/ws/$workspaceId/members': typeof ProtectedWsWorkspaceIdMembersRoute;
@@ -244,6 +251,7 @@ export interface FileRoutesById {
   '/_protected/admin/user': typeof ProtectedAdminUserRouteWithChildren;
   '/_protected/ws/$workspaceId': typeof ProtectedWsWorkspaceIdRouteWithChildren;
   '/api/auth/$': typeof ApiAuthSplatRoute;
+  '/_protected/ws/': typeof ProtectedWsIndexRoute;
   '/_protected/admin/user/$userId': typeof ProtectedAdminUserUserIdRoute;
   '/_protected/ws/$workspaceId/dashboard': typeof ProtectedWsWorkspaceIdDashboardRoute;
   '/_protected/ws/$workspaceId/members': typeof ProtectedWsWorkspaceIdMembersRoute;
@@ -272,6 +280,7 @@ export interface FileRouteTypes {
     | '/admin/user'
     | '/ws/$workspaceId'
     | '/api/auth/$'
+    | '/ws/'
     | '/admin/user/$userId'
     | '/ws/$workspaceId/dashboard'
     | '/ws/$workspaceId/members'
@@ -289,7 +298,6 @@ export interface FileRouteTypes {
     | '/signup'
     | '/verify'
     | '/admin'
-    | '/ws'
     | '/verify-email-change/$email'
     | '/account'
     | '/billing'
@@ -297,6 +305,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/ws/$workspaceId'
     | '/api/auth/$'
+    | '/ws'
     | '/admin/user/$userId'
     | '/ws/$workspaceId/dashboard'
     | '/ws/$workspaceId/members'
@@ -325,6 +334,7 @@ export interface FileRouteTypes {
     | '/_protected/admin/user'
     | '/_protected/ws/$workspaceId'
     | '/api/auth/$'
+    | '/_protected/ws/'
     | '/_protected/admin/user/$userId'
     | '/_protected/ws/$workspaceId/dashboard'
     | '/_protected/ws/$workspaceId/members'
@@ -435,6 +445,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/forgot-password';
       preLoaderRoute: typeof AuthForgotPasswordRouteImport;
       parentRoute: typeof AuthRoute;
+    };
+    '/_protected/ws/': {
+      id: '/_protected/ws/';
+      path: '/';
+      fullPath: '/ws/';
+      preLoaderRoute: typeof ProtectedWsIndexRouteImport;
+      parentRoute: typeof ProtectedWsRoute;
     };
     '/api/auth/$': {
       id: '/api/auth/$';
@@ -597,10 +614,12 @@ const ProtectedWsWorkspaceIdRouteWithChildren =
 
 interface ProtectedWsRouteChildren {
   ProtectedWsWorkspaceIdRoute: typeof ProtectedWsWorkspaceIdRouteWithChildren;
+  ProtectedWsIndexRoute: typeof ProtectedWsIndexRoute;
 }
 
 const ProtectedWsRouteChildren: ProtectedWsRouteChildren = {
   ProtectedWsWorkspaceIdRoute: ProtectedWsWorkspaceIdRouteWithChildren,
+  ProtectedWsIndexRoute: ProtectedWsIndexRoute,
 };
 
 const ProtectedWsRouteWithChildren = ProtectedWsRoute._addFileChildren(
