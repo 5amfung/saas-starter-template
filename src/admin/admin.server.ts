@@ -15,7 +15,7 @@ export async function requireAdmin() {
     throw redirect({ to: '/signin' });
   }
   if (session.user.role !== 'admin') {
-    throw redirect({ to: '/dashboard' });
+    throw redirect({ to: '/ws' });
   }
   return session;
 }

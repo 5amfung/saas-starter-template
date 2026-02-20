@@ -40,7 +40,7 @@ export function SignupForm() {
         email: value.email,
         password: value.password,
         name: value.email.split('@')[0] ?? '',
-        callbackURL: '/dashboard',
+        callbackURL: '/ws',
       });
       if (error) {
         const message = error.message ?? 'Something went wrong.';

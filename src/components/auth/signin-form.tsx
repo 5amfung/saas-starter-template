@@ -39,7 +39,7 @@ export function SigninForm() {
       const { error } = await authClient.signIn.email({
         email: value.email,
         password: value.password,
-        callbackURL: '/dashboard',
+        callbackURL: '/ws',
       });
       if (error) {
         if (error.status === 403) {

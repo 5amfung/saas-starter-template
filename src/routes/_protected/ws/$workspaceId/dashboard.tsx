@@ -2,14 +2,14 @@ import { createFileRoute } from '@tanstack/react-router';
 import { ChartAreaInteractive } from '@/components/chart-area-interactive';
 import { DataTable } from '@/components/data-table';
 import { SectionCards } from '@/components/section-cards';
-import data from './data.json';
+import data from '../../data.json';
 
-export const Route = createFileRoute('/_protected/dashboard')({
-  component: DashboardPage,
+export const Route = createFileRoute('/_protected/ws/$workspaceId/dashboard')({
+  component: WorkspaceDashboardPage,
   staticData: { title: 'Dashboard' },
 });
 
-function DashboardPage() {
+function WorkspaceDashboardPage() {
   return (
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
       <SectionCards />

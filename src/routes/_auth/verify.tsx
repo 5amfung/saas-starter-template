@@ -39,7 +39,7 @@ function VerifyPage() {
     try {
       const { error } = await authClient.sendVerificationEmail({
         email,
-        callbackURL: '/dashboard',
+        callbackURL: '/ws',
       });
       if (error) {
         toast.error(error.message ?? 'Failed to resend verification email.');

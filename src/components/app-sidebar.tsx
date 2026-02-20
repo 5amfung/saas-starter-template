@@ -25,26 +25,6 @@ import {
 } from '@/components/ui/sidebar';
 
 const data = {
-  workspaces: [
-    {
-      name: 'Acme Inc',
-      logo: <IconStack2 className="size-4" />,
-    },
-    {
-      name: 'Acme Corp.',
-      logo: <IconStack2 className="size-4" />,
-    },
-    {
-      name: 'Evil Corp.',
-      logo: <IconStack2 className="size-4" />,
-    },
-  ],
-  navMain: [
-    { title: 'Projects', url: '/projects', icon: <IconFolder /> },
-    { title: 'Members', url: '/members', icon: <IconUsers /> },
-    { title: 'Settings', url: '/settings', icon: <IconSettings /> },
-    { title: 'Dashboard', url: '/dashboard', icon: <IconDashboard /> },
-  ],
   navSecondary: [
     {
       title: 'Search',
@@ -71,6 +51,43 @@ const data = {
 };
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session, isPending } = authClient.useSession();
+  const { data: organizationsData } = authClient.useListOrganizations();
+  const { data: activeOrganization } = authClient.useActiveOrganization();
+  const organizations = organizationsData ?? [];
+
+  const activeWorkspaceId =
+    activeOrganization?.id ?? organizations.at(0)?.id ?? null;
+
+  const navMain = activeWorkspaceId
+    ? [
+        {
+          title: 'Projects',
+          url: `/ws/${activeWorkspaceId}/projects`,
+          icon: <IconFolder />,
+        },
+        {
+          title: 'Members',
+          url: `/ws/${activeWorkspaceId}/members`,
+          icon: <IconUsers />,
+        },
+        {
+          title: 'Settings',
+          url: `/ws/${activeWorkspaceId}/settings`,
+          icon: <IconSettings />,
+        },
+        {
+          title: 'Dashboard',
+          url: `/ws/${activeWorkspaceId}/dashboard`,
+          icon: <IconDashboard />,
+        },
+      ]
+    : [];
+
+  const workspaces = organizations.map((organization) => ({
+    id: organization.id,
+    name: organization.name,
+    logo: <IconStack2 className="size-4" />,
+  }));
 
   const user = session?.user
     ? {
@@ -83,10 +100,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
-        <WorkspaceSwitcher workspaces={data.workspaces} />
+        <WorkspaceSwitcher
+          workspaces={workspaces}
+          activeWorkspaceId={activeWorkspaceId}
+        />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navMain} />
         {session?.user.role === 'admin' && <NavAdmin items={data.navAdmin} />}
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>

@@ -19,7 +19,7 @@ function AuthPage() {
 
   useEffect(() => {
     if (!isPending && isAuthenticated) {
-      navigate({ to: '/dashboard' });
+      navigate({ to: '/ws' });
     }
   }, [isAuthenticated, isPending, navigate]);
 
