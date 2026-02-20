@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { Link, createFileRoute, notFound } from '@tanstack/react-router';
-import { IconArrowLeft, IconLoader2 } from '@tabler/icons-react';
+import { createFileRoute, notFound } from '@tanstack/react-router';
+import { IconLoader2 } from '@tabler/icons-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { authClient } from '@/auth/auth-client';
@@ -20,10 +20,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { toFieldErrorItem } from '@/lib/form-utils';
-import {
-  isPersonalWorkspace,
-  normalizeWorkspaceMetadata,
-} from '@/workspace/workspace';
+import { isPersonalWorkspace } from '@/workspace/workspace';
 
 const workspaceSettingsSchema = z.object({
   name: z.string().trim().min(1, 'Workspace name is required.'),
@@ -60,21 +57,6 @@ export const Route = createFileRoute('/_protected/ws/$workspaceId/settings')({
   staticData: { title: 'Workspace Settings' },
 });
 
-function BackToDashboardButton() {
-  const { workspaceId } = Route.useParams();
-  return (
-    <Button
-      nativeButton={false}
-      variant="ghost"
-      size="sm"
-      render={<Link to="/ws/$workspaceId/dashboard" params={{ workspaceId }} />}
-    >
-      <IconArrowLeft className="size-4" />
-      Back
-    </Button>
-  );
-}
-
 function WorkspaceSettingsPage() {
   const { workspaceId } = Route.useParams();
   const { data: organizationsData } = authClient.useListOrganizations();
@@ -102,7 +84,6 @@ function WorkspaceSettingsPage() {
     };
   }, [workspaceId]);
 
-  const normalizedMetadata = normalizeWorkspaceMetadata(workspace.metadata);
   const isPersonal = isPersonalWorkspace(workspace.metadata);
   const isOwner = hasOwnerRole(activeRole);
   const canDelete = isOwner && !isPersonal;
@@ -164,9 +145,6 @@ function WorkspaceSettingsPage() {
 
   return (
     <div className={PAGE_LAYOUT_CLASS}>
-      <div className="self-start">
-        <BackToDashboardButton />
-      </div>
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -176,7 +154,9 @@ function WorkspaceSettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Workspace</CardTitle>
-            <CardDescription>Manage workspace settings and metadata.</CardDescription>
+            <CardDescription>
+              Manage workspace settings and metadata.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <FieldGroup>
@@ -187,12 +167,16 @@ function WorkspaceSettingsPage() {
                     field.state.meta.isBlurred && !field.state.meta.isValid;
                   return (
                     <Field data-invalid={isInvalid || undefined}>
-                      <FieldLabel htmlFor={field.name}>Workspace Name</FieldLabel>
+                      <FieldLabel htmlFor={field.name}>
+                        Workspace Name
+                      </FieldLabel>
                       <Input
                         id={field.name}
                         value={field.state.value}
                         onBlur={field.handleBlur}
-                        onChange={(event) => field.handleChange(event.target.value)}
+                        onChange={(event) =>
+                          field.handleChange(event.target.value)
+                        }
                         aria-invalid={isInvalid}
                       />
                       {isInvalid ? (
@@ -204,20 +188,15 @@ function WorkspaceSettingsPage() {
                   );
                 }}
               />
-              <Field>
-                <FieldLabel htmlFor="workspace-type">Workspace Type</FieldLabel>
-                <Input
-                  id="workspace-type"
-                  value={normalizedMetadata.workspaceType ?? 'standard'}
-                  readOnly
-                  className="bg-muted text-sm"
-                />
-              </Field>
             </FieldGroup>
           </CardContent>
           <CardFooter className="flex justify-end gap-2">
             <form.Subscribe
-              selector={(state) => [state.isDirty, state.isSubmitting, state.canSubmit]}
+              selector={(state) => [
+                state.isDirty,
+                state.isSubmitting,
+                state.canSubmit,
+              ]}
               children={([isDirty, isSubmitting, canSubmit]) => (
                 <>
                   <Button
@@ -232,7 +211,9 @@ function WorkspaceSettingsPage() {
                     type="submit"
                     disabled={!isDirty || !canSubmit || isSubmitting}
                   >
-                    {isSubmitting && <IconLoader2 className="size-4 animate-spin" />}
+                    {isSubmitting && (
+                      <IconLoader2 className="size-4 animate-spin" />
+                    )}
                     Save
                   </Button>
                 </>
