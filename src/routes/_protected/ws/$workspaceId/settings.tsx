@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { createFileRoute, notFound } from '@tanstack/react-router';
+import { createFileRoute, getRouteApi } from '@tanstack/react-router';
 import { IconLoader2 } from '@tabler/icons-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -50,15 +50,12 @@ export const Route = createFileRoute('/_protected/ws/$workspaceId/settings')({
   staticData: { title: 'Workspace Settings' },
 });
 
+const workspaceRouteApi = getRouteApi('/_protected/ws/$workspaceId');
+
 function WorkspaceSettingsPage() {
   const { workspaceId } = Route.useParams();
-  const { data: organizations } = authClient.useListOrganizations();
+  const workspace = workspaceRouteApi.useLoaderData();
   const { data: activeOrganization } = authClient.useActiveOrganization();
-
-  const workspace = organizations?.find(
-    (candidate) => candidate.id === workspaceId,
-  );
-  if (!workspace) throw notFound();
 
   const [activeRole, setActiveRole] = React.useState<string | null>(null);
 
