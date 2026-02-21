@@ -33,8 +33,8 @@ import { Route as ProtectedAccountAccountRouteImport } from './routes/_protected
 import { Route as ProtectedAdminUserIndexRouteImport } from './routes/_protected/admin/user/index';
 import { Route as ProtectedWsWorkspaceIdSettingsRouteImport } from './routes/_protected/ws/$workspaceId/settings';
 import { Route as ProtectedWsWorkspaceIdProjectsRouteImport } from './routes/_protected/ws/$workspaceId/projects';
+import { Route as ProtectedWsWorkspaceIdOverviewRouteImport } from './routes/_protected/ws/$workspaceId/overview';
 import { Route as ProtectedWsWorkspaceIdMembersRouteImport } from './routes/_protected/ws/$workspaceId/members';
-import { Route as ProtectedWsWorkspaceIdDashboardRouteImport } from './routes/_protected/ws/$workspaceId/dashboard';
 import { Route as ProtectedAdminUserUserIdRouteImport } from './routes/_protected/admin/user/$userId';
 
 const PingRoute = PingRouteImport.update({
@@ -158,16 +158,16 @@ const ProtectedWsWorkspaceIdProjectsRoute =
     path: '/projects',
     getParentRoute: () => ProtectedWsWorkspaceIdRoute,
   } as any);
+const ProtectedWsWorkspaceIdOverviewRoute =
+  ProtectedWsWorkspaceIdOverviewRouteImport.update({
+    id: '/overview',
+    path: '/overview',
+    getParentRoute: () => ProtectedWsWorkspaceIdRoute,
+  } as any);
 const ProtectedWsWorkspaceIdMembersRoute =
   ProtectedWsWorkspaceIdMembersRouteImport.update({
     id: '/members',
     path: '/members',
-    getParentRoute: () => ProtectedWsWorkspaceIdRoute,
-  } as any);
-const ProtectedWsWorkspaceIdDashboardRoute =
-  ProtectedWsWorkspaceIdDashboardRouteImport.update({
-    id: '/dashboard',
-    path: '/dashboard',
     getParentRoute: () => ProtectedWsWorkspaceIdRoute,
   } as any);
 const ProtectedAdminUserUserIdRoute =
@@ -198,8 +198,8 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute;
   '/ws/': typeof ProtectedWsIndexRoute;
   '/admin/user/$userId': typeof ProtectedAdminUserUserIdRoute;
-  '/ws/$workspaceId/dashboard': typeof ProtectedWsWorkspaceIdDashboardRoute;
   '/ws/$workspaceId/members': typeof ProtectedWsWorkspaceIdMembersRoute;
+  '/ws/$workspaceId/overview': typeof ProtectedWsWorkspaceIdOverviewRoute;
   '/ws/$workspaceId/projects': typeof ProtectedWsWorkspaceIdProjectsRoute;
   '/ws/$workspaceId/settings': typeof ProtectedWsWorkspaceIdSettingsRoute;
   '/admin/user/': typeof ProtectedAdminUserIndexRoute;
@@ -223,8 +223,8 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute;
   '/ws': typeof ProtectedWsIndexRoute;
   '/admin/user/$userId': typeof ProtectedAdminUserUserIdRoute;
-  '/ws/$workspaceId/dashboard': typeof ProtectedWsWorkspaceIdDashboardRoute;
   '/ws/$workspaceId/members': typeof ProtectedWsWorkspaceIdMembersRoute;
+  '/ws/$workspaceId/overview': typeof ProtectedWsWorkspaceIdOverviewRoute;
   '/ws/$workspaceId/projects': typeof ProtectedWsWorkspaceIdProjectsRoute;
   '/ws/$workspaceId/settings': typeof ProtectedWsWorkspaceIdSettingsRoute;
   '/admin/user': typeof ProtectedAdminUserIndexRoute;
@@ -253,8 +253,8 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute;
   '/_protected/ws/': typeof ProtectedWsIndexRoute;
   '/_protected/admin/user/$userId': typeof ProtectedAdminUserUserIdRoute;
-  '/_protected/ws/$workspaceId/dashboard': typeof ProtectedWsWorkspaceIdDashboardRoute;
   '/_protected/ws/$workspaceId/members': typeof ProtectedWsWorkspaceIdMembersRoute;
+  '/_protected/ws/$workspaceId/overview': typeof ProtectedWsWorkspaceIdOverviewRoute;
   '/_protected/ws/$workspaceId/projects': typeof ProtectedWsWorkspaceIdProjectsRoute;
   '/_protected/ws/$workspaceId/settings': typeof ProtectedWsWorkspaceIdSettingsRoute;
   '/_protected/admin/user/': typeof ProtectedAdminUserIndexRoute;
@@ -282,8 +282,8 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/ws/'
     | '/admin/user/$userId'
-    | '/ws/$workspaceId/dashboard'
     | '/ws/$workspaceId/members'
+    | '/ws/$workspaceId/overview'
     | '/ws/$workspaceId/projects'
     | '/ws/$workspaceId/settings'
     | '/admin/user/';
@@ -307,8 +307,8 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/ws'
     | '/admin/user/$userId'
-    | '/ws/$workspaceId/dashboard'
     | '/ws/$workspaceId/members'
+    | '/ws/$workspaceId/overview'
     | '/ws/$workspaceId/projects'
     | '/ws/$workspaceId/settings'
     | '/admin/user';
@@ -336,8 +336,8 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/_protected/ws/'
     | '/_protected/admin/user/$userId'
-    | '/_protected/ws/$workspaceId/dashboard'
     | '/_protected/ws/$workspaceId/members'
+    | '/_protected/ws/$workspaceId/overview'
     | '/_protected/ws/$workspaceId/projects'
     | '/_protected/ws/$workspaceId/settings'
     | '/_protected/admin/user/';
@@ -523,18 +523,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedWsWorkspaceIdProjectsRouteImport;
       parentRoute: typeof ProtectedWsWorkspaceIdRoute;
     };
+    '/_protected/ws/$workspaceId/overview': {
+      id: '/_protected/ws/$workspaceId/overview';
+      path: '/overview';
+      fullPath: '/ws/$workspaceId/overview';
+      preLoaderRoute: typeof ProtectedWsWorkspaceIdOverviewRouteImport;
+      parentRoute: typeof ProtectedWsWorkspaceIdRoute;
+    };
     '/_protected/ws/$workspaceId/members': {
       id: '/_protected/ws/$workspaceId/members';
       path: '/members';
       fullPath: '/ws/$workspaceId/members';
       preLoaderRoute: typeof ProtectedWsWorkspaceIdMembersRouteImport;
-      parentRoute: typeof ProtectedWsWorkspaceIdRoute;
-    };
-    '/_protected/ws/$workspaceId/dashboard': {
-      id: '/_protected/ws/$workspaceId/dashboard';
-      path: '/dashboard';
-      fullPath: '/ws/$workspaceId/dashboard';
-      preLoaderRoute: typeof ProtectedWsWorkspaceIdDashboardRouteImport;
       parentRoute: typeof ProtectedWsWorkspaceIdRoute;
     };
     '/_protected/admin/user/$userId': {
@@ -593,16 +593,16 @@ const ProtectedAdminRouteWithChildren = ProtectedAdminRoute._addFileChildren(
 );
 
 interface ProtectedWsWorkspaceIdRouteChildren {
-  ProtectedWsWorkspaceIdDashboardRoute: typeof ProtectedWsWorkspaceIdDashboardRoute;
   ProtectedWsWorkspaceIdMembersRoute: typeof ProtectedWsWorkspaceIdMembersRoute;
+  ProtectedWsWorkspaceIdOverviewRoute: typeof ProtectedWsWorkspaceIdOverviewRoute;
   ProtectedWsWorkspaceIdProjectsRoute: typeof ProtectedWsWorkspaceIdProjectsRoute;
   ProtectedWsWorkspaceIdSettingsRoute: typeof ProtectedWsWorkspaceIdSettingsRoute;
 }
 
 const ProtectedWsWorkspaceIdRouteChildren: ProtectedWsWorkspaceIdRouteChildren =
   {
-    ProtectedWsWorkspaceIdDashboardRoute: ProtectedWsWorkspaceIdDashboardRoute,
     ProtectedWsWorkspaceIdMembersRoute: ProtectedWsWorkspaceIdMembersRoute,
+    ProtectedWsWorkspaceIdOverviewRoute: ProtectedWsWorkspaceIdOverviewRoute,
     ProtectedWsWorkspaceIdProjectsRoute: ProtectedWsWorkspaceIdProjectsRoute,
     ProtectedWsWorkspaceIdSettingsRoute: ProtectedWsWorkspaceIdSettingsRoute,
   };

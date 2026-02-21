@@ -77,7 +77,7 @@ export function WorkspaceSwitcher({
     },
     onSuccess: (_value, organizationId) => {
       navigate({
-        to: '/ws/$workspaceId/dashboard',
+        to: '/ws/$workspaceId/overview',
         params: { workspaceId: organizationId },
       });
     },
@@ -111,7 +111,7 @@ export function WorkspaceSwitcher({
       setIsCreateDialogOpen(false);
       toast.success('Workspace created.');
       navigate({
-        to: '/ws/$workspaceId/dashboard',
+        to: '/ws/$workspaceId/overview',
         params: { workspaceId },
       });
     },

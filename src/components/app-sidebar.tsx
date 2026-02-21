@@ -61,6 +61,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navMain = activeWorkspaceId
     ? [
         {
+          title: 'Overview',
+          url: `/ws/${activeWorkspaceId}/overview`,
+          icon: <IconDashboard />,
+        },
+        {
           title: 'Projects',
           url: `/ws/${activeWorkspaceId}/projects`,
           icon: <IconFolder />,
@@ -74,11 +79,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: 'Settings',
           url: `/ws/${activeWorkspaceId}/settings`,
           icon: <IconSettings />,
-        },
-        {
-          title: 'Dashboard',
-          url: `/ws/${activeWorkspaceId}/dashboard`,
-          icon: <IconDashboard />,
         },
       ]
     : [];

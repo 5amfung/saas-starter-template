@@ -61,7 +61,7 @@ export function WorkspaceDeleteDialog({
     onSuccess: (nextWorkspaceId) => {
       toast.success('Workspace deleted successfully.');
       navigate({
-        to: '/ws/$workspaceId/dashboard',
+        to: '/ws/$workspaceId/overview',
         params: { workspaceId: nextWorkspaceId },
       });
     },

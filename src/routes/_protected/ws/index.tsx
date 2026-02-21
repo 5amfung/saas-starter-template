@@ -6,7 +6,7 @@ export const Route = createFileRoute('/_protected/ws/')({
   loader: async () => {
     const activeWorkspace = await getActiveWorkspace();
     throw redirect({
-      to: '/ws/$workspaceId/dashboard',
+      to: '/ws/$workspaceId/overview',
       params: { workspaceId: activeWorkspace.id },
       replace: true,
     });
