@@ -1,51 +1,9 @@
 import { APIError } from 'better-auth/api';
 import { auth } from '@/auth/auth.server';
-import type { WorkspaceMetadata } from '@/workspace/workspace';
-import {
-  isPersonalWorkspaceOwnedByUser,
-  parseWorkspaceMetadata,
-  pickDefaultWorkspace,
-} from '@/workspace/workspace';
-
-type Workspace = {
-  id: string;
-  name: string;
-  metadata?: WorkspaceMetadata | null;
-};
+import { pickDefaultWorkspace } from '@/workspace/workspace';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
-
-const toWorkspaceMetadata = (value: unknown): WorkspaceMetadata => {
-  return parseWorkspaceMetadata(value);
-};
-
-const toWorkspace = (value: unknown): Workspace | null => {
-  if (!isRecord(value)) return null;
-  const id = value.id;
-  const name = value.name;
-  if (typeof id !== 'string' || typeof name !== 'string') return null;
-  return {
-    id,
-    name,
-    metadata: toWorkspaceMetadata(value.metadata),
-  };
-};
-
-const normalizeWorkspaceList = (value: unknown): Array<Workspace> => {
-  if (!value) return [];
-  if (Array.isArray(value)) {
-    return value
-      .map((item) => toWorkspace(item))
-      .filter((item): item is Workspace => item !== null);
-  }
-  if (isRecord(value) && Array.isArray(value.organizations)) {
-    return value.organizations
-      .map((item) => toWorkspace(item))
-      .filter((item): item is Workspace => item !== null);
-  }
-  return [];
-};
 
 const getActiveOrganizationId = (session: unknown): string | null => {
   if (!isRecord(session)) return null;
@@ -58,22 +16,8 @@ const getActiveOrganizationId = (session: unknown): string | null => {
   return null;
 };
 
-export async function listUserWorkspaces(
-  headers: Headers,
-): Promise<Array<Workspace>> {
-  const data = await auth.api.listOrganizations({ headers });
-  return normalizeWorkspaceList(data);
-}
-
-export function findPersonalWorkspace(
-  workspaces: Array<Workspace>,
-  userId: string,
-): Workspace | null {
-  return (
-    workspaces.find((workspace) =>
-      isPersonalWorkspaceOwnedByUser(workspace.metadata, userId),
-    ) ?? null
-  );
+export async function listUserWorkspaces(headers: Headers) {
+  return auth.api.listOrganizations({ headers });
 }
 
 export async function ensureActiveWorkspaceForSession(
@@ -86,7 +30,7 @@ export async function ensureActiveWorkspaceForSession(
       activeOrganizationId?: string | null;
     };
   },
-): Promise<Workspace> {
+) {
   const workspaces = await listUserWorkspaces(headers);
   const activeOrganizationId = getActiveOrganizationId(session);
   const activeWorkspace =
@@ -114,9 +58,8 @@ export async function ensureActiveWorkspaceForSession(
 
 export async function ensureWorkspaceMembership(
   headers: Headers,
-  userId: string,
   workspaceId: string,
-): Promise<Workspace> {
+) {
   const workspaces = await listUserWorkspaces(headers);
   const workspace = workspaces.find(
     (candidate) => candidate.id === workspaceId,
@@ -124,13 +67,6 @@ export async function ensureWorkspaceMembership(
   if (!workspace) {
     throw new APIError('NOT_FOUND', {
       message: 'Workspace not found.',
-    });
-  }
-
-  const personalWorkspace = findPersonalWorkspace(workspaces, userId);
-  if (!personalWorkspace) {
-    throw new APIError('INTERNAL_SERVER_ERROR', {
-      message: 'Personal workspace is missing for this user.',
     });
   }
 

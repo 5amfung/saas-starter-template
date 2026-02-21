@@ -49,14 +49,14 @@ const data = {
     { title: 'User', url: '/admin/user', icon: <IconUsers /> },
   ],
 };
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session, isPending } = authClient.useSession();
-  const { data: organizationsData } = authClient.useListOrganizations();
+  const { data: organizations } = authClient.useListOrganizations();
   const { data: activeOrganization } = authClient.useActiveOrganization();
-  const organizations = organizationsData ?? [];
 
   const activeWorkspaceId =
-    activeOrganization?.id ?? organizations.at(0)?.id ?? null;
+    activeOrganization?.id ?? organizations?.at(0)?.id ?? null;
 
   const navMain = activeWorkspaceId
     ? [
@@ -83,7 +83,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       ]
     : [];
 
-  const workspaces = organizations.map((organization) => ({
+  const workspaces = (organizations ?? []).map((organization) => ({
     id: organization.id,
     name: organization.name,
     logo: <IconStack2 className="size-4" />,

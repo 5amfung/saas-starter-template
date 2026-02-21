@@ -1,2 +1,2 @@
 export * from './auth.schema';
-export * from './notification-preferences.schema';
+export * from './app.schema';

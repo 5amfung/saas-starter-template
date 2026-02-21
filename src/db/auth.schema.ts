@@ -20,11 +20,11 @@ export const user = pgTable(
     updatedAt: timestamp('updated_at')
       .$onUpdate(() => new Date())
       .notNull(),
-    lastLoginMethod: text('last_login_method'),
     role: text('role'),
     banned: boolean('banned').default(false),
     banReason: text('ban_reason'),
     banExpires: timestamp('ban_expires'),
+    lastLoginMethod: text('last_login_method'),
     lastSignInAt: timestamp('last_sign_in_at'),
   },
   (table) => [
@@ -104,6 +104,8 @@ export const organization = pgTable(
     logo: text('logo'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     metadata: text('metadata'),
+    workspaceType: text('workspace_type'),
+    personalOwnerUserId: text('personal_owner_user_id'),
   },
   (table) => [uniqueIndex('organization_slug_uidx').on(table.slug)],
 );

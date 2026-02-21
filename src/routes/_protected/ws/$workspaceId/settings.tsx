@@ -29,13 +29,6 @@ const workspaceSettingsSchema = z.object({
 const PAGE_LAYOUT_CLASS =
   'mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6';
 
-type WorkspaceListItem = {
-  id: string;
-  name: string;
-  metadata?: Record<string, unknown> | null;
-  createdAt?: string | Date;
-};
-
 const hasOwnerRole = (role: string | null): boolean =>
   !!role &&
   role
@@ -44,8 +37,8 @@ const hasOwnerRole = (role: string | null): boolean =>
     .includes('owner');
 
 const sortByCreatedAtAscending = (
-  left: WorkspaceListItem,
-  right: WorkspaceListItem,
+  left: { createdAt?: string | Date },
+  right: { createdAt?: string | Date },
 ): number => {
   const leftDate = left.createdAt ? new Date(left.createdAt).getTime() : 0;
   const rightDate = right.createdAt ? new Date(right.createdAt).getTime() : 0;
@@ -59,11 +52,12 @@ export const Route = createFileRoute('/_protected/ws/$workspaceId/settings')({
 
 function WorkspaceSettingsPage() {
   const { workspaceId } = Route.useParams();
-  const { data: organizationsData } = authClient.useListOrganizations();
+  const { data: organizations } = authClient.useListOrganizations();
   const { data: activeOrganization } = authClient.useActiveOrganization();
-  const organizations = organizationsData ?? [];
 
-  const workspace = organizations.find((candidate) => candidate.id === workspaceId);
+  const workspace = organizations?.find(
+    (candidate) => candidate.id === workspaceId,
+  );
   if (!workspace) throw notFound();
 
   const [activeRole, setActiveRole] = React.useState<string | null>(null);
@@ -84,7 +78,7 @@ function WorkspaceSettingsPage() {
     };
   }, [workspaceId]);
 
-  const isPersonal = isPersonalWorkspace(workspace.metadata);
+  const isPersonal = isPersonalWorkspace(workspace);
   const isOwner = hasOwnerRole(activeRole);
   const canDelete = isOwner && !isPersonal;
   const deleteDisabledMessage = isPersonal
@@ -93,12 +87,21 @@ function WorkspaceSettingsPage() {
       ? null
       : 'Only owner can delete this workspace';
 
+  // This keeps the input stable during save and avoids the brief revert.
+  const [initialWorkspaceName, setInitialWorkspaceName] = React.useState(
+    workspace.name,
+  );
+  React.useEffect(() => {
+    setInitialWorkspaceName(workspace.name);
+  }, [workspaceId]);
+
   const updateMutation = useMutation({
     mutationFn: async (name: string) => {
       if (activeOrganization?.id !== workspaceId) {
-        const { error: setActiveError } = await authClient.organization.setActive({
-          organizationId: workspaceId,
-        });
+        const { error: setActiveError } =
+          await authClient.organization.setActive({
+            organizationId: workspaceId,
+          });
         if (setActiveError) throw new Error(setActiveError.message);
       }
 
@@ -119,27 +122,31 @@ function WorkspaceSettingsPage() {
 
   const form = useForm({
     defaultValues: {
-      name: workspace.name,
+      name: initialWorkspaceName,
     },
     validators: {
       onBlur: workspaceSettingsSchema,
       onSubmit: workspaceSettingsSchema,
     },
     onSubmit: async ({ value }) => {
-      await updateMutation.mutateAsync(value.name.trim());
-      form.reset({ name: value.name.trim() });
+      const nextName = value.name.trim();
+      await updateMutation.mutateAsync(nextName);
+      setInitialWorkspaceName(nextName);
+      form.reset({ name: nextName });
     },
   });
 
   const getNextWorkspaceIdAfterDelete = React.useCallback(async () => {
-    const { data, error } = await authClient.organization.list({});
-    if (error) return null;
+    const { data } = await authClient.organization.list();
+    if (!data) return null;
+
     const remaining = data
       .filter((candidate) => candidate.id !== workspaceId)
       .sort(sortByCreatedAtAscending);
     const personal = remaining.find((candidate) =>
-      isPersonalWorkspace(candidate.metadata),
+      isPersonalWorkspace(candidate),
     );
+    // Switch to personal workspace after deleting current workspace.
     return personal?.id ?? remaining.at(0)?.id ?? null;
   }, [workspaceId]);
 

@@ -21,24 +21,21 @@ export const ensureWorkspaceRouteAccess = createServerFn()
       throw redirect({ to: '/signin' });
     }
 
-    await ensureActiveWorkspaceForSession(headers, {
-      user: { id: session.user.id },
-      session: session.session,
-    });
-
     try {
-      await ensureWorkspaceMembership(headers, session.user.id, data.workspaceId);
+      await ensureWorkspaceMembership(headers, data.workspaceId);
     } catch {
       throw notFound();
     }
 
+    // After verifying membership above, switch to the workspace below.
     const activeOrganizationId =
       typeof (
         session.session as {
           activeOrganizationId?: unknown;
         }
       ).activeOrganizationId === 'string'
-        ? (session.session as { activeOrganizationId: string }).activeOrganizationId
+        ? (session.session as { activeOrganizationId: string })
+            .activeOrganizationId
         : null;
 
     if (activeOrganizationId !== data.workspaceId) {
@@ -57,7 +54,6 @@ export const getActiveWorkspace = createServerFn().handler(async () => {
   if (!session || !session.user.emailVerified) {
     throw redirect({ to: '/signin' });
   }
-
   const workspace = await ensureActiveWorkspaceForSession(headers, {
     user: { id: session.user.id },
     session: session.session,

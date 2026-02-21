@@ -18,11 +18,63 @@ import { EmailVerificationEmail } from '@/components/email-template/email-verifi
 import { ResetPasswordEmail } from '@/components/email-template/reset-password-email';
 import {
   PERSONAL_WORKSPACE_NAME,
+  PERSONAL_WORKSPACE_TYPE,
+  STANDARD_WORKSPACE_TYPE,
   buildPersonalWorkspaceSlug,
-  createPersonalWorkspaceMetadata,
   isPersonalWorkspace,
   pickDefaultWorkspace,
 } from '@/workspace/workspace';
+
+const WORKSPACE_TYPES = [
+  PERSONAL_WORKSPACE_TYPE,
+  STANDARD_WORKSPACE_TYPE,
+] as const;
+type WorkspaceType = (typeof WORKSPACE_TYPES)[number];
+
+const isWorkspaceType = (value: unknown): value is WorkspaceType =>
+  typeof value === 'string' &&
+  (WORKSPACE_TYPES as ReadonlyArray<string>).includes(value);
+
+const asOptionalString = (value: unknown): string | undefined =>
+  typeof value === 'string' && value.length > 0 ? value : undefined;
+
+const validateWorkspaceFields = (
+  organization: Record<string, unknown>,
+  context: 'create' | 'update',
+) => {
+  const workspaceType = organization.workspaceType;
+  const personalOwnerUserId = asOptionalString(
+    organization.personalOwnerUserId,
+  );
+
+  if (workspaceType !== undefined && !isWorkspaceType(workspaceType)) {
+    throw new APIError('BAD_REQUEST', {
+      message: 'workspaceType must be personal or workspace',
+    });
+  }
+
+  if (workspaceType === PERSONAL_WORKSPACE_TYPE && !personalOwnerUserId) {
+    throw new APIError('BAD_REQUEST', {
+      message: 'personalOwnerUserId is required for personal workspaces',
+    });
+  }
+
+  if (context === 'create' && workspaceType === undefined) {
+    throw new APIError('BAD_REQUEST', {
+      message: 'workspaceType is required',
+    });
+  }
+
+  if (
+    context === 'update' &&
+    personalOwnerUserId &&
+    workspaceType === STANDARD_WORKSPACE_TYPE
+  ) {
+    throw new APIError('BAD_REQUEST', {
+      message: 'personalOwnerUserId is not allowed for workspace type',
+    });
+  }
+};
 
 const isSignInPath = (path: string) =>
   path.startsWith('/sign-in') || path.startsWith('/callback/');
@@ -43,43 +95,6 @@ type SessionLike = {
 const hasActiveOrganization = (session: SessionLike): boolean =>
   typeof session.activeOrganizationId === 'string';
 
-type OrganizationLike = {
-  id: string;
-  name: string;
-  metadata?: unknown;
-};
-
-const normalizeOrganizationList = (value: unknown): Array<OrganizationLike> => {
-  const toOrganization = (candidate: unknown): OrganizationLike | null => {
-    if (!isRecord(candidate)) return null;
-    if (
-      typeof candidate.id !== 'string' ||
-      typeof candidate.name !== 'string'
-    ) {
-      return null;
-    }
-    return {
-      id: candidate.id,
-      name: candidate.name,
-      metadata: candidate.metadata,
-    };
-  };
-
-  if (Array.isArray(value)) {
-    return value
-      .map((candidate) => toOrganization(candidate))
-      .filter((candidate): candidate is OrganizationLike => candidate !== null);
-  }
-
-  if (isRecord(value) && Array.isArray(value.organizations)) {
-    return value.organizations
-      .map((candidate) => toOrganization(candidate))
-      .filter((candidate): candidate is OrganizationLike => candidate !== null);
-  }
-
-  return [];
-};
-
 async function ensurePostSignInActiveWorkspace(params: {
   userId: string;
   session: SessionLike;
@@ -89,9 +104,9 @@ async function ensurePostSignInActiveWorkspace(params: {
   if (!params.headers) return;
 
   try {
-    const organizations = normalizeOrganizationList(
-      await auth.api.listOrganizations({ headers: params.headers }),
-    );
+    const organizations = await auth.api.listOrganizations({
+      headers: params.headers,
+    });
     const targetWorkspace = pickDefaultWorkspace(organizations, params.userId);
 
     if (!targetWorkspace) return;
@@ -101,7 +116,6 @@ async function ensurePostSignInActiveWorkspace(params: {
       headers: params.headers,
     });
   } catch {
-    // Do not block sign-in; middleware will retry active workspace setup.
     return;
   }
 }
@@ -207,12 +221,16 @@ export const auth = betterAuth({
               body: {
                 name: PERSONAL_WORKSPACE_NAME,
                 slug: buildPersonalWorkspaceSlug(user.id),
-                metadata: createPersonalWorkspaceMetadata(user.id),
+                workspaceType: PERSONAL_WORKSPACE_TYPE,
+                personalOwnerUserId: user.id,
                 userId: user.id,
               },
             });
           } catch (error) {
-            if (!isDuplicateOrganizationError(error)) throw error;
+            if (!isDuplicateOrganizationError(error)) {
+              console.error(error);
+              throw error;
+            }
           }
         },
       },
@@ -225,9 +243,35 @@ export const auth = betterAuth({
     organizationPlugin({
       allowUserToCreateOrganization: true,
       creatorRole: 'owner',
+      schema: {
+        organization: {
+          additionalFields: {
+            workspaceType: {
+              type: 'string',
+              input: true,
+              required: false,
+            },
+            personalOwnerUserId: {
+              type: 'string',
+              input: true,
+              required: false,
+            },
+          },
+        },
+      },
       organizationHooks: {
+        beforeCreateOrganization: async ({ organization }) => {
+          if (!isRecord(organization)) return;
+          validateWorkspaceFields(organization, 'create');
+          await Promise.resolve();
+        },
+        beforeUpdateOrganization: async ({ organization }) => {
+          if (!isRecord(organization)) return;
+          validateWorkspaceFields(organization, 'update');
+          await Promise.resolve();
+        },
         beforeDeleteOrganization: async ({ organization }) => {
-          if (isPersonalWorkspace(organization.metadata)) {
+          if (isPersonalWorkspace(organization)) {
             throw new APIError('BAD_REQUEST', {
               message: 'Personal workspace can not be deleted',
             });

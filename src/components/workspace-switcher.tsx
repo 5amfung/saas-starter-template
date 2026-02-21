@@ -30,7 +30,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { buildWorkspaceSlug } from '@/workspace/workspace';
+import {
+  STANDARD_WORKSPACE_TYPE,
+  buildWorkspaceSlug,
+} from '@/workspace/workspace';
 
 export function WorkspaceSwitcher({
   workspaces,
@@ -48,13 +51,20 @@ export function WorkspaceSwitcher({
   const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
   const [workspaceName, setWorkspaceName] = React.useState('');
 
+  const handleCreateDialogOpenChange = (isOpen: boolean) => {
+    setIsCreateDialogOpen(isOpen);
+    if (!isOpen) {
+      setWorkspaceName('');
+    }
+  };
+
   const matchedWorkspace = workspaces.find(
     (workspace) => workspace.id === activeWorkspaceId,
   );
   const activeWorkspace = matchedWorkspace ||
     workspaces[0] || {
       id: 'placeholder-workspace',
-      name: 'No workspace',
+      name: '',
       logo: <IconPlus className="size-4" />,
     };
 
@@ -81,6 +91,7 @@ export function WorkspaceSwitcher({
       const { data, error } = await authClient.organization.create({
         name,
         slug: buildWorkspaceSlug(name),
+        workspaceType: STANDARD_WORKSPACE_TYPE,
       });
       if (error) throw new Error(error.message);
       if (!data.id) throw new Error('Failed to create workspace.');
@@ -175,7 +186,7 @@ export function WorkspaceSwitcher({
       </SidebarMenuItem>
       <AlertDialog
         open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
+        onOpenChange={handleCreateDialogOpenChange}
       >
         <AlertDialogContent size="sm">
           <AlertDialogHeader>

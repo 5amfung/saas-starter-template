@@ -58,6 +58,7 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
       if (error) throw new Error(error.message);
     },
     onSuccess: (_data, variables) => {
+      // Optimistic update.
       queryClient.setQueryData(
         SESSION_QUERY_KEY,
         (prev: { user: { name: string } } | null | undefined) =>
