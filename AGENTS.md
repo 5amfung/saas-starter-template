@@ -25,20 +25,31 @@ SaaS starter template built with TanStack Start, React 19, and shadcn/ui. This i
 
 ```
 src/
-├── app/                 # App-specific data and configuration
-├── auth/                # Authentication service
-├── components/          # Feature components (kebab-case filenames)
-│   ├── auth             # Authentication components
-│   ├── email-template/  # Server-only React Email templates (do not import from client)
-│   └── ui/              # shadcn/ui primitives (do not edit without explicity from user)
-├── db/                  # Drizzle ORM client and database schema
-├── hooks/               # Custom React hooks
-├── lib/                 # Utility functions (cn, etc.)
-├── middleware/          # Middlewares
-├── routes/              # TanStack Router file-based routes
-├── router.tsx           # Router configuration
-├── routeTree.gen.ts     # Auto-generated route tree (do not edit)
-└── styles.css           # Global styles and CSS custom properties
+├── account/                  # Account-domain server functions, schemas, and settings logic.
+├── admin/                    # Admin-domain server functions and validation schemas.
+├── auth/                     # Better Auth server/client setup, permissions, and auth schemas.
+├── components/               # Reusable React UI and feature components.
+│   ├── account/              # Account management UI components.
+│   ├── admin/                # Admin dashboard UI components.
+│   ├── auth/                 # Authentication form and flow components.
+│   ├── email-template/       # Server-only React Email templates.
+│   ├── ui/                   # shadcn/ui primitive components.
+│   └── workspace/            # Workspace-specific UI components.
+├── db/                       # Drizzle ORM schema and database client entrypoints.
+├── email/                    # Email provider integration and request context helpers.
+├── hooks/                    # Shared custom React hooks.
+├── lib/                      # Framework-agnostic utilities and shared helpers.
+├── middleware/               # Request middleware for auth and admin gating.
+├── routes/                   # TanStack Router file-based route modules.
+│   ├── _auth/                # Public authentication route segment files.
+│   ├── _protected/           # Protected route segment files behind auth middleware.
+│   │   ├── _account/         # Protected account pages.
+│   │   ├── admin/            # Protected admin pages and nested admin routes.
+│   │   └── ws/               # Protected workspace routes.
+│   └── api/                  # API route segment files.
+│       └── auth/             # Better Auth API handler route.
+├── types/                    # Project-level TypeScript type declarations.
+└── workspace/                # Workspace-domain server/client logic and tests.
 ```
 
 ## Conventions
