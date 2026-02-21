@@ -1,4 +1,4 @@
-import { notFound, redirect } from '@tanstack/react-router';
+import { redirect } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import * as z from 'zod';
@@ -19,11 +19,7 @@ const resolveWorkspaceRouteAccess = async (workspaceId: string) => {
     throw redirect({ to: '/signin' });
   }
 
-  const workspace = await ensureWorkspaceMembership(headers, workspaceId).catch(
-    () => {
-      throw notFound();
-    },
-  );
+  const workspace = await ensureWorkspaceMembership(headers, workspaceId);
 
   // After verifying membership above, switch to the workspace below.
   const activeOrganizationId =
