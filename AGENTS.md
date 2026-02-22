@@ -6,20 +6,23 @@ SaaS starter template built with TanStack Start, React 19, and shadcn/ui. This i
 
 ## Tech Stack
 
-| Layer        | Technology                                      |
-| ------------ | ----------------------------------------------- |
-| Framework    | TanStack Start + TanStack Router v1 + TanStack Query v5 |
-| UI           | React 19, shadcn/ui (base-vega style), Base UI  |
-| Styling      | Tailwind CSS v4, OKLCH color system, tw-animate  |
-| Icons        | Tabler Icons (`@tabler/icons-react`)             |
-| Data tables  | TanStack Table v8                                |
-| Charts       | Recharts                                         |
-| Validation   | Zod v4                                           |
-| Testing      | Vitest + Testing Library                         |
-| Linting      | ESLint (TanStack config) + Prettier              |
-| Build        | Vite 7, Nitro (server)                           |
-| Package mgr  | Bun                                              |
-| Language     | TypeScript 5.9 (strict mode)                     |
+| Layer          | Technology                                              |
+| -------------- | ------------------------------------------------------- |
+| Framework      | TanStack Start + TanStack Router v1 + TanStack Query v5 |
+| UI             | React 19, shadcn/ui (base-vega style), Base UI          |
+| Styling        | Tailwind CSS v4, OKLCH color system, tw-animate         |
+| Icons          | Tabler Icons (`@tabler/icons-react`)                    |
+| Data tables    | TanStack Table v8                                       |
+| Charts         | Recharts                                                |
+| Validation     | Zod v4                                                  |
+| Testing        | Vitest + Testing Library                                |
+| Linting        | ESLint (TanStack config) + Prettier                     |
+| Build          | Vite 7, Nitro (server)                                  |
+| Package mgr    | Bun                                                     |
+| Language       | TypeScript 5.9 (strict mode)                            |
+| Database       | Neon PostgreSQL                                         |
+| ORM            | Drizzle ORM                                             |
+| Authentication | Better Auth                                             |
 
 ## Project Structure
 
@@ -51,6 +54,10 @@ src/
 ├── types/                    # Project-level TypeScript type declarations.
 └── workspace/                # Workspace-domain server/client logic and tests.
 ```
+
+
+
+
 
 ## Conventions
 
