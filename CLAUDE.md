@@ -1,0 +1,261 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+SaaS starter template built with TanStack Start, React 19, and shadcn/ui. File-based routing, Tailwind CSS v4, strict TypeScript.
+
+## Tech Stack
+
+| Layer          | Technology                                              |
+| -------------- | ------------------------------------------------------- |
+| Framework      | TanStack Start + TanStack Router v1 + TanStack Query v5 |
+| UI             | React 19, shadcn/ui (base-vega style), Base UI          |
+| Styling        | Tailwind CSS v4, OKLCH color system, tw-animate         |
+| Icons          | Tabler Icons (`@tabler/icons-react`)                    |
+| Data tables    | TanStack Table v8                                       |
+| Charts         | Recharts                                                |
+| Validation     | Zod v4                                                  |
+| Testing        | Vitest + Testing Library                                |
+| Linting        | ESLint (TanStack config) + Prettier                     |
+| Build          | Vite 7, Nitro (server)                                  |
+| Package mgr    | Bun                                                     |
+| Language       | TypeScript 5.9 (strict mode)                            |
+| Database       | Neon PostgreSQL                                         |
+| ORM            | Drizzle ORM                                             |
+| Authentication | Better Auth                                             |
+
+## Project Structure
+
+```
+src/
+├── account/                  # Account-domain server functions, schemas, and settings logic.
+├── admin/                    # Admin-domain server functions and validation schemas.
+├── auth/                     # Better Auth server/client setup, permissions, and auth schemas.
+├── components/               # Reusable React UI and feature components.
+│   ├── account/              # Account management UI components.
+│   ├── admin/                # Admin dashboard UI components.
+│   ├── auth/                 # Authentication form and flow components.
+│   ├── email-template/       # Server-only React Email templates.
+│   ├── ui/                   # shadcn/ui primitive components.
+│   └── workspace/            # Workspace-specific UI components.
+├── db/                       # Drizzle ORM schema and database client entrypoints.
+├── email/                    # Email provider integration and request context helpers.
+├── hooks/                    # Shared custom React hooks.
+├── lib/                      # Framework-agnostic utilities and shared helpers.
+├── middleware/               # Request middleware for auth and admin gating.
+├── routes/                   # TanStack Router file-based route modules.
+│   ├── _auth/                # Public authentication route segment files.
+│   ├── _protected/           # Protected route segment files behind auth middleware.
+│   │   ├── _account/         # Protected account pages.
+│   │   ├── admin/            # Protected admin pages and nested admin routes.
+│   │   └── ws/               # Protected workspace routes.
+│   └── api/                  # API route segment files.
+│       └── auth/             # Better Auth API handler route.
+├── types/                    # Project-level TypeScript type declarations.
+└── workspace/                # Workspace-domain server/client logic and tests.
+```
+
+## Commands
+
+| Command                   | Description                                                  |
+| ------------------------- | ------------------------------------------------------------ |
+| `bun dev`                 | Start dev server on port 3000                                |
+| `bun run build`           | Production build                                             |
+| `bun run preview`         | Preview production build                                     |
+| `bun test`                | Run all tests with Vitest                                    |
+| `bun run lint`            | Lint with ESLint                                             |
+| `bun run lint:fix`        | Fix lint issues                                              |
+| `bun run typecheck`       | TypeScript type-check without emitting                       |
+| `bun run check`           | Type-check + lint                                            |
+| `bun run format`          | Format code with Prettier                                    |
+| `bun run db:generate`     | Generate Drizzle migration files                             |
+| `bun run db:migrate`      | Apply migrations                                             |
+| `bun run db:push`         | Push schema directly (dev only)                              |
+| `bun run db:studio`       | Open Drizzle Studio                                          |
+| `bun run email:dev`       | Preview email templates on port 3001                         |
+| `bun run gen-auth-schema` | Regenerate `src/db/auth.schema.ts` from Better Auth config   |
+
+To run a single test file: `bun test src/workspace/workspace.test.ts`
+
+## Architecture
+
+### Workspace Model
+
+Workspaces are implemented as **Better Auth organizations** with two additional fields on the `organization` table:
+- `workspaceType`: `"personal"` | `"workspace"`
+- `personalOwnerUserId`: set only for personal workspaces
+
+Every user gets a personal workspace automatically created on sign-up (via `databaseHooks.user.create` in `src/auth/auth.server.ts`). The active workspace is tracked via Better Auth's `activeOrganizationId` on the session. Workspace logic lives in `src/workspace/`.
+
+### Routing Architecture
+
+File-based routing in `src/routes/`. Key segments:
+- `__root.tsx` — HTML shell, global providers
+- `_auth.tsx` / `_auth/` — Pathless layout for public auth pages (`/signin`, `/signup`)
+- `_protected.tsx` / `_protected/` — Pathless layout with `authMiddleware`; all children require auth
+  - `_protected/ws/index.tsx` — Redirects to `/ws/$workspaceId/overview` for the active workspace
+  - `_protected/ws/$workspaceId.tsx` — Loader calls `getWorkspaceById` (server fn), verifying membership and switching active workspace
+  - `_protected/ws/$workspaceId/` — Per-workspace pages (overview, members, settings, projects)
+  - `_protected/_account/` — Account settings pages
+  - `_protected/admin/` — Admin pages (gated by `adminMiddleware`)
+- `routeTree.gen.ts` — **Auto-generated; never edit manually**
+
+Route conventions:
+- Layout routes use `_` prefix (e.g., `_auth.tsx`).
+- Each route exports `Route` using `createFileRoute()`.
+
+### Server Functions & File Boundaries
+
+Data fetching and mutations use `createServerFn()` from `@tanstack/react-start`. These run on the server and are called from route loaders or client components. See `src/workspace/workspace.functions.ts` for examples.
+
+Split server-side code by responsibility using these file roles:
+
+| Suffix            | Role                                                                                      |
+| ----------------- | ----------------------------------------------------------------------------------------- |
+| `*.functions.ts`  | `createServerFn` wrappers — safe to import anywhere; only the handler runs on the server. |
+| `*.server.ts`     | Server-only helpers (DB queries, internal logic, secrets). Import only from server contexts. |
+| `*.ts` (no suffix)| Client-safe shared code (types, schemas, constants, pure utilities).                      |
+
+**Import rules:**
+- Never import `*.server.ts` from client-safe files or route components.
+- Only `*.functions.ts` (and other `*.server.ts` files) may import `*.server.ts`.
+- Routes call server functions from `*.functions.ts`.
+
+```ts
+// ✅ Route imports server function wrapper.
+import { updateUserRole } from '@/utils/users.functions'
+
+// ❌ Route importing server-only module directly.
+import { updateUserRoleInDb } from '@/utils/users.server'
+```
+
+`src/components/email-template/` is also server-only (imports `.server` modules) — never import from client code.
+
+### Auth
+
+Better Auth configured in `src/auth/auth.server.ts`. Client-side auth via `authClient` from `src/auth/auth-client.ts`.
+
+Plugins active: `organization` (workspaces), `admin`, `lastLoginMethod`, `tanstackStartCookies`.
+
+Middleware in `src/middleware/auth.ts`:
+- `authMiddleware` — Checks session + email verification, ensures active workspace, used on `_protected.tsx`
+- `guestMiddleware` — Redirects authenticated users to `/ws`, used on `_auth.tsx`
+
+Admin user IDs are whitelisted directly in `auth.server.ts` (`admin({ adminUserIds: [...] })`).
+
+### Database
+
+Drizzle ORM with PostgreSQL (Neon). Schema entry point: `src/db/schema.ts` re-exports `auth.schema.ts` (Better Auth tables, managed by `gen-auth-schema` script) and `app.schema.ts` (application tables). Database client: `src/db/index.ts`.
+
+## Conventions
+
+### General
+
+- **Package manager**: Bun only — never use npm or yarn.
+- **Path alias**: `@/*` maps to `src/*`.
+- **Imports**: React first, then external packages, then `@/*` aliases.
+
+### File Naming
+
+- Components: `kebab-case.tsx` (e.g., `login-form.tsx`, `app-sidebar.tsx`).
+- Exports: PascalCase for components (e.g., `LoginForm`, `AppSidebar`).
+- Hooks: `use-kebab-case.ts` (e.g., `use-mobile.ts`).
+- Routes: filenames determine URL paths (file-based routing).
+
+### Components
+
+- Functional components only — no class components.
+- Use `cn()` from `@/lib/utils` for conditional class merging.
+- Use CVA (`class-variance-authority`) for component variants.
+- Use `React.ComponentProps<'element'>` for extending HTML element props.
+- Icons: `@tabler/icons-react`.
+
+### Styling
+
+- Tailwind CSS utility classes — no CSS modules or styled-components.
+- CSS custom properties (OKLCH) for theming — defined in `src/styles.css`.
+- Dark mode via `.dark` class; mobile-first responsive design.
+
+### TypeScript
+
+- Strict mode (`strict`, `strictNullChecks`, `noUnusedLocals`, `noUnusedParameters`).
+- No `any` types — prefer `unknown` and narrow with type guards.
+- Use Zod v4 schemas for runtime validation.
+
+### shadcn/ui
+
+- Style: `base-vega`; base color: `zinc`.
+- Add components via `bunx shadcn@latest add <component>`.
+- Never manually edit files in `src/components/ui/`.
+
+## Code Quality
+
+### Clean Code
+
+**Constants over magic numbers** — Replace hard-coded values with named constants. Keep constants at the top of the file or in a dedicated constants file.
+
+**Meaningful names** — Variables, functions, and classes should reveal purpose. Names should explain why something exists and how it is used. Avoid abbreviations unless universally understood.
+
+**Smart comments** — Comments explain *why*, not *what*. Make code self-documenting; use comments for complex algorithms, non-obvious side effects, and API documentation. Always end comments with a period.
+
+**Single responsibility** — Each function should do exactly one thing and be small and focused. If a function needs a comment to explain what it does, split it.
+
+**DRY** — Extract repeated code into reusable functions. Share common logic through proper abstraction. Maintain single sources of truth.
+
+**Encapsulation** — Hide implementation details, expose clear interfaces, and move nested conditionals into well-named functions.
+
+### Proper Solutions Over Workarounds
+
+Fix root causes rather than papering over symptoms.
+
+- **Fix at the source**: Address root causes, not symptoms.
+- **Use intended APIs**: Prefer library-recommended patterns (optimistic updates, proper cache invalidation) over compensating logic.
+- **Single source of truth**: Avoid parallel state (refs, local copies) that can drift from real data.
+- **TypeScript**: Validate or narrow types rather than casting with `as`.
+
+```typescript
+// ❌ BAD — ref to mask stale data during refetch
+const lastSavedRef = useRef<string | null>(null);
+defaultValues: { name: lastSavedRef.current ?? user.name }
+
+// ✅ GOOD — optimistic cache update at the source
+onSuccess: (_, variables) => {
+  queryClient.setQueryData(['user', id], (prev) =>
+    prev ? { ...prev, ...variables } : prev
+  );
+  queryClient.invalidateQueries({ queryKey: ['user', id] });
+}
+```
+
+```typescript
+// ❌ BAD — silently swallow errors
+catch (e) {}
+
+// ✅ GOOD — handle or rethrow with context
+catch (e) {
+  logger.error('Operation failed', { error: e });
+  throw new AppError('Unable to complete', { cause: e });
+}
+```
+
+```typescript
+// ❌ BAD — escape hatch cast
+const data = response as MyType;
+
+// ✅ GOOD — validate or narrow
+const data = mySchema.parse(response);
+```
+
+When unsure: research the recommended approach for the library, fix the architecture (queries, state flow) rather than adding compensating logic, and prefer a small correct refactor over a quick workaround.
+
+## Do Not
+
+- Edit `src/routeTree.gen.ts` — it is auto-generated by the router plugin.
+- Manually edit files in `src/components/ui/` — use the shadcn CLI to update them.
+- Use `npm` or `yarn` — this project uses Bun.
+- Commit `.env` files or secrets.
+- Use `any` type — prefer proper typing or `unknown` with guards.
+- Import `*.server.ts` modules from client-safe files or route components.
+- Import from `src/components/email-template/` in client code.
