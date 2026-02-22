@@ -55,10 +55,6 @@ src/
 └── workspace/                # Workspace-domain server/client logic and tests.
 ```
 
-
-
-
-
 ## Conventions
 
 ### File Naming
