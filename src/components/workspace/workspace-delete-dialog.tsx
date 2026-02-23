@@ -43,7 +43,9 @@ export function WorkspaceDeleteDialog({
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await authClient.organization.delete({ organizationId: workspaceId });
+      const { error } = await authClient.organization.delete({
+        organizationId: workspaceId,
+      });
       if (error) throw new Error(error.message);
 
       const nextWorkspaceId = await getNextWorkspaceIdAfterDelete();
@@ -51,9 +53,11 @@ export function WorkspaceDeleteDialog({
         throw new Error('Failed to find an active workspace after deletion.');
       }
 
-      const { error: setActiveError } = await authClient.organization.setActive({
-        organizationId: nextWorkspaceId,
-      });
+      const { error: setActiveError } = await authClient.organization.setActive(
+        {
+          organizationId: nextWorkspaceId,
+        },
+      );
       if (setActiveError) throw new Error(setActiveError.message);
 
       return nextWorkspaceId;
@@ -79,7 +83,11 @@ export function WorkspaceDeleteDialog({
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogTrigger
           render={
-            <Button variant="destructive" className="w-fit" disabled={isDisabled}>
+            <Button
+              variant="destructive"
+              className="w-fit"
+              disabled={isDisabled}
+            >
               Delete Workspace
             </Button>
           }
@@ -91,13 +99,16 @@ export function WorkspaceDeleteDialog({
             </AlertDialogMedia>
             <AlertDialogTitle>Delete Workspace</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete <strong>{workspaceName}</strong> and all
-              associated workspace data. This action cannot be undone.
+              This will permanently delete <strong>{workspaceName}</strong> and
+              all associated workspace data. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <div className="flex flex-col gap-2">
-            <label htmlFor="workspace-delete-confirm" className="text-sm font-medium">
+            <label
+              htmlFor="workspace-delete-confirm"
+              className="text-sm font-medium"
+            >
               Type <strong>{CONFIRMATION_TEXT}</strong> to confirm
             </label>
             <Input

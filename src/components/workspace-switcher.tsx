@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { IconPlus, IconSelector } from '@tabler/icons-react';
+import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
@@ -35,6 +36,14 @@ import {
   buildWorkspaceSlug,
 } from '@/workspace/workspace';
 
+const workspaceNameSchema = z
+  .string()
+  .trim()
+  .min(1, { error: 'Workspace name is required.' })
+  .regex(/^[a-zA-Z0-9_\- ]+$/, {
+    error: 'Only letters, numbers, spaces, -, and _ are allowed.',
+  });
+
 export function WorkspaceSwitcher({
   workspaces,
   activeWorkspaceId,
@@ -50,11 +59,15 @@ export function WorkspaceSwitcher({
   const navigate = useNavigate();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
   const [workspaceName, setWorkspaceName] = React.useState('');
+  const [validationError, setValidationError] = React.useState<string | null>(
+    null,
+  );
 
   const handleCreateDialogOpenChange = (isOpen: boolean) => {
     setIsCreateDialogOpen(isOpen);
     if (!isOpen) {
       setWorkspaceName('');
+      setValidationError(null);
     }
   };
 
@@ -108,6 +121,7 @@ export function WorkspaceSwitcher({
         return;
       }
       setWorkspaceName('');
+      setValidationError(null);
       setIsCreateDialogOpen(false);
       toast.success('Workspace created.');
       navigate({
@@ -195,12 +209,30 @@ export function WorkspaceSwitcher({
               Enter a workspace name to create and activate it.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <Input
-            value={workspaceName}
-            onChange={(event) => setWorkspaceName(event.target.value)}
-            placeholder="Workspace name"
-            autoFocus
-          />
+          <div className="grid gap-2">
+            <Input
+              value={workspaceName}
+              onChange={(event) => {
+                setWorkspaceName(event.target.value);
+                setValidationError(null);
+              }}
+              placeholder="Workspace name"
+              autoFocus
+              aria-invalid={!!validationError}
+              aria-describedby={
+                validationError ? 'workspace-name-error' : undefined
+              }
+            />
+            {validationError ? (
+              <p
+                id="workspace-name-error"
+                role="alert"
+                className="text-destructive text-sm"
+              >
+                {validationError}
+              </p>
+            ) : null}
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={createWorkspaceMutation.isPending}>
               Cancel
@@ -211,7 +243,13 @@ export function WorkspaceSwitcher({
               }
               onClick={(event) => {
                 event.preventDefault();
-                createWorkspaceMutation.mutate(workspaceName.trim());
+                const result = workspaceNameSchema.safeParse(workspaceName);
+                if (!result.success) {
+                  setValidationError(result.error.issues[0].message);
+                  return;
+                }
+                setValidationError(null);
+                createWorkspaceMutation.mutate(result.data);
               }}
             >
               {createWorkspaceMutation.isPending ? 'Creating...' : 'Create'}

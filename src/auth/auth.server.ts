@@ -16,6 +16,7 @@ import { APP_NAME, sendEmail } from '@/email/resend.server';
 import { ChangeEmailApprovalEmail } from '@/components/email-template/change-email-approval-email';
 import { EmailVerificationEmail } from '@/components/email-template/email-verification-email';
 import { ResetPasswordEmail } from '@/components/email-template/reset-password-email';
+import { WorkspaceInvitationEmail } from '@/components/email-template/workspace-invitation-email';
 import {
   PERSONAL_WORKSPACE_NAME,
   PERSONAL_WORKSPACE_TYPE,
@@ -88,6 +89,22 @@ const isDuplicateOrganizationError = (error: unknown): boolean =>
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
+const ensureTrailingSlashRemoved = (value: string): string =>
+  value.endsWith('/') ? value.slice(0, -1) : value;
+
+const resolveAppOrigin = (): string => {
+  const baseUrl =
+    process.env.BETTER_AUTH_URL && process.env.BETTER_AUTH_URL.trim() !== ''
+      ? process.env.BETTER_AUTH_URL.trim()
+      : 'http://localhost:3000';
+  return ensureTrailingSlashRemoved(baseUrl);
+};
+
+const buildAcceptInviteUrl = (invitationId: string): string => {
+  const origin = resolveAppOrigin();
+  return `${origin}/accept-invite?id=${encodeURIComponent(invitationId)}`;
+};
+
 type SessionLike = {
   activeOrganizationId?: unknown;
 };
@@ -121,6 +138,15 @@ async function ensurePostSignInActiveWorkspace(params: {
 }
 
 export const auth = betterAuth({
+  telemetry: {
+    enabled: false,
+  },
+  trustedOrigins: [
+    // TODO: Whitlist domains.
+    // Requests from origins not on this list are automatically blocked
+    // https://www.better-auth.com/docs/reference/security#trusted-origins
+    'http://localhost:3000',
+  ],
   database: drizzleAdapter(db, {
     provider: 'pg',
   }),
@@ -243,6 +269,19 @@ export const auth = betterAuth({
     organizationPlugin({
       allowUserToCreateOrganization: true,
       creatorRole: 'owner',
+      requireEmailVerificationOnInvitation: true,
+      sendInvitationEmail: async (data) => {
+        await sendEmail({
+          to: data.email,
+          subject: `Join ${data.organization.name} on ${APP_NAME}`,
+          react: createElement(WorkspaceInvitationEmail, {
+            appName: APP_NAME,
+            workspaceName: data.organization.name,
+            inviterEmail: data.inviter.user.email,
+            invitationUrl: buildAcceptInviteUrl(data.id),
+          }),
+        });
+      },
       schema: {
         organization: {
           additionalFields: {

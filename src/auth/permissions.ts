@@ -55,7 +55,8 @@
  */
 export const ORGANIZATION_DEFAULT_ROLES = ['owner', 'admin', 'member'] as const;
 
-export type OrganizationDefaultRole = (typeof ORGANIZATION_DEFAULT_ROLES)[number];
+export type OrganizationDefaultRole =
+  (typeof ORGANIZATION_DEFAULT_ROLES)[number];
 
 /**
  * Placeholder for future custom resource statements.
