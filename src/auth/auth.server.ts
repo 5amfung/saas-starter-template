@@ -147,6 +147,16 @@ export const auth = betterAuth({
     // https://www.better-auth.com/docs/reference/security#trusted-origins
     'http://localhost:3000',
   ],
+  rateLimit: {
+    enabled: true,
+    window: 60, // 60 second window
+    max: 10, // max 10 attempts
+  },
+  account: {
+    accountLinking: {
+      trustedProviders: ['google'],
+    },
+  },
   database: drizzleAdapter(db, {
     provider: 'pg',
   }),
