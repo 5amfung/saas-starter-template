@@ -43,7 +43,10 @@ export function SignupForm() {
         callbackURL: '/ws',
       });
       if (error) {
-        const message = error.message ?? 'Something went wrong.';
+        const message =
+          error.status === 422
+            ? 'An account with this email already exists. Try signing in with Google or reset your password.'
+            : (error.message ?? 'Something went wrong.');
         formApi.setErrorMap({
           ...formApi.state.errorMap,
           onSubmit: { form: message, fields: {} },

@@ -46,7 +46,10 @@ export function SigninForm() {
           navigate({ to: '/verify', search: { email: value.email } });
           return;
         }
-        const message = error.message ?? 'Something went wrong.';
+        const message =
+          error.status === 401
+            ? 'Invalid email or password. If you signed up with Google, use "Sign in with Google" or reset your password.'
+            : (error.message ?? 'Something went wrong.');
         formApi.setErrorMap({
           ...formApi.state.errorMap,
           onSubmit: { form: message, fields: {} },
