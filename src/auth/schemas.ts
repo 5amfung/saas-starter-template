@@ -42,6 +42,10 @@ export const resetPasswordSchema = z
     path: ['confirmPassword'],
   });
 
+export const signinSearchSchema = z.object({
+  error: z.string().optional(),
+});
+
 export const resetPasswordSearchSchema = z.object({
   token: z.string().optional(),
   error: z.string().optional(),

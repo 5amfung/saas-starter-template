@@ -3,6 +3,7 @@ import { ActiveSessionsList } from '@/components/account/active-sessions-list';
 import { AccountProfileForm } from '@/components/account/account-profile-form';
 import { ChangeEmailDialog } from '@/components/account/change-email-dialog';
 import { ChangePasswordDialog } from '@/components/account/change-password-dialog';
+import { SetPasswordButton } from '@/components/account/set-password-button';
 import {
   Card,
   CardContent,
@@ -13,6 +14,7 @@ import {
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { useSessionQuery } from '@/hooks/use-session-query';
+import { useLinkedAccountsQuery } from '@/hooks/use-linked-accounts-query';
 
 export const Route = createFileRoute('/_protected/_account/account')({
   component: AccountPage,
@@ -26,12 +28,17 @@ const READ_ONLY_INPUT_CLASS = 'bg-muted text-sm';
 
 function AccountPage() {
   const { data: session, isPending } = useSessionQuery();
+  const { data: accounts } = useLinkedAccountsQuery();
 
   if (isPending || !session) {
     return null;
   }
 
   const user = session.user;
+  const hasPassword =
+    accounts != null
+      ? accounts.some((a) => a.providerId === 'credential')
+      : null;
 
   return (
     <div className={PAGE_LAYOUT_CLASS}>
@@ -71,12 +78,14 @@ function AccountPage() {
         <CardHeader>
           <CardTitle>Password</CardTitle>
           <CardDescription>
-            Update your sign-in password. Other active sessions will be signed
-            out when it changes.
+            {hasPassword === false
+              ? 'You signed in with Google. Set a password to also sign in with email.'
+              : 'Update your sign-in password. Other active sessions will be signed out when it changes.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex justify-end">
-          <ChangePasswordDialog />
+          {hasPassword === true && <ChangePasswordDialog />}
+          {hasPassword === false && <SetPasswordButton email={user.email} />}
         </CardContent>
       </Card>
 

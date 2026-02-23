@@ -15,10 +15,12 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
+  FieldSeparator,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { authClient } from '@/auth/auth-client';
 import { FormError } from '@/components/auth/form-error';
+import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 import { toFieldErrorItem } from '@/lib/form-utils';
 import { signupSchema } from '@/auth/schemas';
 
@@ -74,6 +76,10 @@ export function SignupForm() {
             }}
           >
             <FieldGroup>
+              <GoogleSignInButton />
+              <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
+                Or continue with
+              </FieldSeparator>
               <form.Field
                 name="email"
                 children={(field) => {
