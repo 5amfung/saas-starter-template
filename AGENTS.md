@@ -214,6 +214,7 @@ Fix root causes rather than papering over symptoms.
 - **Use intended APIs**: Prefer library-recommended patterns (optimistic updates, proper cache invalidation) over compensating logic.
 - **Single source of truth**: Avoid parallel state (refs, local copies) that can drift from real data.
 - **TypeScript**: Validate or narrow types rather than casting with `as`.
+- **Error handling contracts**: Find and use concrete library error types/contracts instead of shape-probing unknown error objects.
 
 ```typescript
 // ❌ BAD — ref to mask stale data during refetch
