@@ -3,5 +3,11 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
+  },
+  "search.exclude": {
+    ".claude": true,
+    ".cursor": true,
+    "**/.output": true,
+    "**/.tankstaack": true
   }
 }
