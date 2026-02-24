@@ -15,7 +15,7 @@ import { Route as AcceptInviteRouteImport } from './routes/accept-invite';
 import { Route as ProtectedRouteImport } from './routes/_protected';
 import { Route as AuthRouteImport } from './routes/_auth';
 import { Route as IndexRouteImport } from './routes/index';
-import { Route as VerifyEmailChangeEmailRouteImport } from './routes/verify-email-change.$email';
+import { Route as VerifyEmailChangeEmailTokenRouteImport } from './routes/verify-email-change.$emailToken';
 import { Route as ProtectedWsRouteImport } from './routes/_protected/ws';
 import { Route as ProtectedAdminRouteImport } from './routes/_protected/admin';
 import { Route as AuthVerifyRouteImport } from './routes/_auth/verify';
@@ -66,11 +66,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any);
-const VerifyEmailChangeEmailRoute = VerifyEmailChangeEmailRouteImport.update({
-  id: '/verify-email-change/$email',
-  path: '/verify-email-change/$email',
-  getParentRoute: () => rootRouteImport,
-} as any);
+const VerifyEmailChangeEmailTokenRoute =
+  VerifyEmailChangeEmailTokenRouteImport.update({
+    id: '/verify-email-change/$emailToken',
+    path: '/verify-email-change/$emailToken',
+    getParentRoute: () => rootRouteImport,
+  } as any);
 const ProtectedWsRoute = ProtectedWsRouteImport.update({
   id: '/ws',
   path: '/ws',
@@ -195,7 +196,7 @@ export interface FileRoutesByFullPath {
   '/verify': typeof AuthVerifyRoute;
   '/admin': typeof ProtectedAdminRouteWithChildren;
   '/ws': typeof ProtectedWsRouteWithChildren;
-  '/verify-email-change/$email': typeof VerifyEmailChangeEmailRoute;
+  '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/account': typeof ProtectedAccountAccountRoute;
   '/billing': typeof ProtectedAccountBillingRoute;
   '/notifications': typeof ProtectedAccountNotificationsRoute;
@@ -222,7 +223,7 @@ export interface FileRoutesByTo {
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
   '/admin': typeof ProtectedAdminRouteWithChildren;
-  '/verify-email-change/$email': typeof VerifyEmailChangeEmailRoute;
+  '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/account': typeof ProtectedAccountAccountRoute;
   '/billing': typeof ProtectedAccountBillingRoute;
   '/notifications': typeof ProtectedAccountNotificationsRoute;
@@ -252,7 +253,7 @@ export interface FileRoutesById {
   '/_auth/verify': typeof AuthVerifyRoute;
   '/_protected/admin': typeof ProtectedAdminRouteWithChildren;
   '/_protected/ws': typeof ProtectedWsRouteWithChildren;
-  '/verify-email-change/$email': typeof VerifyEmailChangeEmailRoute;
+  '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/_protected/_account/account': typeof ProtectedAccountAccountRoute;
   '/_protected/_account/billing': typeof ProtectedAccountBillingRoute;
   '/_protected/_account/notifications': typeof ProtectedAccountNotificationsRoute;
@@ -282,7 +283,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/admin'
     | '/ws'
-    | '/verify-email-change/$email'
+    | '/verify-email-change/$emailToken'
     | '/account'
     | '/billing'
     | '/notifications'
@@ -309,7 +310,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/verify'
     | '/admin'
-    | '/verify-email-change/$email'
+    | '/verify-email-change/$emailToken'
     | '/account'
     | '/billing'
     | '/notifications'
@@ -338,7 +339,7 @@ export interface FileRouteTypes {
     | '/_auth/verify'
     | '/_protected/admin'
     | '/_protected/ws'
-    | '/verify-email-change/$email'
+    | '/verify-email-change/$emailToken'
     | '/_protected/_account/account'
     | '/_protected/_account/billing'
     | '/_protected/_account/notifications'
@@ -362,7 +363,7 @@ export interface RootRouteChildren {
   AcceptInviteRoute: typeof AcceptInviteRoute;
   HealthRoute: typeof HealthRoute;
   PingRoute: typeof PingRoute;
-  VerifyEmailChangeEmailRoute: typeof VerifyEmailChangeEmailRoute;
+  VerifyEmailChangeEmailTokenRoute: typeof VerifyEmailChangeEmailTokenRoute;
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
 }
 
@@ -410,11 +411,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
-    '/verify-email-change/$email': {
-      id: '/verify-email-change/$email';
-      path: '/verify-email-change/$email';
-      fullPath: '/verify-email-change/$email';
-      preLoaderRoute: typeof VerifyEmailChangeEmailRouteImport;
+    '/verify-email-change/$emailToken': {
+      id: '/verify-email-change/$emailToken';
+      path: '/verify-email-change/$emailToken';
+      fullPath: '/verify-email-change/$emailToken';
+      preLoaderRoute: typeof VerifyEmailChangeEmailTokenRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     '/_protected/ws': {
@@ -673,7 +674,7 @@ const rootRouteChildren: RootRouteChildren = {
   AcceptInviteRoute: AcceptInviteRoute,
   HealthRoute: HealthRoute,
   PingRoute: PingRoute,
-  VerifyEmailChangeEmailRoute: VerifyEmailChangeEmailRoute,
+  VerifyEmailChangeEmailTokenRoute: VerifyEmailChangeEmailTokenRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 };
 export const routeTree = rootRouteImport

@@ -18,13 +18,13 @@ function fromBase64Url(base64Url: string) {
   return decodeURIComponent(escape(window.atob(base64)));
 }
 
-export const Route = createFileRoute('/verify-email-change/$email')({
+export const Route = createFileRoute('/verify-email-change/$emailToken')({
   component: VerifyEmailChangePage,
 });
 
 function VerifyEmailChangePage() {
   const navigate = useNavigate();
-  const { email: emailToken } = Route.useParams();
+  const { emailToken } = Route.useParams();
   const { data: session, isPending } = authClient.useSession();
 
   let email: string | null = null;
