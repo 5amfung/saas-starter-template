@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   IconDeviceDesktop,
   IconDeviceMobile,
@@ -84,6 +84,11 @@ function getBrowserFamily(userAgent?: string | null) {
   return 'Unknown browser';
 }
 
+function formatLoginMethod(method: string | null | undefined) {
+  if (!method) return 'unknown';
+  return method.charAt(0).toUpperCase() + method.slice(1);
+}
+
 export function ActiveSessionsList() {
   const queryClient = useQueryClient();
   const { data: currentSessionData } = useSessionQuery();
@@ -107,6 +112,12 @@ export function ActiveSessionsList() {
   });
 
   const currentSessionToken = currentSessionData?.session.token ?? null;
+  const { data: lastLoginMethod = null } = useQuery({
+    queryKey: ['last-login-method'],
+    queryFn: () => authClient.getLastUsedLoginMethod(),
+    staleTime: Infinity,
+  });
+  const lastSignInAt = currentSessionData?.user.lastSignInAt ?? null;
 
   const sortedSessions = React.useMemo(() => {
     const safeSessions = (sessions ?? []) as Array<SessionItem>;
@@ -122,6 +133,15 @@ export function ActiveSessionsList() {
       <Card>
         <CardHeader>
           <CardTitle>Active sessions</CardTitle>
+          {lastLoginMethod || lastSignInAt ? (
+            <p className="text-muted-foreground text-sm">
+              Last signed in
+              {lastLoginMethod
+                ? ` with ${formatLoginMethod(lastLoginMethod)}`
+                : ''}
+              {lastSignInAt ? ` on ${formatLastActive(lastSignInAt)}` : ''}.
+            </p>
+          ) : null}
           <CardDescription>
             Devices currently signed in to your account.
           </CardDescription>
