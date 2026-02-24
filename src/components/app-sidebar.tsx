@@ -33,13 +33,13 @@ const data = {
     },
     {
       title: 'Get Help',
-      url: '#',
+      url: 'https://github.com/5amfung',
       icon: <IconHelp />,
       newTab: true,
     },
     {
       title: 'Home Page',
-      url: 'https://github.com/5amfung/sass-starter-template',
+      url: 'https://github.com/5amfung',
       icon: <IconHome />,
       newTab: true,
     },
