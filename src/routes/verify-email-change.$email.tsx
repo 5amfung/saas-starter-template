@@ -5,7 +5,7 @@ import { AuthLayout } from '@/components/auth/auth-layout';
 import { CheckEmailCard } from '@/components/auth/check-email-card';
 import { getWebmailLinkForEmail } from '@/lib/email-provider';
 
-const SUCCESS_REDIRECT_DELAY_MS = 2000;
+const SUCCESS_REDIRECT_DELAY_MS = 3000;
 
 function fromBase64Url(base64Url: string) {
   const padded = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -34,6 +34,20 @@ function VerifyEmailChangePage() {
     email = null;
   }
 
+  const isEmailUpdated = !!(
+    email &&
+    session?.user.emailVerified &&
+    session.user.email.toLowerCase() === email.toLowerCase()
+  );
+
+  useEffect(() => {
+    if (!isEmailUpdated) return;
+    const timer = window.setTimeout(() => {
+      navigate({ to: '/account' });
+    }, SUCCESS_REDIRECT_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [isEmailUpdated, navigate]);
+
   if (!email) {
     return (
       <AuthLayout>
@@ -45,19 +59,7 @@ function VerifyEmailChangePage() {
     );
   }
 
-  const isEmailUpdated =
-    session?.user.emailVerified &&
-    session.user.email.toLowerCase() === email.toLowerCase();
-
   if (isPending) return null;
-
-  useEffect(() => {
-    if (!isEmailUpdated) return;
-    const timer = window.setTimeout(() => {
-      navigate({ to: '/account' });
-    }, SUCCESS_REDIRECT_DELAY_MS);
-    return () => window.clearTimeout(timer);
-  }, [isEmailUpdated, navigate]);
 
   if (isEmailUpdated) {
     return (
