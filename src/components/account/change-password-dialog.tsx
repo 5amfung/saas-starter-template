@@ -110,7 +110,9 @@ export function ChangePasswordDialog() {
               name="currentPassword"
               children={(field) => {
                 const isInvalid =
-                  field.state.meta.isBlurred && !field.state.meta.isValid;
+                  field.state.meta.isDirty &&
+                  field.state.meta.isBlurred &&
+                  !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid || undefined}>
                     <FieldLabel htmlFor={field.name}>
@@ -138,7 +140,9 @@ export function ChangePasswordDialog() {
               name="newPassword"
               children={(field) => {
                 const isInvalid =
-                  field.state.meta.isBlurred && !field.state.meta.isValid;
+                  field.state.meta.isDirty &&
+                  field.state.meta.isBlurred &&
+                  !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid || undefined}>
                     <FieldLabel htmlFor={field.name}>New password</FieldLabel>
@@ -164,7 +168,9 @@ export function ChangePasswordDialog() {
               name="confirmPassword"
               children={(field) => {
                 const isInvalid =
-                  field.state.meta.isBlurred && !field.state.meta.isValid;
+                  field.state.meta.isDirty &&
+                  field.state.meta.isBlurred &&
+                  !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid || undefined}>
                     <FieldLabel htmlFor={field.name}>
