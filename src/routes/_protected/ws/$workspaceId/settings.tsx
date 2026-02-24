@@ -67,9 +67,8 @@ function WorkspaceSettingsPage() {
   React.useEffect(() => {
     let isMounted = true;
     const loadActiveRole = async () => {
-      const { data, error } = await authClient.organization.getActiveMemberRole(
-        {},
-      );
+      const { data, error } =
+        await authClient.organization.getActiveMemberRole();
       if (!isMounted) return;
       if (error) return;
       setActiveRole(typeof data.role === 'string' ? data.role : null);
