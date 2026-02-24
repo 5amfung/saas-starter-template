@@ -43,7 +43,7 @@ export function ChangeEmailApprovalEmail({
                 as="h1"
                 className="mb-4 text-xl font-semibold text-zinc-900"
               >
-                Approve your email change
+                Do NOT click the button if you didn't request email change!
               </Heading>
               <Text className="mb-6 text-[15px] leading-6 text-zinc-700">
                 A request was made to change your account email to{' '}
