@@ -53,16 +53,22 @@ export const ensureWorkspaceRouteAccess = createServerFn()
     return { workspaceId: workspace.id };
   });
 
-export const getActiveWorkspace = createServerFn().handler(async () => {
+export const getActiveWorkspaceId = createServerFn().handler(async () => {
   const headers = getRequestHeaders();
   const session = await auth.api.getSession({ headers });
   if (!session || !session.user.emailVerified) {
     throw redirect({ to: '/signin' });
   }
+
+  const activeOrganizationId =
+    (session.session as { activeOrganizationId?: string | null })
+      .activeOrganizationId ?? null;
+  if (activeOrganizationId) {
+    return activeOrganizationId;
+  }
   const workspace = await ensureActiveWorkspaceForSession(headers, {
     user: { id: session.user.id },
     session: session.session,
   });
-
-  return workspace;
+  return workspace.id;
 });

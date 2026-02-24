@@ -24,11 +24,9 @@ import {
   sendVerificationEmail,
 } from './auth-emails.server';
 import {
-  ensurePostSignInActiveWorkspace,
   isDuplicateOrganizationError,
   isSignInPath,
 } from './auth-hooks.server';
-import type { SessionLike } from './auth-hooks.server';
 
 export const auth = betterAuth({
   telemetry: {
@@ -40,11 +38,6 @@ export const auth = betterAuth({
     // https://www.better-auth.com/docs/reference/security#trusted-origins
     'http://localhost:3000',
   ],
-  rateLimit: {
-    enabled: true,
-    window: 60, // 60 second window
-    max: 10, // max 10 attempts
-  },
   account: {
     accountLinking: {
       trustedProviders: ['google'],
@@ -99,15 +92,6 @@ export const auth = betterAuth({
         .update(userTable)
         .set({ lastSignInAt: new Date() })
         .where(eq(userTable.id, newSession.user.id));
-
-      const headers = ctx.headers instanceof Headers ? ctx.headers : undefined;
-      await ensurePostSignInActiveWorkspace({
-        userId: newSession.user.id,
-        session: newSession.session as unknown as SessionLike,
-        headers,
-        listOrganizations: auth.api.listOrganizations,
-        setActiveOrganization: auth.api.setActiveOrganization,
-      });
     }),
   },
   databaseHooks: {

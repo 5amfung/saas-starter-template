@@ -1,13 +1,13 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
-import { getActiveWorkspace } from '@/workspace/workspace.functions';
+import { getActiveWorkspaceId } from '@/workspace/workspace.functions';
 
 export const Route = createFileRoute('/_protected/ws/')({
   component: WorkspaceIndexPage,
   loader: async () => {
-    const activeWorkspace = await getActiveWorkspace();
+    const workspaceId = await getActiveWorkspaceId();
     throw redirect({
       to: '/ws/$workspaceId/overview',
-      params: { workspaceId: activeWorkspace.id },
+      params: { workspaceId },
       replace: true,
     });
   },
