@@ -80,8 +80,8 @@ function AccountPage() {
           <CardTitle>Password</CardTitle>
           <CardDescription>
             {hasPassword === false
-              ? 'You signed in with Google. Set a password to also sign in with email.'
-              : 'Update your sign-in password. Other active sessions will be signed out when it changes.'}
+              ? "You signed in with Google. To set a password and sign in with email too, you'll be signed out and we'll send you an email with a link to set a password for this account."
+              : 'Update your sign-in password here. When you change it, you will be signed out on this device and all other active sessions will be signed out. Use your new password to sign in again.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex justify-end">
