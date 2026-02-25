@@ -131,6 +131,8 @@ function DragHandle({ id }: { id: number }) {
   );
 }
 
+const ACTIONS_COLUMN_CLASS = 'text-right w-14';
+
 const columns: Array<ColumnDef<z.infer<typeof schema>>> = [
   {
     id: 'drag',
@@ -327,7 +329,12 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
       }}
     >
       {row.getVisibleCells().map((cell) => (
-        <TableCell key={cell.id}>
+        <TableCell
+          key={cell.id}
+          className={
+            cell.column.id === 'actions' ? ACTIONS_COLUMN_CLASS : undefined
+          }
+        >
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </TableCell>
       ))}
@@ -494,7 +501,15 @@ export function DataTable({
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
                       return (
-                        <TableHead key={header.id} colSpan={header.colSpan}>
+                        <TableHead
+                          key={header.id}
+                          colSpan={header.colSpan}
+                          className={
+                            header.id === 'actions'
+                              ? ACTIONS_COLUMN_CLASS
+                              : undefined
+                          }
+                        >
                           {header.isPlaceholder
                             ? null
                             : flexRender(

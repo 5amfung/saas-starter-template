@@ -68,6 +68,7 @@ interface WorkspaceMembersTableProps {
 
 const PAGE_SIZE_OPTIONS = ['10', '25', '50'];
 const MAX_SKELETON_ROWS = 10;
+const ACTIONS_COLUMN_CLASS = 'text-right w-14';
 
 export function WorkspaceMembersTable({
   data,
@@ -217,9 +218,11 @@ export function WorkspaceMembersTable({
                         : undefined
                     }
                     className={
-                      header.column.getCanSort()
-                        ? 'cursor-pointer select-none'
-                        : undefined
+                      header.id === 'actions'
+                        ? ACTIONS_COLUMN_CLASS
+                        : header.column.getCanSort()
+                          ? 'cursor-pointer select-none'
+                          : undefined
                     }
                   >
                     {header.isPlaceholder
@@ -243,7 +246,7 @@ export function WorkspaceMembersTable({
                   <TableCell>
                     <Skeleton className="h-4 w-20" />
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className={ACTIONS_COLUMN_CLASS}>
                     <Skeleton className="ml-auto h-8 w-8 rounded-md" />
                   </TableCell>
                 </TableRow>
@@ -252,7 +255,14 @@ export function WorkspaceMembersTable({
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell
+                      key={cell.id}
+                      className={
+                        cell.column.id === 'actions'
+                          ? ACTIONS_COLUMN_CLASS
+                          : undefined
+                      }
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext(),

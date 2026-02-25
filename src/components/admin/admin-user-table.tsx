@@ -92,6 +92,7 @@ interface AdminUserTableProps {
 
 const PAGE_SIZE_OPTIONS = ['10', '50', '100'];
 const MAX_SKELETON_ROWS = 10;
+const ACTIONS_COLUMN_CLASS = 'text-right w-14';
 
 export function AdminUserTable({
   data,
@@ -405,9 +406,11 @@ export function AdminUserTable({
                           : undefined
                       }
                       className={
-                        header.column.getCanSort()
-                          ? 'cursor-pointer select-none'
-                          : undefined
+                        header.id === 'actions'
+                          ? ACTIONS_COLUMN_CLASS
+                          : header.column.getCanSort()
+                            ? 'cursor-pointer select-none'
+                            : undefined
                       }
                     >
                       {header.isPlaceholder
@@ -426,11 +429,26 @@ export function AdminUserTable({
                 Array.from({ length: skeletonRowCount }).map((_, rowIdx) => (
                   <TableRow key={`loading-row-${rowIdx}`}>
                     {Array.from({ length: visibleColumnCount }).map(
-                      (__, colIdx) => (
-                        <TableCell key={`loading-cell-${rowIdx}-${colIdx}`}>
-                          <Skeleton className="h-4 w-24" />
-                        </TableCell>
-                      ),
+                      (__, colIdx) => {
+                        const column = table.getVisibleLeafColumns()[colIdx];
+                        const isActionsColumn = column?.id === 'actions';
+                        return (
+                          <TableCell
+                            key={`loading-cell-${rowIdx}-${colIdx}`}
+                            className={
+                              isActionsColumn ? ACTIONS_COLUMN_CLASS : undefined
+                            }
+                          >
+                            <Skeleton
+                              className={
+                                isActionsColumn
+                                  ? 'ml-auto h-8 w-8 rounded-md'
+                                  : 'h-4 w-24'
+                              }
+                            />
+                          </TableCell>
+                        );
+                      },
                     )}
                   </TableRow>
                 ))
@@ -438,7 +456,14 @@ export function AdminUserTable({
                 table.getRowModel().rows.map((row) => (
                   <TableRow key={row.id}>
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
+                      <TableCell
+                        key={cell.id}
+                        className={
+                          cell.column.id === 'actions'
+                            ? ACTIONS_COLUMN_CLASS
+                            : undefined
+                        }
+                      >
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext(),
