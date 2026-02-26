@@ -8,6 +8,7 @@ import {
   IconNotification,
   IconUserCircle,
 } from '@tabler/icons-react';
+import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -61,6 +62,7 @@ export function NavUser({
       navigate({ to: '/' });
     } catch (error) {
       console.error('Logout failed:', error);
+      toast.error('Logout failed. Please try again.');
     }
   }
 
