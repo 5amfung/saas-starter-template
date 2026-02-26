@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "EnterWorktree",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/scripts/post-enter-worktree.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

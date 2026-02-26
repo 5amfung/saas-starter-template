@@ -216,39 +216,6 @@ Fix root causes rather than papering over symptoms.
 - **TypeScript**: Validate or narrow types rather than casting with `as`.
 - **Error handling contracts**: Find and use concrete library error types/contracts instead of shape-probing unknown error objects.
 
-```typescript
-// ❌ BAD — ref to mask stale data during refetch
-const lastSavedRef = useRef<string | null>(null);
-defaultValues: { name: lastSavedRef.current ?? user.name }
-
-// ✅ GOOD — optimistic cache update at the source
-onSuccess: (_, variables) => {
-  queryClient.setQueryData(['user', id], (prev) =>
-    prev ? { ...prev, ...variables } : prev
-  );
-  queryClient.invalidateQueries({ queryKey: ['user', id] });
-}
-```
-
-```typescript
-// ❌ BAD — silently swallow errors
-catch (e) {}
-
-// ✅ GOOD — handle or rethrow with context
-catch (e) {
-  logger.error('Operation failed', { error: e });
-  throw new AppError('Unable to complete', { cause: e });
-}
-```
-
-```typescript
-// ❌ BAD — escape hatch cast
-const data = response as MyType;
-
-// ✅ GOOD — validate or narrow
-const data = mySchema.parse(response);
-```
-
 When unsure: research the recommended approach for the library, fix the architecture (queries, state flow) rather than adding compensating logic, and prefer a small correct refactor over a quick workaround.
 
 ## Do Not
