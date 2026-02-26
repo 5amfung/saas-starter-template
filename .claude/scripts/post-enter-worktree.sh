@@ -7,6 +7,11 @@ set -euo pipefail
 # Receives a JSON payload on stdin with the shape:
 #   { "tool_name": "EnterWorktree", "tool_input": { "name": "..." }, "tool_response": "..." }
 
+if ! command -v jq &>/dev/null; then
+  echo "post-enter-worktree: jq is required but not installed (brew install jq)." >&2
+  exit 1
+fi
+
 PAYLOAD=$(cat)
 PROJECT_ROOT=$(pwd)
 
