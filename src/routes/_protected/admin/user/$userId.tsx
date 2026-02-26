@@ -14,6 +14,7 @@ import { AdminDeleteUserDialog } from '@/components/admin/admin-delete-user-dial
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { authClient } from '@/auth/auth-client';
+import { useSessionQuery } from '@/hooks/use-session-query';
 
 export const Route = createFileRoute('/_protected/admin/user/$userId')({
   component: AdminUserDetailPage,
@@ -41,6 +42,7 @@ function BackToUserListButton({ disabled }: { disabled?: boolean }) {
 
 function AdminUserDetailPage() {
   const { userId } = Route.useParams();
+  const sessionQuery = useSessionQuery();
 
   const userQuery = useQuery({
     queryKey: ['admin', 'user', userId],
@@ -99,11 +101,17 @@ function AdminUserDetailPage() {
                 Permanently delete this user and all associated data.
               </p>
             </div>
-            <div className="flex justify-end">
+            <div className="flex flex-col items-end gap-2">
               <AdminDeleteUserDialog
                 userId={userQuery.data.id}
                 userEmail={userQuery.data.email}
+                disabled={sessionQuery.data?.user.id === userQuery.data.id}
               />
+              {sessionQuery.data?.user.id === userQuery.data.id ? (
+                <p className="text-muted-foreground text-xs">
+                  You cannot delete your own account.
+                </p>
+              ) : null}
             </div>
           </div>
         </>

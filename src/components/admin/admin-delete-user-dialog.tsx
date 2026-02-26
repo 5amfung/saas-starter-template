@@ -24,11 +24,13 @@ const CONFIRMATION_TEXT = 'DELETE';
 interface AdminDeleteUserDialogProps {
   userId: string;
   userEmail: string;
+  disabled?: boolean;
 }
 
 export function AdminDeleteUserDialog({
   userId,
   userEmail,
+  disabled,
 }: AdminDeleteUserDialogProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -59,55 +61,55 @@ export function AdminDeleteUserDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger
-        render={
-          <Button variant="destructive" className="w-fit">
-            Delete User
-          </Button>
-        }
-      />
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogMedia className="bg-destructive/10">
-            <IconAlertTriangle className="text-destructive" />
-          </AlertDialogMedia>
-          <AlertDialogTitle>Delete User</AlertDialogTitle>
-          <AlertDialogDescription>
-            This will permanently delete <strong>{userEmail}</strong> and all
-            associated data. This action cannot be undone.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+        <AlertDialogTrigger
+          render={
+            <Button variant="destructive" className="w-fit" disabled={disabled}>
+              Delete User
+            </Button>
+          }
+        />
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogMedia className="bg-destructive/10">
+              <IconAlertTriangle className="text-destructive" />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete <strong>{userEmail}</strong> and all
+              associated data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="delete-confirm" className="text-sm font-medium">
-            Type <strong>{CONFIRMATION_TEXT}</strong> to confirm
-          </label>
-          <Input
-            id="delete-confirm"
-            value={confirmation}
-            onChange={(e) => setConfirmation(e.target.value)}
-            placeholder={CONFIRMATION_TEXT}
-            autoComplete="off"
-          />
-        </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="delete-confirm" className="text-sm font-medium">
+              Type <strong>{CONFIRMATION_TEXT}</strong> to confirm
+            </label>
+            <Input
+              id="delete-confirm"
+              value={confirmation}
+              onChange={(e) => setConfirmation(e.target.value)}
+              placeholder={CONFIRMATION_TEXT}
+              autoComplete="off"
+            />
+          </div>
 
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            variant="destructive"
-            disabled={!isConfirmed || mutation.isPending}
-            onClick={(e) => {
-              e.preventDefault();
-              mutation.mutate();
-            }}
-          >
-            {mutation.isPending && (
-              <IconLoader2 className="size-4 animate-spin" />
-            )}
-            Confirm delete
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={!isConfirmed || mutation.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                mutation.mutate();
+              }}
+            >
+              {mutation.isPending && (
+                <IconLoader2 className="size-4 animate-spin" />
+              )}
+              Confirm delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
     </AlertDialog>
   );
 }
