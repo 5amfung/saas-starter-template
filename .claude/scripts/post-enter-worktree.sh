@@ -38,8 +38,3 @@ if [ -f "$PROJECT_ROOT/.env" ]; then
 else
   echo "post-enter-worktree: no .env found at project root — skipping copy." >&2
 fi
-
-# Install dependencies.
-echo "post-enter-worktree: running bun install in $WORKTREE_PATH"
-cd "$WORKTREE_PATH"
-bun install
