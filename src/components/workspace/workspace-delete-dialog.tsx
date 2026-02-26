@@ -25,7 +25,6 @@ type WorkspaceDeleteDialogProps = {
   workspaceId: string;
   workspaceName: string;
   isDisabled: boolean;
-  disabledMessage: string | null;
   getNextWorkspaceIdAfterDelete: () => Promise<string | null>;
 };
 
@@ -33,7 +32,6 @@ export function WorkspaceDeleteDialog({
   workspaceId,
   workspaceName,
   isDisabled,
-  disabledMessage,
   getNextWorkspaceIdAfterDelete,
 }: WorkspaceDeleteDialogProps) {
   const navigate = useNavigate();
@@ -138,9 +136,6 @@ export function WorkspaceDeleteDialog({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      {isDisabled && disabledMessage ? (
-        <p className="text-muted-foreground text-xs">{disabledMessage}</p>
-      ) : null}
     </div>
   );
 }

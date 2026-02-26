@@ -238,14 +238,18 @@ function WorkspaceSettingsPage() {
             Permanently delete this workspace and all associated data.
           </p>
         </div>
-        <div className="flex justify-end">
+        <div className="flex flex-col items-end gap-2">
           <WorkspaceDeleteDialog
             workspaceId={workspace.id}
             workspaceName={workspace.name}
             isDisabled={!canDelete}
-            disabledMessage={deleteDisabledMessage}
             getNextWorkspaceIdAfterDelete={getNextWorkspaceIdAfterDelete}
           />
+          {deleteDisabledMessage ? (
+            <p className="text-muted-foreground text-xs">
+              {deleteDisabledMessage}
+            </p>
+          ) : null}
         </div>
       </div>
     </div>
