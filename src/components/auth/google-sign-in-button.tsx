@@ -37,9 +37,7 @@ export function GoogleSignInButton() {
         )}
         Sign in with Google
       </Button>
-      {error && (
-        <p className="text-destructive text-center text-sm">{error}</p>
-      )}
+      {error && <p className="text-destructive text-center text-sm">{error}</p>}
     </div>
   );
 }

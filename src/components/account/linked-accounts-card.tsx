@@ -34,23 +34,29 @@ interface Provider {
   Icon: React.ComponentType<{ className?: string }>;
 }
 
-const PROVIDERS: Array<Provider> = [{ id: 'google', label: 'Google', Icon: GoogleIcon }];
+const PROVIDERS: Array<Provider> = [
+  { id: 'google', label: 'Google', Icon: GoogleIcon },
+];
 
 const LINK_ERROR_MESSAGES: Record<string, string> = {
   "email_doesn't_match":
-    "Could not connect Google account. Make sure you sign in with the same email address as your account.",
+    'Could not connect Google account. Make sure you sign in with the same email address as your account.',
   account_already_linked_to_different_user:
     'This Google account is already connected to another account.',
 };
 
 function getLinkErrorMessage(code: string): string {
-  return LINK_ERROR_MESSAGES[code] ?? 'Failed to connect account. Please try again.';
+  return (
+    LINK_ERROR_MESSAGES[code] ?? 'Failed to connect account. Please try again.'
+  );
 }
 
 export function LinkedAccountsCard() {
   const queryClient = useQueryClient();
   const { data: accounts, isPending } = useLinkedAccountsQuery();
-  const [confirmDisconnect, setConfirmDisconnect] = React.useState<string | null>(null);
+  const [confirmDisconnect, setConfirmDisconnect] = React.useState<
+    string | null
+  >(null);
   const [connectingId, setConnectingId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -77,16 +83,19 @@ export function LinkedAccountsCard() {
     );
   }, [accounts]);
 
-  const hasPassword = accounts != null
-    ? accounts.some((a) => a.providerId === 'credential')
-    : false;
+  const hasPassword =
+    accounts != null
+      ? accounts.some((a) => a.providerId === 'credential')
+      : false;
 
   const totalAuthMethods = (hasPassword ? 1 : 0) + linkedProviderIds.size;
 
   async function handleConnect(providerId: string) {
     setConnectingId(providerId);
     const { error } = await authClient.linkSocial({
-      provider: providerId as Parameters<typeof authClient.linkSocial>[0]['provider'],
+      provider: providerId as Parameters<
+        typeof authClient.linkSocial
+      >[0]['provider'],
       callbackURL: '/account',
       errorCallbackURL: '/account?link_error=1',
     });
@@ -105,7 +114,9 @@ export function LinkedAccountsCard() {
     onSuccess: async () => {
       toast.success('Account disconnected.');
       setConfirmDisconnect(null);
-      await queryClient.invalidateQueries({ queryKey: LINKED_ACCOUNTS_QUERY_KEY });
+      await queryClient.invalidateQueries({
+        queryKey: LINKED_ACCOUNTS_QUERY_KEY,
+      });
     },
     onError: (err) => {
       toast.error(err.message || 'Failed to disconnect account.');
@@ -169,7 +180,9 @@ export function LinkedAccountsCard() {
                       disabled={isConnecting}
                       onClick={() => void handleConnect(id)}
                     >
-                      {isConnecting && <IconLoader2 className="size-4 animate-spin" />}
+                      {isConnecting && (
+                        <IconLoader2 className="size-4 animate-spin" />
+                      )}
                       Connect
                     </Button>
                   )}

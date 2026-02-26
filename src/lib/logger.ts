@@ -1,4 +1,4 @@
-import { createIsomorphicFn, createMiddleware  } from '@tanstack/react-start';
+import { createIsomorphicFn, createMiddleware } from '@tanstack/react-start';
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -7,9 +7,14 @@ export const logger = createIsomorphicFn()
     const timestamp = new Date().toISOString();
 
     if (process.env.NODE_ENV === 'development') {
-      console[level](`[${timestamp}] [${level.toUpperCase()}]`, message, data ?? '');
+      console[level](
+        `[${timestamp}] [${level.toUpperCase()}]`,
+        message,
+        data ?? '',
+      );
     } else {
-      logger('info',
+      logger(
+        'info',
         JSON.stringify({
           timestamp,
           level,
@@ -30,24 +35,28 @@ export const logger = createIsomorphicFn()
     }
   });
 
-export const requestLogger = createMiddleware().server(async ({ request, next }) => {
-  const startTime = Date.now();
+export const requestLogger = createMiddleware().server(
+  async ({ request, next }) => {
+    const startTime = Date.now();
 
-  try {
-    const result = await next();
-    const duration = Date.now() - startTime;
+    try {
+      const result = await next();
+      const duration = Date.now() - startTime;
 
-    logger('info',
-       `${request.method} ${request.url} - ${result.response.status} (${duration}ms)`,
-    );
+      logger(
+        'info',
+        `${request.method} ${request.url} - ${result.response.status} (${duration}ms)`,
+      );
 
-    return result;
-  } catch (error) {
-    const duration = Date.now() - startTime;
-    logger('error',
-      `${request.method} ${request.url} - Error (${duration}ms):`,
-      error,
-    );
-    throw error;
-  }
-});
+      return result;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      logger(
+        'error',
+        `${request.method} ${request.url} - Error (${duration}ms):`,
+        error,
+      );
+      throw error;
+    }
+  },
+);
