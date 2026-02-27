@@ -59,3 +59,4 @@ certificates
 
 # Claude
 .claude/settings.local.json
+.claude/worktrees
