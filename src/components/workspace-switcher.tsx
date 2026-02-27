@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { IconPlus, IconSelector } from '@tabler/icons-react';
+import { IconLoader2, IconPlus, IconSelector } from '@tabler/icons-react';
 import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
@@ -252,7 +252,10 @@ export function WorkspaceSwitcher({
                 createWorkspaceMutation.mutate(result.data);
               }}
             >
-              {createWorkspaceMutation.isPending ? 'Creating...' : 'Create'}
+              {createWorkspaceMutation.isPending && (
+                <IconLoader2 className="size-4 animate-spin" />
+              )}
+              Create
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
