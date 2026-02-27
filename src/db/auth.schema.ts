@@ -18,13 +18,14 @@ export const user = pgTable(
     image: text('image'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
-      .$onUpdate(() => new Date())
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
+    lastLoginMethod: text('last_login_method'),
     role: text('role'),
     banned: boolean('banned').default(false),
     banReason: text('ban_reason'),
     banExpires: timestamp('ban_expires'),
-    lastLoginMethod: text('last_login_method'),
     lastSignInAt: timestamp('last_sign_in_at'),
   },
   (table) => [
@@ -43,7 +44,7 @@ export const session = pgTable(
     token: text('token').notNull().unique(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
-      .$onUpdate(() => new Date())
+      .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
     ipAddress: text('ip_address'),
     userAgent: text('user_agent'),
@@ -53,7 +54,10 @@ export const session = pgTable(
     activeOrganizationId: text('active_organization_id'),
     impersonatedBy: text('impersonated_by'),
   },
-  (table) => [index('session_userId_idx').on(table.userId)],
+  (table) => [
+    index('session_userId_idx').on(table.userId),
+    index('session_token_idx').on(table.token),
+  ],
 );
 
 export const account = pgTable(
@@ -74,7 +78,7 @@ export const account = pgTable(
     password: text('password'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
-      .$onUpdate(() => new Date())
+      .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
   (table) => [index('account_userId_idx').on(table.userId)],
@@ -89,7 +93,8 @@ export const verification = pgTable(
     expiresAt: timestamp('expires_at').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
-      .$onUpdate(() => new Date())
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
   (table) => [index('verification_identifier_idx').on(table.identifier)],
@@ -102,7 +107,7 @@ export const organization = pgTable(
     name: text('name').notNull(),
     slug: text('slug').notNull().unique(),
     logo: text('logo'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at').notNull(),
     metadata: text('metadata'),
     workspaceType: text('workspace_type'),
     personalOwnerUserId: text('personal_owner_user_id'),
@@ -121,7 +126,7 @@ export const member = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
     role: text('role').default('member').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at').notNull(),
   },
   (table) => [
     index('member_organizationId_idx').on(table.organizationId),

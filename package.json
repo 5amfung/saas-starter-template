@@ -12,12 +12,13 @@
     "typecheck": "tsc --noEmit",
     "check": "tsc --noEmit && eslint",
     "format": "prettier --write ./src",
-    "gen-auth-schema": "bunx @better-auth/cli generate --config ./src/auth/auth.server.ts --output ./src/db/auth.schema.ts && prettier --write ./src/db/auth.schema.ts",
+    "gen-auth-schema": "bunx @better-auth/cli generate --config ./src/auth/auth.server.ts --output ./src/db/auth.schema.ts --yes && bun run scripts/patch-auth-schema.ts && eslint --fix ./src/db/auth.schema.ts && prettier --write ./src/db/auth.schema.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "email:dev": "bunx react-email dev --dir src/components/email --port 3001"
+    "email:dev": "bunx react-email dev --dir src/components/email --port 3001",
+    "install-skills": "npx skills experimental_install"
   },
   "dependencies": {
     "@base-ui/react": "^1.1.0",
