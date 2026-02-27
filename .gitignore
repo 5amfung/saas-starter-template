@@ -56,3 +56,6 @@ certificates
 
 # Serena (semantic code retrieval)
 /.serena
+
+# Claude
+.claude/settings.local.json
