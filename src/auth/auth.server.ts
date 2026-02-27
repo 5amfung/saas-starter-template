@@ -1,4 +1,4 @@
-import { betterAuth } from 'better-auth';
+import { betterAuth } from 'better-auth/minimal';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
 import {
   admin,
