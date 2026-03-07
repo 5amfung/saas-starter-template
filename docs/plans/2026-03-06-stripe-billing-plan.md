@@ -1059,25 +1059,30 @@ git commit -m "feat(billing): wire up billing page with plan cards, banner, and 
 
 **Files:**
 
-- Modify: `.env.example`
+- Modify: `.env` (actual runtime secrets — never committed)
+- Modify: `.env.example` (if Stripe vars are missing from the example template)
 
-**Step 1: Ensure env vars are documented**
+**Step 1: Add Stripe secrets to `.env`**
 
-Verify `.env.example` contains:
+Add the actual Stripe keys to `.env` (this file is gitignored and never committed):
 
 ```
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_SECRET_KEY=sk_test_...   # From Stripe Dashboard → API keys
+STRIPE_WEBHOOK_SECRET=whsec_... # From Stripe Dashboard → Webhooks → Signing secret
 ```
 
-These should already be there per the exploration. If not, add them.
+**Step 2: Ensure `.env.example` documents the vars**
 
-**Step 2: Commit (if changed)**
+Verify `.env.example` contains placeholder entries so other developers know which vars are needed. These should already be there per the exploration. If not, add them.
+
+**Step 3: Commit (only `.env.example` if changed)**
 
 ```bash
 git add .env.example
-git commit -m "chore(env): document Stripe environment variables"
+git commit -m "chore(env): document Stripe environment variables in example"
 ```
+
+**Important:** Never commit `.env`. Only `.env.example` is tracked.
 
 ---
 
