@@ -1,4 +1,4 @@
-# Stripe Billing Integration Design
+  # Stripe Billing Integration Design
 
 ## Summary
 
@@ -31,6 +31,7 @@ interface PlanLimits {
 interface Plan {
   id: PlanId;
   name: string; // Display: "Starter", "Pro"
+  tier: number; // Explicit rank: 0 = free, 1 = pro, 2 = future enterprise
   stripePriceId: string | null; // null for free tier
   price: number; // Cents, 0 for free
   interval: 'month' | 'year' | null;
@@ -39,7 +40,7 @@ interface Plan {
 }
 ```
 
-Helper functions: `getPlanById()`, `getPlanByPriceId()`, `getFreePlan()`, `getUserPlanLimits()`.
+Helper functions: `getPlanById()`, `getPlanByPriceId()`, `getFreePlan()`, `getPlanLimitsForPlanId()`, `getHighestTierPlanId()`.
 
 ## Server Integration
 
@@ -49,14 +50,18 @@ Helper functions: `getPlanById()`, `getPlanByPriceId()`, `getFreePlan()`, `getUs
 - `subscription.enabled: true` with plan entries mapping to Stripe price IDs.
 - Webhooks auto-handled at `/api/auth/stripe/webhook`.
 
-### Plan Limit Enforcement (`src/auth/auth-hooks.server.ts`)
+### Plan Limit Enforcement (`src/auth/auth.server.ts` org hooks)
 
-Server-side hooks using Better Auth's database hooks:
+Server-side hooks using Better Auth's organization hooks:
 
-- **`beforeCreateOrganization`**: Count user's workspaces vs plan's `maxWorkspaces`. Reject if at limit.
-- **`beforeCreateInvitation`/member creation**: Count workspace members vs owner's plan's `maxMembersPerWorkspace`. Reject if at limit.
+- **`beforeCreateOrganization`**: Query subscription table directly via Drizzle, count user's workspaces vs plan's `maxWorkspaces`. Reject if at limit.
+- **`beforeCreateInvitation`**: Query subscription table for workspace owner, count members vs owner's plan's `maxMembersPerWorkspace`. Reject if at limit.
 
-Hooks import plan limits from `src/billing/plans.ts`.
+Hooks import only from `@/billing/plans` (pure config) and `@/db` (Drizzle) — no imports from `billing.server.ts` to avoid circular dependencies with `auth.server.ts`.
+
+### Multiple Active Subscriptions
+
+During upgrade transitions (e.g. webhook race conditions), a user may briefly have multiple active subscriptions. The `tier` field on each plan enables explicit ranking — `getHighestTierPlanId()` always picks the most permissive plan so the user is never under-provisioned.
 
 ### Session Data
 
@@ -165,3 +170,5 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 | Invoice storage   | Stripe API real-time    | Always accurate, no sync complexity          |
 | Plan management   | Stripe Customer Portal  | PCI-compliant, less custom code              |
 | Components dir    | src/components/billing/ | Dedicated billing UI directory               |
+| Plan ranking      | Explicit `tier` field   | Array-order-independent, handles multi-sub    |
+| Circular deps     | Direct Drizzle queries  | Hooks avoid importing billing.server.ts       |
