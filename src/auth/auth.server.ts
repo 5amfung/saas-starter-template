@@ -171,11 +171,11 @@ export const auth = betterAuth({
           validateWorkspaceFields(organization, 'create');
 
           // Enforce workspace limit based on user's plan.
-          if (user?.id) {
+          if (user.id) {
             const subs = await auth.api.listActiveSubscriptions({
               query: { referenceId: user.id },
             });
-            const planId = resolveUserPlanId(subs ?? []);
+            const planId = resolveUserPlanId(Array.from(subs));
             const limits = getPlanLimitsForPlanId(planId);
 
             if (limits.maxWorkspaces !== -1) {
@@ -188,7 +188,8 @@ export const auth = betterAuth({
                     eq(memberTable.role, 'owner'),
                   ),
                 );
-              const workspaceCount = result?.count ?? 0;
+              // Drizzle's count() always returns a row, so result.count is safe.
+              const workspaceCount = result.count;
               if (workspaceCount >= limits.maxWorkspaces) {
                 throw new APIError('FORBIDDEN', {
                   message: `Your plan allows a maximum of ${limits.maxWorkspaces} workspace(s). Please upgrade to create more.`,
@@ -222,7 +223,7 @@ export const auth = betterAuth({
           const subs = await auth.api.listActiveSubscriptions({
             query: { referenceId: owner.userId },
           });
-          const planId = resolveUserPlanId(subs ?? []);
+          const planId = resolveUserPlanId(Array.from(subs));
           const limits = getPlanLimitsForPlanId(planId);
 
           if (limits.maxMembersPerWorkspace !== -1) {

@@ -22,7 +22,7 @@ export const getInvoices = createServerFn().handler(async () => {
     .from(userTable)
     .where(eq(userTable.id, session.user.id));
 
-  if (!dbUser?.stripeCustomerId) return [];
+  if (!dbUser.stripeCustomerId) return [];
 
   const twelveMonthsAgo = Math.floor(Date.now() / 1000) - 365 * 24 * 60 * 60;
   const invoices = await stripeClient.invoices.list({
@@ -96,7 +96,7 @@ export const reactivateSubscription = createServerFn().handler(async () => {
     query: { referenceId: session.user.id },
   });
 
-  const active = (subscriptions ?? []).filter(
+  const active = subscriptions.filter(
     (s) => s.status === 'active' || s.status === 'trialing',
   );
 

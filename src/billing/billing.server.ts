@@ -21,7 +21,7 @@ export async function getUserActivePlanId(userId: string): Promise<PlanId> {
   const subscriptions = await auth.api.listActiveSubscriptions({
     query: { referenceId: userId },
   });
-  return resolveUserPlanId(subscriptions ?? []);
+  return resolveUserPlanId(Array.from(subscriptions));
 }
 
 /**

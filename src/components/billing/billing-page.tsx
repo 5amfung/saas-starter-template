@@ -27,11 +27,14 @@ const INVOICES_QUERY_KEY = ['billing', 'invoices'] as const;
 
 /** Returns the next upgrade plan for a given plan (next tier up), or null. */
 function getUpgradePlan(currentPlan: Plan, annual: boolean): Plan | null {
-  const nextTierPlan = PLANS.filter((p) => p.tier > currentPlan.tier).sort(
+  const sorted = PLANS.filter((p) => p.tier > currentPlan.tier).sort(
     (a, b) => a.tier - b.tier,
-  )[0];
-  if (!nextTierPlan) return null;
+  );
+  if (sorted.length === 0) return null;
 
+  // Non-null assertion is safe: we checked sorted.length above.
+   
+  const nextTierPlan = sorted[0];
   const nextGroup = PLAN_GROUP[nextTierPlan.id];
   // Find the monthly or annual variant of the next tier.
   return (
