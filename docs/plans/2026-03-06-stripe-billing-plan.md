@@ -68,6 +68,7 @@ import {
   getPlanByStripePriceId,
   getFreePlan,
   getPlanLimitsForPlanId,
+  resolveUserPlanId,
   PLANS,
 } from '@/billing/plans';
 
@@ -143,6 +144,57 @@ describe('plans', () => {
 
   it('getHighestTierPlanId falls back to free for unknown IDs', () => {
     expect(getHighestTierPlanId(['unknown'])).toBe(FREE_PLAN_ID);
+  });
+});
+
+describe('resolveUserPlanId', () => {
+  it('returns free plan for empty subscriptions', () => {
+    expect(resolveUserPlanId([])).toBe(FREE_PLAN_ID);
+  });
+
+  it('returns free plan when no subscriptions are active or trialing', () => {
+    expect(
+      resolveUserPlanId([
+        { plan: 'pro-monthly', status: 'canceled' },
+        { plan: 'pro-annual', status: 'past_due' },
+      ]),
+    ).toBe(FREE_PLAN_ID);
+  });
+
+  it('returns the plan ID for a single active subscription', () => {
+    expect(resolveUserPlanId([{ plan: 'pro-monthly', status: 'active' }])).toBe(
+      'pro-monthly',
+    );
+  });
+
+  it('returns the plan ID for a trialing subscription', () => {
+    expect(
+      resolveUserPlanId([{ plan: 'pro-annual', status: 'trialing' }]),
+    ).toBe('pro-annual');
+  });
+
+  it('picks the highest tier when multiple active subscriptions exist', () => {
+    expect(
+      resolveUserPlanId([
+        { plan: 'starter', status: 'active' },
+        { plan: 'pro-monthly', status: 'active' },
+      ]),
+    ).toBe('pro-monthly');
+  });
+
+  it('ignores non-active subscriptions when picking highest tier', () => {
+    expect(
+      resolveUserPlanId([
+        { plan: 'pro-annual', status: 'canceled' },
+        { plan: 'starter', status: 'active' },
+      ]),
+    ).toBe('starter');
+  });
+
+  it('falls back to free plan for unknown plan IDs', () => {
+    expect(
+      resolveUserPlanId([{ plan: 'unknown-plan', status: 'active' }]),
+    ).toBe(FREE_PLAN_ID);
   });
 });
 ```
@@ -310,6 +362,25 @@ export function getHighestTierPlanId(planIds: string[]): PlanId {
     }
   }
   return best?.id ?? FREE_PLAN_ID;
+}
+
+/**
+ * Resolves a user's effective plan from a list of subscriptions.
+ * Filters to active/trialing subscriptions, then picks the highest tier.
+ * Falls back to FREE_PLAN_ID if no active subscriptions exist.
+ *
+ * Pure function — no auth or DB dependency. Safe to import from auth.server.ts
+ * org hooks without circular dependency issues.
+ */
+export function resolveUserPlanId(
+  subscriptions: ReadonlyArray<{ plan: string; status: string }>,
+): PlanId {
+  const activePlans = subscriptions
+    .filter((s) => s.status === 'active' || s.status === 'trialing')
+    .map((s) => s.plan);
+
+  if (activePlans.length === 0) return FREE_PLAN_ID;
+  return getHighestTierPlanId(activePlans);
 }
 ```
 
@@ -505,20 +576,13 @@ Enforce workspace and member limits based on the user's subscription plan.
 
 Create `src/billing/billing.server.ts` with functions to look up a user's current plan from the database.
 
-**Important:** This file imports `auth` from `@/auth/auth.server`. The org hooks in `auth.server.ts` must NOT import from this file (would create a circular dependency). Instead, the hooks query the subscription table directly via Drizzle (see Step 2).
+**Note:** This file imports `auth` from `@/auth/auth.server`. The org hooks in `auth.server.ts` must NOT import from this file (would create a circular dependency). However, both this file and the hooks can import from `@/billing/plans` (pure config, no `auth` dependency). The shared `resolveUserPlanId()` function lives in `plans.ts` for this reason.
 
 ```ts
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { redirect } from '@tanstack/react-router';
-import { eq, and } from 'drizzle-orm';
 import { auth } from '@/auth/auth.server';
-import { db } from '@/db';
-import { subscription as subscriptionTable } from '@/db/schema';
-import {
-  FREE_PLAN_ID,
-  getHighestTierPlanId,
-  getPlanLimitsForPlanId,
-} from '@/billing/plans';
+import { resolveUserPlanId, getPlanLimitsForPlanId } from '@/billing/plans';
 import type { PlanId, PlanLimits } from '@/billing/plans';
 
 export async function requireVerifiedSession() {
@@ -531,24 +595,14 @@ export async function requireVerifiedSession() {
 }
 
 /**
- * Returns the active plan ID for a user by querying the subscription table.
- * If multiple active subscriptions exist (e.g. during an upgrade transition),
- * returns the highest-tier plan to give the user the most permissive limits.
- * Falls back to the free plan if no active subscription exists.
+ * Returns the active plan ID for a user using Better Auth's subscription API.
+ * Delegates to resolveUserPlanId() (pure function in plans.ts) for plan resolution.
  */
 export async function getUserActivePlanId(userId: string): Promise<PlanId> {
-  const rows = await db
-    .select({ plan: subscriptionTable.plan })
-    .from(subscriptionTable)
-    .where(
-      and(
-        eq(subscriptionTable.referenceId, userId),
-        eq(subscriptionTable.status, 'active'),
-      ),
-    );
-
-  if (rows.length === 0) return FREE_PLAN_ID;
-  return getHighestTierPlanId(rows.map((r) => r.plan));
+  const subscriptions = await auth.api.listActiveSubscriptions({
+    query: { referenceId: userId },
+  });
+  return resolveUserPlanId(subscriptions ?? []);
 }
 
 /**
@@ -562,18 +616,12 @@ export async function getUserPlanLimits(userId: string): Promise<PlanLimits> {
 
 **Step 2: Add limit enforcement to org hooks**
 
-In `src/auth/auth.server.ts`, the hooks query the subscription table directly via Drizzle — no imports from `billing.server.ts`, avoiding circular dependencies. The hooks only import from `@/billing/plans` (a pure config file with no `auth` dependency) and `@/db`.
+In `src/auth/auth.server.ts`, the hooks import `resolveUserPlanId` from `@/billing/plans` — a pure config file with no `auth` dependency, so no circular imports. The hooks call `auth.api.listActiveSubscriptions()` to get subscription data, then pass it to `resolveUserPlanId()` for plan resolution.
 
-Add these imports at the top of `src/auth/auth.server.ts`:
+Add this import at the top of `src/auth/auth.server.ts`:
 
 ```ts
-import { and, eq } from 'drizzle-orm';
-import { subscription as subscriptionTable } from '@/db/schema';
-import {
-  getHighestTierPlanId,
-  getPlanLimitsForPlanId,
-  FREE_PLAN_ID,
-} from '@/billing/plans';
+import { resolveUserPlanId, getPlanLimitsForPlanId } from '@/billing/plans';
 ```
 
 Update `beforeCreateOrganization`:
@@ -585,19 +633,10 @@ beforeCreateOrganization: async ({ organization, user }) => {
 
   // Enforce workspace limit based on user's plan.
   if (user?.id) {
-    const rows = await db
-      .select({ plan: subscriptionTable.plan })
-      .from(subscriptionTable)
-      .where(
-        and(
-          eq(subscriptionTable.referenceId, user.id),
-          eq(subscriptionTable.status, 'active'),
-        ),
-      );
-    const planId =
-      rows.length > 0
-        ? getHighestTierPlanId(rows.map((r) => r.plan))
-        : FREE_PLAN_ID;
+    const subs = await auth.api.listActiveSubscriptions({
+      query: { referenceId: user.id },
+    });
+    const planId = resolveUserPlanId(subs ?? []);
     const limits = getPlanLimitsForPlanId(planId);
 
     if (limits.maxWorkspaces !== -1) {
@@ -625,19 +664,10 @@ beforeCreateInvitation: async ({ invitation, organization, inviter }) => {
   const owner = members.find((m) => m.role === 'owner');
   if (!owner) return;
 
-  const rows = await db
-    .select({ plan: subscriptionTable.plan })
-    .from(subscriptionTable)
-    .where(
-      and(
-        eq(subscriptionTable.referenceId, owner.userId),
-        eq(subscriptionTable.status, 'active'),
-      ),
-    );
-  const planId =
-    rows.length > 0
-      ? getHighestTierPlanId(rows.map((r) => r.plan))
-      : FREE_PLAN_ID;
+  const subs = await auth.api.listActiveSubscriptions({
+    query: { referenceId: owner.userId },
+  });
+  const planId = resolveUserPlanId(subs ?? []);
   const limits = getPlanLimitsForPlanId(planId);
 
   if (limits.maxMembersPerWorkspace !== -1) {
@@ -695,12 +725,9 @@ Create `src/billing/billing.functions.ts`:
 import { createServerFn } from '@tanstack/react-start';
 import Stripe from 'stripe';
 import * as z from 'zod';
-import { eq, and } from 'drizzle-orm';
 import { auth } from '@/auth/auth.server';
-import { db } from '@/db';
-import { subscription as subscriptionTable } from '@/db/schema';
 import { requireVerifiedSession } from '@/billing/billing.server';
-import { getHighestTierPlanId, FREE_PLAN_ID } from '@/billing/plans';
+import { resolveUserPlanId } from '@/billing/plans';
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -716,9 +743,11 @@ export const getInvoices = createServerFn().handler(async () => {
   });
   if (!customer?.stripeCustomerId) return [];
 
+  const twelveMonthsAgo = Math.floor(Date.now() / 1000) - 365 * 24 * 60 * 60;
   const invoices = await stripeClient.invoices.list({
     customer: customer.stripeCustomerId,
-    limit: 24,
+    limit: 100,
+    created: { gte: twelveMonthsAgo },
   });
 
   return invoices.data.map((inv) => ({
@@ -779,26 +808,22 @@ export const createPortalSession = createServerFn().handler(async () => {
 export const reactivateSubscription = createServerFn().handler(async () => {
   const session = await requireVerifiedSession();
 
-  // Query subscriptions directly — pick highest tier if multiple exist.
-  const rows = await db
-    .select({
-      plan: subscriptionTable.plan,
-      stripeSubscriptionId: subscriptionTable.stripeSubscriptionId,
-    })
-    .from(subscriptionTable)
-    .where(
-      and(
-        eq(subscriptionTable.referenceId, session.user.id),
-        eq(subscriptionTable.status, 'active'),
-      ),
-    );
+  // Use Better Auth's subscription API to list active subscriptions.
+  const subscriptions = await auth.api.listActiveSubscriptions({
+    query: { referenceId: session.user.id },
+  });
 
-  if (rows.length === 0) {
+  const active = (subscriptions ?? []).filter(
+    (s) => s.status === 'active' || s.status === 'trialing',
+  );
+
+  if (active.length === 0) {
     throw new Error('No active subscription found.');
   }
 
-  const bestPlanId = getHighestTierPlanId(rows.map((r) => r.plan));
-  const target = rows.find((r) => r.plan === bestPlanId);
+  // Pick highest-tier subscription to reactivate.
+  const bestPlanId = resolveUserPlanId(active);
+  const target = active.find((s) => s.plan === bestPlanId);
   if (!target?.stripeSubscriptionId) {
     throw new Error('No Stripe subscription ID found.');
   }
@@ -1055,34 +1080,9 @@ git commit -m "feat(billing): wire up billing page with plan cards, banner, and 
 
 ---
 
-## Task 12: Update Environment Variables
+## Task 12: Verify Environment Variables
 
-**Files:**
-
-- Modify: `.env` (actual runtime secrets — never committed)
-- Modify: `.env.example` (if Stripe vars are missing from the example template)
-
-**Step 1: Add Stripe secrets to `.env`**
-
-Add the actual Stripe keys to `.env` (this file is gitignored and never committed):
-
-```
-STRIPE_SECRET_KEY=sk_test_...   # From Stripe Dashboard → API keys
-STRIPE_WEBHOOK_SECRET=whsec_... # From Stripe Dashboard → Webhooks → Signing secret
-```
-
-**Step 2: Ensure `.env.example` documents the vars**
-
-Verify `.env.example` contains placeholder entries so other developers know which vars are needed. These should already be there per the exploration. If not, add them.
-
-**Step 3: Commit (only `.env.example` if changed)**
-
-```bash
-git add .env.example
-git commit -m "chore(env): document Stripe environment variables in example"
-```
-
-**Important:** Never commit `.env`. Only `.env.example` is tracked.
+**Skip:** `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are already set in `.env`. Placeholders already exist in `.env.example`. No action needed.
 
 ---
 
@@ -1134,14 +1134,14 @@ Expected: Build succeeds.
 
 ### Better Auth Stripe API Discovery
 
-The exact method names on `auth.api` for Stripe operations may vary by plugin version. When implementing Task 7 (server functions), use TypeScript autocomplete to discover:
+The exact method names on `auth.api` for Stripe operations may vary by plugin version. Key server-side methods used in this plan:
 
-- How to get a user's Stripe customer ID.
-- How to list active subscriptions for a user.
-- How to create checkout sessions server-side.
-- How to create portal sessions server-side.
+- `auth.api.listActiveSubscriptions({ query: { referenceId } })` — List subscriptions for a user.
+- `auth.api.stripeGetCustomer({ query: { userId } })` — Get a user's Stripe customer ID.
+- `auth.api.createSubscription({ body: { priceId, successUrl, cancelUrl } })` — Create checkout session.
+- `auth.api.createPortalSession({ body: { returnUrl } })` — Create customer portal session.
 
-If the plugin exposes client-only methods, use the Stripe SDK directly for server-side operations.
+When implementing, use TypeScript autocomplete to verify method names. These are internal server-side calls that do not require HTTP session context — they work in both server functions and org hooks.
 
 ### Stripe Dashboard Setup (Manual, Outside Code)
 

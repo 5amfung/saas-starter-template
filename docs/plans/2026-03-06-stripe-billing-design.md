@@ -1,4 +1,4 @@
-  # Stripe Billing Integration Design
+# Stripe Billing Integration Design
 
 ## Summary
 
@@ -40,7 +40,7 @@ interface Plan {
 }
 ```
 
-Helper functions: `getPlanById()`, `getPlanByPriceId()`, `getFreePlan()`, `getPlanLimitsForPlanId()`, `getHighestTierPlanId()`.
+Helper functions: `getPlanById()`, `getPlanByStripePriceId()`, `getFreePlan()`, `getPlanLimitsForPlanId()`, `getHighestTierPlanId()`, `resolveUserPlanId()`.
 
 ## Server Integration
 
@@ -54,10 +54,10 @@ Helper functions: `getPlanById()`, `getPlanByPriceId()`, `getFreePlan()`, `getPl
 
 Server-side hooks using Better Auth's organization hooks:
 
-- **`beforeCreateOrganization`**: Query subscription table directly via Drizzle, count user's workspaces vs plan's `maxWorkspaces`. Reject if at limit.
-- **`beforeCreateInvitation`**: Query subscription table for workspace owner, count members vs owner's plan's `maxMembersPerWorkspace`. Reject if at limit.
+- **`beforeCreateOrganization`**: Use `auth.api.listActiveSubscriptions()` to resolve user's plan, count user's workspaces vs plan's `maxWorkspaces`. Reject if at limit.
+- **`beforeCreateInvitation`**: Use `auth.api.listActiveSubscriptions()` to resolve workspace owner's plan, count members vs owner's plan's `maxMembersPerWorkspace`. Reject if at limit.
 
-Hooks import only from `@/billing/plans` (pure config) and `@/db` (Drizzle) — no imports from `billing.server.ts` to avoid circular dependencies with `auth.server.ts`.
+Hooks call `auth.api.listActiveSubscriptions()` to fetch subscription data, then pass it to `resolveUserPlanId()` from `@/billing/plans` (a pure function with no `auth` dependency). This avoids circular imports — hooks import only from `@/billing/plans`, never from `billing.server.ts`.
 
 ### Multiple Active Subscriptions
 
@@ -161,14 +161,15 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 
 ## Decisions
 
-| Decision          | Choice                  | Rationale                                    |
-| ----------------- | ----------------------- | -------------------------------------------- |
-| Tier names        | Starter / Pro           | Clear, professional, room for future tiers   |
-| Plan config       | Typed config file       | Simple, type-safe, single source of truth    |
-| Billing cycles    | Monthly + Annual        | Standard SaaS pattern with annual discount   |
-| Limit enforcement | Server-side hooks       | Secure, consistent, single enforcement point |
-| Invoice storage   | Stripe API real-time    | Always accurate, no sync complexity          |
-| Plan management   | Stripe Customer Portal  | PCI-compliant, less custom code              |
-| Components dir    | src/components/billing/ | Dedicated billing UI directory               |
-| Plan ranking      | Explicit `tier` field   | Array-order-independent, handles multi-sub    |
-| Circular deps     | Direct Drizzle queries  | Hooks avoid importing billing.server.ts       |
+| Decision          | Choice                  | Rationale                                                  |
+| ----------------- | ----------------------- | ---------------------------------------------------------- |
+| Tier names        | Starter / Pro           | Clear, professional, room for future tiers                 |
+| Plan config       | Typed config file       | Simple, type-safe, single source of truth                  |
+| Billing cycles    | Monthly + Annual        | Standard SaaS pattern with annual discount                 |
+| Limit enforcement | Server-side hooks       | Secure, consistent, single enforcement point               |
+| Invoice storage   | Stripe API real-time    | Always accurate, no sync complexity                        |
+| Plan management   | Stripe Customer Portal  | PCI-compliant, less custom code                            |
+| Components dir    | src/components/billing/ | Dedicated billing UI directory                             |
+| Plan ranking      | Explicit `tier` field   | Array-order-independent, handles multi-sub                 |
+| Subscription API  | `auth.api` methods      | Uses intended API, no raw table queries needed             |
+| Circular deps     | Pure fn in plans.ts     | `resolveUserPlanId()` has no auth dep, importable anywhere |
