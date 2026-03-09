@@ -33,7 +33,7 @@ function getUpgradePlan(currentPlan: Plan, annual: boolean): Plan | null {
   if (sorted.length === 0) return null;
 
   // Non-null assertion is safe: we checked sorted.length above.
-   
+
   const nextTierPlan = sorted[0];
   const nextGroup = PLAN_GROUP[nextTierPlan.id];
   // Find the monthly or annual variant of the next tier.
