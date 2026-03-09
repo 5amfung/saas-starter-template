@@ -7,15 +7,22 @@ import {
 } from 'better-auth/plugins';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { tanstackStartCookies } from 'better-auth/tanstack-start';
-import { eq } from 'drizzle-orm';
+import { stripe } from '@better-auth/stripe';
+import Stripe from 'stripe';
+import { and, count, eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { user as userTable } from '@/db/schema';
+import { member as memberTable, user as userTable } from '@/db/schema';
 import {
   PERSONAL_WORKSPACE_NAME,
   PERSONAL_WORKSPACE_TYPE,
   buildPersonalWorkspaceSlug,
   isPersonalWorkspace,
 } from '@/workspace/workspace';
+import {
+  PLANS,
+  getPlanLimitsForPlanId,
+  resolveUserPlanId,
+} from '@/billing/plans';
 import { isRecord, validateWorkspaceFields } from './auth-workspace.server';
 import {
   sendChangeEmailConfirmation,
@@ -27,6 +34,8 @@ import {
   isDuplicateOrganizationError,
   isSignInPath,
 } from './auth-hooks.server';
+
+const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export const auth = betterAuth({
   telemetry: {
@@ -120,6 +129,18 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    stripe({
+      stripeClient,
+      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+      createCustomerOnSignUp: true,
+      subscription: {
+        enabled: true,
+        plans: PLANS.filter((p) => p.stripePriceId !== null).map((p) => ({
+          name: p.id,
+          priceId: p.stripePriceId!,
+        })),
+      },
+    }),
     lastLoginMethod({
       storeInDatabase: true,
     }),
@@ -145,10 +166,36 @@ export const auth = betterAuth({
         },
       },
       organizationHooks: {
-        beforeCreateOrganization: async ({ organization }) => {
+        beforeCreateOrganization: async ({ organization, user }) => {
           if (!isRecord(organization)) return;
           validateWorkspaceFields(organization, 'create');
-          await Promise.resolve();
+
+          // Enforce workspace limit based on user's plan.
+          if (user?.id) {
+            const subs = await auth.api.listActiveSubscriptions({
+              query: { referenceId: user.id },
+            });
+            const planId = resolveUserPlanId(subs ?? []);
+            const limits = getPlanLimitsForPlanId(planId);
+
+            if (limits.maxWorkspaces !== -1) {
+              const [result] = await db
+                .select({ count: count() })
+                .from(memberTable)
+                .where(
+                  and(
+                    eq(memberTable.userId, user.id),
+                    eq(memberTable.role, 'owner'),
+                  ),
+                );
+              const workspaceCount = result?.count ?? 0;
+              if (workspaceCount >= limits.maxWorkspaces) {
+                throw new APIError('FORBIDDEN', {
+                  message: `Your plan allows a maximum of ${limits.maxWorkspaces} workspace(s). Please upgrade to create more.`,
+                });
+              }
+            }
+          }
         },
         beforeUpdateOrganization: async ({ organization }) => {
           if (!isRecord(organization)) return;
@@ -162,6 +209,29 @@ export const auth = betterAuth({
             });
           }
           await Promise.resolve();
+        },
+        beforeCreateInvitation: async ({ organization }) => {
+          // Find the workspace owner to check their plan limits.
+          const members = await db
+            .select({ userId: memberTable.userId, role: memberTable.role })
+            .from(memberTable)
+            .where(eq(memberTable.organizationId, organization.id));
+          const owner = members.find((m) => m.role === 'owner');
+          if (!owner) return;
+
+          const subs = await auth.api.listActiveSubscriptions({
+            query: { referenceId: owner.userId },
+          });
+          const planId = resolveUserPlanId(subs ?? []);
+          const limits = getPlanLimitsForPlanId(planId);
+
+          if (limits.maxMembersPerWorkspace !== -1) {
+            if (members.length >= limits.maxMembersPerWorkspace) {
+              throw new APIError('FORBIDDEN', {
+                message: `This workspace has reached its member limit (${limits.maxMembersPerWorkspace}). The workspace owner needs to upgrade their plan.`,
+              });
+            }
+          }
         },
       },
     }),

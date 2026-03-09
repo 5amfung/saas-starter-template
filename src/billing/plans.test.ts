@@ -18,7 +18,7 @@ describe('plans', () => {
   it('has exactly one free plan with no stripePriceId', () => {
     const freePlans = PLANS.filter((p) => p.stripePriceId === null);
     expect(freePlans).toHaveLength(1);
-    expect(freePlans[0]!.id).toBe(FREE_PLAN_ID);
+    expect(freePlans[0].id).toBe(FREE_PLAN_ID);
   });
 
   it('getPlanById returns the correct plan', () => {
@@ -34,7 +34,7 @@ describe('plans', () => {
   it('getPlanByStripePriceId returns the correct plan', () => {
     const paidPlan = PLANS.find((p) => p.stripePriceId !== null);
     if (!paidPlan) return; // No paid plan configured with real price IDs yet.
-    const found = getPlanByStripePriceId(paidPlan.stripePriceId);
+    const found = getPlanByStripePriceId(paidPlan.stripePriceId!);
     expect(found).toBeDefined();
     expect(found!.id).toBe(paidPlan.id);
   });
