@@ -23,6 +23,7 @@ import {
   getPlanLimitsForPlanId,
   resolveUserPlanId,
 } from '@/billing/plans';
+import { logger } from '@/lib/logger';
 import { isRecord, validateWorkspaceFields } from './auth-workspace.server';
 import {
   sendChangeEmailConfirmation,
@@ -145,7 +146,7 @@ export const auth = betterAuth({
           priceId: p.stripePriceId!,
         })),
         onSubscriptionComplete: async ({ subscription, plan }) => {
-          console.log('[stripe] subscription complete', {
+          logger('info', 'subscription complete', {
             subscriptionId: subscription.id,
             plan: subscription.plan,
             planName: plan.name,
@@ -156,7 +157,7 @@ export const auth = betterAuth({
           await Promise.resolve();
         },
         onSubscriptionCreated: async ({ subscription, plan }) => {
-          console.log('[stripe] subscription created', {
+          logger('info', 'subscription created', {
             subscriptionId: subscription.id,
             plan: subscription.plan,
             planName: plan.name,
@@ -167,7 +168,7 @@ export const auth = betterAuth({
           await Promise.resolve();
         },
         onSubscriptionUpdate: async ({ subscription }) => {
-          console.log('[stripe] subscription updated', {
+          logger('info', 'subscription updated', {
             subscriptionId: subscription.id,
             plan: subscription.plan,
             referenceId: subscription.referenceId,
@@ -177,7 +178,7 @@ export const auth = betterAuth({
           await Promise.resolve();
         },
         onSubscriptionCancel: async ({ subscription, cancellationDetails }) => {
-          console.log('[stripe] subscription canceled', {
+          logger('info', 'subscription canceled', {
             subscriptionId: subscription.id,
             plan: subscription.plan,
             referenceId: subscription.referenceId,
@@ -188,7 +189,7 @@ export const auth = betterAuth({
           await Promise.resolve();
         },
         onSubscriptionDeleted: async ({ subscription }) => {
-          console.log('[stripe] subscription deleted', {
+          logger('info', 'subscription deleted', {
             subscriptionId: subscription.id,
             plan: subscription.plan,
             referenceId: subscription.referenceId,
