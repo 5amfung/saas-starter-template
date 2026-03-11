@@ -63,8 +63,6 @@ const PRO_LIMITS: PlanLimits = {
   maxMembersPerWorkspace: 5,
 };
 
-// TODO: Replace placeholder stripePriceId values with real Stripe price IDs
-// after creating the products in the Stripe Dashboard.
 export const PLANS: ReadonlyArray<Plan> = [
   {
     id: 'starter',
@@ -80,7 +78,7 @@ export const PLANS: ReadonlyArray<Plan> = [
     id: 'pro-monthly',
     name: 'Pro',
     tier: 1,
-    stripePriceId: 'price_pro_monthly_placeholder',
+    stripePriceId: process.env.STRIPE_PRO_MONTHLY_PRICE_ID ?? null,
     price: 0, // TODO: Set actual price in cents.
     interval: 'month',
     limits: PRO_LIMITS,
@@ -94,7 +92,7 @@ export const PLANS: ReadonlyArray<Plan> = [
     id: 'pro-annual',
     name: 'Pro',
     tier: 1,
-    stripePriceId: 'price_pro_annual_placeholder',
+    stripePriceId: process.env.STRIPE_PRO_ANNUAL_PRICE_ID ?? null,
     price: 0, // TODO: Set actual price in cents.
     interval: 'year',
     limits: PRO_LIMITS,

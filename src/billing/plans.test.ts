@@ -15,10 +15,12 @@ describe('plans', () => {
     expect(PLANS.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('has exactly one free plan with no stripePriceId', () => {
-    const freePlans = PLANS.filter((p) => p.stripePriceId === null);
+  it('has exactly one free-tier plan (tier 0)', () => {
+    const freePlans = PLANS.filter((p) => p.tier === 0);
     expect(freePlans).toHaveLength(1);
     expect(freePlans[0].id).toBe(FREE_PLAN_ID);
+    expect(freePlans[0].price).toBe(0);
+    expect(freePlans[0].stripePriceId).toBeNull();
   });
 
   it('getPlanById returns the correct plan', () => {
