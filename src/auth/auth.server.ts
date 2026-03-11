@@ -133,12 +133,69 @@ export const auth = betterAuth({
       stripeClient,
       stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
       createCustomerOnSignUp: true,
+      getCheckoutSessionParams: () => ({
+        params: {
+          automatic_tax: { enabled: true },
+        },
+      }),
       subscription: {
         enabled: true,
         plans: PLANS.filter((p) => p.stripePriceId !== null).map((p) => ({
           name: p.id,
           priceId: p.stripePriceId!,
         })),
+        onSubscriptionComplete: async ({ subscription, plan }) => {
+          console.log('[stripe] subscription complete', {
+            subscriptionId: subscription.id,
+            plan: subscription.plan,
+            planName: plan.name,
+            referenceId: subscription.referenceId,
+            status: subscription.status,
+            stripeSubscriptionId: subscription.stripeSubscriptionId,
+          });
+          await Promise.resolve();
+        },
+        onSubscriptionCreated: async ({ subscription, plan }) => {
+          console.log('[stripe] subscription created', {
+            subscriptionId: subscription.id,
+            plan: subscription.plan,
+            planName: plan.name,
+            referenceId: subscription.referenceId,
+            status: subscription.status,
+            stripeSubscriptionId: subscription.stripeSubscriptionId,
+          });
+          await Promise.resolve();
+        },
+        onSubscriptionUpdate: async ({ subscription }) => {
+          console.log('[stripe] subscription updated', {
+            subscriptionId: subscription.id,
+            plan: subscription.plan,
+            referenceId: subscription.referenceId,
+            status: subscription.status,
+            periodEnd: subscription.periodEnd,
+          });
+          await Promise.resolve();
+        },
+        onSubscriptionCancel: async ({ subscription, cancellationDetails }) => {
+          console.log('[stripe] subscription canceled', {
+            subscriptionId: subscription.id,
+            plan: subscription.plan,
+            referenceId: subscription.referenceId,
+            status: subscription.status,
+            reason: cancellationDetails?.reason,
+            feedback: cancellationDetails?.feedback,
+          });
+          await Promise.resolve();
+        },
+        onSubscriptionDeleted: async ({ subscription }) => {
+          console.log('[stripe] subscription deleted', {
+            subscriptionId: subscription.id,
+            plan: subscription.plan,
+            referenceId: subscription.referenceId,
+            stripeSubscriptionId: subscription.stripeSubscriptionId,
+          });
+          await Promise.resolve();
+        },
       },
     }),
     lastLoginMethod({
