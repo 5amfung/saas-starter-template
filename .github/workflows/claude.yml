@@ -50,8 +50,8 @@ jobs:
           # Optional: Give a custom prompt to Claude. If this is not specified, Claude will perform the instructions specified in the comment that tagged it.
           prompt: ${{ github.event_name == 'pull_request' && 'Update the pull request description to include a summary of changes.' || '' }}
 
-          # Allow Claude to interact with PRs and issues via the gh CLI.
-          claude_args: '--allowed-tools "Bash(gh issue:*)" "Bash(gh pr:*)"'
+          # Allow Claude to use git and gh CLI for reading changes and updating PRs/issues.
+          claude_args: '--allowed-tools "Bash(git *)" "Bash(gh issue *)" "Bash(gh pr *)"'
 
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
