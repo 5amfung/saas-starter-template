@@ -5,8 +5,10 @@ import {
   ensureWorkspaceMembership,
 } from '@/workspace/workspace.server';
 
-const listOrganizationsMock = vi.fn();
-const setActiveOrganizationMock = vi.fn();
+const { listOrganizationsMock, setActiveOrganizationMock } = vi.hoisted(() => ({
+  listOrganizationsMock: vi.fn(),
+  setActiveOrganizationMock: vi.fn(),
+}));
 
 vi.mock('@/auth/auth.server', () => ({
   auth: {
@@ -91,7 +93,7 @@ describe('workspace.server', () => {
     });
   });
 
-  it('detects owned personal workspace from custom fields', async () => {
+  it('does not pick personal workspace owned by a different user', async () => {
     listOrganizationsMock.mockResolvedValueOnce([
       {
         id: 'org_team',
@@ -99,10 +101,10 @@ describe('workspace.server', () => {
         workspaceType: 'workspace',
       },
       {
-        id: 'org_personal',
-        name: 'My Private Space',
+        id: 'org_personal_other',
+        name: 'Other Personal',
         workspaceType: 'personal',
-        personalOwnerUserId: 'user_1',
+        personalOwnerUserId: 'user_other',
       },
     ]);
     setActiveOrganizationMock.mockResolvedValueOnce({});
@@ -112,9 +114,10 @@ describe('workspace.server', () => {
       session: { activeOrganizationId: null },
     });
 
-    expect(workspace.id).toBe('org_personal');
+    // Falls back to first workspace since the personal one belongs to another user.
+    expect(workspace.id).toBe('org_team');
     expect(setActiveOrganizationMock).toHaveBeenCalledWith({
-      body: { organizationId: 'org_personal' },
+      body: { organizationId: 'org_team' },
       headers: expect.any(Headers),
     });
   });
