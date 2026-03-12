@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Toggle } from '@/components/ui/toggle';
-import type { Plan } from '@/billing/plans';
+import type { Plan, PlanId } from '@/billing/plans';
 
 interface BillingPlanCardsProps {
   currentPlan: Plan;
@@ -20,7 +20,7 @@ interface BillingPlanCardsProps {
   isAnnual: boolean;
   onToggleInterval: (annual: boolean) => void;
   onManage: () => void;
-  onUpgrade: (planId: string, annual: boolean) => void;
+  onUpgrade: (planId: PlanId) => void;
   isManaging: boolean;
   isUpgrading: boolean;
 }
@@ -99,22 +99,24 @@ export function BillingPlanCards({
 
       {/* Upgrade Card */}
       {upgradePlan && (
-        <Card className="border-primary/30 bg-primary/5 dark:bg-primary/10">
+        <Card>
           <CardHeader>
             <CardDescription>Upgrade to</CardDescription>
             <CardTitle className="text-2xl">{upgradePlan.name}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
-              <p className="text-sm font-medium">
-                {upgradePlan.price === 0 ? 'Free' : formatPrice(upgradePlan)}
-              </p>
-              <div className="flex items-center gap-1 rounded-full border p-0.5">
+              {upgradePlan.price > 0 && (
+                <p className="text-sm font-medium">
+                  {formatPrice(upgradePlan)}
+                </p>
+              )}
+              <div className="flex items-center gap-0.5 rounded-full border p-0.5">
                 <Toggle
                   pressed={!isAnnual}
                   onPressedChange={() => onToggleInterval(false)}
                   size="sm"
-                  className="h-6 rounded-full px-2.5 text-xs"
+                  className="aria-pressed:bg-foreground aria-pressed:text-background h-6 rounded-full px-2.5 text-xs"
                   aria-label="Monthly billing"
                 >
                   Monthly
@@ -123,7 +125,7 @@ export function BillingPlanCards({
                   pressed={isAnnual}
                   onPressedChange={() => onToggleInterval(true)}
                   size="sm"
-                  className="h-6 rounded-full px-2.5 text-xs"
+                  className="aria-pressed:bg-foreground aria-pressed:text-background h-6 rounded-full px-2.5 text-xs"
                   aria-label="Annual billing"
                 >
                   Annual
@@ -142,7 +144,7 @@ export function BillingPlanCards({
           <CardFooter>
             <Button
               className="w-full"
-              onClick={() => onUpgrade(upgradePlan.id, isAnnual)}
+              onClick={() => onUpgrade(upgradePlan.id)}
               disabled={isUpgrading}
             >
               {isUpgrading

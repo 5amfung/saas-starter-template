@@ -17,8 +17,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-// React import needed for useState
-
 export interface Invoice {
   id: string;
   date: number; // Unix timestamp seconds
@@ -66,63 +64,68 @@ function monthKey(timestampSeconds: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
-/** Returns the current month key. */
-function currentMonthKey(): string {
-  return monthKey(Date.now() / 1000);
+interface MonthOption {
+  key: string; // YYYY-MM for filtering.
+  label: string; // Human-readable label shown in dropdown.
+}
+
+/** Generates month options for the last 12 months, newest first. */
+function getLast12Months(): Array<MonthOption> {
+  const options: Array<MonthOption> = [];
+  const now = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    options.push({
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      label: MONTH_FORMAT.format(d),
+    });
+  }
+  return options;
 }
 
 export function BillingInvoiceTable({
   invoices,
   isLoading,
 }: BillingInvoiceTableProps) {
-  // Compute unique months from invoices, sorted newest first.
-  const monthKeys = Array.from(
-    new Set(invoices.map((inv) => monthKey(inv.date))),
-  ).sort((a, b) => b.localeCompare(a));
+  const monthOptions = getLast12Months();
+  const [selectedKey, setSelectedKey] = React.useState(monthOptions[0].key);
 
-  const defaultMonth = monthKeys.includes(currentMonthKey())
-    ? currentMonthKey()
-    : (monthKeys[0] ?? currentMonthKey());
-  const [selectedMonth, setSelectedMonth] = React.useState(defaultMonth);
+  const filtered = invoices.filter((inv) => monthKey(inv.date) === selectedKey);
 
-  const filtered = invoices.filter(
-    (inv) => monthKey(inv.date) === selectedMonth,
+  /** Maps a label back to its YYYY-MM key. */
+  const labelToKey = React.useMemo(
+    () => new Map(monthOptions.map((o) => [o.label, o.key])),
+    [monthOptions],
   );
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium">Invoice history</h3>
-        {monthKeys.length > 0 && (
-          <Select
-            value={selectedMonth}
-            onValueChange={(v) => v && setSelectedMonth(v)}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {monthKeys.map((key) => {
-                const [year, month] = key.split('-').map(Number);
-                const label = MONTH_FORMAT.format(new Date(year, month - 1));
-                return (
-                  <SelectItem key={key} value={key}>
-                    {label}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-        )}
+        <h3 className="text-sm font-medium">Invoices</h3>
+        <Select
+          defaultValue={monthOptions[0].label}
+          onValueChange={(v) => {
+            if (!v) return;
+            const key = labelToKey.get(v);
+            if (key) setSelectedKey(key);
+          }}
+        >
+          <SelectTrigger className="w-44">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {monthOptions.map((option) => (
+              <SelectItem key={option.key} value={option.label}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {isLoading ? (
         <div className="text-muted-foreground py-8 text-center text-sm">
           Loading invoices...
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="text-muted-foreground py-8 text-center text-sm">
-          No invoices for this period.
         </div>
       ) : (
         <Table>
@@ -135,36 +138,47 @@ export function BillingInvoiceTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((invoice) => (
-              <TableRow key={invoice.id}>
-                <TableCell className="text-sm">
-                  {DATE_FORMAT.format(new Date(invoice.date * 1000))}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={getStatusVariant(invoice.status)}>
-                    {invoice.status ?? 'unknown'}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-sm">
-                  {formatAmount(invoice.amount, invoice.currency)}
-                </TableCell>
-                <TableCell className="text-right">
-                  {invoice.invoiceUrl != null ? (
-                    <a
-                      href={invoice.invoiceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
-                    >
-                      View
-                      <IconExternalLink className="size-3" />
-                    </a>
-                  ) : (
-                    <span className="text-muted-foreground text-sm">—</span>
-                  )}
+            {filtered.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={4}
+                  className="text-muted-foreground py-8 text-center text-sm"
+                >
+                  No invoices for this period.
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              filtered.map((invoice) => (
+                <TableRow key={invoice.id}>
+                  <TableCell className="text-sm">
+                    {DATE_FORMAT.format(new Date(invoice.date * 1000))}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusVariant(invoice.status)}>
+                      {invoice.status ?? 'unknown'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {formatAmount(invoice.amount, invoice.currency)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {invoice.invoiceUrl != null ? (
+                      <a
+                        href={invoice.invoiceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+                      >
+                        View
+                        <IconExternalLink className="size-3" />
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       )}

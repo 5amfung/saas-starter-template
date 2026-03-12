@@ -79,7 +79,7 @@ export const PLANS: ReadonlyArray<Plan> = [
     name: 'Pro',
     tier: 1,
     stripePriceId: process.env.STRIPE_PRO_MONTHLY_PRICE_ID ?? null,
-    price: 0, // TODO: Set actual price in cents.
+    price: 49_00,
     interval: 'month',
     limits: PRO_LIMITS,
     features: [
@@ -93,7 +93,7 @@ export const PLANS: ReadonlyArray<Plan> = [
     name: 'Pro',
     tier: 1,
     stripePriceId: process.env.STRIPE_PRO_ANNUAL_PRICE_ID ?? null,
-    price: 0, // TODO: Set actual price in cents.
+    price: 490_00,
     interval: 'year',
     limits: PRO_LIMITS,
     features: [
@@ -104,6 +104,19 @@ export const PLANS: ReadonlyArray<Plan> = [
     ],
   },
 ] as const;
+
+// ── Subscription plan name mapping ────────────────────────────────────────
+// Better Auth stores subscriptions with short plan names (e.g. 'pro').
+// Map those to our internal PlanId variants for display and limit lookups.
+
+const SUBSCRIPTION_PLAN_MAP: Record<string, PlanId> = {
+  pro: 'pro-monthly',
+};
+
+/** Normalizes a Better Auth subscription plan name to our internal PlanId. */
+export function normalizePlanId(planName: string): PlanId {
+  return SUBSCRIPTION_PLAN_MAP[planName] ?? (planName as PlanId);
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -137,7 +150,8 @@ export function getPlanLimitsForPlanId(planId: string): PlanLimits {
  */
 export function getHighestTierPlanId(planIds: Array<string>): PlanId {
   let best: Plan | undefined;
-  for (const id of planIds) {
+  for (const rawId of planIds) {
+    const id = normalizePlanId(rawId);
     const plan = PLANS.find((p) => p.id === id);
     if (plan && (!best || plan.tier > best.tier)) {
       best = plan;

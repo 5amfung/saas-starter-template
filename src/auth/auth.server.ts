@@ -9,7 +9,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { tanstackStartCookies } from 'better-auth/tanstack-start';
 import { stripe } from '@better-auth/stripe';
 import Stripe from 'stripe';
-import { and, count, eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { member as memberTable, user as userTable } from '@/db/schema';
 import {
@@ -18,11 +18,12 @@ import {
   buildPersonalWorkspaceSlug,
   isPersonalWorkspace,
 } from '@/workspace/workspace';
+import { getPlanLimitsForPlanId } from '@/billing/plans';
 import {
-  PLANS,
-  getPlanLimitsForPlanId,
-  resolveUserPlanId,
-} from '@/billing/plans';
+  countOwnedWorkspaces,
+  countWorkspaceMembers,
+  resolveUserPlanIdFromDb,
+} from '@/billing/billing.server';
 import { logger } from '@/lib/logger';
 import { isRecord, validateWorkspaceFields } from './auth-workspace.server';
 import {
@@ -141,10 +142,13 @@ export const auth = betterAuth({
       }),
       subscription: {
         enabled: true,
-        plans: PLANS.filter((p) => p.stripePriceId !== null).map((p) => ({
-          name: p.id,
-          priceId: p.stripePriceId!,
-        })),
+        plans: [
+          {
+            name: 'pro',
+            priceId: process.env.STRIPE_PRO_MONTHLY_PRICE_ID!,
+            annualDiscountPriceId: process.env.STRIPE_PRO_ANNUAL_PRICE_ID!,
+          },
+        ],
         onSubscriptionComplete: async ({ subscription, plan }) => {
           logger('info', 'subscription complete', {
             subscriptionId: subscription.id,
@@ -235,24 +239,11 @@ export const auth = betterAuth({
 
           // Enforce workspace limit based on user's plan.
           if (user.id) {
-            const subs = await auth.api.listActiveSubscriptions({
-              query: { referenceId: user.id },
-            });
-            const planId = resolveUserPlanId(Array.from(subs));
+            const planId = await resolveUserPlanIdFromDb(user.id);
             const limits = getPlanLimitsForPlanId(planId);
 
             if (limits.maxWorkspaces !== -1) {
-              const [result] = await db
-                .select({ count: count() })
-                .from(memberTable)
-                .where(
-                  and(
-                    eq(memberTable.userId, user.id),
-                    eq(memberTable.role, 'owner'),
-                  ),
-                );
-              // Drizzle's count() always returns a row, so result.count is safe.
-              const workspaceCount = result.count;
+              const workspaceCount = await countOwnedWorkspaces(user.id);
               if (workspaceCount >= limits.maxWorkspaces) {
                 throw new APIError('FORBIDDEN', {
                   message: `Your plan allows a maximum of ${limits.maxWorkspaces} workspace(s). Please upgrade to create more.`,
@@ -276,21 +267,24 @@ export const auth = betterAuth({
         },
         beforeCreateInvitation: async ({ organization }) => {
           // Find the workspace owner to check their plan limits.
-          const members = await db
-            .select({ userId: memberTable.userId, role: memberTable.role })
+          const ownerRows = await db
+            .select({ userId: memberTable.userId })
             .from(memberTable)
-            .where(eq(memberTable.organizationId, organization.id));
-          const owner = members.find((m) => m.role === 'owner');
+            .where(
+              and(
+                eq(memberTable.organizationId, organization.id),
+                eq(memberTable.role, 'owner'),
+              ),
+            );
+          const owner = ownerRows.at(0);
           if (!owner) return;
 
-          const subs = await auth.api.listActiveSubscriptions({
-            query: { referenceId: owner.userId },
-          });
-          const planId = resolveUserPlanId(Array.from(subs));
+          const planId = await resolveUserPlanIdFromDb(owner.userId);
           const limits = getPlanLimitsForPlanId(planId);
 
           if (limits.maxMembersPerWorkspace !== -1) {
-            if (members.length >= limits.maxMembersPerWorkspace) {
+            const memberCount = await countWorkspaceMembers(organization.id);
+            if (memberCount >= limits.maxMembersPerWorkspace) {
               throw new APIError('FORBIDDEN', {
                 message: `This workspace has reached its member limit (${limits.maxMembersPerWorkspace}). The workspace owner needs to upgrade their plan.`,
               });

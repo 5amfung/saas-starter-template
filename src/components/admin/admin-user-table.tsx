@@ -431,7 +431,7 @@ export function AdminUserTable({
                     {Array.from({ length: visibleColumnCount }).map(
                       (__, colIdx) => {
                         const column = table.getVisibleLeafColumns()[colIdx];
-                        const isActionsColumn = column?.id === 'actions';
+                        const isActionsColumn = column.id === 'actions';
                         return (
                           <TableCell
                             key={`loading-cell-${rowIdx}-${colIdx}`}

@@ -13,9 +13,11 @@ import {
   PLAN_GROUP,
   getFreePlan,
   getPlanById,
+  normalizePlanId,
 } from '@/billing/plans';
 import type { Plan } from '@/billing/plans';
 import { SESSION_QUERY_KEY, useSessionQuery } from '@/hooks/use-session-query';
+import { Card, CardContent } from '@/components/ui/card';
 import { BillingDowngradeBanner } from './billing-downgrade-banner';
 import { BillingInvoiceTable } from './billing-invoice-table';
 import { BillingPlanCards } from './billing-plan-cards';
@@ -69,8 +71,8 @@ export function BillingPage() {
   });
 
   const upgradeMutation = useMutation({
-    mutationFn: ({ planId, annual }: { planId: string; annual: boolean }) =>
-      createCheckoutSession({ data: { planId, annual } }),
+    mutationFn: (planId: 'starter' | 'pro-monthly' | 'pro-annual') =>
+      createCheckoutSession({ data: { planId } }),
     onSuccess: (result) => {
       if (result.url) {
         window.location.href = result.url;
@@ -105,8 +107,8 @@ export function BillingPage() {
     };
   };
   const subscription = userWithSub.subscription;
-  const planId = subscription?.plan ?? FREE_PLAN_ID;
-  const currentPlan = getPlanById(planId as never) ?? getFreePlan();
+  const planId = normalizePlanId(subscription?.plan ?? FREE_PLAN_ID);
+  const currentPlan = getPlanById(planId) ?? getFreePlan();
   const upgradePlan = getUpgradePlan(currentPlan, isAnnual);
 
   const cancelAtPeriodEnd = subscription?.cancelAtPeriodEnd ?? false;
@@ -131,17 +133,19 @@ export function BillingPage() {
         isAnnual={isAnnual}
         onToggleInterval={setIsAnnual}
         onManage={() => manageMutation.mutate()}
-        onUpgrade={(id, annual) =>
-          upgradeMutation.mutate({ planId: id, annual })
-        }
+        onUpgrade={(id) => upgradeMutation.mutate(id)}
         isManaging={manageMutation.isPending}
         isUpgrading={upgradeMutation.isPending}
       />
 
-      <BillingInvoiceTable
-        invoices={invoicesQuery.data ?? []}
-        isLoading={invoicesQuery.isLoading}
-      />
+      <Card>
+        <CardContent>
+          <BillingInvoiceTable
+            invoices={invoicesQuery.data ?? []}
+            isLoading={invoicesQuery.isLoading}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import {
   getPlanById,
   getPlanByStripePriceId,
   getPlanLimitsForPlanId,
+  normalizePlanId,
   resolveUserPlanId,
 } from '@/billing/plans';
 
@@ -87,6 +88,18 @@ describe('plans', () => {
   });
 });
 
+describe('normalizePlanId', () => {
+  it('maps Better Auth "pro" to "pro-monthly"', () => {
+    expect(normalizePlanId('pro')).toBe('pro-monthly');
+  });
+
+  it('passes through known plan IDs unchanged', () => {
+    expect(normalizePlanId('starter')).toBe('starter');
+    expect(normalizePlanId('pro-monthly')).toBe('pro-monthly');
+    expect(normalizePlanId('pro-annual')).toBe('pro-annual');
+  });
+});
+
 describe('resolveUserPlanId', () => {
   it('returns free plan for empty subscriptions', () => {
     expect(resolveUserPlanId([])).toBe(FREE_PLAN_ID);
@@ -95,29 +108,29 @@ describe('resolveUserPlanId', () => {
   it('returns free plan when no subscriptions are active or trialing', () => {
     expect(
       resolveUserPlanId([
-        { plan: 'pro-monthly', status: 'canceled' },
-        { plan: 'pro-annual', status: 'past_due' },
+        { plan: 'pro', status: 'canceled' },
+        { plan: 'pro', status: 'past_due' },
       ]),
     ).toBe(FREE_PLAN_ID);
   });
 
-  it('returns the plan ID for a single active subscription', () => {
-    expect(resolveUserPlanId([{ plan: 'pro-monthly', status: 'active' }])).toBe(
+  it('resolves Better Auth "pro" plan name to pro-monthly', () => {
+    expect(resolveUserPlanId([{ plan: 'pro', status: 'active' }])).toBe(
       'pro-monthly',
     );
   });
 
   it('returns the plan ID for a trialing subscription', () => {
-    expect(
-      resolveUserPlanId([{ plan: 'pro-annual', status: 'trialing' }]),
-    ).toBe('pro-annual');
+    expect(resolveUserPlanId([{ plan: 'pro', status: 'trialing' }])).toBe(
+      'pro-monthly',
+    );
   });
 
   it('picks the highest tier when multiple active subscriptions exist', () => {
     expect(
       resolveUserPlanId([
         { plan: 'starter', status: 'active' },
-        { plan: 'pro-monthly', status: 'active' },
+        { plan: 'pro', status: 'active' },
       ]),
     ).toBe('pro-monthly');
   });
@@ -125,7 +138,7 @@ describe('resolveUserPlanId', () => {
   it('ignores non-active subscriptions when picking highest tier', () => {
     expect(
       resolveUserPlanId([
-        { plan: 'pro-annual', status: 'canceled' },
+        { plan: 'pro', status: 'canceled' },
         { plan: 'starter', status: 'active' },
       ]),
     ).toBe('starter');

@@ -5,6 +5,9 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { authClient } from '@/auth/auth-client';
+import { checkPlanLimit } from '@/billing/billing.functions';
+import { UpgradePromptDialog } from '@/components/billing/upgrade-prompt-dialog';
+import { useUpgradePrompt } from '@/hooks/use-upgrade-prompt';
 import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
@@ -62,6 +65,7 @@ export function WorkspaceSwitcher({
   const [validationError, setValidationError] = React.useState<string | null>(
     null,
   );
+  const upgradePrompt = useUpgradePrompt();
 
   const handleCreateDialogOpenChange = (isOpen: boolean) => {
     setIsCreateDialogOpen(isOpen);
@@ -136,6 +140,22 @@ export function WorkspaceSwitcher({
 
   const canCreateWorkspace = workspaceName.trim().length > 0;
 
+  const handleAddWorkspace = async () => {
+    try {
+      const result = await checkPlanLimit({ data: { feature: 'workspace' } });
+      if (result.allowed) {
+        setIsCreateDialogOpen(true);
+      } else {
+        upgradePrompt.show(
+          'Workspace limit reached',
+          `You're using ${result.current}/${result.limit} workspaces on the ${result.planName} plan. Upgrade to create more.`,
+        );
+      }
+    } catch {
+      toast.error('Something went wrong. Please try again.');
+    }
+  };
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -185,7 +205,7 @@ export function WorkspaceSwitcher({
             <DropdownMenuGroup>
               <DropdownMenuItem
                 className="gap-2 p-2"
-                onClick={() => setIsCreateDialogOpen(true)}
+                onClick={() => void handleAddWorkspace()}
               >
                 <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                   <IconPlus className="size-4" />
@@ -260,6 +280,7 @@ export function WorkspaceSwitcher({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <UpgradePromptDialog {...upgradePrompt.dialogProps} />
     </SidebarMenu>
   );
 }
