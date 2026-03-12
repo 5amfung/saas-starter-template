@@ -1,7 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-// ── Import under test (after mocks) ───────────────────────────────────────
-
 import {
   checkUserPlanLimit,
   createCheckoutForPlan,
