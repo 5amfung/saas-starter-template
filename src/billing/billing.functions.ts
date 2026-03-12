@@ -5,21 +5,12 @@ import * as z from 'zod';
 import { eq } from 'drizzle-orm';
 import { auth } from '@/auth/auth.server';
 import {
-  countOwnedWorkspaces,
-  countWorkspaceMembers,
+  checkUserPlanLimit,
   getBillingData,
-  getUserActivePlanId,
-  getWorkspaceOwnerUserId,
   requireVerifiedSession,
 } from '@/billing/billing.server';
 import type { PlanId } from '@/billing/plans';
-import {
-  PLANS,
-  getPlanById,
-  getPlanLimitsForPlanId,
-  getUpgradePlan,
-  resolveUserPlanId,
-} from '@/billing/plans';
+import { PLANS, resolveUserPlanId } from '@/billing/plans';
 import { db } from '@/db';
 import { user as userTable } from '@/db/schema';
 
@@ -169,60 +160,10 @@ export const checkPlanLimit = createServerFn()
   .handler(async ({ data }) => {
     const session = await requireVerifiedSession();
     const headers = getRequestHeaders();
-    const userId = session.user.id;
-    const planId = await getUserActivePlanId(headers, userId);
-    const limits = getPlanLimitsForPlanId(planId);
-    const plan = getPlanById(planId);
-    const planName = plan?.name ?? 'Free';
-    const upgradePlan = plan ? getUpgradePlan(plan) : null;
-
-    if (data.feature === 'workspace') {
-      const limit = limits.maxWorkspaces;
-      if (limit === -1) {
-        return { allowed: true, current: 0, limit: -1, planName, upgradePlan };
-      }
-      const current = await countOwnedWorkspaces(userId);
-      return {
-        allowed: current < limit,
-        current,
-        limit,
-        planName,
-        upgradePlan,
-      };
-    }
-
-    if (!data.workspaceId) {
-      throw new Error('workspaceId is required for member limit check.');
-    }
-
-    // Member limits are based on the workspace owner's plan, not the
-    // current user's plan. This mirrors the beforeCreateInvitation hook.
-    const ownerId = await getWorkspaceOwnerUserId(data.workspaceId);
-    if (!ownerId) {
-      return { allowed: true, current: 0, limit: -1, planName, upgradePlan };
-    }
-    const ownerPlanId = await getUserActivePlanId(headers, ownerId);
-    const ownerLimits = getPlanLimitsForPlanId(ownerPlanId);
-    const ownerPlan = getPlanById(ownerPlanId);
-    const ownerPlanName = ownerPlan?.name ?? 'Free';
-    const ownerUpgradePlan = ownerPlan ? getUpgradePlan(ownerPlan) : null;
-
-    const limit = ownerLimits.maxMembersPerWorkspace;
-    if (limit === -1) {
-      return {
-        allowed: true,
-        current: 0,
-        limit: -1,
-        planName: ownerPlanName,
-        upgradePlan: ownerUpgradePlan,
-      };
-    }
-    const current = await countWorkspaceMembers(data.workspaceId);
-    return {
-      allowed: current < limit,
-      current,
-      limit,
-      planName: ownerPlanName,
-      upgradePlan: ownerUpgradePlan,
-    };
+    return checkUserPlanLimit(
+      headers,
+      session.user.id,
+      data.feature,
+      data.workspaceId,
+    );
   });

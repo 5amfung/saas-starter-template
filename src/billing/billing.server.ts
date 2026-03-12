@@ -91,6 +91,86 @@ export async function getBillingData(headers: Headers, userId: string) {
   return { planId, plan, subscription };
 }
 
+export interface CheckPlanLimitResult {
+  allowed: boolean;
+  current: number;
+  limit: number;
+  planName: string;
+  upgradePlan: Plan | null;
+}
+
+/**
+ * Checks whether a user can perform a plan-limited action.
+ * For workspace limits, checks the current user's plan.
+ * For member limits, checks the workspace owner's plan.
+ */
+export async function checkUserPlanLimit(
+  headers: Headers,
+  userId: string,
+  feature: 'workspace' | 'member',
+  workspaceId?: string,
+): Promise<CheckPlanLimitResult> {
+  if (feature === 'workspace') {
+    const ctx = await getUserPlanContext(headers, userId);
+    const limit = ctx.limits.maxWorkspaces;
+    if (limit === -1) {
+      return {
+        allowed: true,
+        current: 0,
+        limit: -1,
+        planName: ctx.planName,
+        upgradePlan: ctx.upgradePlan,
+      };
+    }
+    const current = await countOwnedWorkspaces(userId);
+    return {
+      allowed: current < limit,
+      current,
+      limit,
+      planName: ctx.planName,
+      upgradePlan: ctx.upgradePlan,
+    };
+  }
+
+  if (!workspaceId) {
+    throw new Error('workspaceId is required for member limit check.');
+  }
+
+  // Member limits are based on the workspace owner's plan, not the
+  // current user's plan. This mirrors the beforeCreateInvitation hook.
+  const ownerId = await getWorkspaceOwnerUserId(workspaceId);
+  if (!ownerId) {
+    const ctx = await getUserPlanContext(headers, userId);
+    return {
+      allowed: true,
+      current: 0,
+      limit: -1,
+      planName: ctx.planName,
+      upgradePlan: ctx.upgradePlan,
+    };
+  }
+
+  const ctx = await getUserPlanContext(headers, ownerId);
+  const limit = ctx.limits.maxMembersPerWorkspace;
+  if (limit === -1) {
+    return {
+      allowed: true,
+      current: 0,
+      limit: -1,
+      planName: ctx.planName,
+      upgradePlan: ctx.upgradePlan,
+    };
+  }
+  const current = await countWorkspaceMembers(workspaceId);
+  return {
+    allowed: current < limit,
+    current,
+    limit,
+    planName: ctx.planName,
+    upgradePlan: ctx.upgradePlan,
+  };
+}
+
 /**
  * Resolves a user's plan ID by querying the subscription table directly.
  * Unlike getUserActivePlanId, this does not require an HTTP session context,
