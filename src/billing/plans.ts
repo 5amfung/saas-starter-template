@@ -161,6 +161,31 @@ export function getHighestTierPlanId(planIds: Array<string>): PlanId {
 }
 
 /**
+ * Returns the next upgrade plan for a given plan (next tier up), or null
+ * if the user is already on the highest tier.
+ * Picks the monthly or annual variant based on the `annual` flag.
+ */
+export function getUpgradePlan(
+  currentPlan: Plan,
+  annual: boolean,
+): Plan | null {
+  const higherTierPlans = PLANS.filter((p) => p.tier > currentPlan.tier).sort(
+    (a, b) => a.tier - b.tier,
+  );
+  if (higherTierPlans.length === 0) return null;
+
+  const nextTierPlan = higherTierPlans[0];
+  const nextGroup = PLAN_GROUP[nextTierPlan.id];
+  return (
+    PLANS.find(
+      (p) =>
+        PLAN_GROUP[p.id] === nextGroup &&
+        p.interval === (annual ? 'year' : 'month'),
+    ) ?? nextTierPlan
+  );
+}
+
+/**
  * Resolves a user's effective plan from a list of subscriptions.
  * Filters to active/trialing subscriptions, then picks the highest tier.
  * Falls back to FREE_PLAN_ID if no active subscriptions exist.

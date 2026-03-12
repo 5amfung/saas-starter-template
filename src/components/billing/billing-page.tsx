@@ -9,13 +9,11 @@ import {
 } from '@/billing/billing.functions';
 import {
   FREE_PLAN_ID,
-  PLANS,
-  PLAN_GROUP,
   getFreePlan,
   getPlanById,
+  getUpgradePlan,
   normalizePlanId,
 } from '@/billing/plans';
-import type { Plan } from '@/billing/plans';
 import { SESSION_QUERY_KEY, useSessionQuery } from '@/hooks/use-session-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { BillingDowngradeBanner } from './billing-downgrade-banner';
@@ -26,27 +24,6 @@ const PAGE_LAYOUT_CLASS =
   'mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6';
 
 const INVOICES_QUERY_KEY = ['billing', 'invoices'] as const;
-
-/** Returns the next upgrade plan for a given plan (next tier up), or null. */
-function getUpgradePlan(currentPlan: Plan, annual: boolean): Plan | null {
-  const sorted = PLANS.filter((p) => p.tier > currentPlan.tier).sort(
-    (a, b) => a.tier - b.tier,
-  );
-  if (sorted.length === 0) return null;
-
-  // Non-null assertion is safe: we checked sorted.length above.
-
-  const nextTierPlan = sorted[0];
-  const nextGroup = PLAN_GROUP[nextTierPlan.id];
-  // Find the monthly or annual variant of the next tier.
-  return (
-    PLANS.find(
-      (p) =>
-        PLAN_GROUP[p.id] === nextGroup &&
-        p.interval === (annual ? 'year' : 'month'),
-    ) ?? nextTierPlan
-  );
-}
 
 export function BillingPage() {
   const queryClient = useQueryClient();

@@ -7,6 +7,7 @@ import {
   getPlanById,
   getPlanByStripePriceId,
   getPlanLimitsForPlanId,
+  getUpgradePlan,
   normalizePlanId,
   resolveUserPlanId,
 } from '@/billing/plans';
@@ -97,6 +98,34 @@ describe('normalizePlanId', () => {
     expect(normalizePlanId('starter')).toBe('starter');
     expect(normalizePlanId('pro-monthly')).toBe('pro-monthly');
     expect(normalizePlanId('pro-annual')).toBe('pro-annual');
+  });
+});
+
+describe('getUpgradePlan', () => {
+  it('returns next tier plan for starter (monthly)', () => {
+    const starter = getPlanById('starter')!;
+    const upgrade = getUpgradePlan(starter, false);
+    expect(upgrade).toBeDefined();
+    expect(upgrade!.id).toBe('pro-monthly');
+  });
+
+  it('returns next tier plan for starter (annual)', () => {
+    const starter = getPlanById('starter')!;
+    const upgrade = getUpgradePlan(starter, true);
+    expect(upgrade).toBeDefined();
+    expect(upgrade!.id).toBe('pro-annual');
+  });
+
+  it('returns null for highest tier plan', () => {
+    const pro = getPlanById('pro-monthly')!;
+    const upgrade = getUpgradePlan(pro, false);
+    expect(upgrade).toBeNull();
+  });
+
+  it('returns null for highest tier plan (annual variant)', () => {
+    const pro = getPlanById('pro-annual')!;
+    const upgrade = getUpgradePlan(pro, true);
+    expect(upgrade).toBeNull();
   });
 });
 
