@@ -34,8 +34,8 @@ const upgradeInput = z.object({
 export const createCheckoutSession = createServerFn()
   .inputValidator(upgradeInput)
   .handler(async ({ data }) => {
-    const headers = getRequestHeaders();
     await requireVerifiedSession();
+    const headers = getRequestHeaders();
     return createCheckoutForPlan(headers, data.planId, data.annual);
   });
 
@@ -43,8 +43,8 @@ export const createCheckoutSession = createServerFn()
  * Creates a Stripe Customer Portal session for managing the subscription.
  */
 export const createPortalSession = createServerFn().handler(async () => {
-  const headers = getRequestHeaders();
   await requireVerifiedSession();
+  const headers = getRequestHeaders();
   return createUserBillingPortal(headers);
 });
 
@@ -61,8 +61,8 @@ export const getUserBillingData = createServerFn().handler(async () => {
  * Reactivates a subscription that was set to cancel at period end.
  */
 export const reactivateSubscription = createServerFn().handler(async () => {
-  const headers = getRequestHeaders();
   const session = await requireVerifiedSession();
+  const headers = getRequestHeaders();
   return reactivateUserSubscription(headers, session.user.id);
 });
 

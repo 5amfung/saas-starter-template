@@ -44,17 +44,6 @@ export async function getUserActivePlanId(
   return resolveUserPlanId(Array.from(subscriptions));
 }
 
-/**
- * Returns the plan limits for a given user based on their subscription.
- */
-export async function getUserPlanLimits(
-  headers: Headers,
-  userId: string,
-): Promise<PlanLimits> {
-  const planId = await getUserActivePlanId(headers, userId);
-  return getPlanLimitsForPlanId(planId);
-}
-
 export interface UserPlanContext {
   planId: PlanId;
   plan: Plan;
