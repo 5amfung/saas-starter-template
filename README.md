@@ -1,3 +1,3 @@
-# TanStack Start + shadcn/ui
+# SaaS Starter Template
 
-This is a template for a new TanStack Start project with React, TypeScript, and shadcn/ui.
+An opinioned stack for build Saas application.
