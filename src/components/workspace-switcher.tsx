@@ -149,6 +149,7 @@ export function WorkspaceSwitcher({
         upgradePrompt.show(
           'Workspace limit reached',
           `You're using ${result.current}/${result.limit} workspaces on the ${result.planName} plan. Upgrade to create more.`,
+          result.upgradePlan,
         );
       }
     } catch {
