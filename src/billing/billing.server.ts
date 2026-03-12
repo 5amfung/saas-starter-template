@@ -2,7 +2,11 @@ import { getRequestHeaders } from '@tanstack/react-start/server';
 import { redirect } from '@tanstack/react-router';
 import { and, count, eq } from 'drizzle-orm';
 import { auth } from '@/auth/auth.server';
-import { getPlanLimitsForPlanId, resolveUserPlanId } from '@/billing/plans';
+import {
+  getPlanLimitsForPlanId,
+  normalizePlanId,
+  resolveUserPlanId,
+} from '@/billing/plans';
 import type { PlanId, PlanLimits } from '@/billing/plans';
 import { db } from '@/db';
 import {
@@ -101,4 +105,41 @@ export async function countWorkspaceMembers(
     .from(memberTable)
     .where(eq(memberTable.organizationId, workspaceId));
   return result.count;
+}
+
+/**
+ * Returns the active subscription details for a user, or null if on the free tier.
+ * Picks the subscription matching the user's highest-tier plan.
+ */
+export async function getUserSubscriptionDetails(
+  userId: string,
+  planId: PlanId,
+): Promise<{
+  status: string;
+  periodEnd: Date | null;
+  cancelAtPeriodEnd: boolean;
+} | null> {
+  const rows = await db
+    .select({
+      plan: subscriptionTable.plan,
+      status: subscriptionTable.status,
+      periodEnd: subscriptionTable.periodEnd,
+      cancelAtPeriodEnd: subscriptionTable.cancelAtPeriodEnd,
+    })
+    .from(subscriptionTable)
+    .where(eq(subscriptionTable.referenceId, userId));
+
+  // Find the active/trialing subscription for the resolved plan.
+  const active = rows.find(
+    (r) =>
+      (r.status === 'active' || r.status === 'trialing') &&
+      normalizePlanId(r.plan ?? '') === planId,
+  );
+  if (!active || !active.status) return null;
+
+  return {
+    status: active.status,
+    periodEnd: active.periodEnd ?? null,
+    cancelAtPeriodEnd: active.cancelAtPeriodEnd ?? false,
+  };
 }

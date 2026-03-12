@@ -8,11 +8,13 @@ import {
   countOwnedWorkspaces,
   countWorkspaceMembers,
   getUserActivePlanId,
+  getUserSubscriptionDetails,
   getWorkspaceOwnerUserId,
   requireVerifiedSession,
 } from '@/billing/billing.server';
 import {
   PLAN_GROUP,
+  getFreePlan,
   getPlanById,
   getPlanLimitsForPlanId,
   resolveUserPlanId,
@@ -102,6 +104,22 @@ export const createPortalSession = createServerFn().handler(async () => {
     },
   });
   return { url: result.url, redirect: result.redirect };
+});
+
+/**
+ * Returns the current user's billing state for the billing page.
+ * Single server round-trip replaces the broken session.user.subscription approach.
+ */
+export const getUserBillingData = createServerFn().handler(async () => {
+  const session = await requireVerifiedSession();
+  const planId = await getUserActivePlanId(session.user.id);
+  const plan = getPlanById(planId) ?? getFreePlan();
+  const subscription = await getUserSubscriptionDetails(
+    session.user.id,
+    planId,
+  );
+
+  return { planId, plan, subscription };
 });
 
 /**
