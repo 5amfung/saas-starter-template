@@ -109,13 +109,16 @@ export const PLANS: ReadonlyArray<Plan> = [
 // Better Auth stores subscriptions with short plan names (e.g. 'pro').
 // Map those to our internal PlanId variants for display and limit lookups.
 
-const SUBSCRIPTION_PLAN_MAP: Record<string, PlanId> = {
+const SUBSCRIPTION_PLAN_MAP: Record<string, PlanId | undefined> = {
   pro: 'pro-monthly',
 };
 
 /** Normalizes a Better Auth subscription plan name to our internal PlanId. */
 export function normalizePlanId(planName: string): PlanId {
-  return SUBSCRIPTION_PLAN_MAP[planName] ?? (planName as PlanId);
+  const mapped = SUBSCRIPTION_PLAN_MAP[planName];
+  if (mapped) return mapped;
+  const known = PLANS.find((p) => p.id === planName);
+  return known ? (planName as PlanId) : FREE_PLAN_ID; // explicit fallback
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
