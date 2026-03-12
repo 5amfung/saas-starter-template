@@ -5,8 +5,10 @@ import {
   ensureWorkspaceMembership,
 } from '@/workspace/workspace.server';
 
-const listOrganizationsMock = vi.fn();
-const setActiveOrganizationMock = vi.fn();
+const { listOrganizationsMock, setActiveOrganizationMock } = vi.hoisted(() => ({
+  listOrganizationsMock: vi.fn(),
+  setActiveOrganizationMock: vi.fn(),
+}));
 
 vi.mock('@/auth/auth.server', () => ({
   auth: {
