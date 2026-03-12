@@ -49,7 +49,8 @@ export function BillingPage() {
   });
 
   const upgradeMutation = useMutation({
-    mutationFn: (planId: PlanId) => createCheckoutSession({ data: { planId } }),
+    mutationFn: ({ planId, annual }: { planId: PlanId; annual: boolean }) =>
+      createCheckoutSession({ data: { planId, annual } }),
     onSuccess: (result) => {
       if (result.url) {
         window.location.href = result.url;
@@ -75,7 +76,7 @@ export function BillingPage() {
   if (billingQuery.isPending || !billingQuery.data) return null;
 
   const { plan: currentPlan, subscription } = billingQuery.data;
-  const upgradePlan = getUpgradePlan(currentPlan, isAnnual);
+  const upgradePlan = getUpgradePlan(currentPlan);
 
   const cancelAtPeriodEnd = subscription?.cancelAtPeriodEnd ?? false;
   const periodEnd = subscription?.periodEnd
@@ -99,7 +100,9 @@ export function BillingPage() {
         isAnnual={isAnnual}
         onToggleInterval={setIsAnnual}
         onManage={() => manageMutation.mutate()}
-        onUpgrade={(id) => upgradeMutation.mutate(id)}
+        onUpgrade={(id) =>
+          upgradeMutation.mutate({ planId: id, annual: isAnnual })
+        }
         isManaging={manageMutation.isPending}
         isUpgrading={upgradeMutation.isPending}
       />
