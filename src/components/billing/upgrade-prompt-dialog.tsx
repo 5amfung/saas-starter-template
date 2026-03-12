@@ -8,20 +8,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
+import { formatPrice } from '@/billing/plans';
 import type { Plan } from '@/billing/plans';
-
-const CURRENCY_FORMAT = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  minimumFractionDigits: 0,
-});
-
-function formatPrice(plan: Plan): string {
-  if (plan.price === 0) return '';
-  const monthly =
-    plan.interval === 'year' ? plan.price / 12 / 100 : plan.price / 100;
-  return `${CURRENCY_FORMAT.format(monthly)}/mo`;
-}
 
 interface UpgradePromptDialogProps {
   open: boolean;

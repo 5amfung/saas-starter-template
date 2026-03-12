@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   FREE_PLAN_ID,
   PLANS,
+  formatPrice,
   getFreePlan,
   getHighestTierPlanId,
   getPlanById,
@@ -177,5 +178,25 @@ describe('resolveUserPlanId', () => {
     expect(
       resolveUserPlanId([{ plan: 'unknown-plan', status: 'active' }]),
     ).toBe(FREE_PLAN_ID);
+  });
+});
+
+describe('formatPrice', () => {
+  it('returns empty string for free plans', () => {
+    const freePlan = PLANS.find((p) => p.price === 0)!;
+    expect(formatPrice(freePlan)).toBe('');
+  });
+
+  it('formats monthly plans as currency per month', () => {
+    const monthlyPlan = PLANS.find((p) => p.interval === 'month')!;
+    expect(formatPrice(monthlyPlan)).toMatch(/\/mo$/);
+    expect(formatPrice(monthlyPlan)).toContain('$');
+  });
+
+  it('normalizes annual plans to monthly equivalent', () => {
+    const annualPlan = PLANS.find((p) => p.interval === 'year')!;
+    const monthlyEquivalent = formatPrice(annualPlan);
+    expect(monthlyEquivalent).toMatch(/\/mo$/);
+    expect(monthlyEquivalent).toContain('$');
   });
 });

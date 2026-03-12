@@ -147,6 +147,23 @@ export function getPlanLimitsForPlanId(planId: string): PlanLimits {
 }
 
 /**
+ * Returns a human-readable monthly price string for a plan.
+ * For annual plans, this normalizes to the equivalent monthly price.
+ */
+const CURRENCY_FORMAT = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 0,
+});
+
+export function formatPrice(plan: Plan): string {
+  if (plan.price === 0) return '';
+  const monthly =
+    plan.interval === 'year' ? plan.price / 12 / 100 : plan.price / 100;
+  return `${CURRENCY_FORMAT.format(monthly)}/mo`;
+}
+
+/**
  * Given multiple plan IDs (e.g. from multiple active subscriptions),
  * returns the one with the highest tier rank.
  * Falls back to FREE_PLAN_ID if the list is empty or all IDs are unknown.

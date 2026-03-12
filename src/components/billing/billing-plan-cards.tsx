@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Toggle } from '@/components/ui/toggle';
+import { formatPrice } from '@/billing/plans';
 import type { Plan, PlanId } from '@/billing/plans';
 
 interface BillingPlanCardsProps {
@@ -25,24 +26,11 @@ interface BillingPlanCardsProps {
   isUpgrading: boolean;
 }
 
-const CURRENCY_FORMAT = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  minimumFractionDigits: 0,
-});
-
 const DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
   month: 'long',
   day: 'numeric',
   year: 'numeric',
 });
-
-function formatPrice(plan: Plan): string {
-  if (plan.price === 0) return 'Free';
-  const monthly =
-    plan.interval === 'year' ? plan.price / 12 / 100 : plan.price / 100;
-  return `${CURRENCY_FORMAT.format(monthly)}/mo`;
-}
 
 export function BillingPlanCards({
   currentPlan,
