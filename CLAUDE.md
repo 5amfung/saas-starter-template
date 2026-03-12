@@ -20,7 +20,7 @@ SaaS starter template built with TanStack Start, React 19, and shadcn/ui. File-b
 | Testing        | Vitest + Testing Library                                |
 | Linting        | ESLint (TanStack config) + Prettier                     |
 | Build          | Vite 7, Nitro (server)                                  |
-| Package mgr    | Bun                                                     |
+| Package mgr    | pnpm                                                    |
 | Language       | TypeScript 5.9 (strict mode)                            |
 | Database       | Neon PostgreSQL                                         |
 | ORM            | Drizzle ORM                                             |
@@ -59,31 +59,32 @@ src/
 
 ## Commands
 
-| Command                   | Description                                                  |
-| ------------------------- | ------------------------------------------------------------ |
-| `bun dev`                 | Start dev server on port 3000                                |
-| `bun run build`           | Production build                                             |
-| `bun run preview`         | Preview production build                                     |
-| `bun test`                | Run all tests with Vitest                                    |
-| `bun run lint`            | Lint with ESLint                                             |
-| `bun run lint:fix`        | Fix lint issues                                              |
-| `bun run typecheck`       | TypeScript type-check without emitting                       |
-| `bun run check`           | Type-check + lint                                            |
-| `bun run format`          | Format code with Prettier                                    |
-| `bun run db:generate`     | Generate Drizzle migration files                             |
-| `bun run db:migrate`      | Apply migrations                                             |
-| `bun run db:push`         | Push schema directly (dev only)                              |
-| `bun run db:studio`       | Open Drizzle Studio                                          |
-| `bun run email:dev`       | Preview email templates on port 3001                         |
-| `bun run gen-auth-schema` | Regenerate `src/db/auth.schema.ts` from Better Auth config   |
+| Command                    | Description                                                |
+| -------------------------- | ---------------------------------------------------------- |
+| `pnpm dev`                 | Start dev server on port 3000                              |
+| `pnpm run build`           | Production build                                           |
+| `pnpm run preview`         | Preview production build                                   |
+| `pnpm test`                | Run all tests with Vitest                                  |
+| `pnpm run lint`            | Lint with ESLint                                           |
+| `pnpm run lint:fix`        | Fix lint issues                                            |
+| `pnpm run typecheck`       | TypeScript type-check without emitting                     |
+| `pnpm run check`           | Type-check + lint                                          |
+| `pnpm run format`          | Format code with Prettier                                  |
+| `pnpm run db:generate`     | Generate Drizzle migration files                           |
+| `pnpm run db:migrate`      | Apply migrations                                           |
+| `pnpm run db:push`         | Push schema directly (dev only)                            |
+| `pnpm run db:studio`       | Open Drizzle Studio                                        |
+| `pnpm run email:dev`       | Preview email templates on port 3001                       |
+| `pnpm run gen-auth-schema` | Regenerate `src/db/auth.schema.ts` from Better Auth config |
 
-To run a single test file: `bun test src/workspace/workspace.test.ts`
+To run a single test file: `pnpm test src/workspace/workspace.test.ts`
 
 ## Architecture
 
 ### Workspace Model
 
 Workspaces are implemented as **Better Auth organizations** with two additional fields on the `organization` table:
+
 - `workspaceType`: `"personal"` | `"workspace"`
 - `personalOwnerUserId`: set only for personal workspaces
 
@@ -92,6 +93,7 @@ Every user gets a personal workspace automatically created on sign-up (via `data
 ### Routing Architecture
 
 File-based routing in `src/routes/`. Key segments:
+
 - `__root.tsx` — HTML shell, global providers
 - `_auth.tsx` / `_auth/` — Pathless layout for public auth pages (`/signin`, `/signup`)
 - `_protected.tsx` / `_protected/` — Pathless layout with `authMiddleware`; all children require auth
@@ -103,6 +105,7 @@ File-based routing in `src/routes/`. Key segments:
 - `routeTree.gen.ts` — **Auto-generated; never edit manually**
 
 Route conventions:
+
 - Layout routes use `_` prefix (e.g., `_auth.tsx`).
 - Each route exports `Route` using `createFileRoute()`.
 
@@ -112,23 +115,24 @@ Data fetching and mutations use `createServerFn()` from `@tanstack/react-start`.
 
 Split server-side code by responsibility using these file roles:
 
-| Suffix            | Role                                                                                      |
-| ----------------- | ----------------------------------------------------------------------------------------- |
-| `*.functions.ts`  | `createServerFn` wrappers — safe to import anywhere; only the handler runs on the server. |
-| `*.server.ts`     | Server-only helpers (DB queries, internal logic, secrets). Import only from server contexts. |
-| `*.ts` (no suffix)| Client-safe shared code (types, schemas, constants, pure utilities).                      |
+| Suffix             | Role                                                                                         |
+| ------------------ | -------------------------------------------------------------------------------------------- |
+| `*.functions.ts`   | `createServerFn` wrappers — safe to import anywhere; only the handler runs on the server.    |
+| `*.server.ts`      | Server-only helpers (DB queries, internal logic, secrets). Import only from server contexts. |
+| `*.ts` (no suffix) | Client-safe shared code (types, schemas, constants, pure utilities).                         |
 
 **Import rules:**
+
 - Never import `*.server.ts` from client-safe files or route components.
 - Only `*.functions.ts` (and other `*.server.ts` files) may import `*.server.ts`.
 - Routes call server functions from `*.functions.ts`.
 
 ```ts
 // ✅ Route imports server function wrapper.
-import { updateUserRole } from '@/utils/users.functions'
+import { updateUserRole } from '@/utils/users.functions';
 
 // ❌ Route importing server-only module directly.
-import { updateUserRoleInDb } from '@/utils/users.server'
+import { updateUserRoleInDb } from '@/utils/users.server';
 ```
 
 `src/components/email-template/` is also server-only (imports `.server` modules) — never import from client code.
@@ -140,6 +144,7 @@ Better Auth configured in `src/auth/auth.server.ts`. Client-side auth via `authC
 Plugins active: `organization` (workspaces), `admin`, `lastLoginMethod`, `tanstackStartCookies`.
 
 Middleware in `src/middleware/auth.ts`:
+
 - `authMiddleware` — Checks session + email verification, ensures active workspace, used on `_protected.tsx`
 - `guestMiddleware` — Redirects authenticated users to `/ws`, used on `_auth.tsx`
 
@@ -153,7 +158,7 @@ Drizzle ORM with PostgreSQL (Neon). Schema entry point: `src/db/schema.ts` re-ex
 
 ### General
 
-- **Package manager**: Bun only — never use npm or yarn.
+- **Package manager**: pnpm only — never use npm, yarn, or bun.
 - **Path alias**: `@/*` maps to `src/*`.
 - **Imports**: React first, then external packages, then `@/*` aliases.
 
@@ -187,7 +192,7 @@ Drizzle ORM with PostgreSQL (Neon). Schema entry point: `src/db/schema.ts` re-ex
 ### shadcn/ui
 
 - Style: `base-vega`; base color: `zinc`.
-- Add components via `bunx shadcn@latest add <component>`.
+- Add components via `pnpx shadcn@latest add <component>`.
 - Never manually edit files in `src/components/ui/`.
 
 ## Code Quality
@@ -198,7 +203,7 @@ Drizzle ORM with PostgreSQL (Neon). Schema entry point: `src/db/schema.ts` re-ex
 
 **Meaningful names** — Variables, functions, and classes should reveal purpose. Names should explain why something exists and how it is used. Avoid abbreviations unless universally understood.
 
-**Smart comments** — Comments explain *why*, not *what*. Make code self-documenting; use comments for complex algorithms, non-obvious side effects, and API documentation. Always end comments with a period.
+**Smart comments** — Comments explain _why_, not _what_. Make code self-documenting; use comments for complex algorithms, non-obvious side effects, and API documentation. Always end comments with a period.
 
 **Single responsibility** — Each function should do exactly one thing and be small and focused. If a function needs a comment to explain what it does, split it.
 
@@ -222,7 +227,7 @@ When unsure: research the recommended approach for the library, fix the architec
 
 - Edit `src/routeTree.gen.ts` — it is auto-generated by the router plugin.
 - Manually edit files in `src/components/ui/` — use the shadcn CLI to update them.
-- Use `npm` or `yarn` — this project uses Bun.
+- Use `npm`, `yarn`, or `bun` — this project uses pnpm.
 - Commit `.env` files or secrets.
 - Use `any` type — prefer proper typing or `unknown` with guards.
 - Import `*.server.ts` modules from client-safe files or route components.
