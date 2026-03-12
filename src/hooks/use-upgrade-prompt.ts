@@ -3,7 +3,6 @@ import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { createCheckoutSession } from '@/billing/billing.functions';
 import type { Plan, PlanId } from '@/billing/plans';
-import { PLANS, PLAN_GROUP } from '@/billing/plans';
 
 interface UpgradePromptState {
   open: boolean;
@@ -33,7 +32,8 @@ export function useUpgradePrompt() {
   const [isAnnual, setIsAnnual] = useState(false);
 
   const upgradeMutation = useMutation({
-    mutationFn: (planId: PlanId) => createCheckoutSession({ data: { planId } }),
+    mutationFn: ({ planId, annual }: { planId: PlanId; annual: boolean }) =>
+      createCheckoutSession({ data: { planId, annual } }),
     onSuccess: (result) => {
       if (result.url) {
         window.location.href = result.url;
@@ -52,31 +52,19 @@ export function useUpgradePrompt() {
     setPrompt({ open: true, title, description, upgradePlan });
   };
 
-  /** Resolves the correct plan variant (monthly/annual) for checkout. */
-  const getUpgradePlanVariant = (): Plan | null => {
-    const { upgradePlan } = prompt;
-    if (!upgradePlan) return null;
-    if (!isAnnual) return upgradePlan;
-    // Find the annual variant of the same plan group.
-    const group = PLAN_GROUP[upgradePlan.id];
-    return (
-      PLANS.find((p) => PLAN_GROUP[p.id] === group && p.interval === 'year') ??
-      upgradePlan
-    );
-  };
-
-  const resolvedPlan = getUpgradePlanVariant();
-
   const dialogProps = {
     open: prompt.open,
     onOpenChange: (open: boolean) => setPrompt((prev) => ({ ...prev, open })),
     title: prompt.title,
     description: prompt.description,
-    upgradePlan: resolvedPlan,
+    upgradePlan: prompt.upgradePlan,
     isUpgrading: upgradeMutation.isPending,
     onUpgrade: () => {
-      if (resolvedPlan) {
-        upgradeMutation.mutate(resolvedPlan.id);
+      if (prompt.upgradePlan) {
+        upgradeMutation.mutate({
+          planId: prompt.upgradePlan.id,
+          annual: isAnnual,
+        });
       }
     },
     isAnnual,
