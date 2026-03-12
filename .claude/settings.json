@@ -6,11 +6,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r '.tool_input.file_path' | xargs bunx eslint --fix"
+            "command": "jq -r '.tool_input.file_path' | xargs pnpx eslint --fix"
           },
           {
             "type": "command",
-            "command": "jq -r '.tool_input.file_path' | xargs bunx prettier --write"
+            "command": "jq -r '.tool_input.file_path' | xargs pnpx prettier --write"
           }
         ]
       }
