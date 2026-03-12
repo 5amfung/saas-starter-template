@@ -7,15 +7,14 @@ import { auth } from '@/auth/auth.server';
 import {
   countOwnedWorkspaces,
   countWorkspaceMembers,
+  getBillingData,
   getUserActivePlanId,
-  getUserSubscriptionDetails,
   getWorkspaceOwnerUserId,
   requireVerifiedSession,
 } from '@/billing/billing.server';
 import type { PlanId } from '@/billing/plans';
 import {
   PLANS,
-  getFreePlan,
   getPlanById,
   getPlanLimitsForPlanId,
   getUpgradePlan,
@@ -115,14 +114,7 @@ export const createPortalSession = createServerFn().handler(async () => {
 export const getUserBillingData = createServerFn().handler(async () => {
   const session = await requireVerifiedSession();
   const headers = getRequestHeaders();
-  const planId = await getUserActivePlanId(headers, session.user.id);
-  const plan = getPlanById(planId) ?? getFreePlan();
-  const subscription = await getUserSubscriptionDetails(
-    session.user.id,
-    planId,
-  );
-
-  return { planId, plan, subscription };
+  return getBillingData(headers, session.user.id);
 });
 
 /**

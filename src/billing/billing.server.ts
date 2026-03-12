@@ -2,8 +2,14 @@ import { getRequestHeaders } from '@tanstack/react-start/server';
 import { redirect } from '@tanstack/react-router';
 import { and, count, eq } from 'drizzle-orm';
 import { auth } from '@/auth/auth.server';
-import { getPlanLimitsForPlanId, resolveUserPlanId } from '@/billing/plans';
-import type { PlanId, PlanLimits } from '@/billing/plans';
+import {
+  getFreePlan,
+  getPlanById,
+  getPlanLimitsForPlanId,
+  getUpgradePlan,
+  resolveUserPlanId,
+} from '@/billing/plans';
+import type { Plan, PlanId, PlanLimits } from '@/billing/plans';
 import { db } from '@/db';
 import {
   member as memberTable,
@@ -43,6 +49,46 @@ export async function getUserPlanLimits(
 ): Promise<PlanLimits> {
   const planId = await getUserActivePlanId(headers, userId);
   return getPlanLimitsForPlanId(planId);
+}
+
+export interface UserPlanContext {
+  planId: PlanId;
+  plan: Plan;
+  planName: string;
+  limits: PlanLimits;
+  upgradePlan: Plan | null;
+}
+
+/**
+ * Resolves a user's full plan context — plan, limits, and upgrade path.
+ * Consolidates the repeated plan resolution pattern used by billing data
+ * and plan limit checks.
+ */
+export async function getUserPlanContext(
+  headers: Headers,
+  userId: string,
+): Promise<UserPlanContext> {
+  const planId = await getUserActivePlanId(headers, userId);
+  const plan = getPlanById(planId) ?? getFreePlan();
+  const limits = getPlanLimitsForPlanId(planId);
+  const upgradePlan = getUpgradePlan(plan);
+
+  return {
+    planId,
+    plan,
+    planName: plan.name,
+    limits,
+    upgradePlan,
+  };
+}
+
+/**
+ * Returns the current user's billing state for the billing page.
+ */
+export async function getBillingData(headers: Headers, userId: string) {
+  const { planId, plan } = await getUserPlanContext(headers, userId);
+  const subscription = await getUserSubscriptionDetails(userId, planId);
+  return { planId, plan, subscription };
 }
 
 /**
