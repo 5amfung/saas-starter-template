@@ -15,7 +15,6 @@ import {
 import type { PlanId } from '@/billing/plans';
 import {
   PLANS,
-  PLAN_GROUP,
   getFreePlan,
   getPlanById,
   getPlanLimitsForPlanId,
@@ -63,6 +62,7 @@ const VALID_PLAN_IDS = PLANS.map((p) => p.id) as [PlanId, ...Array<PlanId>];
 
 const upgradeInput = z.object({
   planId: z.enum(VALID_PLAN_IDS),
+  annual: z.boolean(),
 });
 
 /**
@@ -76,15 +76,12 @@ export const createCheckoutSession = createServerFn()
     const headers = getRequestHeaders();
     await requireVerifiedSession();
 
-    // Better Auth expects the group name (e.g. 'pro'), not the variant ID.
-    const plan = PLAN_GROUP[data.planId];
-    const annual = data.planId.endsWith('-annual');
-
+    // PlanId maps 1:1 to Better Auth's plan name — no translation needed.
     const result = await auth.api.upgradeSubscription({
       headers,
       body: {
-        plan,
-        annual,
+        plan: data.planId,
+        annual: data.annual,
         successUrl: `${process.env.BETTER_AUTH_URL}/billing?success=true`,
         cancelUrl: `${process.env.BETTER_AUTH_URL}/billing`,
       },
@@ -183,8 +180,7 @@ export const checkPlanLimit = createServerFn()
     const limits = getPlanLimitsForPlanId(planId);
     const plan = getPlanById(planId);
     const planName = plan?.name ?? 'Free';
-    // Default to monthly variant for upgrade suggestion.
-    const upgradePlan = plan ? getUpgradePlan(plan, false) : null;
+    const upgradePlan = plan ? getUpgradePlan(plan) : null;
 
     if (data.feature === 'workspace') {
       const limit = limits.maxWorkspaces;
@@ -215,9 +211,7 @@ export const checkPlanLimit = createServerFn()
     const ownerLimits = getPlanLimitsForPlanId(ownerPlanId);
     const ownerPlan = getPlanById(ownerPlanId);
     const ownerPlanName = ownerPlan?.name ?? 'Free';
-    const ownerUpgradePlan = ownerPlan
-      ? getUpgradePlan(ownerPlan, false)
-      : null;
+    const ownerUpgradePlan = ownerPlan ? getUpgradePlan(ownerPlan) : null;
 
     const limit = ownerLimits.maxMembersPerWorkspace;
     if (limit === -1) {
