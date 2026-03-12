@@ -12,7 +12,9 @@ import {
   getWorkspaceOwnerUserId,
   requireVerifiedSession,
 } from '@/billing/billing.server';
+import type { PlanId } from '@/billing/plans';
 import {
+  PLANS,
   PLAN_GROUP,
   getFreePlan,
   getPlanById,
@@ -57,8 +59,10 @@ export const getInvoices = createServerFn().handler(async () => {
   }));
 });
 
+const VALID_PLAN_IDS = PLANS.map((p) => p.id) as [PlanId, ...Array<PlanId>];
+
 const upgradeInput = z.object({
-  planId: z.enum(['starter', 'pro-monthly', 'pro-annual']),
+  planId: z.enum(VALID_PLAN_IDS),
 });
 
 /**
