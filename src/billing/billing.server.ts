@@ -2,11 +2,7 @@ import { getRequestHeaders } from '@tanstack/react-start/server';
 import { redirect } from '@tanstack/react-router';
 import { and, count, eq } from 'drizzle-orm';
 import { auth } from '@/auth/auth.server';
-import {
-  getPlanLimitsForPlanId,
-  normalizePlanId,
-  resolveUserPlanId,
-} from '@/billing/plans';
+import { getPlanLimitsForPlanId, resolveUserPlanId } from '@/billing/plans';
 import type { PlanId, PlanLimits } from '@/billing/plans';
 import { db } from '@/db';
 import {
@@ -132,8 +128,7 @@ export async function getUserSubscriptionDetails(
   // Find the active/trialing subscription for the resolved plan.
   const active = rows.find(
     (r) =>
-      (r.status === 'active' || r.status === 'trialing') &&
-      normalizePlanId(r.plan) === planId,
+      (r.status === 'active' || r.status === 'trialing') && r.plan === planId,
   );
   if (!active || !active.status) return null;
 
