@@ -15,7 +15,7 @@ describe('getWebmailLinkForEmail', () => {
     ['user@proton.me', 'Proton Mail'],
     ['user@protonmail.com', 'Proton Mail'],
     ['user@aol.com', 'AOL Mail'],
-  ])('returns %s provider for %s', (email, label) => {
+  ])('returns correct provider for %s (%s)', (email, label) => {
     const result = getWebmailLinkForEmail(email);
     expect(result).not.toBeNull();
     expect(result!.label).toBe(label);
