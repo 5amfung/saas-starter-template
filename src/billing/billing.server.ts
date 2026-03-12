@@ -23,8 +23,10 @@ export async function requireVerifiedSession() {
  * Returns the active plan ID for a user using Better Auth's subscription API.
  * Delegates to resolveUserPlanId() (pure function in plans.ts) for plan resolution.
  */
-export async function getUserActivePlanId(userId: string): Promise<PlanId> {
-  const headers = getRequestHeaders();
+export async function getUserActivePlanId(
+  headers: Headers,
+  userId: string,
+): Promise<PlanId> {
   const subscriptions = await auth.api.listActiveSubscriptions({
     headers,
     query: { referenceId: userId },
@@ -35,8 +37,11 @@ export async function getUserActivePlanId(userId: string): Promise<PlanId> {
 /**
  * Returns the plan limits for a given user based on their subscription.
  */
-export async function getUserPlanLimits(userId: string): Promise<PlanLimits> {
-  const planId = await getUserActivePlanId(userId);
+export async function getUserPlanLimits(
+  headers: Headers,
+  userId: string,
+): Promise<PlanLimits> {
+  const planId = await getUserActivePlanId(headers, userId);
   return getPlanLimitsForPlanId(planId);
 }
 

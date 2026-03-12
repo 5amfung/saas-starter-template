@@ -114,7 +114,8 @@ export const createPortalSession = createServerFn().handler(async () => {
  */
 export const getUserBillingData = createServerFn().handler(async () => {
   const session = await requireVerifiedSession();
-  const planId = await getUserActivePlanId(session.user.id);
+  const headers = getRequestHeaders();
+  const planId = await getUserActivePlanId(headers, session.user.id);
   const plan = getPlanById(planId) ?? getFreePlan();
   const subscription = await getUserSubscriptionDetails(
     session.user.id,
@@ -175,8 +176,9 @@ export const checkPlanLimit = createServerFn()
   .inputValidator(checkPlanLimitInput)
   .handler(async ({ data }) => {
     const session = await requireVerifiedSession();
+    const headers = getRequestHeaders();
     const userId = session.user.id;
-    const planId = await getUserActivePlanId(userId);
+    const planId = await getUserActivePlanId(headers, userId);
     const limits = getPlanLimitsForPlanId(planId);
     const plan = getPlanById(planId);
     const planName = plan?.name ?? 'Free';
@@ -207,7 +209,7 @@ export const checkPlanLimit = createServerFn()
     if (!ownerId) {
       return { allowed: true, current: 0, limit: -1, planName, upgradePlan };
     }
-    const ownerPlanId = await getUserActivePlanId(ownerId);
+    const ownerPlanId = await getUserActivePlanId(headers, ownerId);
     const ownerLimits = getPlanLimitsForPlanId(ownerPlanId);
     const ownerPlan = getPlanById(ownerPlanId);
     const ownerPlanName = ownerPlan?.name ?? 'Free';
