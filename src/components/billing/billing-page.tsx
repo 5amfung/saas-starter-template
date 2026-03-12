@@ -5,16 +5,12 @@ import {
   createCheckoutSession,
   createPortalSession,
   getInvoices,
+  getUserBillingData,
   reactivateSubscription,
 } from '@/billing/billing.functions';
-import {
-  FREE_PLAN_ID,
-  getFreePlan,
-  getPlanById,
-  getUpgradePlan,
-  normalizePlanId,
-} from '@/billing/plans';
-import { SESSION_QUERY_KEY, useSessionQuery } from '@/hooks/use-session-query';
+import { getUpgradePlan } from '@/billing/plans';
+import type { PlanId } from '@/billing/plans';
+import { SESSION_QUERY_KEY } from '@/hooks/use-session-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { BillingDowngradeBanner } from './billing-downgrade-banner';
 import { BillingInvoiceTable } from './billing-invoice-table';
@@ -24,11 +20,16 @@ const PAGE_LAYOUT_CLASS =
   'mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6';
 
 const INVOICES_QUERY_KEY = ['billing', 'invoices'] as const;
+const BILLING_DATA_QUERY_KEY = ['billing', 'data'] as const;
 
 export function BillingPage() {
   const queryClient = useQueryClient();
-  const { data: session, isPending } = useSessionQuery();
   const [isAnnual, setIsAnnual] = useState(false);
+
+  const billingQuery = useQuery({
+    queryKey: BILLING_DATA_QUERY_KEY,
+    queryFn: () => getUserBillingData(),
+  });
 
   const invoicesQuery = useQuery({
     queryKey: INVOICES_QUERY_KEY,
@@ -48,8 +49,7 @@ export function BillingPage() {
   });
 
   const upgradeMutation = useMutation({
-    mutationFn: (planId: 'starter' | 'pro-monthly' | 'pro-annual') =>
-      createCheckoutSession({ data: { planId } }),
+    mutationFn: (planId: PlanId) => createCheckoutSession({ data: { planId } }),
     onSuccess: (result) => {
       if (result.url) {
         window.location.href = result.url;
@@ -65,27 +65,16 @@ export function BillingPage() {
     onSuccess: () => {
       toast.success('Subscription reactivated.');
       void queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: BILLING_DATA_QUERY_KEY });
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to reactivate subscription.');
     },
   });
 
-  if (isPending || !session) return null;
+  if (billingQuery.isPending || !billingQuery.data) return null;
 
-  // The Stripe plugin extends the session user with subscription data.
-  // Cast as unknown first since the type inference doesn't capture this automatically.
-  const userWithSub = session.user as unknown as {
-    subscription?: {
-      plan?: string;
-      status?: string;
-      periodEnd?: Date | string;
-      cancelAtPeriodEnd?: boolean;
-    };
-  };
-  const subscription = userWithSub.subscription;
-  const planId = normalizePlanId(subscription?.plan ?? FREE_PLAN_ID);
-  const currentPlan = getPlanById(planId) ?? getFreePlan();
+  const { plan: currentPlan, subscription } = billingQuery.data;
   const upgradePlan = getUpgradePlan(currentPlan, isAnnual);
 
   const cancelAtPeriodEnd = subscription?.cancelAtPeriodEnd ?? false;
