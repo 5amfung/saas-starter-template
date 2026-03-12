@@ -1,3 +1,3 @@
 # SaaS Starter Template
 
-An opinioned stack for building Saas application. ✨🚀
+An opinioned stack for building Saas application. ✨✨🚀
