@@ -98,7 +98,7 @@ export function BillingPlanCards({
       </Card>
 
       {/* Upgrade Card */}
-      {upgradePlan && (
+      {upgradePlan ? (
         <Card>
           <CardHeader>
             <CardDescription>Upgrade to</CardDescription>
@@ -152,6 +152,19 @@ export function BillingPlanCards({
                 : `Upgrade to ${upgradePlan.name}`}
             </Button>
           </CardFooter>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardDescription>Need more?</CardDescription>
+            <CardTitle className="text-2xl">Custom plan</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground text-sm">
+              You're on our best plan. Contact us for a custom plan tailored to
+              your needs.
+            </p>
+          </CardContent>
         </Card>
       )}
     </div>
