@@ -84,5 +84,13 @@
     "vite-tsconfig-paths": "^6.1.0",
     "vitest": "^4.0.18",
     "web-vitals": "^5.1.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "msw",
+      "sharp",
+      "unrs-resolver"
+    ]
   }
 }
