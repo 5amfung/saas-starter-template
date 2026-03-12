@@ -52,3 +52,6 @@ jobs:
 
           # Allow Claude to interact with PRs and issues via the gh CLI.
           claude_args: '--allowed-tools "Bash(gh issue:*)" "Bash(gh pr:*)"'
+
+          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
+          # or https://code.claude.com/docs/en/cli-reference for available options
