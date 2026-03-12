@@ -1,6 +1,7 @@
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { redirect } from '@tanstack/react-router';
 import { and, count, eq } from 'drizzle-orm';
+import Stripe from 'stripe';
 import { auth } from '@/auth/auth.server';
 import {
   getFreePlan,
@@ -14,7 +15,10 @@ import { db } from '@/db';
 import {
   member as memberTable,
   subscription as subscriptionTable,
+  user as userTable,
 } from '@/db/schema';
+
+const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function requireVerifiedSession() {
   const headers = getRequestHeaders();
@@ -268,4 +272,104 @@ export async function getUserSubscriptionDetails(
     periodEnd: active.periodEnd ?? null,
     cancelAtPeriodEnd: active.cancelAtPeriodEnd ?? false,
   };
+}
+
+/**
+ * Fetches a user's invoices from Stripe (past 12 months).
+ */
+export async function getInvoicesForUser(userId: string) {
+  const [dbUser] = await db
+    .select({ stripeCustomerId: userTable.stripeCustomerId })
+    .from(userTable)
+    .where(eq(userTable.id, userId));
+
+  if (!dbUser.stripeCustomerId) return [];
+
+  const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
+  const twelveMonthsAgo = Math.floor(Date.now() / 1000) - SECONDS_PER_YEAR;
+  const invoices = await stripeClient.invoices.list({
+    customer: dbUser.stripeCustomerId,
+    limit: 100,
+    created: { gte: twelveMonthsAgo },
+  });
+
+  return invoices.data.map((inv) => ({
+    id: inv.id,
+    date: inv.created,
+    status: inv.status,
+    amount: inv.amount_paid,
+    currency: inv.currency,
+    invoiceUrl: inv.hosted_invoice_url,
+    invoicePdf: inv.invoice_pdf,
+  }));
+}
+
+/**
+ * Creates a Stripe Checkout session to subscribe to a plan.
+ * PlanId maps 1:1 to Better Auth's plan name — no translation needed.
+ */
+export async function createCheckoutForPlan(
+  headers: Headers,
+  planId: PlanId,
+  annual: boolean,
+) {
+  const result = await auth.api.upgradeSubscription({
+    headers,
+    body: {
+      plan: planId,
+      annual,
+      successUrl: `${process.env.BETTER_AUTH_URL}/billing?success=true`,
+      cancelUrl: `${process.env.BETTER_AUTH_URL}/billing`,
+    },
+  });
+
+  return { url: result.url, redirect: result.redirect };
+}
+
+/**
+ * Creates a Stripe Customer Portal session for managing the subscription.
+ */
+export async function createUserBillingPortal(headers: Headers) {
+  const result = await auth.api.createBillingPortal({
+    headers,
+    body: {
+      returnUrl: `${process.env.BETTER_AUTH_URL}/billing`,
+    },
+  });
+  return { url: result.url, redirect: result.redirect };
+}
+
+/**
+ * Reactivates a subscription that was set to cancel at period end.
+ * Picks the highest-tier active subscription and restores it.
+ */
+export async function reactivateUserSubscription(
+  headers: Headers,
+  userId: string,
+) {
+  const subscriptions = await auth.api.listActiveSubscriptions({
+    headers,
+    query: { referenceId: userId },
+  });
+
+  const active = subscriptions.filter(
+    (s) => s.status === 'active' || s.status === 'trialing',
+  );
+
+  if (active.length === 0) {
+    throw new Error('No active subscription found.');
+  }
+
+  const bestPlanId = resolveUserPlanId(active);
+  const target = active.find((s) => s.plan === bestPlanId);
+  if (!target?.id) {
+    throw new Error('Could not find subscription to restore.');
+  }
+
+  await auth.api.restoreSubscription({
+    headers,
+    body: { subscriptionId: target.id },
+  });
+
+  return { success: true };
 }
