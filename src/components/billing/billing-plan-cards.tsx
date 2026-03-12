@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Toggle } from '@/components/ui/toggle';
-import { formatPrice } from '@/billing/plans';
+import { formatPlanPrice, getPlanFeatures } from '@/billing/plans';
 import type { Plan, PlanId } from '@/billing/plans';
 
 interface BillingPlanCardsProps {
@@ -53,9 +53,9 @@ export function BillingPlanCards({
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <p className="text-muted-foreground text-sm">
-            {currentPlan.price === 0
+            {!currentPlan.pricing
               ? 'Free forever'
-              : formatPrice(currentPlan)}
+              : formatPlanPrice(currentPlan, false)}
           </p>
           {nextBillingDate && (
             <p className="text-muted-foreground text-sm">
@@ -71,7 +71,7 @@ export function BillingPlanCards({
             ))}
           </ul>
         </CardContent>
-        {currentPlan.price > 0 && (
+        {currentPlan.pricing && (
           <CardFooter>
             <Button
               variant="outline"
@@ -94,9 +94,9 @@ export function BillingPlanCards({
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
-              {upgradePlan.price > 0 && (
+              {upgradePlan.pricing && (
                 <p className="text-sm font-medium">
-                  {formatPrice(upgradePlan)}
+                  {formatPlanPrice(upgradePlan, isAnnual)}
                 </p>
               )}
               <div className="flex items-center gap-0.5 rounded-full border p-0.5">
@@ -121,7 +121,7 @@ export function BillingPlanCards({
               </div>
             </div>
             <ul className="mt-1 flex flex-col gap-2">
-              {upgradePlan.features.map((feature) => (
+              {getPlanFeatures(upgradePlan, isAnnual).map((feature) => (
                 <li key={feature} className="flex items-center gap-2 text-sm">
                   <IconCheck className="text-primary size-3.5 shrink-0" />
                   {feature}

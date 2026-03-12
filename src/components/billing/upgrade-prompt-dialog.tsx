@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
-import { formatPrice } from '@/billing/plans';
+import { formatPlanPrice, getPlanFeatures } from '@/billing/plans';
 import type { Plan } from '@/billing/plans';
 
 interface UpgradePromptDialogProps {
@@ -58,9 +58,9 @@ export function UpgradePromptDialog({
                   <h3 className="text-xl font-semibold tracking-tight">
                     {upgradePlan.name}
                   </h3>
-                  {formatPrice(upgradePlan) && (
+                  {upgradePlan.pricing && (
                     <span className="text-muted-foreground text-sm">
-                      {formatPrice(upgradePlan)}
+                      {formatPlanPrice(upgradePlan, isAnnual)}
                     </span>
                   )}
                 </div>
@@ -89,7 +89,7 @@ export function UpgradePromptDialog({
 
               {/* Features */}
               <ul className="flex flex-col gap-2.5">
-                {upgradePlan.features.map((feature) => (
+                {getPlanFeatures(upgradePlan, isAnnual).map((feature) => (
                   <li
                     key={feature}
                     className="flex items-center gap-2.5 text-sm"
