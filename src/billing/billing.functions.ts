@@ -17,6 +17,7 @@ import {
   getFreePlan,
   getPlanById,
   getPlanLimitsForPlanId,
+  getUpgradePlan,
   resolveUserPlanId,
 } from '@/billing/plans';
 import { db } from '@/db';
@@ -176,15 +177,24 @@ export const checkPlanLimit = createServerFn()
     const userId = session.user.id;
     const planId = await getUserActivePlanId(userId);
     const limits = getPlanLimitsForPlanId(planId);
-    const planName = getPlanById(planId)?.name ?? 'Free';
+    const plan = getPlanById(planId);
+    const planName = plan?.name ?? 'Free';
+    // Default to monthly variant for upgrade suggestion.
+    const upgradePlan = plan ? getUpgradePlan(plan, false) : null;
 
     if (data.feature === 'workspace') {
       const limit = limits.maxWorkspaces;
       if (limit === -1) {
-        return { allowed: true, current: 0, limit: -1, planName };
+        return { allowed: true, current: 0, limit: -1, planName, upgradePlan };
       }
       const current = await countOwnedWorkspaces(userId);
-      return { allowed: current < limit, current, limit, planName };
+      return {
+        allowed: current < limit,
+        current,
+        limit,
+        planName,
+        upgradePlan,
+      };
     }
 
     if (!data.workspaceId) {
@@ -195,15 +205,25 @@ export const checkPlanLimit = createServerFn()
     // current user's plan. This mirrors the beforeCreateInvitation hook.
     const ownerId = await getWorkspaceOwnerUserId(data.workspaceId);
     if (!ownerId) {
-      return { allowed: true, current: 0, limit: -1, planName };
+      return { allowed: true, current: 0, limit: -1, planName, upgradePlan };
     }
     const ownerPlanId = await getUserActivePlanId(ownerId);
     const ownerLimits = getPlanLimitsForPlanId(ownerPlanId);
-    const ownerPlanName = getPlanById(ownerPlanId)?.name ?? 'Free';
+    const ownerPlan = getPlanById(ownerPlanId);
+    const ownerPlanName = ownerPlan?.name ?? 'Free';
+    const ownerUpgradePlan = ownerPlan
+      ? getUpgradePlan(ownerPlan, false)
+      : null;
 
     const limit = ownerLimits.maxMembersPerWorkspace;
     if (limit === -1) {
-      return { allowed: true, current: 0, limit: -1, planName: ownerPlanName };
+      return {
+        allowed: true,
+        current: 0,
+        limit: -1,
+        planName: ownerPlanName,
+        upgradePlan: ownerUpgradePlan,
+      };
     }
     const current = await countWorkspaceMembers(data.workspaceId);
     return {
@@ -211,5 +231,6 @@ export const checkPlanLimit = createServerFn()
       current,
       limit,
       planName: ownerPlanName,
+      upgradePlan: ownerUpgradePlan,
     };
   });
