@@ -133,7 +133,7 @@ export async function getUserSubscriptionDetails(
   const active = rows.find(
     (r) =>
       (r.status === 'active' || r.status === 'trialing') &&
-      normalizePlanId(r.plan ?? '') === planId,
+      normalizePlanId(r.plan) === planId,
   );
   if (!active || !active.status) return null;
 
