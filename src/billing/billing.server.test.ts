@@ -10,6 +10,10 @@ import {
   resolveSubscriptionDetails,
 } from '@/billing/billing.server';
 
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+import { mockDbChain } from '@/test/mocks/db';
+
 // ── Hoisted mocks ──────────────────────────────────────────────────────────
 
 const {
@@ -78,18 +82,8 @@ vi.mock('@tanstack/react-router', () => ({
   redirect: vi.fn(),
 }));
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-
 const TEST_HEADERS = new Headers();
 const TEST_USER_ID = 'user_123';
-
-/** Sets up the chainable db.select().from().where() mock to resolve a value. */
-function mockDbChain(result: Array<unknown>) {
-  const whereMock = vi.fn().mockResolvedValue(result);
-  const fromMock = vi.fn().mockReturnValue({ where: whereMock });
-  dbSelectMock.mockReturnValue({ from: fromMock });
-  return { fromMock, whereMock };
-}
 
 // ── Tests ──────────────────────────────────────────────────────────────────
 
@@ -263,7 +257,7 @@ describe('billing.server', () => {
     it('allows when under limit (starter, 0 workspaces)', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([]);
       // countOwnedWorkspaces DB query.
-      mockDbChain([{ count: 0 }]);
+      mockDbChain(dbSelectMock, [{ count: 0 }]);
 
       const result = await checkUserPlanLimit(
         TEST_HEADERS,
@@ -278,7 +272,7 @@ describe('billing.server', () => {
 
     it('blocks when at limit (starter, 1 workspace)', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([]);
-      mockDbChain([{ count: 1 }]);
+      mockDbChain(dbSelectMock, [{ count: 1 }]);
 
       const result = await checkUserPlanLimit(
         TEST_HEADERS,
@@ -296,7 +290,7 @@ describe('billing.server', () => {
       listActiveSubscriptionsMock.mockResolvedValue([
         { plan: 'pro', status: 'active' },
       ]);
-      mockDbChain([{ count: 3 }]);
+      mockDbChain(dbSelectMock, [{ count: 3 }]);
 
       const result = await checkUserPlanLimit(
         TEST_HEADERS,
@@ -321,7 +315,7 @@ describe('billing.server', () => {
     it('allows when no owner found (personal workspace fallback)', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([]);
       // getWorkspaceOwnerUserId returns empty array (no owner).
-      mockDbChain([]);
+      mockDbChain(dbSelectMock, []);
 
       const result = await checkUserPlanLimit(
         TEST_HEADERS,
@@ -460,7 +454,7 @@ describe('billing.server', () => {
 
   describe('getInvoicesForUser', () => {
     it('returns empty array when no stripeCustomerId', async () => {
-      mockDbChain([{ stripeCustomerId: null }]);
+      mockDbChain(dbSelectMock, [{ stripeCustomerId: null }]);
 
       const result = await getInvoicesForUser(TEST_USER_ID);
 
