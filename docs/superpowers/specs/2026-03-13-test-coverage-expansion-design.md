@@ -16,9 +16,11 @@ Add comprehensive tests to the SaaS starter template to ensure developer confide
 
 **Risk-driven, three-phase rollout:**
 
-1. **Phase 1 — Foundation + Critical Paths:** Shared test infra, middleware, billing functions, auth form components.
+1. **Phase 1 — Foundation + Critical Paths:** Shared test infra, middleware, auth form components.
 2. **Phase 2 — Core UI + Server Logic:** Workspace/account/admin components, admin analytics, notification preferences, email sending.
 3. **Phase 3 — Expansion:** Custom hooks, email templates, edge cases across all modules.
+
+> **Note on `*.functions.ts` wrappers:** Server function files like `billing.functions.ts`, `admin.functions.ts`, and `notification-preferences.functions.ts` are thin delegation wrappers (call `requireVerifiedSession()`, forward to `*.server.ts` logic). Testing these would only verify that `createServerFn` calls the function you passed it — which is the framework's responsibility. These are intentionally excluded from the test plan. The underlying business logic in `*.server.ts` files is where tests belong.
 
 ---
 
@@ -47,6 +49,7 @@ test: {
   include: ['src/**/*.test.{ts,tsx}'],
   environmentMatchGlobs: [
     ['src/**/*.test.tsx', 'jsdom'],
+    ['src/hooks/**/*.test.ts', 'jsdom'],
   ],
 }
 ```
@@ -61,9 +64,17 @@ test: {
 
 ### 1.2 Middleware Tests
 
+**Testing approach:** TanStack Start middleware is created via `createMiddleware().server(handler)`. The handler is an opaque callback — there's no public API to invoke it directly in tests. To make the middleware logic testable:
+
+1. **Extract the core logic** from each middleware into standalone async functions (e.g., `validateAuthSession(headers)`, `validateAdminSession(headers)`) in the same file.
+2. The `createMiddleware().server()` calls become thin wrappers that call the extracted functions.
+3. Tests target the extracted functions directly — no need to mock `createMiddleware` internals.
+
+This refactor is minimal (moving ~5 lines per middleware into a named function) and follows the existing pattern of extracting testable logic from framework wrappers.
+
 #### `src/middleware/auth.test.ts`
 
-Tests for `authMiddleware`:
+Tests for extracted `validateAuthSession()`:
 
 | Test case                                 | Expected behavior                                   |
 | ----------------------------------------- | --------------------------------------------------- |
@@ -72,16 +83,16 @@ Tests for `authMiddleware`:
 | Valid session, `emailVerified: true`      | Calls `ensureActiveWorkspaceForSession()`, proceeds |
 | Valid session, workspace resolution fails | Appropriate error propagation                       |
 
-Tests for `guestMiddleware`:
+Tests for extracted `validateGuestSession()`:
 
 | Test case            | Expected behavior        |
 | -------------------- | ------------------------ |
-| No session           | Proceeds (guest allowed) |
+| No session           | Returns without throwing |
 | Valid session exists | Throws redirect to `/ws` |
 
 #### `src/middleware/admin.test.ts`
 
-Tests for `adminMiddleware`:
+Tests for extracted `validateAdminSession()`:
 
 | Test case                                            | Expected behavior            |
 | ---------------------------------------------------- | ---------------------------- |
@@ -90,25 +101,9 @@ Tests for `adminMiddleware`:
 | Session with non-admin role                          | Throws redirect to `/signin` |
 | Session with `role: 'admin'` + `emailVerified: true` | Proceeds                     |
 
-**Mock strategy:** Hoist mocks for `auth.api.getSession()`, `redirect()`, and `ensureActiveWorkspaceForSession()`. Same hoisted pattern as existing billing tests.
+**Mock strategy:** Hoist mocks for `auth.api.getSession()`, `redirect()`, and `ensureActiveWorkspaceForSession()`. Same hoisted pattern as existing billing tests. No need to mock `createMiddleware` since tests target the extracted functions.
 
-### 1.3 Billing Server Function Tests
-
-#### `src/billing/billing.functions.test.ts`
-
-These test the `createServerFn` wrappers — the integration seam between route loaders and the already-tested server logic.
-
-| Function                     | Key test cases                                                                                 |
-| ---------------------------- | ---------------------------------------------------------------------------------------------- |
-| `getInvoices`                | Validates auth; calls server logic with correct params; returns formatted invoice list         |
-| `createCheckoutSession`      | Validates plan param; checks eligibility; returns Stripe checkout URL; handles ineligible plan |
-| `createBillingPortalSession` | Validates workspace ownership; returns portal URL; rejects non-owners                          |
-| `checkPlanLimit`             | Checks workspace against plan limits; returns allowed/denied with reason                       |
-| `getBillingData`             | Aggregates subscription + plan info; handles no active subscription                            |
-
-**Mock strategy:** Mock the `*.server.ts` imports (already-tested functions) and `getRequestHeaders`. Verify correct delegation, parameter forwarding, and error propagation. Do NOT re-test the underlying logic.
-
-### 1.4 Auth Form Components
+### 1.3 Auth Form Components
 
 #### Unit Tests
 
@@ -181,12 +176,12 @@ These test the `createServerFn` wrappers — the integration seam between route 
 
 ### 2.4 Server Logic Tests
 
-| Module                             | Test file                                                | Key test cases                                                                                                                      |
-| ---------------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Admin analytics functions          | `src/admin/admin.functions.test.ts`                      | `getAdminDashboardMetrics` returns formatted metrics; `getSignupChartData` validates date range; `getMauChartData` handles timezone |
-| Notification preferences functions | `src/account/notification-preferences.functions.test.ts` | Get returns user preferences; upsert creates/updates correctly; validates input                                                     |
-| Notification preferences schema    | `src/account/notification-preferences.schemas.test.ts`   | Valid input passes; invalid fields rejected                                                                                         |
-| Email sending                      | `src/email/resend.server.test.ts`                        | Sends email via Resend SDK; handles API errors; validates required fields                                                           |
+| Module                             | Test file                                                | Key test cases                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Admin analytics server logic       | `src/admin/admin.server.test.ts` (extend existing)       | Add tests for `queryDashboardMetrics`, `querySignupChartData`, `queryMauChartData` — mock DB queries, verify timezone-aware bucketing, test empty result sets |
+| Notification preferences server    | `src/account/notification-preferences.server.test.ts`    | `getNotificationPreferencesForUser` returns preferences with defaults; `upsertNotificationPreferencesForUser` creates/updates correctly; handles missing user |
+| Notification preferences schema    | `src/account/notification-preferences.schemas.test.ts`   | Valid input passes; invalid fields rejected                                                                                                                                                                                                                                                                                                                      |
+| Email sending                      | `src/email/resend.server.test.ts`                        | Sends email via Resend SDK; handles API errors; validates required env vars (RESEND_API_KEY, RESEND_FROM_EMAIL); prefixes subject in non-production. **Note:** Module uses a singleton `resendClient` and reads env vars at module load time. Tests must use `vi.resetModules()` between tests that need different env states to avoid cross-test contamination. |
 
 ---
 
@@ -194,12 +189,12 @@ These test the `createServerFn` wrappers — the integration seam between route 
 
 ### 3.1 Custom Hook Tests
 
-| Hook                     | Test file                                     | Key test cases                                                                                       |
-| ------------------------ | --------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `useSessionQuery`        | `src/hooks/use-session-query.test.ts`         | Returns session data on success; returns null when no session; handles auth error; correct query key |
-| `useUpgradePrompt`       | `src/hooks/use-upgrade-prompt.test.ts`        | Shows prompt at plan limit; dismisses correctly; hidden on highest tier                              |
-| `useLinkedAccountsQuery` | `src/hooks/use-linked-accounts-query.test.ts` | Fetches linked OAuth accounts; handles empty list                                                    |
-| `useSessionsQuery`       | `src/hooks/use-sessions-query.test.ts`        | Fetches active sessions; handles error state                                                         |
+| Hook                     | Test file                                     | Key test cases                                                                                                                                                                                                                                                                       |
+| ------------------------ | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `useSessionQuery`        | `src/hooks/use-session-query.test.ts`         | Returns session data on success; returns null when no session; handles auth error; correct query key                                                                                                                                                                                 |
+| `useUpgradePrompt`       | `src/hooks/use-upgrade-prompt.test.ts`        | `show()` populates dialog props (title, description, plan); `onOpenChange(false)` closes dialog; `onUpgrade()` fires mutation with correct planId + annual; `onUpgrade()` is no-op when `upgradePlan` is null; sets `window.location.href` on checkout success; shows toast on error |
+| `useLinkedAccountsQuery` | `src/hooks/use-linked-accounts-query.test.ts` | Fetches linked OAuth accounts; handles empty list                                                                                                                                                                                                                                    |
+| `useSessionsQuery`       | `src/hooks/use-sessions-query.test.ts`        | Fetches active sessions; handles error state                                                                                                                                                                                                                                         |
 
 **Strategy:** Use `renderHook` from `@testing-library/react` with a QueryClient wrapper. Mock `authClient` methods. No DOM rendering needed.
 
@@ -213,7 +208,7 @@ These test the `createServerFn` wrappers — the integration seam between route 
 | Required props produce expected text content | Key content (user name, links, action text) appears |
 | Missing optional props don't crash           | Graceful handling of optional data                  |
 
-**Strategy:** Render React Email components to static HTML using `render()` from `@react-email/render`. Assert key content strings appear in output.
+**Strategy:** Mock React Email components as simple string values (consistent with `auth-emails.server.test.ts` pattern). Verify that templates are invoked with correct props via `createElement()` calls. This avoids depending on the React Email rendering pipeline (CSS inlining, etc.) which is slow and occasionally flaky. Full rendering fidelity is covered by `pnpm run email:dev` visual preview.
 
 ### 3.3 Edge Cases (additions to existing tests)
 
@@ -228,12 +223,12 @@ These test the `createServerFn` wrappers — the integration seam between route 
 
 ## File Summary
 
-| Phase     | New test files | New infra files | Updates to existing                     |
-| --------- | -------------- | --------------- | --------------------------------------- |
-| Phase 1   | ~7             | 5               | 2 (vitest config, billing test extract) |
-| Phase 2   | ~9             | 0               | 0                                       |
-| Phase 3   | ~5             | 0               | ~4 (edge case additions)                |
-| **Total** | **~21**        | **5**           | **~6**                                  |
+| Phase     | New test files | New infra files | Updates to existing                                          |
+| --------- | -------------- | --------------- | ------------------------------------------------------------ |
+| Phase 1   | ~6             | 5               | 3 (vitest config, billing test extract, middleware refactor) |
+| Phase 2   | ~9             | 0               | 0                                                            |
+| Phase 3   | ~5             | 0               | ~4 (edge case additions)                                     |
+| **Total** | **~20**        | **5**           | **~7**                                                       |
 
 ## Testing Patterns
 
