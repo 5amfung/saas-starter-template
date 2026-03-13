@@ -787,6 +787,11 @@ describe('SigninForm', () => {
     const user = userEvent.setup();
     renderWithProviders(<SigninForm />);
 
+    // Blur each field to trigger onBlur validation (field errors only render when isBlurred=true).
+    await user.click(screen.getByLabelText(/email/i));
+    await user.tab();
+    await user.tab();
+
     await user.click(screen.getByRole('button', { name: /sign in/i }));
 
     await waitFor(() => {
@@ -942,7 +947,8 @@ describe('SignupForm', () => {
 
     await user.type(screen.getByLabelText(/^password$/i), 'password123');
     await user.type(screen.getByLabelText(/confirm password/i), 'different');
-    await user.click(screen.getByRole('button', { name: /sign up|create/i }));
+    // Tab away to trigger blur — field errors only render when isBlurred=true.
+    await user.tab();
 
     await waitFor(() => {
       expect(screen.getByText(/do not match/i)).toBeInTheDocument();
@@ -2175,4 +2181,10 @@ Expected: No lint errors.
 | 6: Verification | 21     | 0                                   | 0                                                |
 | **Total**       | **21** | **18**                              | **5**                                            |
 
-> **Note:** Phase 2 UI component tests (workspace, account, admin) are deferred to a follow-up plan. They require reading the actual component files to write accurate tests — each component has unique props, callbacks, and rendering patterns. This plan covers all Phase 1, Phase 2 server logic, and Phase 3 hooks/email.
+> **Deferred to follow-up plan:**
+>
+> - **Phase 2 UI component tests** (workspace, account, admin) — require reading actual component files; each has unique props, callbacks, and rendering patterns.
+> - **Phase 3.2 email template tests** — mock-as-string strategy defined in spec; deferred for same component-analysis reasons.
+> - **Phase 3.3 edge case additions** — malformed sessions, Stripe failures, deleted workspaces, double-submit. These build on top of the tests created here.
+>
+> This plan covers all Phase 1, Phase 2 server logic, and Phase 3 hooks.
