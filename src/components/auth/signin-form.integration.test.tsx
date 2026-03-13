@@ -18,7 +18,7 @@ vi.mock('@/auth/auth-client', () => ({
 }));
 
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@tanstack/react-router')>()),
+  ...(await importOriginal()),
   useNavigate: () => navigate,
   Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
     <a href={to}>{children}</a>

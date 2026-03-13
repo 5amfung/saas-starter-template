@@ -9,9 +9,6 @@ import {
   reactivateUserSubscription,
   resolveSubscriptionDetails,
 } from '@/billing/billing.server';
-
-// ── Helpers ────────────────────────────────────────────────────────────────
-
 import { mockDbChain } from '@/test/mocks/db';
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────
