@@ -43,8 +43,8 @@ jobs:
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
           prompt: '/code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
-          # Allow Claude to use git and gh CLI for reading changes and posting review comments.
-          claude_args: '--allowed-tools "Bash(git *)" "Bash(gh issue *)" "Bash(gh pr *)"'
+          # Allow Claude to use git/gh CLI and read-only tools for thorough code review.
+          claude_args: '--allowed-tools "Bash(git *)" "Bash(gh issue *)" "Bash(gh pr *)" "Read" "Glob" "Grep"'
 
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
