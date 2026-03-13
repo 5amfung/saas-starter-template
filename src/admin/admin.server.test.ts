@@ -1,5 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getDayBuckets, getLocalDayStartUtc } from './admin.server';
+import {
+  getDayBuckets,
+  getLocalDayStartUtc,
+  queryDashboardMetrics,
+  queryMauChartData,
+  querySignupChartData,
+} from './admin.server';
+
+const { dbSelectMock } = vi.hoisted(() => ({
+  dbSelectMock: vi.fn(),
+}));
 
 // Mock modules that import server-only dependencies.
 vi.mock('@tanstack/react-start/server', () => ({
@@ -19,10 +29,14 @@ vi.mock('@/auth/auth.server', () => ({
   auth: { api: {} },
 }));
 vi.mock('@/db', () => ({
-  db: {},
+  db: { select: dbSelectMock },
 }));
 vi.mock('@/db/schema', () => ({
-  user: {},
+  user: {
+    createdAt: 'createdAt',
+    emailVerified: 'emailVerified',
+    lastSignInAt: 'lastSignInAt',
+  },
 }));
 
 describe('getLocalDayStartUtc', () => {
@@ -98,5 +112,105 @@ describe('getDayBuckets', () => {
     // UTC-8: local time is 07:30 on Mar 12. Still Mar 12 locally.
     const buckets = getDayBuckets(1, 480);
     expect(buckets[0].label).toBe('2026-03-12');
+  });
+});
+
+describe('queryDashboardMetrics', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns metrics from DB query result', async () => {
+    const mockRow = {
+      totalUsers: 100,
+      verifiedUsers: 80,
+      unverifiedUsers: 20,
+      signupsToday: 5,
+      verifiedToday: 3,
+      unverifiedToday: 2,
+    };
+    const fromMock = vi.fn().mockResolvedValue([mockRow]);
+    dbSelectMock.mockReturnValue({ from: fromMock });
+
+    const result = await queryDashboardMetrics(0);
+    expect(result).toEqual(mockRow);
+  });
+});
+
+describe('querySignupChartData', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-13T12:00:00Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('returns chart data with verified/unverified counts per day', async () => {
+    const today = new Date('2026-03-13T10:00:00Z');
+    const mockRows = [
+      { createdAt: today, emailVerified: true },
+      { createdAt: today, emailVerified: false },
+    ];
+    const whereMock = vi.fn().mockResolvedValue(mockRows);
+    const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+    dbSelectMock.mockReturnValue({ from: fromMock });
+
+    const result = await querySignupChartData(7, 0);
+    expect(result).toHaveLength(7);
+    const todayBucket = result[result.length - 1];
+    expect(todayBucket.verified).toBe(1);
+    expect(todayBucket.unverified).toBe(1);
+  });
+
+  it('returns empty counts for days with no signups', async () => {
+    const whereMock = vi.fn().mockResolvedValue([]);
+    const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+    dbSelectMock.mockReturnValue({ from: fromMock });
+
+    const result = await querySignupChartData(7, 0);
+    expect(result).toHaveLength(7);
+    result.forEach((bucket) => {
+      expect(bucket.verified).toBe(0);
+      expect(bucket.unverified).toBe(0);
+    });
+  });
+});
+
+describe('queryMauChartData', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-13T12:00:00Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('counts MAU using 30-day sliding window', async () => {
+    const recentSignIn = new Date('2026-03-12T10:00:00Z');
+    const mockRows = [{ lastSignInAt: recentSignIn }];
+    const whereMock = vi.fn().mockResolvedValue(mockRows);
+    const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+    dbSelectMock.mockReturnValue({ from: fromMock });
+
+    const result = await queryMauChartData(7, 0);
+    expect(result).toHaveLength(7);
+    const todayBucket = result[result.length - 1];
+    expect(todayBucket.mau).toBeGreaterThanOrEqual(1);
+  });
+
+  it('returns zero MAU for days with no activity', async () => {
+    const whereMock = vi.fn().mockResolvedValue([]);
+    const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+    dbSelectMock.mockReturnValue({ from: fromMock });
+
+    const result = await queryMauChartData(7, 0);
+    result.forEach((bucket) => {
+      expect(bucket.mau).toBe(0);
+    });
   });
 });
