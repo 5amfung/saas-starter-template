@@ -4,8 +4,8 @@ import { getRequestHeaders } from '@tanstack/react-start/server';
 import { auth } from '@/auth/auth.server';
 import { ensureActiveWorkspaceForSession } from '@/workspace/workspace.server';
 
-export const authMiddleware = createMiddleware().server(async ({ next }) => {
-  const headers = getRequestHeaders();
+/** Validates that the request has an authenticated, email-verified session and an active workspace. */
+export async function validateAuthSession(headers: Headers) {
   const session = await auth.api.getSession({ headers });
   if (!session || !session.user.emailVerified) {
     throw redirect({ to: '/signin' });
@@ -14,14 +14,25 @@ export const authMiddleware = createMiddleware().server(async ({ next }) => {
     user: { id: session.user.id },
     session: session.session,
   });
+  return session;
+}
+
+/** Validates that the request is from a guest (no verified session). Redirects authenticated users. */
+export async function validateGuestSession(headers: Headers) {
+  const session = await auth.api.getSession({ headers });
+  if (session?.user.emailVerified) {
+    throw redirect({ to: '/ws' });
+  }
+}
+
+export const authMiddleware = createMiddleware().server(async ({ next }) => {
+  const headers = getRequestHeaders();
+  await validateAuthSession(headers);
   return await next();
 });
 
 export const guestMiddleware = createMiddleware().server(async ({ next }) => {
   const headers = getRequestHeaders();
-  const session = await auth.api.getSession({ headers });
-  if (session?.user.emailVerified) {
-    throw redirect({ to: '/ws' });
-  }
+  await validateGuestSession(headers);
   return await next();
 });
