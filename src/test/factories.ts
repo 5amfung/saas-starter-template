@@ -76,9 +76,10 @@ export function createMockSessionResponse(
   userOverrides: Partial<MockUser> = {},
   sessionOverrides: Partial<MockSession> = {},
 ): MockSessionResponse {
+  const user = createMockUser(userOverrides);
   return {
-    user: createMockUser(userOverrides),
-    session: createMockSession(sessionOverrides),
+    user,
+    session: createMockSession({ userId: user.id, ...sessionOverrides }),
   };
 }
 
