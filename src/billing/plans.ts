@@ -111,7 +111,7 @@ export function getFreePlan(): Plan {
  * Returns the plan limits for a given plan ID.
  * Falls back to the free plan limits if the plan ID is unknown.
  */
-export function getPlanLimitsForPlanId(planId: string): PlanLimits {
+export function getPlanLimitsForPlanId(planId: PlanId): PlanLimits {
   const plan = PLANS.find((p) => p.id === planId);
   return plan?.limits ?? getFreePlan().limits;
 }
