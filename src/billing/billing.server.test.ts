@@ -199,6 +199,7 @@ describe('billing.server', () => {
         status: 'active',
         periodEnd,
         cancelAtPeriodEnd: false,
+        cancelAt: null,
       });
     });
   });
@@ -317,8 +318,18 @@ describe('billing.server', () => {
   describe('reactivateUserSubscription', () => {
     it('restores highest-tier active subscription', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([
-        { id: 'sub_starter', plan: 'starter', status: 'active' },
-        { id: 'sub_pro', plan: 'pro', status: 'active' },
+        {
+          id: 'rec_starter',
+          stripeSubscriptionId: 'sub_starter',
+          plan: 'starter',
+          status: 'active',
+        },
+        {
+          id: 'rec_pro',
+          stripeSubscriptionId: 'sub_pro',
+          plan: 'pro',
+          status: 'active',
+        },
       ]);
       restoreSubscriptionMock.mockResolvedValue({});
 

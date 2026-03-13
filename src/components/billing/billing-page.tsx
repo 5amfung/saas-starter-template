@@ -78,16 +78,22 @@ export function BillingPage() {
   const { plan: currentPlan, subscription } = billingQuery.data;
   const upgradePlan = getUpgradePlan(currentPlan);
 
-  const cancelAtPeriodEnd = subscription?.cancelAtPeriodEnd ?? false;
+  // Stripe Flexible Billing uses cancelAt instead of cancelAtPeriodEnd.
+  // Check both to match Better Auth's isPendingCancel logic.
+  const isPendingCancel =
+    (subscription?.cancelAtPeriodEnd ?? false) || !!subscription?.cancelAt;
   const periodEnd = subscription?.periodEnd
     ? new Date(subscription.periodEnd)
     : null;
+  const effectiveCancelDate =
+    periodEnd ??
+    (subscription?.cancelAt ? new Date(subscription.cancelAt) : null);
 
   return (
     <div className={PAGE_LAYOUT_CLASS}>
-      {cancelAtPeriodEnd && periodEnd && (
+      {isPendingCancel && effectiveCancelDate && (
         <BillingDowngradeBanner
-          periodEnd={periodEnd}
+          periodEnd={effectiveCancelDate}
           onReactivate={() => reactivateMutation.mutate()}
           isReactivating={reactivateMutation.isPending}
         />

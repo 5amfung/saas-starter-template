@@ -1,4 +1,4 @@
-import { IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle, IconLoader2 } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 
 interface BillingDowngradeBannerProps {
@@ -34,7 +34,8 @@ export function BillingDowngradeBanner({
         disabled={isReactivating}
         className="border-amber-300 dark:border-amber-700 shrink-0"
       >
-        {isReactivating ? 'Canceling...' : 'Keep subscription'}
+        {isReactivating && <IconLoader2 className="size-4 animate-spin" />}
+        Keep subscription
       </Button>
     </div>
   );

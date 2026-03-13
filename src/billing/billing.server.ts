@@ -238,6 +238,7 @@ export async function getUserSubscriptionDetails(
   status: string;
   periodEnd: Date | null;
   cancelAtPeriodEnd: boolean;
+  cancelAt: Date | null;
 } | null> {
   const rows = await db
     .select({
@@ -245,6 +246,7 @@ export async function getUserSubscriptionDetails(
       status: subscriptionTable.status,
       periodEnd: subscriptionTable.periodEnd,
       cancelAtPeriodEnd: subscriptionTable.cancelAtPeriodEnd,
+      cancelAt: subscriptionTable.cancelAt,
     })
     .from(subscriptionTable)
     .where(eq(subscriptionTable.referenceId, userId));
@@ -260,6 +262,7 @@ export async function getUserSubscriptionDetails(
     status: active.status,
     periodEnd: active.periodEnd ?? null,
     cancelAtPeriodEnd: active.cancelAtPeriodEnd ?? false,
+    cancelAt: active.cancelAt ?? null,
   };
 }
 
@@ -351,13 +354,13 @@ export async function reactivateUserSubscription(
 
   const bestPlanId = resolveUserPlanId(active);
   const target = active.find((s) => s.plan === bestPlanId);
-  if (!target?.id) {
+  if (!target?.stripeSubscriptionId) {
     throw new Error('Could not find subscription to restore.');
   }
 
   await auth.api.restoreSubscription({
     headers,
-    body: { subscriptionId: target.id },
+    body: { subscriptionId: target.stripeSubscriptionId },
   });
 
   return { success: true };
