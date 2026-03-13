@@ -83,6 +83,44 @@ export function createMockSessionResponse(
   };
 }
 
+interface MockMemberRow {
+  id: string;
+  userId: string;
+  email: string;
+  role: string;
+}
+
+export function createMockMemberRow(
+  overrides: Partial<MockMemberRow> = {},
+): MockMemberRow {
+  return {
+    id: 'member-1',
+    userId: 'user-1',
+    email: 'member@example.com',
+    role: 'member',
+    ...overrides,
+  };
+}
+
+interface MockInvitationRow {
+  id: string;
+  email: string;
+  role: string;
+  invitedAt: string;
+}
+
+export function createMockInvitationRow(
+  overrides: Partial<MockInvitationRow> = {},
+): MockInvitationRow {
+  return {
+    id: 'invitation-1',
+    email: 'invited@example.com',
+    role: 'member',
+    invitedAt: '2025-03-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
 export function createMockWorkspace(
   overrides: Partial<MockWorkspace> = {},
 ): MockWorkspace {
