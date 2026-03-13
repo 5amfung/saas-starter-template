@@ -85,10 +85,11 @@ Tests for extracted `validateAuthSession()`:
 
 Tests for extracted `validateGuestSession()`:
 
-| Test case            | Expected behavior        |
-| -------------------- | ------------------------ |
-| No session           | Returns without throwing |
-| Valid session exists | Throws redirect to `/ws` |
+| Test case                           | Expected behavior        |
+| ----------------------------------- | ------------------------ |
+| No session                          | Returns without throwing |
+| Session with `emailVerified: false` | Returns without throwing |
+| Session with `emailVerified: true`  | Throws redirect to `/ws` |
 
 #### `src/middleware/admin.test.ts`
 
@@ -176,12 +177,12 @@ Tests for extracted `validateAdminSession()`:
 
 ### 2.4 Server Logic Tests
 
-| Module                             | Test file                                                | Key test cases                                                                                                                                                                                                                                                                                                                                                   |
-| ---------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Admin analytics server logic       | `src/admin/admin.server.test.ts` (extend existing)       | Add tests for `queryDashboardMetrics`, `querySignupChartData`, `queryMauChartData` — mock DB queries, verify timezone-aware bucketing, test empty result sets |
-| Notification preferences server    | `src/account/notification-preferences.server.test.ts`    | `getNotificationPreferencesForUser` returns preferences with defaults; `upsertNotificationPreferencesForUser` creates/updates correctly; handles missing user |
-| Notification preferences schema    | `src/account/notification-preferences.schemas.test.ts`   | Valid input passes; invalid fields rejected                                                                                                                                                                                                                                                                                                                      |
-| Email sending                      | `src/email/resend.server.test.ts`                        | Sends email via Resend SDK; handles API errors; validates required env vars (RESEND_API_KEY, RESEND_FROM_EMAIL); prefixes subject in non-production. **Note:** Module uses a singleton `resendClient` and reads env vars at module load time. Tests must use `vi.resetModules()` between tests that need different env states to avoid cross-test contamination. |
+| Module                          | Test file                                              | Key test cases                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Admin analytics server logic    | `src/admin/admin.server.test.ts` (extend existing)     | Add tests for `queryDashboardMetrics`, `querySignupChartData`, `queryMauChartData` — mock DB queries, verify timezone-aware bucketing, test empty result sets                                                                                                                                                                                                                                                                                                                             |
+| Notification preferences server | `src/account/notification-preferences.server.test.ts`  | `getNotificationPreferencesForUser` returns preferences with defaults; `upsertNotificationPreferencesForUser` creates/updates correctly; handles missing user                                                                                                                                                                                                                                                                                                                             |
+| Notification preferences schema | `src/account/notification-preferences.schemas.test.ts` | Valid input passes; invalid fields rejected                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| Email sending                   | `src/email/resend.server.test.ts`                      | Sends email via Resend SDK; handles API errors; validates required env vars (RESEND_API_KEY, RESEND_FROM_EMAIL); prefixes subject in non-production. **Note:** Module uses a singleton `resendClient` and reads env vars at module load time. Tests must use `vi.resetModules()` then dynamically re-import the module (e.g., `const { sendEmail } = await import('@/email/resend.server')`) to pick up new env var values, since static imports retain the stale module-level constants. |
 
 ---
 
