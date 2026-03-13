@@ -135,6 +135,13 @@ export const auth = betterAuth({
       stripeClient,
       stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
       createCustomerOnSignUp: true,
+      onCustomerCreate: async ({ stripeCustomer, user }) => {
+        logger(
+          'info',
+          `Strip customer ${stripeCustomer.id} created for user ${user.id} on signup`,
+        );
+        return Promise.resolve();
+      },
       getCheckoutSessionParams: () => ({
         params: {
           automatic_tax: { enabled: true },
