@@ -18,7 +18,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "dev:email": "bunx react-email dev --dir src/components/email --port 3001",
+    "dev:email": "pnpx react-email dev --dir src/components/email --port 3001",
     "dev:stripe-webhook": "stripe listen --forward-to localhost:3000/api/auth/stripe/webhook"
   },
   "dependencies": {
