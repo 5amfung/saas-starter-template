@@ -76,11 +76,56 @@ export async function getUserPlanContext(
 }
 
 /**
+ * Extracts subscription details from an in-memory subscription list.
+ * Pure function — no DB or API calls. Used by getBillingData to avoid
+ * a redundant round trip after listActiveSubscriptions already fetched
+ * the same data.
+ */
+export function resolveSubscriptionDetails(
+  subscriptions: ReadonlyArray<{
+    plan: string;
+    status: string;
+    periodEnd?: Date | null;
+    cancelAtPeriodEnd?: boolean | null;
+    cancelAt?: Date | null;
+  }>,
+  planId: PlanId,
+): {
+  status: string;
+  periodEnd: Date | null;
+  cancelAtPeriodEnd: boolean;
+  cancelAt: Date | null;
+} | null {
+  const active = subscriptions.find(
+    (s) =>
+      (s.status === 'active' || s.status === 'trialing') && s.plan === planId,
+  );
+  if (!active) return null;
+
+  return {
+    status: active.status,
+    periodEnd: active.periodEnd ?? null,
+    cancelAtPeriodEnd: active.cancelAtPeriodEnd ?? false,
+    cancelAt: active.cancelAt ?? null,
+  };
+}
+
+/**
  * Returns the current user's billing state for the billing page.
+ * Fetches subscriptions once and derives both plan context and
+ * subscription details from the same data.
  */
 export async function getBillingData(headers: Headers, userId: string) {
-  const { planId, plan } = await getUserPlanContext(headers, userId);
-  const subscription = await getUserSubscriptionDetails(userId, planId);
+  const subscriptions = await auth.api.listActiveSubscriptions({
+    headers,
+    query: { referenceId: userId },
+  });
+  const subArray = Array.from(subscriptions);
+
+  const planId = resolveUserPlanId(subArray);
+  const plan = getPlanById(planId) ?? getFreePlan();
+  const subscription = resolveSubscriptionDetails(subArray, planId);
+
   return { planId, plan, subscription };
 }
 
@@ -225,45 +270,6 @@ export async function countWorkspaceMembers(
     .from(memberTable)
     .where(eq(memberTable.organizationId, workspaceId));
   return result.count;
-}
-
-/**
- * Returns the active subscription details for a user, or null if on the free tier.
- * Picks the subscription matching the user's highest-tier plan.
- */
-export async function getUserSubscriptionDetails(
-  userId: string,
-  planId: PlanId,
-): Promise<{
-  status: string;
-  periodEnd: Date | null;
-  cancelAtPeriodEnd: boolean;
-  cancelAt: Date | null;
-} | null> {
-  const rows = await db
-    .select({
-      plan: subscriptionTable.plan,
-      status: subscriptionTable.status,
-      periodEnd: subscriptionTable.periodEnd,
-      cancelAtPeriodEnd: subscriptionTable.cancelAtPeriodEnd,
-      cancelAt: subscriptionTable.cancelAt,
-    })
-    .from(subscriptionTable)
-    .where(eq(subscriptionTable.referenceId, userId));
-
-  // Find the active/trialing subscription for the resolved plan.
-  const active = rows.find(
-    (r) =>
-      (r.status === 'active' || r.status === 'trialing') && r.plan === planId,
-  );
-  if (!active || !active.status) return null;
-
-  return {
-    status: active.status,
-    periodEnd: active.periodEnd ?? null,
-    cancelAtPeriodEnd: active.cancelAtPeriodEnd ?? false,
-    cancelAt: active.cancelAt ?? null,
-  };
 }
 
 /**

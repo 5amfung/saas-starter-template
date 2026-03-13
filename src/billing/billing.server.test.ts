@@ -7,6 +7,7 @@ import {
   getInvoicesForUser,
   getUserPlanContext,
   reactivateUserSubscription,
+  resolveSubscriptionDetails,
 } from '@/billing/billing.server';
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────
@@ -162,32 +163,82 @@ describe('billing.server', () => {
     });
   });
 
+  // ── resolveSubscriptionDetails ────────────────────────────────────────
+
+  describe('resolveSubscriptionDetails', () => {
+    it('returns null when no matching subscription exists', () => {
+      const result = resolveSubscriptionDetails([], 'starter');
+      expect(result).toBeNull();
+    });
+
+    it('returns null when subscription plan does not match', () => {
+      const result = resolveSubscriptionDetails(
+        [{ plan: 'pro', status: 'active' }],
+        'starter',
+      );
+      expect(result).toBeNull();
+    });
+
+    it('extracts details from matching active subscription', () => {
+      const periodEnd = new Date('2026-04-12');
+      const result = resolveSubscriptionDetails(
+        [
+          {
+            plan: 'pro',
+            status: 'active',
+            periodEnd,
+            cancelAtPeriodEnd: false,
+            cancelAt: null,
+          },
+        ],
+        'pro',
+      );
+      expect(result).toEqual({
+        status: 'active',
+        periodEnd,
+        cancelAtPeriodEnd: false,
+        cancelAt: null,
+      });
+    });
+
+    it('defaults missing optional fields to null/false', () => {
+      const result = resolveSubscriptionDetails(
+        [{ plan: 'pro', status: 'trialing' }],
+        'pro',
+      );
+      expect(result).toEqual({
+        status: 'trialing',
+        periodEnd: null,
+        cancelAtPeriodEnd: false,
+        cancelAt: null,
+      });
+    });
+  });
+
   // ── getBillingData ─────────────────────────────────────────────────────
 
   describe('getBillingData', () => {
     it('returns plan and null subscription for free user', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([]);
-      // getUserSubscriptionDetails does a DB query.
-      mockDbChain([]);
 
       const data = await getBillingData(TEST_HEADERS, TEST_USER_ID);
 
       expect(data.planId).toBe('starter');
       expect(data.plan.id).toBe('starter');
       expect(data.subscription).toBeNull();
+      // Verify no DB call was made — subscription details derived from API response.
+      expect(dbSelectMock).not.toHaveBeenCalled();
     });
 
     it('returns plan and subscription for pro user', async () => {
-      listActiveSubscriptionsMock.mockResolvedValue([
-        { plan: 'pro', status: 'active' },
-      ]);
       const periodEnd = new Date('2026-04-12');
-      mockDbChain([
+      listActiveSubscriptionsMock.mockResolvedValue([
         {
           plan: 'pro',
           status: 'active',
           periodEnd,
           cancelAtPeriodEnd: false,
+          cancelAt: null,
         },
       ]);
 
@@ -201,6 +252,8 @@ describe('billing.server', () => {
         cancelAtPeriodEnd: false,
         cancelAt: null,
       });
+      // Single API call, no DB round trip.
+      expect(dbSelectMock).not.toHaveBeenCalled();
     });
   });
 
