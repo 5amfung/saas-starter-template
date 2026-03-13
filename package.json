@@ -60,7 +60,7 @@
   "devDependencies": {
     "@react-email/preview-server": "5.2.8",
     "@tanstack/devtools-vite": "^0.5.1",
-    "@tanstack/eslint-config": "^0.3.4",
+    "@tanstack/eslint-config": "^0.4.0",
     "@tanstack/eslint-plugin-query": "^5.91.4",
     "@tanstack/eslint-plugin-router": "^1.155.0",
     "@tanstack/react-devtools": "^0.9.5",
