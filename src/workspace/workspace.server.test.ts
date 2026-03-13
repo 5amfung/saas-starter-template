@@ -142,6 +142,7 @@ describe('workspace.server', () => {
   });
 
   it('throws when user has no workspaces', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     listOrganizationsMock.mockResolvedValueOnce([]);
 
     await expect(
@@ -150,9 +151,12 @@ describe('workspace.server', () => {
         session: { activeOrganizationId: null },
       }),
     ).rejects.toBeInstanceOf(APIError);
+
+    consoleSpy.mockRestore();
   });
 
   it('rejects non-member workspace access', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     listOrganizationsMock.mockResolvedValueOnce([
       {
         id: 'org_personal',
@@ -165,5 +169,7 @@ describe('workspace.server', () => {
     await expect(
       ensureWorkspaceMembership(new Headers(), 'org_missing'),
     ).rejects.toBeInstanceOf(APIError);
+
+    consoleSpy.mockRestore();
   });
 });

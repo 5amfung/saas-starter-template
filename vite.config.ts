@@ -17,8 +17,8 @@ const config = defineConfig({
     tailwindcss(),
     tanstackStart({
       router: {
-        semicolons: true
-      }
+        semicolons: true,
+      },
     }),
     viteReact(),
   ],

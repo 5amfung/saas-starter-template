@@ -6,6 +6,7 @@ import {
   lastLoginMethodClient,
   organizationClient,
 } from 'better-auth/client/plugins';
+import { stripeClient } from '@better-auth/stripe/client';
 import type { auth } from '@/auth/auth.server';
 
 export const authClient = createAuthClient({
@@ -15,6 +16,9 @@ export const authClient = createAuthClient({
     adminClient(),
     organizationClient({
       schema: inferOrgAdditionalFields<typeof auth>(),
+    }),
+    stripeClient({
+      subscription: true,
     }),
   ],
 });

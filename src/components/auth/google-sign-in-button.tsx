@@ -14,7 +14,7 @@ export function GoogleSignInButton() {
     const { error: signInError } = await authClient.signIn.social({
       provider: 'google',
       callbackURL: '/ws',
-      errorCallbackURL: '/signin?error=oauth_error',
+      errorCallbackURL: '/signin',
     });
     if (signInError) {
       setError(signInError.message ?? 'Something went wrong.');
