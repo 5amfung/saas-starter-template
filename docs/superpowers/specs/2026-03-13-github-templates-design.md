@@ -91,6 +91,7 @@ Sections:
    - Documentation
    - Refactor/cleanup
 3. **Checklist** — reminders:
+   - Ran `pnpm run format`
    - Ran `pnpm check` (typecheck + lint)
    - Ran `pnpm test`
    - Updated documentation if needed
@@ -103,8 +104,8 @@ File: `.github/CONTRIBUTING.md`
 
 Sections:
 
-1. **Getting started** — clone, `pnpm install`, copy `.env.example` to `.env`, configure environment variables, `pnpm run db:push` (for dev) or `pnpm run db:migrate` (for production), `pnpm dev`. Include a note distinguishing required env vars (DATABASE_URL, BETTER_AUTH_SECRET, BETTER_AUTH_URL) from optional ones (Google OAuth, Resend, Stripe) — omitting optional vars disables those features but does not prevent the app from starting.
-2. **Development workflow** — branch from `main`, make changes, run `pnpm check` and `pnpm test` before submitting a PR
+1. **Getting started** — clone, `pnpm install`, copy `.env.example` to `.env`, configure environment variables, `pnpm run db:push` (for dev) or `pnpm run db:migrate` (for production), `pnpm dev`. Include a note distinguishing required env vars (DATABASE_URL, BETTER_AUTH_SECRET, BETTER_AUTH_URL) from optional ones (Google OAuth, Resend, Stripe) — omitting optional vars disables those features but does not prevent the app from starting. Note: `.env.example` must be committed to the repo root with all recognized keys and placeholder values (no real secrets).
+2. **Development workflow** — branch from `main`, make changes, run `pnpm run format`, `pnpm check`, and `pnpm test` before submitting a PR
 3. **Project structure** — brief overview with pointer to CLAUDE.md for full details (avoid duplicating structure docs)
 4. **Conventions** — highlight key rules with link to CLAUDE.md for the complete list:
    - pnpm only (no npm/yarn/bun)
