@@ -233,8 +233,9 @@ export const auth = betterAuth({
           validateWorkspaceFields(organization, 'create');
 
           // Personal workspaces are created during sign-up (before a session
-          // exists), so auth.api calls would fail with 401. They also don't
-          // count toward the workspace limit — every user gets exactly one.
+          // exists), so auth.api calls would fail with 401. Skip the limit
+          // check here — the personal workspace still counts toward the
+          // user's maxWorkspaces quota.
           if (isPersonalWorkspace(organization)) return;
 
           // Enforce workspace limit based on user's plan.
