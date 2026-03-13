@@ -14,13 +14,15 @@
     "typecheck": "tsc --noEmit",
     "check": "tsc --noEmit && eslint",
     "format": "prettier --write ./src",
+    "lint-staged": "lint-staged",
     "gen-auth-schema": "pnpx @better-auth/cli generate --config ./src/auth/auth.server.ts --output ./src/db/auth.schema.ts --yes && node --experimental-strip-types scripts/patch-auth-schema.ts && eslint --fix ./src/db/auth.schema.ts && prettier --write ./src/db/auth.schema.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "dev:email": "pnpx react-email dev --dir src/components/email --port 3001",
-    "dev:stripe-webhook": "stripe listen --forward-to localhost:3000/api/auth/stripe/webhook"
+    "dev:stripe-webhook": "stripe listen --forward-to localhost:3000/api/auth/stripe/webhook",
+    "prepare": "husky || echo 'Skip installing husky'"
   },
   "dependencies": {
     "@base-ui/react": "^1.1.0",
@@ -81,7 +83,9 @@
     "dotenv": "^17.2.4",
     "drizzle-kit": "^0.31.9",
     "eslint-plugin-import-x": "^4.16.2",
+    "husky": "^9.1.7",
     "jsdom": "^28.0.0",
+    "lint-staged": "^16.3.3",
     "prettier": "^3.8.1",
     "react-email": "^5.2.8",
     "typescript": "^5.9.3",
@@ -89,6 +93,13 @@
     "vite-tsconfig-paths": "^6.1.0",
     "vitest": "^4.0.18",
     "web-vitals": "^5.1.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,mjs,cjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md,mdx}": "prettier --write"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -98,10 +109,6 @@
       "prisma",
       "sharp",
       "unrs-resolver"
-    ],
-    "ignoredBuiltDependencies": [
-      "@prisma/engines",
-      "prisma"
     ]
   }
 }
