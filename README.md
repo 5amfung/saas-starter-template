@@ -185,4 +185,4 @@ Contributions are welcome. Please open an issue to discuss changes before submit
 
 ## License
 
-MIT
+[MIT](LICENSE)
