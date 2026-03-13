@@ -107,7 +107,7 @@ A production-ready SaaS foundation with authentication, multi-tenant workspaces,
 
    ```bash
    git clone <repo-url>
-   cd sass-starter-template
+   cd saas-starter-template
    ```
 
 2. **Install dependencies**
