@@ -8,7 +8,7 @@
 //   1. Add its ID to the PlanId union.
 //   2. Add an entry to the PLANS array.
 //   3. Create the corresponding product + prices in Stripe Dashboard.
-//   4. Set the stripe price IDs in the pricing field.
+//   4. Set the stripe price IDs in stripe plugin in auth.server.ts.
 //   5. Run the app — limit enforcement and UI pick up the new plan automatically.
 //
 // To add a new limit dimension:
@@ -27,8 +27,6 @@ export interface PlanLimits {
 }
 
 export interface PlanPricing {
-  /** Stripe price ID (price_xxx). */
-  stripePriceId: string | null;
   /** Price in cents. */
   price: number;
 }
@@ -76,14 +74,8 @@ export const PLANS: ReadonlyArray<Plan> = [
     name: 'Pro',
     tier: 1,
     pricing: {
-      monthly: {
-        stripePriceId: process.env.STRIPE_PRO_MONTHLY_PRICE_ID ?? null,
-        price: 49_00,
-      },
-      annual: {
-        stripePriceId: process.env.STRIPE_PRO_ANNUAL_PRICE_ID ?? null,
-        price: 490_00,
-      },
+      monthly: { price: 49_00 },
+      annual: { price: 490_00 },
     },
     limits: PRO_LIMITS,
     features: [
