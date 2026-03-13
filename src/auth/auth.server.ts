@@ -157,6 +157,13 @@ export const auth = betterAuth({
             referenceId: subscription.referenceId,
             status: subscription.status,
             stripeSubscriptionId: subscription.stripeSubscriptionId,
+            periodStart: subscription.periodStart,
+            periodEnd: subscription.periodEnd,
+            billingInterval: subscription.billingInterval,
+            cancelAt: subscription.cancelAt,
+            canceledAt: subscription.canceledAt,
+            cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+            endedAt: subscription.endedAt,
           });
           await Promise.resolve();
         },
@@ -168,6 +175,13 @@ export const auth = betterAuth({
             referenceId: subscription.referenceId,
             status: subscription.status,
             stripeSubscriptionId: subscription.stripeSubscriptionId,
+            periodStart: subscription.periodStart,
+            periodEnd: subscription.periodEnd,
+            billingInterval: subscription.billingInterval,
+            cancelAt: subscription.cancelAt,
+            canceledAt: subscription.canceledAt,
+            cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+            endedAt: subscription.endedAt,
           });
           await Promise.resolve();
         },
@@ -177,7 +191,14 @@ export const auth = betterAuth({
             plan: subscription.plan,
             referenceId: subscription.referenceId,
             status: subscription.status,
+            stripeSubscriptionId: subscription.stripeSubscriptionId,
+            periodStart: subscription.periodStart,
             periodEnd: subscription.periodEnd,
+            billingInterval: subscription.billingInterval,
+            cancelAt: subscription.cancelAt,
+            canceledAt: subscription.canceledAt,
+            cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+            endedAt: subscription.endedAt,
           });
           await Promise.resolve();
         },
@@ -187,6 +208,13 @@ export const auth = betterAuth({
             plan: subscription.plan,
             referenceId: subscription.referenceId,
             status: subscription.status,
+            periodStart: subscription.periodStart,
+            periodEnd: subscription.periodEnd,
+            billingInterval: subscription.billingInterval,
+            cancelAt: subscription.cancelAt,
+            canceledAt: subscription.canceledAt,
+            cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+            endedAt: subscription.endedAt,
             reason: cancellationDetails?.reason,
             feedback: cancellationDetails?.feedback,
           });
@@ -197,7 +225,15 @@ export const auth = betterAuth({
             subscriptionId: subscription.id,
             plan: subscription.plan,
             referenceId: subscription.referenceId,
+            status: subscription.status,
             stripeSubscriptionId: subscription.stripeSubscriptionId,
+            periodStart: subscription.periodStart,
+            periodEnd: subscription.periodEnd,
+            billingInterval: subscription.billingInterval,
+            cancelAt: subscription.cancelAt,
+            canceledAt: subscription.canceledAt,
+            cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+            endedAt: subscription.endedAt,
           });
           await Promise.resolve();
         },
