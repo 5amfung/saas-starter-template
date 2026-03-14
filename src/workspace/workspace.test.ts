@@ -98,3 +98,64 @@ describe('buildPersonalWorkspaceSlug', () => {
     expect(buildPersonalWorkspaceSlug('XyZ')).toBe('personal-xyz');
   });
 });
+
+describe('edge cases', () => {
+  it('generates slug from workspace name with special characters', () => {
+    const slug = buildWorkspaceSlug('My Workspace! @#$%');
+    expect(slug).toMatch(/^[a-z0-9-]+$/);
+  });
+
+  it('buildWorkspaceSlugBase strips all non-alphanumeric characters', () => {
+    expect(buildWorkspaceSlugBase('!!!@@@###')).toBe('workspace');
+  });
+
+  it('buildWorkspaceSlugBase truncates long names', () => {
+    const longName = 'a'.repeat(100);
+    const slug = buildWorkspaceSlugBase(longName);
+    expect(slug.length).toBeLessThanOrEqual(40);
+  });
+
+  it('buildWorkspaceSlugBase collapses multiple hyphens', () => {
+    expect(buildWorkspaceSlugBase('hello---world')).toBe('hello-world');
+  });
+
+  it('buildWorkspaceSlug produces unique slugs for the same name', () => {
+    const slug1 = buildWorkspaceSlug('Test');
+    const slug2 = buildWorkspaceSlug('Test');
+    expect(slug1).not.toBe(slug2);
+  });
+
+  it('isPersonalWorkspaceOwnedByUser handles null personalOwnerUserId', () => {
+    const result = isPersonalWorkspaceOwnedByUser(
+      {
+        workspaceType: 'personal',
+        personalOwnerUserId: null,
+      } as unknown as Record<string, unknown>,
+      'user-1',
+    );
+    expect(result).toBe(false);
+  });
+
+  it('isPersonalWorkspaceOwnedByUser handles undefined workspace fields', () => {
+    expect(isPersonalWorkspaceOwnedByUser({}, 'user-1')).toBe(false);
+    expect(isPersonalWorkspaceOwnedByUser(undefined, 'user-1')).toBe(false);
+  });
+
+  it('pickDefaultWorkspace skips personal workspace owned by different user', () => {
+    const workspaces = [
+      { id: 'ws_1', workspaceType: 'personal', personalOwnerUserId: 'other' },
+      { id: 'ws_2', workspaceType: 'workspace' },
+    ];
+    const result = pickDefaultWorkspace(workspaces, 'user-1');
+    expect(result?.id).toBe('ws_1');
+  });
+
+  it('pickDefaultWorkspace returns single workspace when only one exists', () => {
+    const workspaces = [{ id: 'ws_only', workspaceType: 'workspace' }];
+    expect(pickDefaultWorkspace(workspaces, 'user-1')?.id).toBe('ws_only');
+  });
+
+  it('buildPersonalWorkspaceSlug handles empty user ID', () => {
+    expect(buildPersonalWorkspaceSlug('')).toBe('personal-');
+  });
+});
