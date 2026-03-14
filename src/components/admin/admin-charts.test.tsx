@@ -3,15 +3,15 @@ import { render, screen } from '@testing-library/react';
 import { AdminMauChart } from './admin-mau-chart';
 import { AdminSignupChart } from './admin-signup-chart';
 
-// Mock Recharts — components don't render in jsdom.
+// Mock Recharts — components don't render in jsdom. SVG elements like
+// <defs>, <linearGradient>, and <stop> are unrecognized by jsdom, so we
+// discard children to avoid console warnings.
 vi.mock('recharts', () => ({
   ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="responsive-container">{children}</div>
   ),
-  AreaChart: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="area-chart">{children}</div>
-  ),
-  Area: () => <div data-testid="area" />,
+  AreaChart: () => <div data-testid="area-chart" />,
+  Area: () => null,
   CartesianGrid: () => null,
   XAxis: () => null,
   YAxis: () => null,
