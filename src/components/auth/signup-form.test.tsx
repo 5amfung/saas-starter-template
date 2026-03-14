@@ -70,6 +70,22 @@ describe('SignupForm', () => {
     });
   });
 
+  it('validates password at exact minimum length boundary (8 chars)', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<SignupForm />);
+
+    const passwordInput = screen.getByLabelText(/^password$/i);
+    await user.type(passwordInput, '12345678'); // Exactly 8 characters.
+    await user.tab();
+
+    // Should NOT show the validation error (the static hint text is always present).
+    await waitFor(() => {
+      expect(
+        screen.queryByText('Password must be at least 8 characters.'),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   it('calls authClient.signUp.email with correct params on valid submit', async () => {
     const user = userEvent.setup();
     signUpEmail.mockResolvedValue({ data: {}, error: null });

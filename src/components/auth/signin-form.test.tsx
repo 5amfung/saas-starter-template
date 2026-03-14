@@ -98,6 +98,40 @@ describe('SigninForm', () => {
     });
   });
 
+  it('shows generic error message on non-401/403 error', async () => {
+    signInEmail.mockResolvedValue({
+      data: null,
+      error: { status: 500, message: 'Something went wrong.' },
+    });
+
+    const user = userEvent.setup();
+    renderWithProviders(<SigninForm />);
+
+    await user.type(screen.getByLabelText(/email/i), 'test@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'password123');
+    await user.click(screen.getByRole('button', { name: /sign in$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
+    });
+  });
+
+  it('disables submit button while submitting', async () => {
+    // Make signIn hang to test loading state.
+    signInEmail.mockImplementation(() => new Promise(() => {}));
+
+    const user = userEvent.setup();
+    renderWithProviders(<SigninForm />);
+
+    await user.type(screen.getByLabelText(/email/i), 'test@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'password123');
+    await user.click(screen.getByRole('button', { name: /sign in$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /sign in$/i })).toBeDisabled();
+    });
+  });
+
   it('navigates to /verify on 403 (unverified email)', async () => {
     const user = userEvent.setup();
     signInEmail.mockResolvedValue({
