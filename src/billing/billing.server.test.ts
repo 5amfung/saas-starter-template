@@ -300,6 +300,48 @@ describe('billing.server', () => {
     });
   });
 
+  // ── checkUserPlanLimit - edge cases ──────────────────────────────────
+
+  describe('checkUserPlanLimit - edge cases', () => {
+    it('blocks at exactly max workspace limit for pro (boundary)', async () => {
+      listActiveSubscriptionsMock.mockResolvedValue([
+        { plan: 'pro', status: 'active' },
+      ]);
+      mockDbChain(dbSelectMock, [{ count: 5 }]);
+
+      const result = await checkUserPlanLimit(
+        TEST_HEADERS,
+        TEST_USER_ID,
+        'workspace',
+      );
+
+      expect(result.allowed).toBe(false);
+      expect(result.current).toBe(5);
+      expect(result.limit).toBe(5);
+      expect(result.planName).toBe('Pro');
+    });
+
+    it('falls back to starter limits for past_due subscription', async () => {
+      // past_due is not in the active statuses list, so resolveUserPlanId
+      // should ignore it and fall back to starter.
+      listActiveSubscriptionsMock.mockResolvedValue([
+        { plan: 'pro', status: 'past_due' },
+      ]);
+      mockDbChain(dbSelectMock, [{ count: 0 }]);
+
+      const result = await checkUserPlanLimit(
+        TEST_HEADERS,
+        TEST_USER_ID,
+        'workspace',
+      );
+
+      expect(result.allowed).toBe(true);
+      expect(result.current).toBe(0);
+      expect(result.limit).toBe(1);
+      expect(result.planName).toBe('Starter');
+    });
+  });
+
   // ── checkUserPlanLimit - member ────────────────────────────────────────
 
   describe('checkUserPlanLimit - member', () => {
