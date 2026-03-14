@@ -10,7 +10,7 @@ on:
   pull_request_review:
     types: [submitted]
   pull_request:
-    types: [opened, synchronize]
+    types: [opened]
 
 jobs:
   claude:
@@ -31,7 +31,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
         env:
-          HUSKY: 0  # Don't install hook in CI/CD
+          HUSKY: 0 # Don't install hook in CI/CD
         with:
           fetch-depth: 1
 
