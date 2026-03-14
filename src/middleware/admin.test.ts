@@ -48,6 +48,22 @@ describe('validateAdminSession', () => {
     );
   });
 
+  it('handles getSession throwing an error', async () => {
+    mockGetSession.mockRejectedValue(new Error('Auth service unavailable'));
+    await expect(validateAdminSession(headers)).rejects.toThrow(
+      'Auth service unavailable',
+    );
+  });
+
+  it('handles session with empty role string', async () => {
+    mockGetSession.mockResolvedValue(createMockSessionResponse({ role: '' }));
+    await expect(validateAdminSession(headers)).rejects.toEqual(
+      expect.objectContaining({
+        options: expect.objectContaining({ to: '/signin' }),
+      }),
+    );
+  });
+
   it('returns session for admin with verified email', async () => {
     const session = createMockSessionResponse({ role: 'admin' });
     mockGetSession.mockResolvedValue(session);

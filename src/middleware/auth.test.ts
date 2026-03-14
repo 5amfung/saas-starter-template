@@ -55,6 +55,18 @@ describe('validateAuthSession', () => {
     });
   });
 
+  it('handles malformed session object (missing user)', async () => {
+    mockGetSession.mockResolvedValue({ session: null, user: null });
+    await expect(validateAuthSession(headers)).rejects.toThrow();
+  });
+
+  it('handles getSession throwing an error', async () => {
+    mockGetSession.mockRejectedValue(new Error('Auth service unavailable'));
+    await expect(validateAuthSession(headers)).rejects.toThrow(
+      'Auth service unavailable',
+    );
+  });
+
   it('propagates errors from ensureActiveWorkspaceForSession', async () => {
     const session = createMockSessionResponse();
     mockGetSession.mockResolvedValue(session);
@@ -83,6 +95,13 @@ describe('validateGuestSession', () => {
       createMockSessionResponse({ emailVerified: false }),
     );
     await expect(validateGuestSession(headers)).resolves.toBeUndefined();
+  });
+
+  it('handles getSession throwing an error', async () => {
+    mockGetSession.mockRejectedValue(new Error('Auth service unavailable'));
+    await expect(validateGuestSession(headers)).rejects.toThrow(
+      'Auth service unavailable',
+    );
   });
 
   it('throws redirect to /ws when session has emailVerified true', async () => {
