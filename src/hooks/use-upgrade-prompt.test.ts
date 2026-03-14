@@ -74,6 +74,15 @@ describe('useUpgradePrompt', () => {
   });
 
   it('onUpgrade() fires mutation with correct planId and annual', async () => {
+    // Mock window.location to prevent jsdom "Not implemented: navigation
+    // to another Document" warning when onSuccess sets location.href.
+    const locationHrefSpy = vi
+      .spyOn(window, 'location', 'get')
+      .mockReturnValue({
+        ...window.location,
+        href: '',
+      } as Location);
+
     mockCreateCheckoutSession.mockResolvedValue({
       url: 'https://checkout.stripe.com/test',
     });
@@ -95,6 +104,8 @@ describe('useUpgradePrompt', () => {
         data: { planId: 'pro', annual: false },
       });
     });
+
+    locationHrefSpy.mockRestore();
   });
 
   it('onUpgrade() is no-op when upgradePlan is null', () => {
