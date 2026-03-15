@@ -17,7 +17,7 @@
 //   3. Add enforcement in the appropriate org hook (auth.server.ts).
 // ────────────────────────────────────────────────────────────────────────────
 
-export type PlanId = 'starter' | 'pro';
+export type PlanId = 'free' | 'starter' | 'pro';
 
 export interface PlanLimits {
   /** Maximum workspaces the user can own. -1 = unlimited. */
@@ -49,40 +49,53 @@ export interface Plan {
 /** Canonical plan ID for the free tier. */
 export const FREE_PLAN_ID: PlanId = 'starter';
 
-const STARTER_LIMITS: PlanLimits = {
+const FREE_PLAN_LIMITS: PlanLimits = {
   maxWorkspaces: 1,
   maxMembersPerWorkspace: 1,
 };
 
-const PRO_LIMITS: PlanLimits = {
+const STARTER_LIMITS: PlanLimits = {
   maxWorkspaces: 5,
   maxMembersPerWorkspace: 5,
 };
 
+const PRO_LIMITS: PlanLimits = {
+  maxWorkspaces: 25,
+  maxMembersPerWorkspace: 25,
+};
+
 export const PLANS: ReadonlyArray<Plan> = [
   {
-    id: 'starter',
-    name: 'Starter',
+    id: 'free',
+    name: 'Free',
     tier: 0,
     pricing: null,
-    limits: STARTER_LIMITS,
+    limits: FREE_PLAN_LIMITS,
     features: ['1 personal workspace', '1 member'],
     annualBonusFeatures: [],
   },
   {
-    id: 'pro',
-    name: 'Pro',
+    id: 'starter',
+    name: 'Starter',
     tier: 1,
     pricing: {
-      monthly: { price: 49_00 },
-      annual: { price: 490_00 },
+      monthly: { price: 5_00 },
+      annual: { price: 50_00 },
+    },
+    limits: STARTER_LIMITS,
+    features: ['5 personal workspace', '5 member'],
+    annualBonusFeatures: ['2 months free'],
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    tier: 2,
+    pricing: {
+      monthly: { price: 20_00 },
+      annual: { price: 200_00 },
     },
     limits: PRO_LIMITS,
-    features: [
-      'Up to 5 workspaces',
-      'Up to 5 members per workspace',
-      'Priority support',
-    ],
+    features: ['25 workspaces', '25 members per workspace'],
     annualBonusFeatures: ['2 months free'],
   },
 ] as const;
