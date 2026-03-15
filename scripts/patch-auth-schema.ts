@@ -6,14 +6,14 @@
  * Run automatically after gen-auth-schema (see package.json).
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const AUTH_SCHEMA_PATH = join(ROOT, "src/db/auth.schema.ts");
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const AUTH_SCHEMA_PATH = join(ROOT, 'src/db/auth.schema.ts');
 
-const EXPORT_PREFIX = "export const ";
+const EXPORT_PREFIX = 'export const ';
 
 /** Recommended indexes per table. CLI generates some tables with indexes; we add any missing. */
 const TABLE_INDEXES: Record<string, Array<string>> = {
@@ -23,18 +23,22 @@ const TABLE_INDEXES: Record<string, Array<string>> = {
     'index("user_banned_idx").on(table.banned)',
     'index("user_lastSignInAt_idx").on(table.lastSignInAt)',
   ],
-  session: [
-    'index("session_token_idx").on(table.token)',
+  session: ['index("session_token_idx").on(table.token)'],
+  subscription: [
+    'index("subscription_referenceId_idx").on(table.referenceId)',
+    'index("subscription_stripeCustomerId_idx").on(table.stripeCustomerId)',
+    'index("subscription_stripeSubscriptionId_idx").on(table.stripeSubscriptionId)',
   ],
 };
 
-const PG_CORE_IMPORT_REGEX = /import\s*\{([^}]+)\}\s*from\s*["']drizzle-orm\/pg-core["']/;
+const PG_CORE_IMPORT_REGEX =
+  /import\s*\{([^}]+)\}\s*from\s*["']drizzle-orm\/pg-core["']/;
 
 function findMatchingBrace(str: string, startPos: number): number {
   let depth = 0;
   for (let i = startPos; i < str.length; i += 1) {
-    if (str[i] === "{") depth += 1;
-    if (str[i] === "}") {
+    if (str[i] === '{') depth += 1;
+    if (str[i] === '}') {
       depth -= 1;
       if (depth === 0) return i;
     }
@@ -46,8 +50,8 @@ function findMatchingBrace(str: string, startPos: number): number {
 function findMatchingBracket(str: string, startPos: number): number {
   let depth = 0;
   for (let i = startPos; i < str.length; i += 1) {
-    if (str[i] === "[") depth += 1;
-    if (str[i] === "]") {
+    if (str[i] === '[') depth += 1;
+    if (str[i] === ']') {
       depth -= 1;
       if (depth === 0) return i;
     }
@@ -62,15 +66,13 @@ function indexIdFromLine(line: string): string | null {
 }
 
 function main(): void {
-  let content = readFileSync(AUTH_SCHEMA_PATH, "utf-8");
+  let content = readFileSync(AUTH_SCHEMA_PATH, 'utf-8');
 
   // Ensure `index` is in the pg-core import if we use it and it's missing.
   const match = content.match(PG_CORE_IMPORT_REGEX);
-  if (match && !match[1].includes("index")) {
-    content = content.replace(
-      PG_CORE_IMPORT_REGEX,
-      (full) =>
-        full.replace(match[1], match[1].replace(/(\s*)(\})/, "$1index,$2")),
+  if (match && !match[1].includes('index')) {
+    content = content.replace(PG_CORE_IMPORT_REGEX, (full) =>
+      full.replace(match[1], match[1].replace(/(\s*)(\})/, '$1index,$2')),
     );
   }
 
@@ -79,13 +81,13 @@ function main(): void {
     const exportIndex = content.indexOf(exportPattern);
     if (exportIndex === -1) continue;
 
-    const columnsStart = content.indexOf("{", exportIndex);
+    const columnsStart = content.indexOf('{', exportIndex);
     if (columnsStart === -1) continue;
 
     const columnsEnd = findMatchingBrace(content, columnsStart);
     if (columnsEnd === -1) continue;
 
-    const closingParen = content.indexOf(");", columnsEnd);
+    const closingParen = content.indexOf(');', columnsEnd);
     if (closingParen === -1) continue;
 
     const tableSlice = content.slice(exportIndex, closingParen + 2);
@@ -115,7 +117,7 @@ function main(): void {
       continue;
     }
 
-    const indexesBlock = `, (table) => [\n    ${indexLines.join(",\n    ")},\n  ]\n`;
+    const indexesBlock = `, (table) => [\n    ${indexLines.join(',\n    ')},\n  ]\n`;
     content =
       content.slice(0, columnsEnd + 1) +
       indexesBlock +
