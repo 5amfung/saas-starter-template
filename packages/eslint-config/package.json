@@ -1,0 +1,17 @@
+{
+  "name": "@workspace/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./base": "./base.js",
+    "./react": "./react.js"
+  },
+  "dependencies": {
+    "@tanstack/eslint-config": "^0.3.4",
+    "@tanstack/eslint-plugin-query": "^5.91.4",
+    "@tanstack/eslint-plugin-router": "^1.155.0",
+    "eslint": "^9.39.4",
+    "eslint-plugin-import-x": "^4.16.2"
+  }
+}

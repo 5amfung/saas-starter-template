@@ -16,6 +16,7 @@
     "clean": "npkill"
   },
   "devDependencies": {
+    "eslint": "^9.39.4",
     "husky": "^9.1.7",
     "lint-staged": "^16.3.3",
     "npkill": "^0.12.2",
