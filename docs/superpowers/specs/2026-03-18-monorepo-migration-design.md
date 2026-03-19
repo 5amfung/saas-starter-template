@@ -53,7 +53,7 @@ saas-starter-template/
 │           ├── account/              # Account domain (stays in app)
 │           ├── admin/                # Admin domain (stays in app)
 │           ├── workspace/            # Workspace domain (stays in app)
-│           ├── billing/              # App-level billing wiring (createServerFn wrappers)
+│           ├── billing/              # App-level billing wiring (createServerFn wrappers + auth-coupled billing fns)
 │           ├── components/
 │           │   ├── account/
 │           │   ├── admin/
@@ -121,8 +121,11 @@ saas-starter-template/
     │       ├── index.ts              # Public API: types, permissions, re-exports
     │       ├── auth.server.ts        # createAuth(config) factory
     │       ├── auth-client.ts        # createAuthClient()
-    │       ├── auth-emails.server.ts # Email hook wiring
+    │       ├── auth-emails.server.ts # Email hook wiring (uses config.getRequestHeaders)
+    │       ├── auth-hooks.server.ts  # isSignInPath, isDuplicateOrganizationError, SessionLike
+    │       ├── auth-workspace.server.ts # validateWorkspaceFields, buildAcceptInviteUrl (uses config.baseUrl)
     │       ├── permissions.ts        # Permission definitions
+    │       ├── workspace-types.ts    # PERSONAL_WORKSPACE_TYPE, isPersonalWorkspace, buildPersonalWorkspaceSlug
     │       ├── validators.ts         # validateAuthSession, validateGuestSession (pure fns)
     │       └── schemas.ts            # Auth-related Zod schemas
     │
@@ -133,7 +136,7 @@ saas-starter-template/
     │   └── src/
     │       ├── index.ts              # Public API: plan helpers, types
     │       ├── plans.ts              # Plan definitions, limits, pure helpers
-    │       └── billing.server.ts     # Stripe helpers, DB queries (no createServerFn)
+    │       └── billing.server.ts     # Pure DB/Stripe helpers (no auth.api, no createServerFn)
     │
     └── test-utils/
         ├── package.json
@@ -468,8 +471,25 @@ export interface AuthConfig {
   adminUserIds?: string[];
   trustedOrigins?: string[];
   hooks?: AuthHooks;
+  /** Logger callback — auth package uses this instead of importing app logger. */
+  logger?: (
+    level: string,
+    message: string,
+    meta?: Record<string, unknown>,
+  ) => void;
+  /** Returns request headers in the current server context. Used by auth-emails
+   *  to build email request context (IP, location) for security notices. */
+  getRequestHeaders?: () => Headers;
 }
 ```
+
+**Why `logger` is a callback**: `auth.server.ts` uses `logger()` in 10+ Stripe subscription hooks. The app's logger uses `createIsomorphicFn` (TanStack Start primitive), so it can't be imported by the package. The app passes its logger at init time; if not provided, the package falls back to `console.log`.
+
+**Why `getRequestHeaders` is a callback**: `auth-emails.server.ts` calls `buildEmailRequestContext()` to include IP/location in security emails. This function needs request headers, but Better Auth hooks trigger internally without explicit header access. The app passes its `getRequestHeaders` function (from `@tanstack/react-start/server`) at init time. The `buildEmailRequestContext` function in `@workspace/email` accepts `Headers` as a param; the auth package's email hooks call `config.getRequestHeaders()` to obtain them.
+
+**Why `baseUrl` covers `auth-workspace.server.ts`**: `buildAcceptInviteUrl()` currently calls `resolveAppOrigin()` which reads `process.env.BETTER_AUTH_URL`. After migration, it uses `config.baseUrl` instead — no `process.env` access.
+
+````
 
 ### CLI Tooling (Package-local `.env`)
 
@@ -484,7 +504,7 @@ export interface AuthConfig {
     "gen-auth-schema": "dotenv -e .env -- pnpx @better-auth/cli generate --config ../auth/src/auth.server.ts --output ./src/auth.schema.ts --yes && node --experimental-strip-types scripts/patch-auth-schema.ts && eslint --fix ./src/auth.schema.ts && prettier --write ./src/auth.schema.ts"
   }
 }
-```
+````
 
 `packages/db/.env` contains only `DATABASE_URL`. Gitignored. Documented in `packages/db/.env.example`.
 
@@ -541,13 +561,47 @@ export type Auth = ReturnType<typeof createAuth>;
 
 ### Billing
 
+The billing domain splits into two layers:
+
+**`@workspace/billing` (package)** — Pure functions that need only `db` and/or `stripeSecretKey`. No auth dependency.
+
 ```typescript
-// packages/billing/src/billing.server.ts
-// Pure functions that accept db and config as parameters.
-export function getUserActivePlanId(db: Database, subscriptions: Subscription[]) { ... }
-export function checkWorkspaceLimit(db: Database, userId: string) { ... }
-export function checkMemberLimit(db: Database, orgId: string) { ... }
+// packages/billing/src/plans.ts — Pure, no dependencies.
+export function getPlanById(id: PlanId): Plan { ... }
+export function getPlanLimitsForPlanId(id: PlanId): PlanLimits { ... }
+export function resolveUserPlanId(subscriptions: { plan: string; status: string }[]): PlanId { ... }
+
+// packages/billing/src/billing.server.ts — Needs db + stripe, but NOT auth.api.
+export function resolveUserPlanIdFromDb(db: Database, userId: string): Promise<PlanId> { ... }
+export function countOwnedWorkspaces(db: Database, userId: string): Promise<number> { ... }
+export function countWorkspaceMembers(db: Database, workspaceId: string): Promise<number> { ... }
+export function getWorkspaceOwnerUserId(db: Database, workspaceId: string): Promise<string | null> { ... }
+export function getInvoicesForUser(db: Database, stripeSecretKey: string, userId: string) { ... }
+export function resolveSubscriptionDetails(subscriptions: ..., planId: PlanId) { ... }
+export function checkWorkspaceLimit(db: Database, userId: string): Promise<void> { ... }
+export function checkMemberLimit(db: Database, orgId: string): Promise<void> { ... }
 ```
+
+**`apps/web/src/billing/` (app)** — Functions that call `auth.api.*` (subscription APIs). These stay in the app because they couple auth + billing.
+
+```typescript
+// apps/web/src/billing/billing.server.ts — Needs auth.api + billing helpers.
+export function getUserActivePlanId(headers: Headers, userId: string): Promise<PlanId> {
+  const subscriptions = await auth.api.listActiveSubscriptions({ headers, query: { referenceId: userId } });
+  return resolveUserPlanId(Array.from(subscriptions));
+}
+export function getBillingData(headers: Headers, userId: string) { ... }
+export function createCheckoutForPlan(headers: Headers, planId: PlanId, annual: boolean) { ... }
+export function createUserBillingPortal(headers: Headers) { ... }
+export function reactivateUserSubscription(headers: Headers, userId: string) { ... }
+export function requireVerifiedSession() { ... } // Uses getRequestHeaders() + auth.api.getSession
+
+// apps/web/src/billing/billing.functions.ts — createServerFn wrappers.
+export const getInvoicesFn = createServerFn().handler(async () => { ... });
+export const createCheckoutSessionFn = createServerFn().handler(async () => { ... });
+```
+
+This keeps the dependency graph clean: `@workspace/billing` depends only on `@workspace/db`.
 
 The app wires everything together in `apps/web/src/init.ts`.
 
@@ -709,29 +763,38 @@ Each step is independently verifiable.
 
 1. Create `packages/auth` with `package.json`, `tsconfig.json`, `vitest.config.ts`
 2. Add `@workspace/db` and `@workspace/email` as dependencies
-3. Move `src/auth/*` → `packages/auth/src/`
-4. Move workspace type constants (`PERSONAL_WORKSPACE_TYPE`, `isPersonalWorkspace`, `buildPersonalWorkspaceSlug`) into `packages/auth/src/` since auth hooks enforce them
-5. Convert to factory: `createAuth(config: AuthConfig)` with full config interface (see Section 7)
-6. Extract auth hook callbacks (billing limit checks) into `AuthHooks` interface — app wires them at init
-7. Create `packages/auth/src/validators.ts` with `validateAuthSession(headers, auth)` and `validateGuestSession(headers, auth)` as pure functions (no `createMiddleware`)
-8. Keep `apps/web/src/middleware/auth.ts` — it wraps validators with `createMiddleware` from TanStack Start
-9. Keep `apps/web/src/middleware/admin.ts` — imports from `@workspace/auth`
-10. Update `apps/web/src/init.ts` with `createAuth()` call
-11. Update `src/workspace/` to import workspace constants from `@workspace/auth`
-12. Rewrite auth imports
-13. Move auth validator tests and permission tests to `packages/auth/`
-14. **Verify**: `pnpm test`, `pnpm run build`
+3. Move `src/auth/*` → `packages/auth/src/`, including:
+   - `auth.server.ts` → convert to `createAuth(config: AuthConfig)` factory
+   - `auth-client.ts` → `createAuthClient()`
+   - `auth-emails.server.ts` → use `config.getRequestHeaders()` for email request context
+   - `auth-hooks.server.ts` → helper functions (`isSignInPath`, `isDuplicateOrganizationError`, etc.)
+   - `auth-workspace.server.ts` → use `config.baseUrl` instead of `process.env.BETTER_AUTH_URL`
+   - `permissions.ts`, `schemas.ts`
+4. Move workspace type constants (`PERSONAL_WORKSPACE_TYPE`, `isPersonalWorkspace`, `buildPersonalWorkspaceSlug`) into `packages/auth/src/workspace-types.ts`
+5. Add `logger` callback to `AuthConfig` — replace all `logger()` calls in Stripe hooks with `config.logger?.()` (fallback to `console.log`)
+6. Add `getRequestHeaders` callback to `AuthConfig` — auth-emails uses it to build email request context
+7. Extract auth hook callbacks (billing limit checks) into `AuthHooks` interface — app wires them at init
+8. Create `packages/auth/src/validators.ts` with `validateAuthSession(headers, auth)` and `validateGuestSession(headers, auth)` as pure functions (no `createMiddleware`)
+9. Keep `apps/web/src/middleware/auth.ts` — wraps validators with `createMiddleware`
+10. Keep `apps/web/src/middleware/admin.ts` — imports from `@workspace/auth`
+11. Update `apps/web/src/init.ts` with `createAuth()` call (passing logger, getRequestHeaders, hooks)
+12. Update `src/workspace/` to import workspace constants from `@workspace/auth`
+13. Rewrite auth imports
+14. Move auth validator tests, permission tests, auth-hooks tests to `packages/auth/`
+15. **Verify**: `pnpm test`, `pnpm run build`
 
 ### Step 6: Extract `packages/billing`
 
 1. Create `packages/billing` with `package.json`, `tsconfig.json`, `vitest.config.ts`
 2. Add `@workspace/db` as dependency (no auth dependency — cycle broken by hooks)
-3. Move `src/billing/plans.ts` and `src/billing/billing.server.ts` → `packages/billing/src/`
-4. Refactor `billing.server.ts` functions to accept `db` and config as parameters (no `process.env`)
-5. Keep `src/billing/billing.functions.ts` in `apps/web/` (uses `createServerFn`)
+3. Move `src/billing/plans.ts` → `packages/billing/src/plans.ts` (pure, no changes needed)
+4. Split `src/billing/billing.server.ts` into two layers:
+   - **Package** (`packages/billing/src/billing.server.ts`): Pure DB/Stripe functions — `resolveUserPlanIdFromDb`, `countOwnedWorkspaces`, `countWorkspaceMembers`, `getWorkspaceOwnerUserId`, `getInvoicesForUser`, `resolveSubscriptionDetails`, `checkWorkspaceLimit`, `checkMemberLimit`. Refactor to accept `db` and `stripeSecretKey` as params.
+   - **App** (`apps/web/src/billing/billing.server.ts`): Auth-coupled functions — `getUserActivePlanId`, `getBillingData`, `createCheckoutForPlan`, `createUserBillingPortal`, `reactivateUserSubscription`, `requireVerifiedSession`. These call `auth.api.*` and stay in the app.
+5. Keep `apps/web/src/billing/billing.functions.ts` (uses `createServerFn`)
 6. Move `dev:stripe-webhook` script to `apps/web/package.json`
-7. Rewrite billing imports
-8. Move billing tests (plan helpers, server logic)
+7. Rewrite billing imports — app-level billing imports from both `@workspace/billing` and `@/billing`
+8. Move plan helper tests and pure billing server tests to `packages/billing/`; auth-coupled billing tests stay in app
 9. **Verify**: `pnpm test`, `pnpm run build`
 
 ### Step 7: Create `packages/test-utils`
