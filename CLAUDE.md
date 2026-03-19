@@ -129,10 +129,10 @@ Split server-side code by responsibility using these file roles:
 
 ```ts
 // ✅ Route imports server function wrapper.
-import { updateUserRole } from '@/utils/users.functions';
+import { updateUserRole } from "@/utils/users.function"
 
 // ❌ Route importing server-only module directly.
-import { updateUserRoleInDb } from '@/utils/users.server';
+import { updateUserRoleInDb } from "@/utils/users.server"
 ```
 
 `src/components/email-template/` is also server-only (imports `.server` modules) — never import from client code.
@@ -232,3 +232,12 @@ When unsure: research the recommended approach for the library, fix the architec
 - Use `any` type — prefer proper typing or `unknown` with guards.
 - Import `*.server.ts` modules from client-safe files or route components.
 - Import from `src/components/email-template/` in client code.
+
+## Command Execution Rules
+
+- **Always run from the project root.** Never `cd` into subdirectories.
+- **Use `pnpm` consistently.** Never use `npx` as a substitute.
+- **Turbo tasks**: `pnpm run <task>` from root (e.g., `pnpm run build`, `pnpm test`).
+- **Workspace-specific commands**: `pnpm --filter <workspace> <cmd>` (e.g., `pnpm --filter @workspace/web dev`). Never `cd apps/web && pnpm dev`.
+- **Pre-approve CLIs**: Before executing a multi-step task, identify all CLI tools needed and run a benign command (e.g., `pnpm --version`, `git --version`) to trigger permission approval upfront. This avoids interruptions mid-task.
+- **Subagents follow the same rules.** Include these rules in subagent prompts.
