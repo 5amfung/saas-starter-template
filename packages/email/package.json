@@ -9,13 +9,16 @@
   },
   "scripts": {
     "test": "vitest run",
-    "dev:email": "pnpx react-email dev --dir src/templates --port 3001"
+    "dev:email": "pnpx react-email dev --dir src/templates --port 3001",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "dependencies": {
     "@react-email/components": "^1.0.7",
     "resend": "^6.9.2"
   },
   "devDependencies": {
+    "@workspace/eslint-config": "workspace:*",
     "@react-email/preview-server": "5.2.9",
     "@react-email/render": "^1.0.7",
     "react": "^19.2.4",

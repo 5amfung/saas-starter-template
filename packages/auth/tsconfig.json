@@ -12,5 +12,10 @@
       "@workspace/email/*": ["../email/src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "vitest.config.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "vitest.config.ts",
+    "eslint.config.ts"
+  ]
 }

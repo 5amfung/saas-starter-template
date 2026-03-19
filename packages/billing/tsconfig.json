@@ -9,5 +9,5 @@
       "@workspace/db/*": ["../db/src/*"]
     }
   },
-  "include": ["src/**/*.ts", "vitest.config.ts"]
+  "include": ["src/**/*.ts", "vitest.config.ts", "eslint.config.ts"]
 }

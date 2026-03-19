@@ -253,6 +253,9 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
     devDependencies:
+      '@workspace/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -278,6 +281,9 @@ importers:
         specifier: ^20.4.1
         version: 20.4.1(@types/node@25.5.0)
     devDependencies:
+      '@workspace/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -331,6 +337,9 @@ importers:
       '@react-email/render':
         specifier: ^1.0.7
         version: 1.4.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@workspace/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       react:
         specifier: ^19.2.4
         version: 19.2.4
@@ -386,6 +395,9 @@ importers:
         specifier: ^19.2.4
         version: 19.2.4(react@19.2.4)
     devDependencies:
+      '@workspace/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
