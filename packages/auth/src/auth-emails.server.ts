@@ -25,10 +25,7 @@ export function createAuthEmails(deps: AuthEmailDeps) {
     newEmail: string
     url: string
   }) => {
-    const headers = getRequestHeaders?.()
-    const requestContext = headers
-      ? buildEmailRequestContext(headers)
-      : undefined
+    const requestContext = buildEmailRequestContext(getRequestHeaders?.())
     await emailClient.sendEmail({
       to: user.email,
       subject: "Approve your email change",
@@ -48,10 +45,7 @@ export function createAuthEmails(deps: AuthEmailDeps) {
     user: { email: string }
     url: string
   }) => {
-    const headers = getRequestHeaders?.()
-    const requestContext = headers
-      ? buildEmailRequestContext(headers)
-      : undefined
+    const requestContext = buildEmailRequestContext(getRequestHeaders?.())
     await emailClient.sendEmail({
       to: user.email,
       subject: "Reset your password",
@@ -70,10 +64,7 @@ export function createAuthEmails(deps: AuthEmailDeps) {
     user: { email: string }
     url: string
   }) => {
-    const headers = getRequestHeaders?.()
-    const requestContext = headers
-      ? buildEmailRequestContext(headers)
-      : undefined
+    const requestContext = buildEmailRequestContext(getRequestHeaders?.())
     await emailClient.sendEmail({
       to: user.email,
       subject: "Verify your email address",

@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "types": ["vitest/globals"],
     "paths": {
       "@workspace/billing/*": ["./src/*"],
       "@workspace/db": ["../db/src/index.ts"],

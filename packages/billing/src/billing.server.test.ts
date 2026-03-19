@@ -20,7 +20,7 @@ vi.mock("@workspace/db/schema", () => ({
 }))
 
 vi.mock("drizzle-orm", async (importOriginal) => {
-  const actual = await importOriginal()
+  const actual = await importOriginal<Record<string, unknown>>()
   return {
     ...actual,
     and: vi.fn((...args: Array<unknown>) => args),
