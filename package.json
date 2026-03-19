@@ -37,7 +37,10 @@
       "prisma",
       "sharp",
       "unrs-resolver"
-    ]
+    ],
+    "overrides": {
+      "@noble/ciphers": "^2.1.1"
+    }
   },
   "engines": {
     "node": ">=20"
