@@ -5,11 +5,6 @@ import { EmailVerificationEmail } from "./email-verification-email"
 import { ResetPasswordEmail } from "./reset-password-email"
 import { WorkspaceInvitationEmail } from "./workspace-invitation-email"
 
-// Mock the server-only dependency that email-request-context.server.ts imports.
-vi.mock("@tanstack/react-start/server", () => ({
-  getRequestHeaders: vi.fn().mockReturnValue({}),
-}))
-
 const baseRequestContext = {
   requestedAtUtc: "13 March 2025, 12:00 UTC",
   ip: "1.2.3.4",

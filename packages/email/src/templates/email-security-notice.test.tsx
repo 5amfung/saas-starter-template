@@ -2,11 +2,6 @@ import { createElement } from "react"
 import { render } from "@react-email/render"
 import { EmailSecurityNotice } from "./email-security-notice"
 
-// Mock the server-only dependency that email-request-context.server.ts imports.
-vi.mock("@tanstack/react-start/server", () => ({
-  getRequestHeaders: vi.fn().mockReturnValue({}),
-}))
-
 describe("EmailSecurityNotice", () => {
   it("renders with full context (IP, city, country)", async () => {
     const html = await render(

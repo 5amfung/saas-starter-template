@@ -1,51 +1,64 @@
 import { createElement } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import {
-  sendChangeEmailConfirmation,
-  sendInvitationEmail,
-  sendResetPasswordEmail,
-  sendVerificationEmail,
-} from "./auth-emails.server"
 
-const { sendEmailMock, buildEmailRequestContextMock } = vi.hoisted(() => ({
-  sendEmailMock: vi.fn(),
-  buildEmailRequestContextMock: vi.fn(),
+const { sendEmailMock, buildEmailRequestContextMock, getRequestHeadersMock } =
+  vi.hoisted(() => ({
+    sendEmailMock: vi.fn(),
+    buildEmailRequestContextMock: vi.fn(),
+    getRequestHeadersMock: vi.fn(),
+  }))
+
+vi.mock("@/init", () => ({
+  emailClient: {
+    sendEmail: sendEmailMock,
+    config: { appName: "TestApp" },
+  },
 }))
 
-vi.mock("@/email/resend.server", () => ({
-  sendEmail: sendEmailMock,
-  APP_NAME: "TestApp",
-}))
-
-vi.mock("@/email/email-request-context.server", () => ({
+vi.mock("@workspace/email", () => ({
   buildEmailRequestContext: buildEmailRequestContextMock,
 }))
 
+vi.mock("@tanstack/react-start/server", () => ({
+  getRequestHeaders: getRequestHeadersMock,
+}))
+
 // Mock email template components to simple strings for assertion simplicity.
-vi.mock("@/components/email-template/change-email-approval-email", () => ({
+vi.mock("@workspace/email/templates/change-email-approval-email", () => ({
   ChangeEmailApprovalEmail: "ChangeEmailApprovalEmail",
 }))
 
-vi.mock("@/components/email-template/email-verification-email", () => ({
+vi.mock("@workspace/email/templates/email-verification-email", () => ({
   EmailVerificationEmail: "EmailVerificationEmail",
 }))
 
-vi.mock("@/components/email-template/reset-password-email", () => ({
+vi.mock("@workspace/email/templates/reset-password-email", () => ({
   ResetPasswordEmail: "ResetPasswordEmail",
 }))
 
-vi.mock("@/components/email-template/workspace-invitation-email", () => ({
+vi.mock("@workspace/email/templates/workspace-invitation-email", () => ({
   WorkspaceInvitationEmail: "WorkspaceInvitationEmail",
 }))
+
+// Lazily import the module under test after all mocks are registered.
+const {
+  sendChangeEmailConfirmation,
+  sendResetPasswordEmail,
+  sendVerificationEmail,
+  sendInvitationEmail,
+} = await import("./auth-emails.server")
 
 const MOCK_REQUEST_CONTEXT = {
   requestedAtUtc: "12 March 2026, 10:00 UTC",
   ip: "1.2.3.4",
 }
 
+const MOCK_HEADERS = new Headers()
+
 describe("auth-emails", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    getRequestHeadersMock.mockReturnValue(MOCK_HEADERS)
     buildEmailRequestContextMock.mockReturnValue(MOCK_REQUEST_CONTEXT)
   })
 
@@ -57,6 +70,7 @@ describe("auth-emails", () => {
         url: "https://app.example.com/verify-change",
       })
 
+      expect(buildEmailRequestContextMock).toHaveBeenCalledWith(MOCK_HEADERS)
       expect(sendEmailMock).toHaveBeenCalledOnce()
       expect(sendEmailMock).toHaveBeenCalledWith({
         to: "old@example.com",
@@ -78,6 +92,7 @@ describe("auth-emails", () => {
         url: "https://app.example.com/reset",
       })
 
+      expect(buildEmailRequestContextMock).toHaveBeenCalledWith(MOCK_HEADERS)
       expect(sendEmailMock).toHaveBeenCalledOnce()
       expect(sendEmailMock).toHaveBeenCalledWith({
         to: "user@example.com",
@@ -98,6 +113,7 @@ describe("auth-emails", () => {
         url: "https://app.example.com/verify",
       })
 
+      expect(buildEmailRequestContextMock).toHaveBeenCalledWith(MOCK_HEADERS)
       expect(sendEmailMock).toHaveBeenCalledOnce()
       expect(sendEmailMock).toHaveBeenCalledWith({
         to: "user@example.com",

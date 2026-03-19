@@ -2,7 +2,7 @@
  * Server-only: used when rendering emails; do not import from client code.
  */
 import { Section, Text } from "@react-email/components"
-import type { EmailRequestContext } from "@/email/email-request-context.server"
+import type { EmailRequestContext } from "../request-context"
 
 const SECURITY_HEADING = "Didn't request this?"
 const REASSURANCE_SENTENCE =

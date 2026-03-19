@@ -15,24 +15,26 @@ import {
   Text,
   pixelBasedPreset,
 } from "@react-email/components"
-import type { EmailRequestContext } from "@/email/email-request-context.server"
+import type { EmailRequestContext } from "../request-context"
 import { EmailSecurityNotice } from "./email-security-notice"
 
-export interface EmailVerificationEmailProps {
+export interface ChangeEmailApprovalEmailProps {
   appName: string
-  verificationUrl: string
+  newEmail: string
+  approvalUrl: string
   requestContext: EmailRequestContext
 }
 
-export function EmailVerificationEmail({
+export function ChangeEmailApprovalEmail({
   appName,
-  verificationUrl,
+  newEmail,
+  approvalUrl,
   requestContext,
-}: EmailVerificationEmailProps) {
+}: ChangeEmailApprovalEmailProps) {
   return (
     <Html lang="en" dir="ltr">
       <Head />
-      <Preview>Verify your email address</Preview>
+      <Preview>Approve your email change to {newEmail}</Preview>
       <Tailwind config={{ presets: [pixelBasedPreset] }}>
         <Body className="bg-zinc-100 p-8 px-4 font-sans">
           <Container className="mx-auto max-w-[480px] overflow-hidden rounded-[10px] bg-white shadow-sm">
@@ -41,32 +43,34 @@ export function EmailVerificationEmail({
                 as="h1"
                 className="mb-4 text-xl font-semibold text-zinc-900"
               >
-                Verify your email address
+                Do NOT click the button if you didn't request email change!
               </Heading>
               <Text className="mb-6 text-[15px] leading-6 text-zinc-700">
-                Click the button below to verify your email address and complete
-                setup.
+                A request was made to change your account email to{" "}
+                <strong>{newEmail}</strong>. Click the button below to approve
+                this change.
               </Text>
               <Section className="mb-6">
                 <Button
-                  href={verificationUrl}
+                  href={approvalUrl}
                   className="inline-block rounded-lg bg-zinc-900 px-6 py-3 text-sm font-medium text-white no-underline"
                 >
-                  Verify email
+                  Approve change
                 </Button>
               </Section>
               <Text className="mb-2 text-sm leading-5 text-zinc-500">
                 Or copy and paste this link into your browser:
               </Text>
               <Link
-                href={verificationUrl}
+                href={approvalUrl}
                 className="mb-6 block text-sm break-all text-blue-500"
               >
-                {verificationUrl}
+                {approvalUrl}
               </Link>
               <Text className="mb-6 text-sm leading-5 text-zinc-500">
-                After you click the link, you can sign in with this email
-                address.
+                After you approve, we will send a verification email to{" "}
+                <strong>{newEmail}</strong>. Your account email updates only
+                after you click the link in that email.
               </Text>
               <Text className="text-sm leading-5 text-zinc-500">
                 This link expires in 10 minutes.
@@ -83,14 +87,15 @@ export function EmailVerificationEmail({
   )
 }
 
-export default EmailVerificationEmail
-EmailVerificationEmail.PreviewProps = {
+export default ChangeEmailApprovalEmail
+ChangeEmailApprovalEmail.PreviewProps = {
   appName: "My App",
-  verificationUrl: "https://example.com/api/auth/verify-email?token=abc123",
+  newEmail: "new@example.com",
+  approvalUrl: "https://example.com/api/auth/verify-email?token=abc123",
   requestContext: {
     requestedAtUtc: "13 February 2026, 21:11 UTC",
     ip: "136.24.244.114",
     city: "San Francisco",
     country: "US",
   },
-} satisfies EmailVerificationEmailProps
+} satisfies ChangeEmailApprovalEmailProps

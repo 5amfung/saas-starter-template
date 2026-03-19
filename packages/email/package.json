@@ -1,0 +1,28 @@
+{
+  "name": "@workspace/email",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./templates/*": "./src/templates/*.tsx"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "dev:email": "pnpx react-email dev --dir src/templates --port 3001"
+  },
+  "dependencies": {
+    "@react-email/components": "^1.0.7",
+    "resend": "^6.9.2"
+  },
+  "devDependencies": {
+    "@react-email/preview-server": "5.2.9",
+    "@react-email/render": "^1.0.7",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-email": "^5.2.8",
+    "typescript": "^5.9.3",
+    "vite-tsconfig-paths": "^6.1.0",
+    "vitest": "^4.0.18"
+  }
+}

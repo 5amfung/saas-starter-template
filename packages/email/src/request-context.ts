@@ -1,5 +1,3 @@
-import { getRequestHeaders } from "@tanstack/react-start/server"
-
 /**
  * Context about the HTTP request that triggered the email, used for the
  * "Didn't request this?" security notice in verification and reset emails.
@@ -58,30 +56,23 @@ function formatUtcTimestamp(date: Date): string {
   return `${day} ${month} ${year}, ${hours}:${minutes} UTC`
 }
 
-export function getEmailRequestContextFromCurrentRequest():
-  | EmailRequestContext
-  | undefined {
-  try {
-    const headers = getRequestHeaders()
-    if (!headers) return undefined
-
-    const ip = extractClientIp(headers)
-    const city = getHeader(headers, CITY_HEADERS)
-    const country = getHeader(headers, COUNTRY_HEADERS)
-    const requestedAtUtc = formatUtcTimestamp(new Date())
-
-    return {
-      requestedAtUtc,
-      ip: ip ?? undefined,
-      city: city ?? undefined,
-      country: country ?? undefined,
-    }
-  } catch {
-    return undefined
+/** Build email request context from optional request headers. */
+export function buildEmailRequestContext(
+  headers?: Headers
+): EmailRequestContext {
+  if (!headers) {
+    return { requestedAtUtc: formatUtcTimestamp(new Date()) }
   }
-}
 
-export function buildEmailRequestContext(): EmailRequestContext {
-  const fromRequest = getEmailRequestContextFromCurrentRequest()
-  return fromRequest ?? { requestedAtUtc: formatUtcTimestamp(new Date()) }
+  const ip = extractClientIp(headers)
+  const city = getHeader(headers, CITY_HEADERS)
+  const country = getHeader(headers, COUNTRY_HEADERS)
+  const requestedAtUtc = formatUtcTimestamp(new Date())
+
+  return {
+    requestedAtUtc,
+    ip: ip ?? undefined,
+    city: city ?? undefined,
+    country: country ?? undefined,
+  }
 }

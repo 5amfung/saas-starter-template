@@ -15,7 +15,7 @@ import {
   Text,
   pixelBasedPreset,
 } from "@react-email/components"
-import type { EmailRequestContext } from "@/email/email-request-context.server"
+import type { EmailRequestContext } from "../request-context"
 import { EmailSecurityNotice } from "./email-security-notice"
 
 export interface ResetPasswordEmailProps {
