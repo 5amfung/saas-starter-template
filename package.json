@@ -12,11 +12,13 @@
     "check": "turbo run check",
     "format": "turbo run format",
     "test": "turbo run test",
-    "prepare": "husky || echo 'Skip installing husky'"
+    "prepare": "husky || echo 'Skip installing husky'",
+    "clean": "npkill"
   },
   "devDependencies": {
     "husky": "^9.1.7",
     "lint-staged": "^16.3.3",
+    "npkill": "^0.12.2",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "turbo": "^2.8.17",
