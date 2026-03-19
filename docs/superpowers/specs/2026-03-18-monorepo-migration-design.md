@@ -489,8 +489,6 @@ export interface AuthConfig {
 
 **Why `baseUrl` covers `auth-workspace.server.ts`**: `buildAcceptInviteUrl()` currently calls `resolveAppOrigin()` which reads `process.env.BETTER_AUTH_URL`. After migration, it uses `config.baseUrl` instead — no `process.env` access.
 
-````
-
 ### CLI Tooling (Package-local `.env`)
 
 ```json
@@ -504,7 +502,7 @@ export interface AuthConfig {
     "gen-auth-schema": "dotenv -e .env -- pnpx @better-auth/cli generate --config ../auth/src/auth.server.ts --output ./src/auth.schema.ts --yes && node --experimental-strip-types scripts/patch-auth-schema.ts && eslint --fix ./src/auth.schema.ts && prettier --write ./src/auth.schema.ts"
   }
 }
-````
+```
 
 `packages/db/.env` contains only `DATABASE_URL`. Gitignored. Documented in `packages/db/.env.example`.
 
@@ -590,6 +588,8 @@ export function getUserActivePlanId(headers: Headers, userId: string): Promise<P
   const subscriptions = await auth.api.listActiveSubscriptions({ headers, query: { referenceId: userId } });
   return resolveUserPlanId(Array.from(subscriptions));
 }
+export function getUserPlanContext(headers: Headers, userId: string): Promise<UserPlanContext> { ... }
+export function checkUserPlanLimit(headers: Headers, userId: string, feature: string, workspaceId?: string) { ... }
 export function getBillingData(headers: Headers, userId: string) { ... }
 export function createCheckoutForPlan(headers: Headers, planId: PlanId, annual: boolean) { ... }
 export function createUserBillingPortal(headers: Headers) { ... }
