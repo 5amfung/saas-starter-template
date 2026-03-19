@@ -92,17 +92,17 @@ describe('billing.server', () => {
   // ── getUserPlanContext ──────────────────────────────────────────────────
 
   describe('getUserPlanContext', () => {
-    it('returns starter context when no subscriptions exist', async () => {
+    it('returns free context when no subscriptions exist', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([]);
 
       const ctx = await getUserPlanContext(TEST_HEADERS, TEST_USER_ID);
 
-      expect(ctx.planId).toBe('starter');
-      expect(ctx.planName).toBe('Starter');
+      expect(ctx.planId).toBe('free');
+      expect(ctx.planName).toBe('Free');
       expect(ctx.limits.maxWorkspaces).toBe(1);
       expect(ctx.limits.maxMembersPerWorkspace).toBe(1);
       expect(ctx.upgradePlan).not.toBeNull();
-      expect(ctx.upgradePlan?.id).toBe('pro');
+      expect(ctx.upgradePlan?.id).toBe('starter');
     });
 
     it('returns pro context for active pro subscription', async () => {
@@ -114,8 +114,8 @@ describe('billing.server', () => {
 
       expect(ctx.planId).toBe('pro');
       expect(ctx.planName).toBe('Pro');
-      expect(ctx.limits.maxWorkspaces).toBe(5);
-      expect(ctx.limits.maxMembersPerWorkspace).toBe(5);
+      expect(ctx.limits.maxWorkspaces).toBe(25);
+      expect(ctx.limits.maxMembersPerWorkspace).toBe(25);
       expect(ctx.upgradePlan).toBeNull();
     });
 
@@ -130,15 +130,15 @@ describe('billing.server', () => {
       expect(ctx.planName).toBe('Pro');
     });
 
-    it('falls back to starter for unknown plan', async () => {
+    it('falls back to free plan for unknown plan', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([
         { plan: 'unknown_plan', status: 'active' },
       ]);
 
       const ctx = await getUserPlanContext(TEST_HEADERS, TEST_USER_ID);
 
-      expect(ctx.planId).toBe('starter');
-      expect(ctx.planName).toBe('Starter');
+      expect(ctx.planId).toBe('free');
+      expect(ctx.planName).toBe('Free');
     });
 
     it('passes headers to listActiveSubscriptions', async () => {
@@ -214,8 +214,8 @@ describe('billing.server', () => {
 
       const data = await getBillingData(TEST_HEADERS, TEST_USER_ID);
 
-      expect(data.planId).toBe('starter');
-      expect(data.plan.id).toBe('starter');
+      expect(data.planId).toBe('free');
+      expect(data.plan.id).toBe('free');
       expect(data.subscription).toBeNull();
       // Verify no DB call was made — subscription details derived from API response.
       expect(dbSelectMock).not.toHaveBeenCalled();
@@ -251,9 +251,8 @@ describe('billing.server', () => {
   // ── checkUserPlanLimit - workspace ─────────────────────────────────────
 
   describe('checkUserPlanLimit - workspace', () => {
-    it('allows when under limit (starter, 0 workspaces)', async () => {
+    it('allows when under limit (free, 0 workspaces)', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([]);
-      // countOwnedWorkspaces DB query.
       mockDbChain(dbSelectMock, [{ count: 0 }]);
 
       const result = await checkUserPlanLimit(
@@ -267,7 +266,7 @@ describe('billing.server', () => {
       expect(result.limit).toBe(1);
     });
 
-    it('blocks when at limit (starter, 1 workspace)', async () => {
+    it('blocks when at limit (free, 1 workspace)', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([]);
       mockDbChain(dbSelectMock, [{ count: 1 }]);
 
@@ -280,10 +279,10 @@ describe('billing.server', () => {
       expect(result.allowed).toBe(false);
       expect(result.current).toBe(1);
       expect(result.limit).toBe(1);
-      expect(result.planName).toBe('Starter');
+      expect(result.planName).toBe('Free');
     });
 
-    it('pro has limit of 5', async () => {
+    it('pro has limit of 25', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([
         { plan: 'pro', status: 'active' },
       ]);
@@ -296,7 +295,7 @@ describe('billing.server', () => {
       );
 
       expect(result.allowed).toBe(true);
-      expect(result.limit).toBe(5);
+      expect(result.limit).toBe(25);
     });
   });
 
@@ -307,7 +306,7 @@ describe('billing.server', () => {
       listActiveSubscriptionsMock.mockResolvedValue([
         { plan: 'pro', status: 'active' },
       ]);
-      mockDbChain(dbSelectMock, [{ count: 5 }]);
+      mockDbChain(dbSelectMock, [{ count: 25 }]);
 
       const result = await checkUserPlanLimit(
         TEST_HEADERS,
@@ -316,14 +315,14 @@ describe('billing.server', () => {
       );
 
       expect(result.allowed).toBe(false);
-      expect(result.current).toBe(5);
-      expect(result.limit).toBe(5);
+      expect(result.current).toBe(25);
+      expect(result.limit).toBe(25);
       expect(result.planName).toBe('Pro');
     });
 
-    it('falls back to starter limits for past_due subscription', async () => {
+    it('falls back to free limits for past_due subscription', async () => {
       // past_due is not in the active statuses list, so resolveUserPlanId
-      // should ignore it and fall back to starter.
+      // should ignore it and fall back to the free plan.
       listActiveSubscriptionsMock.mockResolvedValue([
         { plan: 'pro', status: 'past_due' },
       ]);
@@ -338,7 +337,7 @@ describe('billing.server', () => {
       expect(result.allowed).toBe(true);
       expect(result.current).toBe(0);
       expect(result.limit).toBe(1);
-      expect(result.planName).toBe('Starter');
+      expect(result.planName).toBe('Free');
     });
   });
 
@@ -392,7 +391,7 @@ describe('billing.server', () => {
         'ws_123',
       );
 
-      // Starter limit is 1, current is 3, so should be blocked.
+      // Free plan limit is 1, current is 3, so should be blocked.
       expect(result.allowed).toBe(false);
       expect(result.current).toBe(3);
       expect(result.limit).toBe(1);

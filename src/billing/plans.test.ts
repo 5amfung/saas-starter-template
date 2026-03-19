@@ -13,8 +13,8 @@ import {
 } from '@/billing/plans';
 
 describe('plans', () => {
-  it('exports exactly two plans', () => {
-    expect(PLANS).toHaveLength(2);
+  it('exports exactly three plans', () => {
+    expect(PLANS).toHaveLength(3);
   });
 
   it('has exactly one free-tier plan (tier 0)', () => {
@@ -34,7 +34,7 @@ describe('plans', () => {
     expect(getPlanById('nonexistent' as never)).toBeUndefined();
   });
 
-  it('getFreePlan returns the starter plan', () => {
+  it('getFreePlan returns the free plan', () => {
     const free = getFreePlan();
     expect(free.id).toBe(FREE_PLAN_ID);
     expect(free.pricing).toBeNull();
@@ -42,8 +42,8 @@ describe('plans', () => {
 
   it('getPlanLimitsForPlanId returns correct limits for starter', () => {
     const limits = getPlanLimitsForPlanId('starter');
-    expect(limits.maxWorkspaces).toBe(1);
-    expect(limits.maxMembersPerWorkspace).toBe(1);
+    expect(limits.maxWorkspaces).toBe(5);
+    expect(limits.maxMembersPerWorkspace).toBe(5);
   });
 
   it('getPlanLimitsForPlanId returns higher limits for pro', () => {
@@ -52,7 +52,7 @@ describe('plans', () => {
     expect(limits.maxMembersPerWorkspace).toBeGreaterThan(1);
   });
 
-  it('getPlanLimitsForPlanId falls back to starter for unknown plan', () => {
+  it('getPlanLimitsForPlanId falls back to free plan for unknown plan', () => {
     const limits = getPlanLimitsForPlanId('nonexistent' as never);
     expect(limits.maxWorkspaces).toBe(1);
   });
@@ -142,14 +142,14 @@ describe('resolveUserPlanId', () => {
 
 describe('formatPlanPrice', () => {
   it('returns empty string for free plans', () => {
-    const freePlan = getPlanById('starter')!;
+    const freePlan = getPlanById('free')!;
     expect(formatPlanPrice(freePlan, false)).toBe('');
   });
 
   it('formats monthly price', () => {
     const pro = getPlanById('pro')!;
     const price = formatPlanPrice(pro, false);
-    expect(price).toMatch(/\$49\/mo$/);
+    expect(price).toMatch(/\$20\/mo$/);
   });
 
   it('formats annual price as monthly equivalent', () => {
@@ -164,14 +164,14 @@ describe('getPlanFeatures', () => {
   it('returns base features for monthly', () => {
     const pro = getPlanById('pro')!;
     const features = getPlanFeatures(pro, false);
-    expect(features).toContain('Priority support');
+    expect(features).toContain('25 workspaces');
     expect(features).not.toContain('2 months free');
   });
 
   it('returns base + bonus features for annual', () => {
     const pro = getPlanById('pro')!;
     const features = getPlanFeatures(pro, true);
-    expect(features).toContain('Priority support');
+    expect(features).toContain('25 workspaces');
     expect(features).toContain('2 months free');
   });
 });

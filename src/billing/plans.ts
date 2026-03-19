@@ -47,7 +47,7 @@ export interface Plan {
 }
 
 /** Canonical plan ID for the free tier. */
-export const FREE_PLAN_ID: PlanId = 'starter';
+export const FREE_PLAN_ID: PlanId = 'free';
 
 const FREE_PLAN_LIMITS: PlanLimits = {
   maxWorkspaces: 1,
