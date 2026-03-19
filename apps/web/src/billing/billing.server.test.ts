@@ -4,12 +4,9 @@ import {
   createCheckoutForPlan,
   createUserBillingPortal,
   getBillingData,
-  getInvoicesForUser,
   getUserPlanContext,
   reactivateUserSubscription,
-  resolveSubscriptionDetails,
 } from "@/billing/billing.server"
-import { mockDbChain } from "@/test/mocks/db"
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────
 
@@ -19,16 +16,18 @@ const {
   upgradeSubscriptionMock,
   restoreSubscriptionMock,
   getSessionMock,
-  dbSelectMock,
-  stripeInvoicesListMock,
+  countOwnedWorkspacesMock,
+  countWorkspaceMembersMock,
+  getWorkspaceOwnerUserIdMock,
 } = vi.hoisted(() => ({
   listActiveSubscriptionsMock: vi.fn(),
   createBillingPortalMock: vi.fn(),
   upgradeSubscriptionMock: vi.fn(),
   restoreSubscriptionMock: vi.fn(),
   getSessionMock: vi.fn(),
-  dbSelectMock: vi.fn(),
-  stripeInvoicesListMock: vi.fn(),
+  countOwnedWorkspacesMock: vi.fn(),
+  countWorkspaceMembersMock: vi.fn(),
+  getWorkspaceOwnerUserIdMock: vi.fn(),
 }))
 
 // ── Module mocks ───────────────────────────────────────────────────────────
@@ -43,34 +42,12 @@ vi.mock("@/init", () => ({
       getSession: getSessionMock,
     },
   },
-  db: { select: dbSelectMock },
+  billingService: {
+    countOwnedWorkspaces: countOwnedWorkspacesMock,
+    countWorkspaceMembers: countWorkspaceMembersMock,
+    getWorkspaceOwnerUserId: getWorkspaceOwnerUserIdMock,
+  },
 }))
-
-vi.mock("@workspace/db/schema", () => ({
-  member: "member",
-  subscription: "subscription",
-  user: "user",
-}))
-
-vi.mock("drizzle-orm", async (importOriginal) => {
-  const actual = await importOriginal()
-  return {
-    ...actual,
-    and: vi.fn((...args: Array<unknown>) => args),
-    count: vi.fn(() => "count"),
-    eq: vi.fn((a: unknown, b: unknown) => [a, b]),
-  }
-})
-
-vi.mock("stripe", () => {
-  // Stripe is imported as a default export and called with `new Stripe(...)`.
-  // The mock must be a real constructor function.
-  function StripeMock() {
-    // @ts-expect-error -- mock constructor assigns invoices property.
-    this.invoices = { list: stripeInvoicesListMock }
-  }
-  return { default: StripeMock }
-})
 
 vi.mock("@tanstack/react-start/server", () => ({
   getRequestHeaders: vi.fn(),
@@ -155,58 +132,6 @@ describe("billing.server", () => {
     })
   })
 
-  // ── resolveSubscriptionDetails ────────────────────────────────────────
-
-  describe("resolveSubscriptionDetails", () => {
-    it("returns null when no matching subscription exists", () => {
-      const result = resolveSubscriptionDetails([], "starter")
-      expect(result).toBeNull()
-    })
-
-    it("returns null when subscription plan does not match", () => {
-      const result = resolveSubscriptionDetails(
-        [{ plan: "pro", status: "active" }],
-        "starter"
-      )
-      expect(result).toBeNull()
-    })
-
-    it("extracts details from matching active subscription", () => {
-      const periodEnd = new Date("2026-04-12")
-      const result = resolveSubscriptionDetails(
-        [
-          {
-            plan: "pro",
-            status: "active",
-            periodEnd,
-            cancelAtPeriodEnd: false,
-            cancelAt: null,
-          },
-        ],
-        "pro"
-      )
-      expect(result).toEqual({
-        status: "active",
-        periodEnd,
-        cancelAtPeriodEnd: false,
-        cancelAt: null,
-      })
-    })
-
-    it("defaults missing optional fields to null/false", () => {
-      const result = resolveSubscriptionDetails(
-        [{ plan: "pro", status: "trialing" }],
-        "pro"
-      )
-      expect(result).toEqual({
-        status: "trialing",
-        periodEnd: null,
-        cancelAtPeriodEnd: false,
-        cancelAt: null,
-      })
-    })
-  })
-
   // ── getBillingData ─────────────────────────────────────────────────────
 
   describe("getBillingData", () => {
@@ -218,8 +143,6 @@ describe("billing.server", () => {
       expect(data.planId).toBe("free")
       expect(data.plan.id).toBe("free")
       expect(data.subscription).toBeNull()
-      // Verify no DB call was made — subscription details derived from API response.
-      expect(dbSelectMock).not.toHaveBeenCalled()
     })
 
     it("returns plan and subscription for pro user", async () => {
@@ -244,8 +167,6 @@ describe("billing.server", () => {
         cancelAtPeriodEnd: false,
         cancelAt: null,
       })
-      // Single API call, no DB round trip.
-      expect(dbSelectMock).not.toHaveBeenCalled()
     })
   })
 
@@ -254,7 +175,7 @@ describe("billing.server", () => {
   describe("checkUserPlanLimit - workspace", () => {
     it("allows when under limit (free, 0 workspaces)", async () => {
       listActiveSubscriptionsMock.mockResolvedValue([])
-      mockDbChain(dbSelectMock, [{ count: 0 }])
+      countOwnedWorkspacesMock.mockResolvedValue(0)
 
       const result = await checkUserPlanLimit(
         TEST_HEADERS,
@@ -269,7 +190,7 @@ describe("billing.server", () => {
 
     it("blocks when at limit (free, 1 workspace)", async () => {
       listActiveSubscriptionsMock.mockResolvedValue([])
-      mockDbChain(dbSelectMock, [{ count: 1 }])
+      countOwnedWorkspacesMock.mockResolvedValue(1)
 
       const result = await checkUserPlanLimit(
         TEST_HEADERS,
@@ -287,7 +208,7 @@ describe("billing.server", () => {
       listActiveSubscriptionsMock.mockResolvedValue([
         { plan: "pro", status: "active" },
       ])
-      mockDbChain(dbSelectMock, [{ count: 3 }])
+      countOwnedWorkspacesMock.mockResolvedValue(3)
 
       const result = await checkUserPlanLimit(
         TEST_HEADERS,
@@ -307,7 +228,7 @@ describe("billing.server", () => {
       listActiveSubscriptionsMock.mockResolvedValue([
         { plan: "pro", status: "active" },
       ])
-      mockDbChain(dbSelectMock, [{ count: 25 }])
+      countOwnedWorkspacesMock.mockResolvedValue(25)
 
       const result = await checkUserPlanLimit(
         TEST_HEADERS,
@@ -322,12 +243,10 @@ describe("billing.server", () => {
     })
 
     it("falls back to free limits for past_due subscription", async () => {
-      // past_due is not in the active statuses list, so resolveUserPlanId
-      // should ignore it and fall back to the free plan.
       listActiveSubscriptionsMock.mockResolvedValue([
         { plan: "pro", status: "past_due" },
       ])
-      mockDbChain(dbSelectMock, [{ count: 0 }])
+      countOwnedWorkspacesMock.mockResolvedValue(0)
 
       const result = await checkUserPlanLimit(
         TEST_HEADERS,
@@ -353,8 +272,7 @@ describe("billing.server", () => {
 
     it("allows when no owner found (personal workspace fallback)", async () => {
       listActiveSubscriptionsMock.mockResolvedValue([])
-      // getWorkspaceOwnerUserId returns empty array (no owner).
-      mockDbChain(dbSelectMock, [])
+      getWorkspaceOwnerUserIdMock.mockResolvedValue(null)
 
       const result = await checkUserPlanLimit(
         TEST_HEADERS,
@@ -369,20 +287,10 @@ describe("billing.server", () => {
 
     it("checks member limit against workspace owner's plan", async () => {
       const ownerId = "owner_456"
+      getWorkspaceOwnerUserIdMock.mockResolvedValue(ownerId)
+      countWorkspaceMembersMock.mockResolvedValue(3)
 
-      // First DB call: getWorkspaceOwnerUserId — returns owner.
-      const whereOwner = vi.fn().mockResolvedValue([{ userId: ownerId }])
-      const fromOwner = vi.fn().mockReturnValue({ where: whereOwner })
-
-      // Second DB call: countWorkspaceMembers — returns count.
-      const whereMembers = vi.fn().mockResolvedValue([{ count: 3 }])
-      const fromMembers = vi.fn().mockReturnValue({ where: whereMembers })
-
-      dbSelectMock
-        .mockReturnValueOnce({ from: fromOwner })
-        .mockReturnValueOnce({ from: fromMembers })
-
-      // Owner has starter plan.
+      // Owner has no subscription (free plan).
       listActiveSubscriptionsMock.mockResolvedValue([])
 
       const result = await checkUserPlanLimit(
@@ -486,19 +394,6 @@ describe("billing.server", () => {
           returnUrl: expect.stringContaining("/billing"),
         },
       })
-    })
-  })
-
-  // ── getInvoicesForUser ─────────────────────────────────────────────────
-
-  describe("getInvoicesForUser", () => {
-    it("returns empty array when no stripeCustomerId", async () => {
-      mockDbChain(dbSelectMock, [{ stripeCustomerId: null }])
-
-      const result = await getInvoicesForUser(TEST_USER_ID)
-
-      expect(result).toEqual([])
-      expect(stripeInvoicesListMock).not.toHaveBeenCalled()
     })
   })
 })

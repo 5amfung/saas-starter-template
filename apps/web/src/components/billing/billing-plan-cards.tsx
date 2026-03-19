@@ -9,8 +9,8 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card"
 import { Toggle } from "@workspace/ui/components/toggle"
-import { formatPlanPrice, getPlanFeatures } from "@/billing/plans"
-import type { Plan, PlanId } from "@/billing/plans"
+import { formatPlanPrice, getPlanFeatures } from "@workspace/billing/plans"
+import type { Plan, PlanId } from "@workspace/billing/plans"
 
 interface BillingPlanCardsProps {
   currentPlan: Plan

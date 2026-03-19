@@ -10,7 +10,7 @@ import {
   getPlanLimitsForPlanId,
   getUpgradePlan,
   resolveUserPlanId,
-} from "@/billing/plans"
+} from "./plans"
 
 describe("plans", () => {
   it("exports exactly three plans", () => {

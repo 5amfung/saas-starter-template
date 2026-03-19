@@ -1,6 +1,7 @@
 import { createDb } from "@workspace/db"
 import { createEmailClient } from "@workspace/email"
 import { createAuth } from "@workspace/auth/server"
+import { createBillingService } from "@workspace/billing/server"
 import { getRequestHeaders } from "@tanstack/react-start/server"
 import { logger } from "@/lib/logger"
 
@@ -13,6 +14,13 @@ export const emailClient = createEmailClient({
   appName: process.env.VITE_APP_NAME || "App",
   devPrefix: process.env.NODE_ENV !== "production",
 })
+
+// Billing service must be created before auth since auth hooks use it.
+// It only depends on db and Stripe — no circular dependency.
+export const billingService = createBillingService(
+  db,
+  process.env.STRIPE_SECRET_KEY!
+)
 
 export const auth = createAuth({
   db,
@@ -31,5 +39,12 @@ export const auth = createAuth({
   },
   logger,
   getRequestHeaders,
-  // hooks will be added in Task 6 when billing is extracted.
+  hooks: {
+    beforeCreateOrganization: async (userId) => {
+      await billingService.checkWorkspaceLimit(userId)
+    },
+    beforeCreateInvitation: async (organizationId) => {
+      await billingService.checkMemberLimit(organizationId)
+    },
+  },
 })

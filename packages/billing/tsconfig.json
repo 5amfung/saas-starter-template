@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@workspace/billing/*": ["./src/*"],
+      "@workspace/db": ["../db/src/index.ts"],
+      "@workspace/db/*": ["../db/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "vitest.config.ts"]
+}

@@ -2,6 +2,8 @@ import { useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { Card, CardContent } from "@workspace/ui/components/card"
+import { getUpgradePlan } from "@workspace/billing/plans"
+import type { PlanId } from "@workspace/billing/plans"
 import {
   createCheckoutSession,
   createPortalSession,
@@ -9,8 +11,6 @@ import {
   getUserBillingData,
   reactivateSubscription,
 } from "@/billing/billing.functions"
-import { getUpgradePlan } from "@/billing/plans"
-import type { PlanId } from "@/billing/plans"
 import { SESSION_QUERY_KEY } from "@/hooks/use-session-query"
 import { BillingDowngradeBanner } from "./billing-downgrade-banner"
 import { BillingInvoiceTable } from "./billing-invoice-table"

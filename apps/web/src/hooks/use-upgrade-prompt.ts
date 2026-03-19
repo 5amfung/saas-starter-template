@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { useMutation } from "@tanstack/react-query"
 import { toast } from "sonner"
+import type { Plan, PlanId } from "@workspace/billing/plans"
 import { createCheckoutSession } from "@/billing/billing.functions"
-import type { Plan, PlanId } from "@/billing/plans"
 
 interface UpgradePromptState {
   open: boolean

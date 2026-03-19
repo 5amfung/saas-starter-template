@@ -1,0 +1,25 @@
+{
+  "name": "@workspace/billing",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./plans": "./src/plans.ts",
+    "./server": "./src/billing.server.ts"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@workspace/db": "workspace:*",
+    "better-auth": "1.5.5",
+    "drizzle-orm": "^0.45.1",
+    "stripe": "^20.4.1"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.18",
+    "vite-tsconfig-paths": "^6.1.0",
+    "typescript": "^5.9.3"
+  }
+}

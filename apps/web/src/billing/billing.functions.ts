@@ -1,24 +1,24 @@
 import { createServerFn } from "@tanstack/react-start"
 import { getRequestHeaders } from "@tanstack/react-start/server"
 import * as z from "zod"
+import type { PlanId } from "@workspace/billing/plans"
+import { PLANS } from "@workspace/billing/plans"
 import {
   checkUserPlanLimit,
   createCheckoutForPlan,
   createUserBillingPortal,
   getBillingData,
-  getInvoicesForUser,
   reactivateUserSubscription,
   requireVerifiedSession,
 } from "@/billing/billing.server"
-import type { PlanId } from "@/billing/plans"
-import { PLANS } from "@/billing/plans"
+import { billingService } from "@/init"
 
 /**
  * Fetches the current user's invoices from Stripe (past 12 months).
  */
 export const getInvoices = createServerFn().handler(async () => {
   const session = await requireVerifiedSession()
-  return getInvoicesForUser(session.user.id)
+  return billingService.getInvoicesForUser(session.user.id)
 })
 
 const VALID_PLAN_IDS = PLANS.map((p) => p.id) as [PlanId, ...Array<PlanId>]

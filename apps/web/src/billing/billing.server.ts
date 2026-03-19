@@ -1,23 +1,15 @@
 import { getRequestHeaders } from "@tanstack/react-start/server"
 import { redirect } from "@tanstack/react-router"
-import { and, count, eq } from "drizzle-orm"
-import Stripe from "stripe"
-import {
-  member as memberTable,
-  subscription as subscriptionTable,
-  user as userTable,
-} from "@workspace/db/schema"
-import { auth, db } from "@/init"
 import {
   getFreePlan,
   getPlanById,
   getPlanLimitsForPlanId,
   getUpgradePlan,
   resolveUserPlanId,
-} from "@/billing/plans"
-import type { Plan, PlanId, PlanLimits } from "@/billing/plans"
-
-const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!)
+} from "@workspace/billing/plans"
+import { resolveSubscriptionDetails } from "@workspace/billing/server"
+import type { Plan, PlanId, PlanLimits } from "@workspace/billing/plans"
+import { auth, billingService } from "@/init"
 
 export async function requireVerifiedSession() {
   const headers = getRequestHeaders()
@@ -75,41 +67,6 @@ export async function getUserPlanContext(
 }
 
 /**
- * Extracts subscription details from an in-memory subscription list.
- * Pure function — no DB or API calls. Used by getBillingData to avoid
- * a redundant round trip after listActiveSubscriptions already fetched
- * the same data.
- */
-export function resolveSubscriptionDetails(
-  subscriptions: ReadonlyArray<{
-    plan: string
-    status: string
-    periodEnd?: Date | null
-    cancelAtPeriodEnd?: boolean | null
-    cancelAt?: Date | null
-  }>,
-  planId: PlanId
-): {
-  status: string
-  periodEnd: Date | null
-  cancelAtPeriodEnd: boolean
-  cancelAt: Date | null
-} | null {
-  const active = subscriptions.find(
-    (s) =>
-      (s.status === "active" || s.status === "trialing") && s.plan === planId
-  )
-  if (!active) return null
-
-  return {
-    status: active.status,
-    periodEnd: active.periodEnd ?? null,
-    cancelAtPeriodEnd: active.cancelAtPeriodEnd ?? false,
-    cancelAt: active.cancelAt ?? null,
-  }
-}
-
-/**
  * Returns the current user's billing state for the billing page.
  * Fetches subscriptions once and derives both plan context and
  * subscription details from the same data.
@@ -159,7 +116,7 @@ export async function checkUserPlanLimit(
         upgradePlan: ctx.upgradePlan,
       }
     }
-    const current = await countOwnedWorkspaces(userId)
+    const current = await billingService.countOwnedWorkspaces(userId)
     return {
       allowed: current < limit,
       current,
@@ -175,7 +132,7 @@ export async function checkUserPlanLimit(
 
   // Member limits are based on the workspace owner's plan, not the
   // current user's plan. This mirrors the beforeCreateInvitation hook.
-  const ownerId = await getWorkspaceOwnerUserId(workspaceId)
+  const ownerId = await billingService.getWorkspaceOwnerUserId(workspaceId)
   if (!ownerId) {
     const ctx = await getUserPlanContext(headers, userId)
     return {
@@ -198,7 +155,7 @@ export async function checkUserPlanLimit(
       upgradePlan: ctx.upgradePlan,
     }
   }
-  const current = await countWorkspaceMembers(workspaceId)
+  const current = await billingService.countWorkspaceMembers(workspaceId)
   return {
     allowed: current < limit,
     current,
@@ -206,97 +163,6 @@ export async function checkUserPlanLimit(
     planName: ctx.planName,
     upgradePlan: ctx.upgradePlan,
   }
-}
-
-/**
- * Resolves a user's plan ID by querying the subscription table directly.
- * Unlike getUserActivePlanId, this does not require an HTTP session context,
- * making it safe to call from database hooks where no request headers exist.
- */
-export async function resolveUserPlanIdFromDb(userId: string): Promise<PlanId> {
-  const rows = await db
-    .select({ plan: subscriptionTable.plan, status: subscriptionTable.status })
-    .from(subscriptionTable)
-    .where(eq(subscriptionTable.referenceId, userId))
-  return resolveUserPlanId(
-    rows.filter((r): r is { plan: string; status: string } => r.status !== null)
-  )
-}
-
-/**
- * Counts the number of workspaces where the user is an owner.
- * Used by both the plan limit check and the org creation hook.
- */
-export async function countOwnedWorkspaces(userId: string): Promise<number> {
-  const [result] = await db
-    .select({ count: count() })
-    .from(memberTable)
-    .where(and(eq(memberTable.userId, userId), eq(memberTable.role, "owner")))
-  return result.count
-}
-
-/**
- * Returns the owner's user ID for a workspace, or null if none found.
- * Used by the plan limit check to resolve the owner's plan for member limits.
- */
-export async function getWorkspaceOwnerUserId(
-  workspaceId: string
-): Promise<string | null> {
-  const rows = await db
-    .select({ userId: memberTable.userId })
-    .from(memberTable)
-    .where(
-      and(
-        eq(memberTable.organizationId, workspaceId),
-        eq(memberTable.role, "owner")
-      )
-    )
-  if (rows.length === 0) return null
-  return rows[0].userId
-}
-
-/**
- * Counts the number of members in a workspace.
- * Used by both the plan limit check and the invitation hook.
- */
-export async function countWorkspaceMembers(
-  workspaceId: string
-): Promise<number> {
-  const [result] = await db
-    .select({ count: count() })
-    .from(memberTable)
-    .where(eq(memberTable.organizationId, workspaceId))
-  return result.count
-}
-
-/**
- * Fetches a user's invoices from Stripe (past 12 months).
- */
-export async function getInvoicesForUser(userId: string) {
-  const [dbUser] = await db
-    .select({ stripeCustomerId: userTable.stripeCustomerId })
-    .from(userTable)
-    .where(eq(userTable.id, userId))
-
-  if (!dbUser.stripeCustomerId) return []
-
-  const SECONDS_PER_YEAR = 365 * 24 * 60 * 60
-  const twelveMonthsAgo = Math.floor(Date.now() / 1000) - SECONDS_PER_YEAR
-  const invoices = await stripeClient.invoices.list({
-    customer: dbUser.stripeCustomerId,
-    limit: 100,
-    created: { gte: twelveMonthsAgo },
-  })
-
-  return invoices.data.map((inv) => ({
-    id: inv.id,
-    date: inv.created,
-    status: inv.status,
-    amount: inv.amount_paid,
-    currency: inv.currency,
-    invoiceUrl: inv.hosted_invoice_url,
-    invoicePdf: inv.invoice_pdf,
-  }))
 }
 
 /**
