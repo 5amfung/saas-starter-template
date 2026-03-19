@@ -11,8 +11,8 @@ import { stripe } from "@better-auth/stripe"
 import Stripe from "stripe"
 import { eq } from "drizzle-orm"
 import { user as userTable } from "@workspace/db/schema"
-import type { EmailClient } from "@workspace/email"
 import type { Database } from "@workspace/db"
+import type { EmailClient } from "@workspace/email"
 import {
   PERSONAL_WORKSPACE_NAME,
   PERSONAL_WORKSPACE_TYPE,
