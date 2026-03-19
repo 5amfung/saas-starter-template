@@ -1,42 +1,22 @@
+// Import workspace helpers for local use.
+import { isPersonalWorkspaceOwnedByUser as _isPersonalWorkspaceOwnedByUser } from "@workspace/auth"
+
+// Re-export workspace type constants from @workspace/auth.
+export {
+  PERSONAL_WORKSPACE_TYPE,
+  STANDARD_WORKSPACE_TYPE,
+  PERSONAL_WORKSPACE_NAME,
+  WORKSPACE_TYPES,
+  type WorkspaceType,
+  type PersonalWorkspaceFields,
+  isPersonalWorkspace,
+  isPersonalWorkspaceOwnedByUser,
+  buildPersonalWorkspaceSlug,
+} from "@workspace/auth"
+
 const WORKSPACE_NAME_FALLBACK = "workspace"
 const MAX_SLUG_BASE_LENGTH = 40
 const RANDOM_SUFFIX_LENGTH = 6
-const PERSONAL_WORKSPACE_SLUG_PREFIX = "personal"
-
-export const PERSONAL_WORKSPACE_TYPE = "personal"
-export const STANDARD_WORKSPACE_TYPE = "workspace"
-export const PERSONAL_WORKSPACE_NAME = "Personal"
-export const WORKSPACE_TYPES = [
-  PERSONAL_WORKSPACE_TYPE,
-  STANDARD_WORKSPACE_TYPE,
-] as const
-
-export type WorkspaceType = (typeof WORKSPACE_TYPES)[number]
-
-export type PersonalWorkspaceFields = {
-  workspaceType: typeof PERSONAL_WORKSPACE_TYPE
-  personalOwnerUserId: string
-}
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null
-
-export function isPersonalWorkspace(workspace: unknown): boolean {
-  return (
-    isRecord(workspace) && workspace.workspaceType === PERSONAL_WORKSPACE_TYPE
-  )
-}
-
-export function isPersonalWorkspaceOwnedByUser(
-  workspace: unknown,
-  userId: string
-): boolean {
-  if (!isRecord(workspace)) return false
-  return (
-    workspace.workspaceType === PERSONAL_WORKSPACE_TYPE &&
-    workspace.personalOwnerUserId === userId
-  )
-}
 
 // Pick personal workspace first then any one of the other workspaces.
 export function pickDefaultWorkspace<T extends { id: string }>(
@@ -47,15 +27,11 @@ export function pickDefaultWorkspace<T extends { id: string }>(
 
   const ownedPersonalWorkspace =
     workspaces.find((workspace) =>
-      isPersonalWorkspaceOwnedByUser(workspace, userId)
+      _isPersonalWorkspaceOwnedByUser(workspace, userId)
     ) ?? null
   if (ownedPersonalWorkspace) return ownedPersonalWorkspace
 
   return workspaces[0] ?? null
-}
-
-export function buildPersonalWorkspaceSlug(userId: string): string {
-  return `${PERSONAL_WORKSPACE_SLUG_PREFIX}-${userId.toLowerCase()}`
 }
 
 export function buildWorkspaceSlugBase(name: string): string {

@@ -18,8 +18,8 @@ import {
   FieldLabel,
 } from "@workspace/ui/components/field"
 import { Input } from "@workspace/ui/components/input"
-import { authClient } from "@/auth/auth-client"
-import { forgotPasswordSchema } from "@/auth/schemas"
+import { authClient } from "@workspace/auth/client"
+import { forgotPasswordSchema } from "@workspace/auth/schemas"
 import { FormError } from "@/components/auth/form-error"
 import { toFieldErrorItem } from "@/lib/form-utils"
 

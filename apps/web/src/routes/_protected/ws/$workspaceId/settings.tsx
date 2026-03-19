@@ -22,8 +22,8 @@ import {
 } from "@workspace/ui/components/field"
 import { Input } from "@workspace/ui/components/input"
 import { Separator } from "@workspace/ui/components/separator"
+import { authClient } from "@workspace/auth/client"
 import { WorkspaceDeleteDialog } from "@/components/workspace/workspace-delete-dialog"
-import { authClient } from "@/auth/auth-client"
 import { toFieldErrorItem } from "@/lib/form-utils"
 import { isPersonalWorkspace } from "@/workspace/workspace"
 

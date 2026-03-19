@@ -31,7 +31,9 @@
       "@workspace/db": ["../../packages/db/src/index.ts"],
       "@workspace/db/*": ["../../packages/db/src/*"],
       "@workspace/email": ["../../packages/email/src/index.ts"],
-      "@workspace/email/*": ["../../packages/email/src/*"]
+      "@workspace/email/*": ["../../packages/email/src/*"],
+      "@workspace/auth": ["../../packages/auth/src/index.ts"],
+      "@workspace/auth/*": ["../../packages/auth/src/*"]
     }
   }
 }

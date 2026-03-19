@@ -16,7 +16,7 @@ import {
 import { Button } from "@workspace/ui/components/button"
 import { Field, FieldError, FieldLabel } from "@workspace/ui/components/field"
 import { Input } from "@workspace/ui/components/input"
-import { authClient } from "@/auth/auth-client"
+import { authClient } from "@workspace/auth/client"
 import { changeEmailSchema } from "@/account/schemas"
 
 const CONFIRMATION_TEXT = "CHANGE"

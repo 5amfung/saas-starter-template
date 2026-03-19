@@ -3,7 +3,7 @@ import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import type { SortingState } from "@tanstack/react-table"
 import { toast } from "sonner"
-import { authClient } from "@/auth/auth-client"
+import { authClient } from "@workspace/auth/client"
 import { useSessionQuery } from "@/hooks/use-session-query"
 import type { WorkspaceMemberRow } from "@/components/workspace/workspace-members-table"
 import {

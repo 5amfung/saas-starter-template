@@ -1,5 +1,5 @@
 import { APIError } from "better-auth/api"
-import { auth } from "@/auth/auth.server"
+import { auth } from "@/init"
 import { pickDefaultWorkspace } from "@/workspace/workspace"
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

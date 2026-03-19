@@ -8,7 +8,7 @@ const { linkSocialMock, unlinkAccountMock } = vi.hoisted(() => ({
   unlinkAccountMock: vi.fn(),
 }))
 
-vi.mock("@/auth/auth-client", () => ({
+vi.mock("@workspace/auth/client", () => ({
   authClient: {
     linkSocial: linkSocialMock,
     unlinkAccount: unlinkAccountMock,

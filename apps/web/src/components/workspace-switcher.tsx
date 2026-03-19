@@ -30,7 +30,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@workspace/ui/components/sidebar"
-import { authClient } from "@/auth/auth-client"
+import { authClient } from "@workspace/auth/client"
 import { checkPlanLimit } from "@/billing/billing.functions"
 import { UpgradePromptDialog } from "@/components/billing/upgrade-prompt-dialog"
 import { useUpgradePrompt } from "@/hooks/use-upgrade-prompt"

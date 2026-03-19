@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
-import { authClient } from "@/auth/auth-client"
+import { authClient } from "@workspace/auth/client"
 import { AuthLayout } from "@/components/auth/auth-layout"
 import { CheckEmailCard } from "@/components/auth/check-email-card"
 import { getWebmailLinkForEmail } from "@/lib/email-provider"

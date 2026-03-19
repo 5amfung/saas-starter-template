@@ -8,7 +8,7 @@ const { changePasswordMock } = vi.hoisted(() => ({
   changePasswordMock: vi.fn(),
 }))
 
-vi.mock("@/auth/auth-client", () => ({
+vi.mock("@workspace/auth/client", () => ({
   authClient: { changePassword: changePasswordMock },
 }))
 

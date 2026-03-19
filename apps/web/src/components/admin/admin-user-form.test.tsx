@@ -8,7 +8,7 @@ const { updateUserMock } = vi.hoisted(() => ({
   updateUserMock: vi.fn(),
 }))
 
-vi.mock("@/auth/auth-client", () => ({
+vi.mock("@workspace/auth/client", () => ({
   authClient: {
     admin: {
       updateUser: updateUserMock,

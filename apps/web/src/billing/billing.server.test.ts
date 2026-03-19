@@ -33,7 +33,7 @@ const {
 
 // ── Module mocks ───────────────────────────────────────────────────────────
 
-vi.mock("@/auth/auth.server", () => ({
+vi.mock("@/init", () => ({
   auth: {
     api: {
       listActiveSubscriptions: listActiveSubscriptionsMock,
@@ -43,9 +43,6 @@ vi.mock("@/auth/auth.server", () => ({
       getSession: getSessionMock,
     },
   },
-}))
-
-vi.mock("@/init", () => ({
   db: { select: dbSelectMock },
 }))
 

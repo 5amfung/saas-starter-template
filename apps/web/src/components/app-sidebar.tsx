@@ -17,7 +17,7 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from "@workspace/ui/components/sidebar"
-import { authClient } from "@/auth/auth-client"
+import { authClient } from "@workspace/auth/client"
 import { NavAdmin } from "@/components/nav-admin"
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"

@@ -7,7 +7,7 @@ import {
   subscription as subscriptionTable,
   user as userTable,
 } from "@workspace/db/schema"
-import { auth } from "@/auth/auth.server"
+import { auth, db } from "@/init"
 import {
   getFreePlan,
   getPlanById,
@@ -16,7 +16,6 @@ import {
   resolveUserPlanId,
 } from "@/billing/plans"
 import type { Plan, PlanId, PlanLimits } from "@/billing/plans"
-import { db } from "@/init"
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!)
 

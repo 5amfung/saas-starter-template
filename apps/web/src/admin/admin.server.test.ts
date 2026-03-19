@@ -29,7 +29,7 @@ vi.mock("drizzle-orm", async (importOriginal) => {
     sql: vi.fn(),
   }
 })
-vi.mock("@/auth/auth.server", () => ({
+vi.mock("@/init", () => ({
   auth: { api: {} },
 }))
 vi.mock("@/init", () => ({

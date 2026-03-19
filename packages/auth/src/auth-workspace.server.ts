@@ -2,12 +2,9 @@ import { APIError } from "better-auth/api"
 import {
   PERSONAL_WORKSPACE_TYPE,
   STANDARD_WORKSPACE_TYPE,
-} from "@/workspace/workspace"
+  WORKSPACE_TYPES,
+} from "./workspace-types"
 
-const WORKSPACE_TYPES = [
-  PERSONAL_WORKSPACE_TYPE,
-  STANDARD_WORKSPACE_TYPE,
-] as const
 type WorkspaceType = (typeof WORKSPACE_TYPES)[number]
 
 export const isWorkspaceType = (value: unknown): value is WorkspaceType =>
@@ -59,15 +56,13 @@ export const validateWorkspaceFields = (
 const ensureTrailingSlashRemoved = (value: string): string =>
   value.endsWith("/") ? value.slice(0, -1) : value
 
-const resolveAppOrigin = (): string => {
-  const baseUrl =
-    process.env.BETTER_AUTH_URL && process.env.BETTER_AUTH_URL.trim() !== ""
-      ? process.env.BETTER_AUTH_URL.trim()
-      : "http://localhost:3000"
-  return ensureTrailingSlashRemoved(baseUrl)
-}
-
-export const buildAcceptInviteUrl = (invitationId: string): string => {
-  const origin = resolveAppOrigin()
+/** Builds the accept-invite URL using the provided base URL. */
+export const buildAcceptInviteUrl = (
+  baseUrl: string,
+  invitationId: string
+): string => {
+  const origin = ensureTrailingSlashRemoved(
+    baseUrl && baseUrl.trim() !== "" ? baseUrl.trim() : "http://localhost:3000"
+  )
   return `${origin}/accept-invite?id=${encodeURIComponent(invitationId)}`
 }

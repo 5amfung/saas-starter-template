@@ -2,7 +2,7 @@ import { redirect } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { getRequestHeaders } from "@tanstack/react-start/server"
 import * as z from "zod"
-import { auth } from "@/auth/auth.server"
+import { auth } from "@/init"
 import {
   ensureActiveWorkspaceForSession,
   ensureWorkspaceMembership,

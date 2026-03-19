@@ -34,6 +34,7 @@
     "@tanstack/react-start": "^1.159.4",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/router-plugin": "^1.159.4",
+    "@workspace/auth": "workspace:*",
     "@workspace/db": "workspace:*",
     "@workspace/email": "workspace:*",
     "@workspace/ui": "workspace:*",

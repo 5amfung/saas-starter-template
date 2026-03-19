@@ -12,6 +12,7 @@ const { dbSelectMock, dbInsertMock } = vi.hoisted(() => ({
 
 vi.mock("@/init", () => ({
   db: { select: dbSelectMock, insert: dbInsertMock },
+  auth: { api: {} },
 }))
 
 vi.mock("@workspace/db/schema", () => ({
@@ -35,9 +36,6 @@ vi.mock("@tanstack/react-start/server", () => ({
 }))
 vi.mock("@tanstack/react-router", () => ({
   redirect: vi.fn(),
-}))
-vi.mock("@/auth/auth.server", () => ({
-  auth: { api: {} },
 }))
 
 describe("getNotificationPreferencesForUser", () => {

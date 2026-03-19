@@ -3,8 +3,8 @@ import { createFileRoute } from "@tanstack/react-router"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import type { SortingState } from "@tanstack/react-table"
 import { Button } from "@workspace/ui/components/button"
+import { authClient } from "@workspace/auth/client"
 import { AdminUserTable } from "@/components/admin/admin-user-table"
-import { authClient } from "@/auth/auth-client"
 
 export const Route = createFileRoute("/_protected/admin/user/")({
   component: AdminUserListPage,

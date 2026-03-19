@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card"
 import { FieldDescription } from "@workspace/ui/components/field"
-import { authClient } from "@/auth/auth-client"
+import { authClient } from "@workspace/auth/client"
 import { AuthLayout } from "@/components/auth/auth-layout"
 
 export const Route = createFileRoute("/accept-invite")({

@@ -21,7 +21,7 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card"
 import { Skeleton } from "@workspace/ui/components/skeleton"
-import { authClient } from "@/auth/auth-client"
+import { authClient } from "@workspace/auth/client"
 import {
   LINKED_ACCOUNTS_QUERY_KEY,
   useLinkedAccountsQuery,

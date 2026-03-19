@@ -18,8 +18,8 @@ import {
   FieldSeparator,
 } from "@workspace/ui/components/field"
 import { Input } from "@workspace/ui/components/input"
-import { authClient } from "@/auth/auth-client"
-import { loginSchema } from "@/auth/schemas"
+import { authClient } from "@workspace/auth/client"
+import { loginSchema } from "@workspace/auth/schemas"
 import { FormError } from "@/components/auth/form-error"
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button"
 import { toFieldErrorItem } from "@/lib/form-utils"

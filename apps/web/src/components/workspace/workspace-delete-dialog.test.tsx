@@ -11,7 +11,7 @@ const { organizationDeleteMock, organizationSetActiveMock, navigateMock } =
     navigateMock: vi.fn(),
   }))
 
-vi.mock("@/auth/auth-client", () => ({
+vi.mock("@workspace/auth/client", () => ({
   authClient: {
     organization: {
       delete: organizationDeleteMock,

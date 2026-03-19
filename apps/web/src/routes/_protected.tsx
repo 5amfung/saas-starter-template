@@ -1,10 +1,10 @@
 import { useEffect } from "react"
 import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { SidebarInset, SidebarProvider } from "@workspace/ui/components/sidebar"
+import { authClient } from "@workspace/auth/client"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { authMiddleware } from "@/middleware/auth"
-import { authClient } from "@/auth/auth-client"
 
 export const Route = createFileRoute("/_protected")({
   component: ProtectedLayout,

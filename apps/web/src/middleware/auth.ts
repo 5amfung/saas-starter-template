@@ -1,15 +1,15 @@
-import { redirect } from "@tanstack/react-router"
 import { createMiddleware } from "@tanstack/react-start"
 import { getRequestHeaders } from "@tanstack/react-start/server"
-import { auth } from "@/auth/auth.server"
+import {
+  getVerifiedSession,
+  validateGuestSession as validateGuest,
+} from "@workspace/auth/validators"
 import { ensureActiveWorkspaceForSession } from "@/workspace/workspace.server"
+import { auth } from "@/init"
 
 /** Validates that the request has an authenticated, email-verified session and an active workspace. */
 export async function validateAuthSession(headers: Headers) {
-  const session = await auth.api.getSession({ headers })
-  if (!session || !session.user.emailVerified) {
-    throw redirect({ to: "/signin" })
-  }
+  const session = await getVerifiedSession(headers, auth)
   await ensureActiveWorkspaceForSession(headers, {
     user: { id: session.user.id },
     session: session.session,
@@ -19,10 +19,7 @@ export async function validateAuthSession(headers: Headers) {
 
 /** Validates that the request is from a guest (no verified session). Redirects authenticated users. */
 export async function validateGuestSession(headers: Headers) {
-  const session = await auth.api.getSession({ headers })
-  if (session?.user.emailVerified) {
-    throw redirect({ to: "/ws" })
-  }
+  await validateGuest(headers, auth)
 }
 
 export const authMiddleware = createMiddleware().server(async ({ next }) => {

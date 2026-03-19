@@ -2,7 +2,7 @@ import * as React from "react"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import type { SortingState } from "@tanstack/react-table"
 import { toast } from "sonner"
-import { authClient } from "@/auth/auth-client"
+import { authClient } from "@workspace/auth/client"
 import type { WorkspaceInvitationRow } from "@/components/workspace/workspace-invitations-table"
 import {
   DEFAULT_INVITE_ROLES,

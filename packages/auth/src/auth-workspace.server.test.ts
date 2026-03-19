@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 import {
   asOptionalString,
   buildAcceptInviteUrl,
@@ -116,47 +116,32 @@ describe("validateWorkspaceFields", () => {
 })
 
 describe("buildAcceptInviteUrl", () => {
-  const originalEnv = process.env.BETTER_AUTH_URL
-
-  afterEach(() => {
-    if (originalEnv === undefined) {
-      delete process.env.BETTER_AUTH_URL
-    } else {
-      process.env.BETTER_AUTH_URL = originalEnv
-    }
-  })
-
-  it("uses BETTER_AUTH_URL when set", () => {
-    process.env.BETTER_AUTH_URL = "https://app.example.com"
-    expect(buildAcceptInviteUrl("inv_123")).toBe(
+  it("uses provided baseUrl", () => {
+    expect(buildAcceptInviteUrl("https://app.example.com", "inv_123")).toBe(
       "https://app.example.com/accept-invite?id=inv_123"
     )
   })
 
   it("removes trailing slash from origin", () => {
-    process.env.BETTER_AUTH_URL = "https://app.example.com/"
-    expect(buildAcceptInviteUrl("inv_123")).toBe(
+    expect(buildAcceptInviteUrl("https://app.example.com/", "inv_123")).toBe(
       "https://app.example.com/accept-invite?id=inv_123"
     )
   })
 
-  it("falls back to localhost when env is unset", () => {
-    delete process.env.BETTER_AUTH_URL
-    expect(buildAcceptInviteUrl("inv_123")).toBe(
+  it("falls back to localhost when baseUrl is empty", () => {
+    expect(buildAcceptInviteUrl("  ", "inv_123")).toBe(
       "http://localhost:3000/accept-invite?id=inv_123"
     )
   })
 
-  it("falls back to localhost when env is empty", () => {
-    process.env.BETTER_AUTH_URL = "  "
-    expect(buildAcceptInviteUrl("inv_123")).toBe(
+  it("falls back to localhost when baseUrl is empty string", () => {
+    expect(buildAcceptInviteUrl("", "inv_123")).toBe(
       "http://localhost:3000/accept-invite?id=inv_123"
     )
   })
 
   it("encodes special characters in invitationId", () => {
-    delete process.env.BETTER_AUTH_URL
-    expect(buildAcceptInviteUrl("a&b=c")).toBe(
+    expect(buildAcceptInviteUrl("http://localhost:3000", "a&b=c")).toBe(
       "http://localhost:3000/accept-invite?id=a%26b%3Dc"
     )
   })

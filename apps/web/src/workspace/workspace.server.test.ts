@@ -10,7 +10,7 @@ const { listOrganizationsMock, setActiveOrganizationMock } = vi.hoisted(() => ({
   setActiveOrganizationMock: vi.fn(),
 }))
 
-vi.mock("@/auth/auth.server", () => ({
+vi.mock("@/init", () => ({
   auth: {
     api: {
       listOrganizations: listOrganizationsMock,

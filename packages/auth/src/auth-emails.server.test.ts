@@ -8,19 +8,8 @@ const { sendEmailMock, buildEmailRequestContextMock, getRequestHeadersMock } =
     getRequestHeadersMock: vi.fn(),
   }))
 
-vi.mock("@/init", () => ({
-  emailClient: {
-    sendEmail: sendEmailMock,
-    config: { appName: "TestApp" },
-  },
-}))
-
 vi.mock("@workspace/email", () => ({
   buildEmailRequestContext: buildEmailRequestContextMock,
-}))
-
-vi.mock("@tanstack/react-start/server", () => ({
-  getRequestHeaders: getRequestHeadersMock,
 }))
 
 // Mock email template components to simple strings for assertion simplicity.
@@ -41,12 +30,7 @@ vi.mock("@workspace/email/templates/workspace-invitation-email", () => ({
 }))
 
 // Lazily import the module under test after all mocks are registered.
-const {
-  sendChangeEmailConfirmation,
-  sendResetPasswordEmail,
-  sendVerificationEmail,
-  sendInvitationEmail,
-} = await import("./auth-emails.server")
+const { createAuthEmails } = await import("./auth-emails.server")
 
 const MOCK_REQUEST_CONTEXT = {
   requestedAtUtc: "12 March 2026, 10:00 UTC",
@@ -55,16 +39,36 @@ const MOCK_REQUEST_CONTEXT = {
 
 const MOCK_HEADERS = new Headers()
 
+const BASE_URL = "http://localhost:3000"
+
+function createTestEmails() {
+  return createAuthEmails({
+    emailClient: {
+      sendEmail: sendEmailMock,
+      config: {
+        appName: "TestApp",
+        apiKey: "test",
+        fromEmail: "test@test.com",
+      },
+    },
+    getRequestHeaders: getRequestHeadersMock,
+    baseUrl: BASE_URL,
+  })
+}
+
 describe("auth-emails", () => {
+  let emails: ReturnType<typeof createTestEmails>
+
   beforeEach(() => {
     vi.clearAllMocks()
     getRequestHeadersMock.mockReturnValue(MOCK_HEADERS)
     buildEmailRequestContextMock.mockReturnValue(MOCK_REQUEST_CONTEXT)
+    emails = createTestEmails()
   })
 
   describe("sendChangeEmailConfirmation", () => {
     it("sends email with correct parameters", async () => {
-      await sendChangeEmailConfirmation({
+      await emails.sendChangeEmailConfirmation({
         user: { email: "old@example.com" },
         newEmail: "new@example.com",
         url: "https://app.example.com/verify-change",
@@ -87,7 +91,7 @@ describe("auth-emails", () => {
 
   describe("sendResetPasswordEmail", () => {
     it("sends email with correct parameters", async () => {
-      await sendResetPasswordEmail({
+      await emails.sendResetPasswordEmail({
         user: { email: "user@example.com" },
         url: "https://app.example.com/reset",
       })
@@ -108,7 +112,7 @@ describe("auth-emails", () => {
 
   describe("sendVerificationEmail", () => {
     it("sends email with correct parameters", async () => {
-      await sendVerificationEmail({
+      await emails.sendVerificationEmail({
         user: { email: "user@example.com" },
         url: "https://app.example.com/verify",
       })
@@ -129,7 +133,7 @@ describe("auth-emails", () => {
 
   describe("sendInvitationEmail", () => {
     it("sends email with correct parameters", async () => {
-      await sendInvitationEmail({
+      await emails.sendInvitationEmail({
         email: "invitee@example.com",
         id: "inv_456",
         organization: { name: "Acme Corp" },
@@ -150,7 +154,7 @@ describe("auth-emails", () => {
     })
 
     it("does not call buildEmailRequestContext", async () => {
-      await sendInvitationEmail({
+      await emails.sendInvitationEmail({
         email: "invitee@example.com",
         id: "inv_789",
         organization: { name: "Team" },

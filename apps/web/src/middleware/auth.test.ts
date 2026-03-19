@@ -7,7 +7,7 @@ const { mockGetSession, mockEnsureActiveWorkspace } = vi.hoisted(() => ({
   mockEnsureActiveWorkspace: vi.fn(),
 }))
 
-vi.mock("@/auth/auth.server", () => ({
+vi.mock("@/init", () => ({
   auth: { api: { getSession: mockGetSession } },
 }))
 
