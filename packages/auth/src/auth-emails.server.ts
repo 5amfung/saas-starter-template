@@ -1,10 +1,10 @@
 import { createElement } from "react"
-import type { EmailClient } from "@workspace/email"
 import { buildEmailRequestContext } from "@workspace/email"
 import { ChangeEmailApprovalEmail } from "@workspace/email/templates/change-email-approval-email"
 import { EmailVerificationEmail } from "@workspace/email/templates/email-verification-email"
 import { ResetPasswordEmail } from "@workspace/email/templates/reset-password-email"
 import { WorkspaceInvitationEmail } from "@workspace/email/templates/workspace-invitation-email"
+import type { EmailClient } from "@workspace/email"
 import { buildAcceptInviteUrl } from "./auth-workspace.server"
 
 interface AuthEmailDeps {

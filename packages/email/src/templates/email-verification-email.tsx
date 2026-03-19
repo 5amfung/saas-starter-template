@@ -15,8 +15,8 @@ import {
   Text,
   pixelBasedPreset,
 } from "@react-email/components"
-import type { EmailRequestContext } from "../request-context"
 import { EmailSecurityNotice } from "./email-security-notice"
+import type { EmailRequestContext } from "../request-context"
 
 export interface EmailVerificationEmailProps {
   appName: string

@@ -11,7 +11,10 @@
     "test": "vitest run",
     "dev:email": "pnpx react-email dev --dir src/templates --port 3001",
     "lint": "eslint",
-    "lint:fix": "eslint --fix"
+    "lint:fix": "eslint --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "typecheck": "tsc --noEmit",
+    "check": "tsc --noEmit && eslint"
   },
   "dependencies": {
     "@react-email/components": "^1.0.7",

@@ -10,6 +10,9 @@
   "scripts": {
     "lint": "eslint",
     "lint:fix": "eslint --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "typecheck": "tsc --noEmit",
+    "check": "tsc --noEmit && eslint",
     "test": "vitest run --passWithNoTests",
     "db:generate": "dotenv -e .env -- drizzle-kit generate",
     "db:migrate": "dotenv -e .env -- drizzle-kit migrate",

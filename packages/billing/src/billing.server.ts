@@ -1,5 +1,4 @@
 import Stripe from "stripe"
-import type { Database } from "@workspace/db"
 import { and, count, eq } from "drizzle-orm"
 import {
   member as memberTable,
@@ -7,6 +6,7 @@ import {
   user as userTable,
 } from "@workspace/db/schema"
 import { APIError } from "better-auth/api"
+import type { Database } from "@workspace/db"
 import { getPlanLimitsForPlanId, resolveUserPlanId } from "./plans"
 import type { PlanId } from "./plans"
 
