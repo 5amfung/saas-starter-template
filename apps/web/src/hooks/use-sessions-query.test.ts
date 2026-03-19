@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { renderHook, waitFor } from "@testing-library/react"
-import { createHookWrapper } from "@/test/render"
+import { createHookWrapper } from "@workspace/test-utils"
 import {
   SESSIONS_QUERY_KEY,
   useSessionsQuery,

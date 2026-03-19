@@ -1,5 +1,5 @@
 // src/middleware/admin.test.ts
-import { createMockSessionResponse } from "@/test/factories"
+import { createMockSessionResponse } from "@workspace/test-utils"
 import { validateAdminSession } from "@/middleware/admin"
 
 const { mockGetSession } = vi.hoisted(() => ({

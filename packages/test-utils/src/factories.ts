@@ -1,5 +1,3 @@
-// src/test/factories.ts
-
 interface MockUser {
   id: string
   name: string

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { renderWithProviders } from "@/test/render"
+import { renderWithProviders } from "@workspace/test-utils"
 import { ChangePasswordDialog } from "@/components/account/change-password-dialog"
 
 const { changePasswordMock } = vi.hoisted(() => ({

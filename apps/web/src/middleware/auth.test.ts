@@ -1,5 +1,5 @@
 // src/middleware/auth.test.ts
-import { createMockSessionResponse } from "@/test/factories"
+import { createMockSessionResponse } from "@workspace/test-utils"
 import { validateAuthSession, validateGuestSession } from "@/middleware/auth"
 
 const { mockGetSession, mockEnsureActiveWorkspace } = vi.hoisted(() => ({

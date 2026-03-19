@@ -2,7 +2,7 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { SortingState } from "@tanstack/react-table"
-import { createMockInvitationRow } from "@/test/factories"
+import { createMockInvitationRow } from "@workspace/test-utils"
 import { WorkspaceInvitationsTable } from "@/components/workspace/workspace-invitations-table"
 
 const defaultProps = {
