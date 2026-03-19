@@ -2,6 +2,11 @@ import { getRequestHeaders } from "@tanstack/react-start/server"
 import { redirect } from "@tanstack/react-router"
 import { and, count, eq } from "drizzle-orm"
 import Stripe from "stripe"
+import {
+  member as memberTable,
+  subscription as subscriptionTable,
+  user as userTable,
+} from "@workspace/db/schema"
 import { auth } from "@/auth/auth.server"
 import {
   getFreePlan,
@@ -11,12 +16,7 @@ import {
   resolveUserPlanId,
 } from "@/billing/plans"
 import type { Plan, PlanId, PlanLimits } from "@/billing/plans"
-import { db } from "@/db"
-import {
-  member as memberTable,
-  subscription as subscriptionTable,
-  user as userTable,
-} from "@/db/schema"
+import { db } from "@/init"
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!)
 

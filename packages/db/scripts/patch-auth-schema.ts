@@ -11,7 +11,7 @@ import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..")
-const AUTH_SCHEMA_PATH = join(ROOT, "src/db/auth.schema.ts")
+const AUTH_SCHEMA_PATH = join(ROOT, "src/auth.schema.ts")
 
 const EXPORT_PREFIX = "export const "
 

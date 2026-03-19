@@ -10,20 +10,24 @@ const { dbSelectMock, dbInsertMock } = vi.hoisted(() => ({
   dbInsertMock: vi.fn(),
 }))
 
-vi.mock("@/db", () => ({
+vi.mock("@/init", () => ({
   db: { select: dbSelectMock, insert: dbInsertMock },
 }))
 
-vi.mock("@/db/schema", () => ({
+vi.mock("@workspace/db/schema", () => ({
   notificationPreferences: {
     userId: "userId",
     marketingEmails: "marketingEmails",
   },
 }))
 
-vi.mock("drizzle-orm", () => ({
-  eq: vi.fn((a, b) => ({ field: a, value: b })),
-}))
+vi.mock("drizzle-orm", async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    eq: vi.fn((a, b) => ({ field: a, value: b })),
+  }
+})
 
 // Mock server-only dependencies that notification-preferences.server.ts imports.
 vi.mock("@tanstack/react-start/server", () => ({

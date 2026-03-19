@@ -1,13 +1,13 @@
 import { getRequestHeaders } from "@tanstack/react-start/server"
 import { redirect } from "@tanstack/react-router"
 import { eq } from "drizzle-orm"
+import { notificationPreferences } from "@workspace/db/schema"
 import type {
   NotificationPreferences,
   NotificationPreferencesPatch,
 } from "@/account/notification-preferences.schemas"
 import { auth } from "@/auth/auth.server"
-import { db } from "@/db"
-import { notificationPreferences } from "@/db/schema"
+import { db } from "@/init"
 
 const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   emailUpdates: true,

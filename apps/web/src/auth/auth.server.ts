@@ -10,8 +10,8 @@ import { tanstackStartCookies } from "better-auth/tanstack-start"
 import { stripe } from "@better-auth/stripe"
 import Stripe from "stripe"
 import { and, eq } from "drizzle-orm"
-import { db } from "@/db"
-import { member as memberTable, user as userTable } from "@/db/schema"
+import { member as memberTable, user as userTable } from "@workspace/db/schema"
+import { db } from "@/init"
 import {
   PERSONAL_WORKSPACE_NAME,
   PERSONAL_WORKSPACE_TYPE,

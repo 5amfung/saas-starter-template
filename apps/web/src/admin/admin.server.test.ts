@@ -18,20 +18,24 @@ vi.mock("@tanstack/react-start/server", () => ({
 vi.mock("@tanstack/react-router", () => ({
   redirect: vi.fn(),
 }))
-vi.mock("drizzle-orm", () => ({
-  and: vi.fn(),
-  gte: vi.fn(),
-  isNotNull: vi.fn(),
-  lt: vi.fn(),
-  sql: vi.fn(),
-}))
+vi.mock("drizzle-orm", async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    and: vi.fn(),
+    gte: vi.fn(),
+    isNotNull: vi.fn(),
+    lt: vi.fn(),
+    sql: vi.fn(),
+  }
+})
 vi.mock("@/auth/auth.server", () => ({
   auth: { api: {} },
 }))
-vi.mock("@/db", () => ({
+vi.mock("@/init", () => ({
   db: { select: dbSelectMock },
 }))
-vi.mock("@/db/schema", () => ({
+vi.mock("@workspace/db/schema", () => ({
   user: {
     createdAt: "createdAt",
     emailVerified: "emailVerified",

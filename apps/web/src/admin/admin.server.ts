@@ -1,9 +1,9 @@
 import { getRequestHeaders } from "@tanstack/react-start/server"
 import { redirect } from "@tanstack/react-router"
 import { and, gte, isNotNull, lt, sql } from "drizzle-orm"
+import { user as userTable } from "@workspace/db/schema"
 import { auth } from "@/auth/auth.server"
-import { db } from "@/db"
-import { user as userTable } from "@/db/schema"
+import { db } from "@/init"
 
 // --- Auth ---
 

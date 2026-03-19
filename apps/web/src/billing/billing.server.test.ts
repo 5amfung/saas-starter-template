@@ -45,21 +45,25 @@ vi.mock("@/auth/auth.server", () => ({
   },
 }))
 
-vi.mock("@/db", () => ({
+vi.mock("@/init", () => ({
   db: { select: dbSelectMock },
 }))
 
-vi.mock("@/db/schema", () => ({
+vi.mock("@workspace/db/schema", () => ({
   member: "member",
   subscription: "subscription",
   user: "user",
 }))
 
-vi.mock("drizzle-orm", () => ({
-  and: vi.fn((...args: Array<unknown>) => args),
-  count: vi.fn(() => "count"),
-  eq: vi.fn((a: unknown, b: unknown) => [a, b]),
-}))
+vi.mock("drizzle-orm", async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    and: vi.fn((...args: Array<unknown>) => args),
+    count: vi.fn(() => "count"),
+    eq: vi.fn((a: unknown, b: unknown) => [a, b]),
+  }
+})
 
 vi.mock("stripe", () => {
   // Stripe is imported as a default export and called with `new Stripe(...)`.
