@@ -1,15 +1,15 @@
 {
   "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "base-maia",
+  "style": "base-vega",
   "rsc": false,
   "tsx": true,
   "tailwind": {
     "config": "",
     "css": "../../packages/ui/src/styles/globals.css",
-    "baseColor": "neutral",
+    "baseColor": "zinc",
     "cssVariables": true
   },
-  "iconLibrary": "hugeicons",
+  "iconLibrary": "tabler",
   "aliases": {
     "components": "@/components",
     "hooks": "@/hooks",
