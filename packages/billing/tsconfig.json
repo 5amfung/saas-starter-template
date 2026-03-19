@@ -1,8 +1,6 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src",
     "paths": {
       "@workspace/billing/*": ["./src/*"],
       "@workspace/db": ["../db/src/index.ts"],

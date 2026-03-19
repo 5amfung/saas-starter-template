@@ -4,8 +4,14 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./base": "./base.js",
-    "./react": "./react.js"
+    "./base": {
+      "types": "./base.d.ts",
+      "default": "./base.js"
+    },
+    "./react": {
+      "types": "./react.d.ts",
+      "default": "./react.js"
+    }
   },
   "dependencies": {
     "@tanstack/eslint-config": "^0.3.4",
