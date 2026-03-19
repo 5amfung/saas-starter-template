@@ -209,7 +209,7 @@ The `dotenv` path stays `'.env'` since `.env` is now in `apps/web/`.
 
 - [ ] **Step 1.7: Update root `package.json`**
 
-Ensure the root `package.json` has Turbo-delegating scripts and ONLY shared devDependencies. Remove any app-level dependencies that were left from the merge:
+Ensure the root `package.json` has Turbo-delegating scripts and ONLY shared devDependencies. Keep `"prepare": "husky || echo 'Skip installing husky'"` and the `"lint-staged"` config at the root level (these are monorepo-wide concerns). Remove any app-level dependencies that were left from the merge:
 
 ```json
 {
@@ -349,13 +349,9 @@ rm apps/web/src/styles.css
 
 - [ ] **Step 2.7: Update `__root.tsx` to import CSS from UI package**
 
-Read `apps/web/src/routes/__root.tsx`. Change the CSS import:
+Read `apps/web/src/routes/__root.tsx`. Find the CSS import (may be a relative path like `'../styles.css?url'` or an alias like `'@/styles.css?url'`). Replace it with:
 
 ```typescript
-// Before:
-import appCss from '@/styles.css?url';
-
-// After:
 import appCss from '@workspace/ui/globals.css?url';
 ```
 
@@ -730,8 +726,9 @@ mkdir -p packages/email/src/templates
 
 ```bash
 mv apps/web/src/email/resend.server.ts packages/email/src/resend.server.ts
+mv apps/web/src/email/resend.server.test.ts packages/email/src/resend.server.test.ts 2>/dev/null || true
 mv apps/web/src/email/email-request-context.server.ts packages/email/src/request-context.ts
-rmdir apps/web/src/email
+rmdir apps/web/src/email 2>/dev/null || true
 ```
 
 - [ ] **Step 4.3: Move email templates**
@@ -747,7 +744,6 @@ mv apps/web/src/components/email-template/workspace-invitation-email.tsx package
 - [ ] **Step 4.4: Move email tests**
 
 ```bash
-mv apps/web/src/email/resend.server.test.ts packages/email/src/resend.server.test.ts 2>/dev/null || true
 mv apps/web/src/components/email-template/email-security-notice.test.tsx packages/email/src/templates/email-security-notice.test.tsx
 mv apps/web/src/components/email-template/email-templates.test.tsx packages/email/src/templates/email-templates.test.tsx
 rmdir apps/web/src/components/email-template
@@ -766,6 +762,8 @@ export interface EmailConfig {
   apiKey: string;
   fromEmail: string;
   replyToEmail?: string;
+  /** App name used in email subjects and templates (e.g., "My App"). */
+  appName: string;
   /** Prefix subject in dev. Pass `true` or a custom prefix string. */
   devPrefix?: boolean | string;
 }
@@ -928,6 +926,7 @@ export const emailClient = createEmailClient({
   apiKey: process.env.RESEND_API_KEY!,
   fromEmail: process.env.RESEND_FROM_EMAIL!,
   replyToEmail: process.env.RESEND_REPLY_TO_EMAIL,
+  appName: process.env.VITE_APP_NAME || 'App',
   devPrefix: process.env.NODE_ENV !== 'production',
 });
 ```
@@ -1037,21 +1036,23 @@ rmdir apps/web/src/auth
 
 Extract workspace type constants from `apps/web/src/workspace/workspace.ts`. Read that file and extract:
 
-```typescript
-// packages/auth/src/workspace-types.ts
-export const PERSONAL_WORKSPACE_TYPE = 'personal';
-export const STANDARD_WORKSPACE_TYPE = 'workspace';
-export const PERSONAL_WORKSPACE_NAME = 'Personal';
+Read `apps/web/src/workspace/workspace.ts` carefully — the actual signatures may differ from what you expect.
 
-export const isPersonalWorkspace = (
-  workspaceType: string | null | undefined,
-): boolean => workspaceType === PERSONAL_WORKSPACE_TYPE;
+Key functions/constants to extract (copy the **exact** implementations):
 
-export const buildPersonalWorkspaceSlug = (userId: string): string =>
-  `personal-${userId}`;
+- `PERSONAL_WORKSPACE_TYPE`, `STANDARD_WORKSPACE_TYPE`, `PERSONAL_WORKSPACE_NAME`
+- `WORKSPACE_TYPES` array and `WorkspaceType` type
+- `PersonalWorkspaceFields` type
+- `isPersonalWorkspace(workspace: unknown): boolean` — **takes a full object, not just a string**. It checks `workspace.workspaceType === PERSONAL_WORKSPACE_TYPE` after a `isRecord` guard.
+- `isPersonalWorkspaceOwnedByUser(workspace: unknown, userId: string): boolean`
+- `buildPersonalWorkspaceSlug(userId: string): string`
+- The helper `isRecord(value: unknown)` that `isPersonalWorkspace` depends on (can be inlined or kept private)
+
+Also extract any other constants/helpers from `workspace.ts` that are imported by auth files. Search:
+
+```bash
+grep -r "from ['\"]@/workspace/workspace['\"]" packages/auth/src/ apps/web/src/auth/ --include="*.ts"
 ```
-
-Read the actual `workspace.ts` to get the exact implementations and any other constants that `auth.server.ts` or `auth-workspace.server.ts` imports.
 
 - [ ] **Step 5.5: Create `AuthConfig` interface and convert `auth.server.ts` to factory**
 
@@ -1148,31 +1149,33 @@ Update workspace constant imports from `@/workspace/workspace` to `./workspace-t
 
 - [ ] **Step 5.8: Create `packages/auth/src/validators.ts`**
 
-Extract the session validation logic from `apps/web/src/middleware/auth.ts` into pure functions:
+**IMPORTANT**: `validateAuthSession` in the current middleware calls `ensureActiveWorkspaceForSession` from `workspace.server.ts`, which imports `auth` and calls `auth.api.listOrganizations` / `auth.api.setActiveOrganization`. Since workspace stays in the app, `validateAuthSession` **cannot move to the auth package**.
 
-Read `apps/web/src/middleware/auth.ts` to understand the validation logic. Create:
+Instead, the auth package exports **simpler building blocks** that the app composes with workspace logic:
 
 ```typescript
 // packages/auth/src/validators.ts
 import { redirect } from '@tanstack/react-router';
 import type { Auth } from './auth.server';
 
-export async function validateAuthSession(headers: Headers, auth: Auth) {
+/** Gets a verified session or throws redirect to /signin. */
+export async function getVerifiedSession(headers: Headers, auth: Auth) {
   const session = await auth.api.getSession({ headers });
   if (!session || !session.user.emailVerified) {
     throw redirect({ to: '/signin' });
   }
-  // ... ensure active workspace logic
   return session;
 }
 
+/** Checks if user is authenticated. If so, throws redirect to /ws. */
 export async function validateGuestSession(headers: Headers, auth: Auth) {
   const session = await auth.api.getSession({ headers });
-  if (session) {
+  if (session?.user.emailVerified) {
     throw redirect({ to: '/ws' });
   }
 }
 
+/** Gets an admin session or throws redirect to /signin. */
 export async function validateAdminSession(headers: Headers, auth: Auth) {
   const session = await auth.api.getSession({ headers });
   if (!session || session.user.role !== 'admin') {
@@ -1182,7 +1185,39 @@ export async function validateAdminSession(headers: Headers, auth: Auth) {
 }
 ```
 
-Read the actual middleware to get the exact logic. Note: `@tanstack/react-router` is needed for `redirect` — this is a router primitive, not a Start primitive, so it's OK in a package.
+The app-level `validateAuthSession` stays in `apps/web/src/middleware/auth.ts` and **composes** the package's `getVerifiedSession` with the workspace's `ensureActiveWorkspaceForSession`:
+
+```typescript
+// apps/web/src/middleware/auth.ts
+import { createMiddleware } from '@tanstack/react-start';
+import { getRequestHeaders } from '@tanstack/react-start/server';
+import { getVerifiedSession, validateGuestSession } from '@workspace/auth';
+import { ensureActiveWorkspaceForSession } from '@/workspace/workspace.server';
+import { auth } from '@/init';
+
+export async function validateAuthSession(headers: Headers) {
+  const session = await getVerifiedSession(headers, auth);
+  await ensureActiveWorkspaceForSession(headers, {
+    user: { id: session.user.id },
+    session: session.session,
+  });
+  return session;
+}
+
+export const authMiddleware = createMiddleware().server(async ({ next }) => {
+  const headers = getRequestHeaders();
+  await validateAuthSession(headers);
+  return await next();
+});
+
+export const guestMiddleware = createMiddleware().server(async ({ next }) => {
+  const headers = getRequestHeaders();
+  await validateGuestSession(headers, auth);
+  return await next();
+});
+```
+
+Note: `@tanstack/react-router` is needed for `redirect` in the auth package — this is a router primitive, not a Start primitive, so it's OK in a package.
 
 - [ ] **Step 5.9: Create `packages/auth/src/index.ts`**
 
@@ -1195,7 +1230,7 @@ export {
 } from './auth.server';
 export { createAuthClient } from './auth-client';
 export {
-  validateAuthSession,
+  getVerifiedSession,
   validateGuestSession,
   validateAdminSession,
 } from './validators';
@@ -1210,26 +1245,11 @@ export {
 
 - [ ] **Step 5.10: Rewire `apps/web/src/middleware/auth.ts`**
 
-Replace the validation logic with calls to package validators:
+The auth middleware is already defined in Step 5.8 above. The file stays in the app but now composes `getVerifiedSession` from the auth package with `ensureActiveWorkspaceForSession` from the workspace module. Replace the current file with the code from Step 5.8.
 
-```typescript
-import { createMiddleware } from '@tanstack/react-start';
-import { getRequestHeaders } from '@tanstack/react-start/server';
-import { validateAuthSession, validateGuestSession } from '@workspace/auth';
-import { auth } from '@/init';
+Key change: `import { auth } from '@/auth/auth.server'` becomes `import { auth } from '@/init'` and `import { getVerifiedSession, validateGuestSession } from '@workspace/auth'`.
 
-export const authMiddleware = createMiddleware().server(async ({ next }) => {
-  const headers = getRequestHeaders();
-  const session = await validateAuthSession(headers, auth);
-  return next({ context: { session } });
-});
-
-export const guestMiddleware = createMiddleware().server(async ({ next }) => {
-  const headers = getRequestHeaders();
-  await validateGuestSession(headers, auth);
-  return next();
-});
-```
+Also update `apps/web/src/middleware/auth.test.ts` — the test now mocks `@workspace/auth` instead of re-testing the validation logic (which is tested in the auth package).
 
 - [ ] **Step 5.11: Rewire `apps/web/src/middleware/admin.ts`**
 
@@ -1408,6 +1428,13 @@ Find all affected files:
 grep -r "from ['\"]@/auth/" apps/web/src/ --include="*.ts" --include="*.tsx" -l
 ```
 
+**Key files to check that are easy to miss:**
+
+- `apps/web/src/workspace/workspace.server.ts` — imports `auth` from `@/auth/auth.server`. Change to `from '@/init'`.
+- `apps/web/src/lib/email-provider.ts` — may import from `@/email/`. Update to `@workspace/email`.
+- `apps/web/src/admin/admin.server.ts` — may import `auth`. Update to `from '@/init'`.
+- Any file in `apps/web/src/account/` that imports auth.
+
 - [ ] **Step 5.19: Update auth test mocks**
 
 Read `apps/web/src/test/mocks/auth.ts`. Update mock paths from `@/auth/auth-client` to `@workspace/auth/client`.
@@ -1470,16 +1497,42 @@ Note: use `cp` not `mv` for plans.ts because the app still imports it (later we 
 
 Read `apps/web/src/billing/billing.server.ts` fully. Split into:
 
-**Package layer** (`packages/billing/src/billing.server.ts`) — Pure functions. Refactor to accept `db` and `stripeSecretKey` as params:
+**Package layer** (`packages/billing/src/billing.server.ts`) — Use a `createBillingService` factory to avoid re-creating Stripe client per call:
 
-- `resolveUserPlanIdFromDb(db, userId)`
-- `countOwnedWorkspaces(db, userId)`
-- `countWorkspaceMembers(db, workspaceId)`
-- `getWorkspaceOwnerUserId(db, workspaceId)`
-- `getInvoicesForUser(db, stripeSecretKey, userId)`
-- `resolveSubscriptionDetails(subscriptions, planId)` (already pure)
-- `checkWorkspaceLimit(db, userId)` — calls `resolveUserPlanIdFromDb` + `countOwnedWorkspaces` + `getPlanLimitsForPlanId`
-- `checkMemberLimit(db, orgId)` — calls `getWorkspaceOwnerUserId` + `resolveUserPlanIdFromDb` + `countWorkspaceMembers` + `getPlanLimitsForPlanId`
+```typescript
+import Stripe from 'stripe';
+import type { Database } from '@workspace/db';
+
+export function createBillingService(db: Database, stripeSecretKey: string) {
+  const stripeClient = new Stripe(stripeSecretKey);
+  return {
+    resolveUserPlanIdFromDb(userId: string) {
+      /* uses db */
+    },
+    countOwnedWorkspaces(userId: string) {
+      /* uses db */
+    },
+    countWorkspaceMembers(workspaceId: string) {
+      /* uses db */
+    },
+    getWorkspaceOwnerUserId(workspaceId: string) {
+      /* uses db */
+    },
+    getInvoicesForUser(userId: string) {
+      /* uses stripeClient + db */
+    },
+    checkWorkspaceLimit(userId: string) {
+      /* uses db */
+    },
+    checkMemberLimit(orgId: string) {
+      /* uses db */
+    },
+  };
+}
+export type BillingService = ReturnType<typeof createBillingService>;
+```
+
+Also keep `resolveSubscriptionDetails` as a standalone export (already pure, no db/stripe needed)
 
 **App layer** (`apps/web/src/billing/billing.server.ts`) — Keep auth-coupled functions:
 
@@ -1540,24 +1593,27 @@ Read `apps/web/src/billing/billing.server.test.ts`. Tests for pure functions (`r
 
 - [ ] **Step 6.8: Wire billing hooks into auth init**
 
-Update `apps/web/src/init.ts` to pass billing hooks to `createAuth`:
+Update `apps/web/src/init.ts` to create the billing service and pass billing hooks to `createAuth`:
 
 ```typescript
-import {
-  checkWorkspaceLimit,
-  checkMemberLimit,
-} from '@workspace/billing/server';
+import { createBillingService } from '@workspace/billing/server';
+
+export const billingService = createBillingService(
+  db,
+  process.env.STRIPE_SECRET_KEY!,
+);
 
 export const auth = createAuth({
   // ... existing config
   hooks: {
-    beforeCreateOrganization: (userId) => checkWorkspaceLimit(db, userId),
-    beforeCreateInvitation: (orgId) => checkMemberLimit(db, orgId),
+    beforeCreateOrganization: (userId) =>
+      billingService.checkWorkspaceLimit(userId),
+    beforeCreateInvitation: (orgId) => billingService.checkMemberLimit(orgId),
   },
 });
 ```
 
-Note: This may create a circular init issue if `auth` needs `billing` hooks and `billing.server.ts` (app layer) needs `auth`. The solution: the package-level billing functions (`checkWorkspaceLimit`, `checkMemberLimit`) DON'T need auth — they only need `db`. So there's no circular dependency.
+Note: `billingService` is created before `auth` because it only needs `db` (no auth dependency). `auth` is created second with billing hooks passed in. No circular dependency.
 
 - [ ] **Step 6.9: Rewrite billing imports across the app**
 
