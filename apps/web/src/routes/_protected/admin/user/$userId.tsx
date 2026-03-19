@@ -6,13 +6,13 @@ import {
 } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
 import { IconArrowLeft } from "@tabler/icons-react"
+import { Button } from "@workspace/ui/components/button"
+import { Separator } from "@workspace/ui/components/separator"
 import {
   AdminUserForm,
   AdminUserFormSkeleton,
 } from "@/components/admin/admin-user-form"
 import { AdminDeleteUserDialog } from "@/components/admin/admin-delete-user-dialog"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import { authClient } from "@/auth/auth-client"
 import { useSessionQuery } from "@/hooks/use-session-query"
 

@@ -5,9 +5,7 @@ import { createFileRoute, getRouteApi } from "@tanstack/react-router"
 import { IconLoader2 } from "@tabler/icons-react"
 import { toast } from "sonner"
 import { z } from "zod"
-import { authClient } from "@/auth/auth-client"
-import { WorkspaceDeleteDialog } from "@/components/workspace/workspace-delete-dialog"
-import { Button } from "@/components/ui/button"
+import { Button } from "@workspace/ui/components/button"
 import {
   Card,
   CardContent,
@@ -15,15 +13,17 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@workspace/ui/components/card"
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
+} from "@workspace/ui/components/field"
+import { Input } from "@workspace/ui/components/input"
+import { Separator } from "@workspace/ui/components/separator"
+import { WorkspaceDeleteDialog } from "@/components/workspace/workspace-delete-dialog"
+import { authClient } from "@/auth/auth-client"
 import { toFieldErrorItem } from "@/lib/form-utils"
 import { isPersonalWorkspace } from "@/workspace/workspace"
 

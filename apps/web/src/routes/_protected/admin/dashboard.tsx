@@ -1,6 +1,7 @@
 import * as React from "react"
 import { createFileRoute } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
+import { Button } from "@workspace/ui/components/button"
 import {
   AdminDashboardCards,
   AdminDashboardCardsSkeleton,
@@ -13,7 +14,6 @@ import {
   AdminMauChart,
   AdminMauChartSkeleton,
 } from "@/components/admin/admin-mau-chart"
-import { Button } from "@/components/ui/button"
 import {
   getAdminDashboardMetrics,
   getMauChartData,

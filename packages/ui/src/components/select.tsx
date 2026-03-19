@@ -6,7 +6,7 @@ import {
   IconChevronUp,
   IconSelector,
 } from "@tabler/icons-react"
-import { cn } from "@/lib/utils"
+import { cn } from "@workspace/ui/lib/utils"
 
 const Select = SelectPrimitive.Root
 

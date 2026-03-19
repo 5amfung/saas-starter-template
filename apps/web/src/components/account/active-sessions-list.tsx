@@ -7,7 +7,6 @@ import {
   IconTrash,
 } from "@tabler/icons-react"
 import { toast } from "sonner"
-import { authClient } from "@/auth/auth-client"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,17 +16,18 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+} from "@workspace/ui/components/alert-dialog"
+import { Badge } from "@workspace/ui/components/badge"
+import { Button } from "@workspace/ui/components/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
+} from "@workspace/ui/components/card"
+import { Skeleton } from "@workspace/ui/components/skeleton"
+import { authClient } from "@/auth/auth-client"
 import { useSessionQuery } from "@/hooks/use-session-query"
 import {
   SESSIONS_QUERY_KEY,

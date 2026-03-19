@@ -7,7 +7,7 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
+} from "@workspace/ui/components/breadcrumb"
 
 export function DynamicBreadcrumb() {
   const matches = useMatches()

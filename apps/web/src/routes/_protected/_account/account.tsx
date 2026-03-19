@@ -1,19 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { ActiveSessionsList } from "@/components/account/active-sessions-list"
-import { LinkedAccountsCard } from "@/components/account/linked-accounts-card"
-import { AccountProfileForm } from "@/components/account/account-profile-form"
-import { ChangeEmailDialog } from "@/components/account/change-email-dialog"
-import { ChangePasswordDialog } from "@/components/account/change-password-dialog"
-import { SetPasswordButton } from "@/components/account/set-password-button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Field, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+} from "@workspace/ui/components/card"
+import { Field, FieldLabel } from "@workspace/ui/components/field"
+import { Input } from "@workspace/ui/components/input"
+import { ActiveSessionsList } from "@/components/account/active-sessions-list"
+import { LinkedAccountsCard } from "@/components/account/linked-accounts-card"
+import { AccountProfileForm } from "@/components/account/account-profile-form"
+import { ChangeEmailDialog } from "@/components/account/change-email-dialog"
+import { ChangePasswordDialog } from "@/components/account/change-password-dialog"
+import { SetPasswordButton } from "@/components/account/set-password-button"
 import { useSessionQuery } from "@/hooks/use-session-query"
 import { useLinkedAccountsQuery } from "@/hooks/use-linked-accounts-query"
 

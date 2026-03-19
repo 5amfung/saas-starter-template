@@ -1,5 +1,5 @@
 import { IconAlertCircle, IconLoader2 } from "@tabler/icons-react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@workspace/ui/components/button"
 
 interface BillingDowngradeBannerProps {
   periodEnd: Date

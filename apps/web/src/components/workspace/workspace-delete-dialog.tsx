@@ -3,7 +3,6 @@ import { useMutation } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { IconAlertTriangle, IconLoader2 } from "@tabler/icons-react"
 import { toast } from "sonner"
-import { authClient } from "@/auth/auth-client"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,9 +14,10 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+} from "@workspace/ui/components/alert-dialog"
+import { Button } from "@workspace/ui/components/button"
+import { Input } from "@workspace/ui/components/input"
+import { authClient } from "@/auth/auth-client"
 
 const CONFIRMATION_TEXT = "DELETE"
 

@@ -1,8 +1,8 @@
 import { useEffect } from "react"
 import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router"
+import { SidebarInset, SidebarProvider } from "@workspace/ui/components/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { authMiddleware } from "@/middleware/auth"
 import { authClient } from "@/auth/auth-client"
 

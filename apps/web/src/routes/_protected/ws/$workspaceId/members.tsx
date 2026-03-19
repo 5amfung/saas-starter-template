@@ -1,14 +1,19 @@
 import * as React from "react"
 import { createFileRoute } from "@tanstack/react-router"
 import { toast } from "sonner"
+import { Button } from "@workspace/ui/components/button"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@workspace/ui/components/tabs"
 import { checkPlanLimit } from "@/billing/billing.functions"
 import { UpgradePromptDialog } from "@/components/billing/upgrade-prompt-dialog"
-import { Button } from "@/components/ui/button"
 import { useUpgradePrompt } from "@/hooks/use-upgrade-prompt"
 import { WorkspaceInviteDialog } from "@/components/workspace/workspace-invite-dialog"
 import { WorkspaceInvitationsTable } from "@/components/workspace/workspace-invitations-table"
 import { WorkspaceMembersTable } from "@/components/workspace/workspace-members-table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DEFAULT_INVITE_ROLES } from "@/workspace/workspace-members.types"
 import { useInvitationsTable } from "@/workspace/use-invitations-table"
 import { useMembersTable } from "@/workspace/use-members-table"

@@ -6,20 +6,25 @@ import { AdminSignupChart } from "./admin-signup-chart"
 // Mock Recharts — components don't render in jsdom. SVG elements like
 // <defs>, <linearGradient>, and <stop> are unrecognized by jsdom, so we
 // discard children to avoid console warnings.
-vi.mock("recharts", () => ({
-  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="responsive-container">{children}</div>
-  ),
-  AreaChart: () => <div data-testid="area-chart" />,
-  Area: () => null,
-  CartesianGrid: () => null,
-  XAxis: () => null,
-  YAxis: () => null,
-  Legend: () => null,
-}))
+vi.mock("recharts", async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="responsive-container">{children}</div>
+    ),
+    AreaChart: () => <div data-testid="area-chart" />,
+    Area: () => null,
+    CartesianGrid: () => null,
+    XAxis: () => null,
+    YAxis: () => null,
+    Legend: () => null,
+    Tooltip: () => null,
+  }
+})
 
 // Mock shadcn chart components.
-vi.mock("@/components/ui/chart", () => ({
+vi.mock("@workspace/ui/components/chart", () => ({
   ChartContainer: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),

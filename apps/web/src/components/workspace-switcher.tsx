@@ -4,11 +4,7 @@ import { z } from "zod"
 import { useMutation } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
-import { authClient } from "@/auth/auth-client"
-import { checkPlanLimit } from "@/billing/billing.functions"
-import { UpgradePromptDialog } from "@/components/billing/upgrade-prompt-dialog"
-import { useUpgradePrompt } from "@/hooks/use-upgrade-prompt"
-import { Input } from "@/components/ui/input"
+import { Input } from "@workspace/ui/components/input"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +13,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@workspace/ui/components/dropdown-menu"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,13 +23,17 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "@workspace/ui/components/alert-dialog"
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@workspace/ui/components/sidebar"
+import { authClient } from "@/auth/auth-client"
+import { checkPlanLimit } from "@/billing/billing.functions"
+import { UpgradePromptDialog } from "@/components/billing/upgrade-prompt-dialog"
+import { useUpgradePrompt } from "@/hooks/use-upgrade-prompt"
 import {
   STANDARD_WORKSPACE_TYPE,
   buildWorkspaceSlug,

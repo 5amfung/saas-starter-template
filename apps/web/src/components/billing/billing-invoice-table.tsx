@@ -1,13 +1,13 @@
 import React from "react"
 import { IconExternalLink } from "@tabler/icons-react"
-import { Badge } from "@/components/ui/badge"
+import { Badge } from "@workspace/ui/components/badge"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@workspace/ui/components/select"
 import {
   Table,
   TableBody,
@@ -15,7 +15,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@workspace/ui/components/table"
 
 export interface Invoice {
   id: string

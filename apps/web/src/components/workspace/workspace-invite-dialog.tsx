@@ -1,5 +1,4 @@
 import { IconLoader2, IconSend } from "@tabler/icons-react"
-import type { InviteRole } from "@/workspace/workspace-members.types"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,16 +8,17 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@workspace/ui/components/alert-dialog"
+import { Input } from "@workspace/ui/components/input"
+import { Label } from "@workspace/ui/components/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@workspace/ui/components/select"
+import type { InviteRole } from "@/workspace/workspace-members.types"
 
 interface WorkspaceInviteDialogProps {
   open: boolean

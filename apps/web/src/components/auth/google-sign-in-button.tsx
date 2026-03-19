@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { IconLoader } from "@tabler/icons-react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@workspace/ui/components/button"
 import { authClient } from "@/auth/auth-client"
 import { GoogleIcon } from "@/components/icons/google-icon"
 

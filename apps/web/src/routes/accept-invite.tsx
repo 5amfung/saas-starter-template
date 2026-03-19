@@ -2,17 +2,17 @@ import * as React from "react"
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { IconLoader2 } from "@tabler/icons-react"
 import { z } from "zod"
-import { AuthLayout } from "@/components/auth/auth-layout"
-import { authClient } from "@/auth/auth-client"
-import { Button } from "@/components/ui/button"
+import { Button } from "@workspace/ui/components/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { FieldDescription } from "@/components/ui/field"
+} from "@workspace/ui/components/card"
+import { FieldDescription } from "@workspace/ui/components/field"
+import { authClient } from "@/auth/auth-client"
+import { AuthLayout } from "@/components/auth/auth-layout"
 
 export const Route = createFileRoute("/accept-invite")({
   component: AcceptInvitePage,

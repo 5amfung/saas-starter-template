@@ -1,5 +1,5 @@
 import { IconCheck } from "@tabler/icons-react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@workspace/ui/components/button"
 import {
   Card,
   CardContent,
@@ -7,8 +7,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Toggle } from "@/components/ui/toggle"
+} from "@workspace/ui/components/card"
+import { Toggle } from "@workspace/ui/components/toggle"
 import { formatPlanPrice, getPlanFeatures } from "@/billing/plans"
 import type { Plan, PlanId } from "@/billing/plans"
 

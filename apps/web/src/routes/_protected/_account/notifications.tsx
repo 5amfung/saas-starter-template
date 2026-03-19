@@ -1,20 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { toast } from "sonner"
-import type { NotificationPreferences } from "@/account/notification-preferences.schemas"
-import {
-  getNotificationPreferences,
-  updateNotificationPreferences,
-} from "@/account/notification-preferences.functions"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { Switch } from "@/components/ui/switch"
+} from "@workspace/ui/components/card"
+import { Separator } from "@workspace/ui/components/separator"
+import { Switch } from "@workspace/ui/components/switch"
+import {
+  getNotificationPreferences,
+  updateNotificationPreferences,
+} from "@/account/notification-preferences.functions"
+import type { NotificationPreferences } from "@/account/notification-preferences.schemas"
 
 export const Route = createFileRoute("/_protected/_account/notifications")({
   component: NotificationsPage,

@@ -2,7 +2,6 @@ import * as React from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { IconLoader2 } from "@tabler/icons-react"
 import { toast } from "sonner"
-import { authClient } from "@/auth/auth-client"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,16 +11,17 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Button } from "@/components/ui/button"
+} from "@workspace/ui/components/alert-dialog"
+import { Button } from "@workspace/ui/components/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
+} from "@workspace/ui/components/card"
+import { Skeleton } from "@workspace/ui/components/skeleton"
+import { authClient } from "@/auth/auth-client"
 import {
   LINKED_ACCOUNTS_QUERY_KEY,
   useLinkedAccountsQuery,

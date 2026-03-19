@@ -4,8 +4,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { FieldDescription } from "@/components/ui/field"
+} from "@workspace/ui/components/card"
+import { FieldDescription } from "@workspace/ui/components/field"
 
 interface CheckEmailCardProps {
   title: string

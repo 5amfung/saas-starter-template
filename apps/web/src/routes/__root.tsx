@@ -8,10 +8,10 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
 import { formDevtoolsPlugin } from "@tanstack/react-form-devtools"
 import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools"
-import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@workspace/ui/components/sonner"
+import appCss from "@workspace/ui/globals.css?url"
+import { ThemeProvider, useTheme } from "@/components/theme-provider"
 import { NotFound } from "@/components/not-found"
-import { Toaster } from "@/components/ui/sonner"
-import appCss from "../styles.css?url"
 
 interface RouterContext {
   queryClient: QueryClient
@@ -43,6 +43,12 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   notFoundComponent: NotFound,
 })
 
+/** Passes the resolved theme from ThemeProvider to the UI Toaster. */
+function ThemedToaster() {
+  const { resolvedTheme } = useTheme()
+  return <Toaster theme={resolvedTheme} />
+}
+
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -52,7 +58,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body>
         <ThemeProvider defaultTheme="system" storageKey="app-theme">
           {children}
-          <Toaster />
+          <ThemedToaster />
           <TanStackDevtools
             config={{
               position: "bottom-right",

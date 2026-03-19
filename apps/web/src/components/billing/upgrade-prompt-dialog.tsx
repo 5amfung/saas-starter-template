@@ -5,9 +5,9 @@ import {
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Button } from "@/components/ui/button"
-import { Toggle } from "@/components/ui/toggle"
+} from "@workspace/ui/components/alert-dialog"
+import { Button } from "@workspace/ui/components/button"
+import { Toggle } from "@workspace/ui/components/toggle"
 import { formatPlanPrice, getPlanFeatures } from "@/billing/plans"
 import type { Plan } from "@/billing/plans"
 

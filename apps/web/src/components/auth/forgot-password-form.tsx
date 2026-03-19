@@ -2,22 +2,22 @@ import { useState } from "react"
 import { useForm } from "@tanstack/react-form"
 import { Link } from "@tanstack/react-router"
 import { IconLoader } from "@tabler/icons-react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@workspace/ui/components/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@workspace/ui/components/card"
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+} from "@workspace/ui/components/field"
+import { Input } from "@workspace/ui/components/input"
 import { authClient } from "@/auth/auth-client"
 import { forgotPasswordSchema } from "@/auth/schemas"
 import { FormError } from "@/components/auth/form-error"
