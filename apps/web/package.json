@@ -4,16 +4,18 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev --port 3000",
+    "dev:stripe-webhook": "stripe listen --forward-to localhost:3000/api/auth/stripe/webhook",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:report": "playwright show-report",
     "coverage": "vitest run --coverage",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "typecheck": "tsc --noEmit",
     "check": "tsc --noEmit && eslint",
-    "format": "prettier --write ./src",
-    "dev:stripe-webhook": "stripe listen --forward-to localhost:3000/api/auth/stripe/webhook"
+    "format": "prettier --write ./src"
   },
   "dependencies": {
     "@base-ui/react": "^1.1.0",
@@ -56,6 +58,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@tanstack/devtools-vite": "^0.5.1",
     "@tanstack/react-devtools": "^0.9.5",
     "@tanstack/react-form-devtools": "^0.2.13",
