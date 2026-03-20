@@ -1,8 +1,8 @@
-import * as React from "react"
-import { useMutation } from "@tanstack/react-query"
-import { useNavigate } from "@tanstack/react-router"
-import { IconAlertTriangle, IconLoader2 } from "@tabler/icons-react"
-import { toast } from "sonner"
+import * as React from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
+import { IconAlertTriangle, IconLoader2 } from '@tabler/icons-react';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,19 +14,19 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@workspace/ui/components/alert-dialog"
-import { Button } from "@workspace/ui/components/button"
-import { Input } from "@workspace/ui/components/input"
-import { authClient } from "@workspace/auth/client"
+} from '@workspace/ui/components/alert-dialog';
+import { Button } from '@workspace/ui/components/button';
+import { Input } from '@workspace/ui/components/input';
+import { authClient } from '@workspace/auth/client';
 
-const CONFIRMATION_TEXT = "DELETE"
+const CONFIRMATION_TEXT = 'DELETE';
 
 type WorkspaceDeleteDialogProps = {
-  workspaceId: string
-  workspaceName: string
-  isDisabled: boolean
-  getNextWorkspaceIdAfterDelete: () => Promise<string | null>
-}
+  workspaceId: string;
+  workspaceName: string;
+  isDisabled: boolean;
+  getNextWorkspaceIdAfterDelete: () => Promise<string | null>;
+};
 
 export function WorkspaceDeleteDialog({
   workspaceId,
@@ -34,47 +34,47 @@ export function WorkspaceDeleteDialog({
   isDisabled,
   getNextWorkspaceIdAfterDelete,
 }: WorkspaceDeleteDialogProps) {
-  const navigate = useNavigate()
-  const [open, setOpen] = React.useState(false)
-  const [confirmation, setConfirmation] = React.useState("")
-  const isConfirmed = confirmation === CONFIRMATION_TEXT
+  const navigate = useNavigate();
+  const [open, setOpen] = React.useState(false);
+  const [confirmation, setConfirmation] = React.useState('');
+  const isConfirmed = confirmation === CONFIRMATION_TEXT;
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
       const { error } = await authClient.organization.delete({
         organizationId: workspaceId,
-      })
-      if (error) throw new Error(error.message)
+      });
+      if (error) throw new Error(error.message);
 
-      const nextWorkspaceId = await getNextWorkspaceIdAfterDelete()
+      const nextWorkspaceId = await getNextWorkspaceIdAfterDelete();
       if (!nextWorkspaceId) {
-        throw new Error("Failed to find an active workspace after deletion.")
+        throw new Error('Failed to find an active workspace after deletion.');
       }
 
       const { error: setActiveError } = await authClient.organization.setActive(
         {
           organizationId: nextWorkspaceId,
         }
-      )
-      if (setActiveError) throw new Error(setActiveError.message)
+      );
+      if (setActiveError) throw new Error(setActiveError.message);
 
-      return nextWorkspaceId
+      return nextWorkspaceId;
     },
     onSuccess: (nextWorkspaceId) => {
-      toast.success("Workspace deleted successfully.")
+      toast.success('Workspace deleted successfully.');
       navigate({
-        to: "/ws/$workspaceId/overview",
+        to: '/ws/$workspaceId/overview',
         params: { workspaceId: nextWorkspaceId },
-      })
+      });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to delete workspace.")
+      toast.error(error.message || 'Failed to delete workspace.');
     },
-  })
+  });
 
   React.useEffect(() => {
-    if (!open) setConfirmation("")
-  }, [open])
+    if (!open) setConfirmation('');
+  }, [open]);
 
   return (
     <div className="flex flex-col items-end gap-2">
@@ -124,8 +124,8 @@ export function WorkspaceDeleteDialog({
               variant="destructive"
               disabled={!isConfirmed || deleteMutation.isPending}
               onClick={(event) => {
-                event.preventDefault()
-                deleteMutation.mutate()
+                event.preventDefault();
+                deleteMutation.mutate();
               }}
             >
               {deleteMutation.isPending && (
@@ -137,5 +137,5 @@ export function WorkspaceDeleteDialog({
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }

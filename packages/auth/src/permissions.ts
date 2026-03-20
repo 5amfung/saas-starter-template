@@ -53,10 +53,10 @@
  *   roles: { owner, admin, member },
  * })
  */
-export const ORGANIZATION_DEFAULT_ROLES = ["owner", "admin", "member"] as const
+export const ORGANIZATION_DEFAULT_ROLES = ['owner', 'admin', 'member'] as const;
 
 export type OrganizationDefaultRole =
-  (typeof ORGANIZATION_DEFAULT_ROLES)[number]
+  (typeof ORGANIZATION_DEFAULT_ROLES)[number];
 
 /**
  * Placeholder for future custom resource statements.
@@ -65,4 +65,4 @@ export type OrganizationDefaultRole =
  * For now we keep this empty to preserve the out-of-the-box Better Auth
  * organization role/permission behavior.
  */
-export const CUSTOM_PERMISSION_STATEMENTS = {} as const
+export const CUSTOM_PERMISSION_STATEMENTS = {} as const;

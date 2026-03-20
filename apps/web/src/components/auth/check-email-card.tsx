@@ -4,14 +4,14 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
-import { FieldDescription } from "@workspace/ui/components/field"
+} from '@workspace/ui/components/card';
+import { FieldDescription } from '@workspace/ui/components/field';
 
 interface CheckEmailCardProps {
-  title: string
-  description: React.ReactNode
-  actions?: React.ReactNode
-  footer?: React.ReactNode
+  title: string;
+  description: React.ReactNode;
+  actions?: React.ReactNode;
+  footer?: React.ReactNode;
 }
 
 export function CheckEmailCard({
@@ -35,5 +35,5 @@ export function CheckEmailCard({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

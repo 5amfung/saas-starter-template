@@ -14,14 +14,14 @@ import {
   Tailwind,
   Text,
   pixelBasedPreset,
-} from "@react-email/components"
-import { EmailSecurityNotice } from "./email-security-notice"
-import type { EmailRequestContext } from "../request-context"
+} from '@react-email/components';
+import { EmailSecurityNotice } from './email-security-notice';
+import type { EmailRequestContext } from '../request-context';
 
 export interface ResetPasswordEmailProps {
-  appName: string
-  resetUrl: string
-  requestContext: EmailRequestContext
+  appName: string;
+  resetUrl: string;
+  requestContext: EmailRequestContext;
 }
 
 export function ResetPasswordEmail({
@@ -76,17 +76,17 @@ export function ResetPasswordEmail({
         </Body>
       </Tailwind>
     </Html>
-  )
+  );
 }
 
-export default ResetPasswordEmail
+export default ResetPasswordEmail;
 ResetPasswordEmail.PreviewProps = {
-  appName: "My App",
-  resetUrl: "https://example.com/reset-password?token=abc123",
+  appName: 'My App',
+  resetUrl: 'https://example.com/reset-password?token=abc123',
   requestContext: {
-    requestedAtUtc: "13 February 2026, 21:11 UTC",
-    ip: "136.24.244.114",
-    city: "San Francisco",
-    country: "US",
+    requestedAtUtc: '13 February 2026, 21:11 UTC',
+    ip: '136.24.244.114',
+    city: 'San Francisco',
+    country: 'US',
   },
-} satisfies ResetPasswordEmailProps
+} satisfies ResetPasswordEmailProps;

@@ -1,11 +1,11 @@
-import * as React from "react"
-import { useForm } from "@tanstack/react-form"
-import { useMutation } from "@tanstack/react-query"
-import { createFileRoute, getRouteApi } from "@tanstack/react-router"
-import { IconLoader2 } from "@tabler/icons-react"
-import { toast } from "sonner"
-import { z } from "zod"
-import { Button } from "@workspace/ui/components/button"
+import * as React from 'react';
+import { useForm } from '@tanstack/react-form';
+import { useMutation } from '@tanstack/react-query';
+import { createFileRoute, getRouteApi } from '@tanstack/react-router';
+import { IconLoader2 } from '@tabler/icons-react';
+import { toast } from 'sonner';
+import { z } from 'zod';
+import { Button } from '@workspace/ui/components/button';
 import {
   Card,
   CardContent,
@@ -13,88 +13,88 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
+} from '@workspace/ui/components/card';
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
-import { Separator } from "@workspace/ui/components/separator"
-import { authClient } from "@workspace/auth/client"
-import { WorkspaceDeleteDialog } from "@/components/workspace/workspace-delete-dialog"
-import { toFieldErrorItem } from "@/lib/form-utils"
-import { isPersonalWorkspace } from "@/workspace/workspace"
+} from '@workspace/ui/components/field';
+import { Input } from '@workspace/ui/components/input';
+import { Separator } from '@workspace/ui/components/separator';
+import { authClient } from '@workspace/auth/client';
+import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
+import { toFieldErrorItem } from '@/lib/form-utils';
+import { isPersonalWorkspace } from '@/workspace/workspace';
 
 const workspaceSettingsSchema = z.object({
-  name: z.string().trim().min(1, "Workspace name is required."),
-})
+  name: z.string().trim().min(1, 'Workspace name is required.'),
+});
 
 const PAGE_LAYOUT_CLASS =
-  "mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6"
+  'mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6';
 
 const hasOwnerRole = (role: string | null): boolean =>
   !!role &&
   role
-    .split(",")
+    .split(',')
     .map((item) => item.trim())
-    .includes("owner")
+    .includes('owner');
 
 const sortByCreatedAtAscending = (
   left: { createdAt?: string | Date },
   right: { createdAt?: string | Date }
 ): number => {
-  const leftDate = left.createdAt ? new Date(left.createdAt).getTime() : 0
-  const rightDate = right.createdAt ? new Date(right.createdAt).getTime() : 0
-  return leftDate - rightDate
-}
+  const leftDate = left.createdAt ? new Date(left.createdAt).getTime() : 0;
+  const rightDate = right.createdAt ? new Date(right.createdAt).getTime() : 0;
+  return leftDate - rightDate;
+};
 
-export const Route = createFileRoute("/_protected/ws/$workspaceId/settings")({
+export const Route = createFileRoute('/_protected/ws/$workspaceId/settings')({
   component: WorkspaceSettingsPage,
-  staticData: { title: "Workspace Settings" },
-})
+  staticData: { title: 'Workspace Settings' },
+});
 
-const workspaceRouteApi = getRouteApi("/_protected/ws/$workspaceId")
+const workspaceRouteApi = getRouteApi('/_protected/ws/$workspaceId');
 
 function WorkspaceSettingsPage() {
-  const { workspaceId } = Route.useParams()
-  const workspace = workspaceRouteApi.useLoaderData()
-  const { data: activeOrganization } = authClient.useActiveOrganization()
+  const { workspaceId } = Route.useParams();
+  const workspace = workspaceRouteApi.useLoaderData();
+  const { data: activeOrganization } = authClient.useActiveOrganization();
 
-  const [activeRole, setActiveRole] = React.useState<string | null>(null)
+  const [activeRole, setActiveRole] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    let isMounted = true
+    let isMounted = true;
     const loadActiveRole = async () => {
       const { data, error } =
-        await authClient.organization.getActiveMemberRole()
-      if (!isMounted) return
-      if (error) return
-      setActiveRole(typeof data.role === "string" ? data.role : null)
-    }
-    void loadActiveRole()
+        await authClient.organization.getActiveMemberRole();
+      if (!isMounted) return;
+      if (error) return;
+      setActiveRole(typeof data.role === 'string' ? data.role : null);
+    };
+    void loadActiveRole();
     return () => {
-      isMounted = false
-    }
-  }, [workspaceId])
+      isMounted = false;
+    };
+  }, [workspaceId]);
 
-  const isPersonal = isPersonalWorkspace(workspace)
-  const isOwner = hasOwnerRole(activeRole)
-  const canDelete = isOwner && !isPersonal
+  const isPersonal = isPersonalWorkspace(workspace);
+  const isOwner = hasOwnerRole(activeRole);
+  const canDelete = isOwner && !isPersonal;
   const deleteDisabledMessage = isPersonal
-    ? "Personal workspace can not be deleted"
+    ? 'Personal workspace can not be deleted'
     : isOwner
       ? null
-      : "Only owner can delete this workspace"
+      : 'Only owner can delete this workspace';
 
   // This keeps the input stable during save and avoids the brief revert.
   const [initialWorkspaceName, setInitialWorkspaceName] = React.useState(
     workspace.name
-  )
+  );
   React.useEffect(() => {
-    setInitialWorkspaceName(workspace.name)
-  }, [workspaceId])
+    setInitialWorkspaceName(workspace.name);
+  }, [workspaceId]);
 
   const updateMutation = useMutation({
     mutationFn: async (name: string) => {
@@ -102,24 +102,24 @@ function WorkspaceSettingsPage() {
         const { error: setActiveError } =
           await authClient.organization.setActive({
             organizationId: workspaceId,
-          })
-        if (setActiveError) throw new Error(setActiveError.message)
+          });
+        if (setActiveError) throw new Error(setActiveError.message);
       }
 
       const { error } = await authClient.organization.update({
         data: {
           name,
         },
-      })
-      if (error) throw new Error(error.message)
+      });
+      if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      toast.success("Workspace updated.")
+      toast.success('Workspace updated.');
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update workspace.")
+      toast.error(error.message || 'Failed to update workspace.');
     },
-  })
+  });
 
   const form = useForm({
     defaultValues: {
@@ -130,33 +130,33 @@ function WorkspaceSettingsPage() {
       onSubmit: workspaceSettingsSchema,
     },
     onSubmit: async ({ value }) => {
-      const nextName = value.name.trim()
-      await updateMutation.mutateAsync(nextName)
-      setInitialWorkspaceName(nextName)
-      form.reset({ name: nextName })
+      const nextName = value.name.trim();
+      await updateMutation.mutateAsync(nextName);
+      setInitialWorkspaceName(nextName);
+      form.reset({ name: nextName });
     },
-  })
+  });
 
   const getNextWorkspaceIdAfterDelete = React.useCallback(async () => {
-    const { data } = await authClient.organization.list()
-    if (!data) return null
+    const { data } = await authClient.organization.list();
+    if (!data) return null;
 
     const remaining = data
       .filter((candidate) => candidate.id !== workspaceId)
-      .sort(sortByCreatedAtAscending)
+      .sort(sortByCreatedAtAscending);
     const personal = remaining.find((candidate) =>
       isPersonalWorkspace(candidate)
-    )
+    );
     // Switch to personal workspace after deleting current workspace.
-    return personal?.id ?? remaining.at(0)?.id ?? null
-  }, [workspaceId])
+    return personal?.id ?? remaining.at(0)?.id ?? null;
+  }, [workspaceId]);
 
   return (
     <div className={PAGE_LAYOUT_CLASS}>
       <form
         onSubmit={(event) => {
-          event.preventDefault()
-          form.handleSubmit()
+          event.preventDefault();
+          form.handleSubmit();
         }}
       >
         <Card>
@@ -172,7 +172,7 @@ function WorkspaceSettingsPage() {
                 name="name"
                 children={(field) => {
                   const isInvalid =
-                    field.state.meta.isBlurred && !field.state.meta.isValid
+                    field.state.meta.isBlurred && !field.state.meta.isValid;
                   return (
                     <Field data-invalid={isInvalid || undefined}>
                       <FieldLabel htmlFor={field.name}>
@@ -193,7 +193,7 @@ function WorkspaceSettingsPage() {
                         />
                       ) : null}
                     </Field>
-                  )
+                  );
                 }}
               />
             </FieldGroup>
@@ -253,5 +253,5 @@ function WorkspaceSettingsPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

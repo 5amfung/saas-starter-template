@@ -1,13 +1,13 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import { IconBrightness, IconExternalLink } from "@tabler/icons-react"
+import * as React from 'react';
+import { IconBrightness, IconExternalLink } from '@tabler/icons-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu"
+} from '@workspace/ui/components/dropdown-menu';
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -15,22 +15,22 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@workspace/ui/components/sidebar"
-import { useTheme } from "@/components/theme-provider"
+} from '@workspace/ui/components/sidebar';
+import { useTheme } from '@/components/theme-provider';
 
 export function NavSecondary({
   items,
   ...props
 }: {
   items: Array<{
-    title: string
-    url: string
-    icon: React.ReactNode
-    newTab?: boolean
-  }>
+    title: string;
+    url: string;
+    icon: React.ReactNode;
+    newTab?: boolean;
+  }>;
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
-  const { setTheme } = useTheme()
-  const { isMobile } = useSidebar()
+  const { setTheme } = useTheme();
+  const { isMobile } = useSidebar();
 
   return (
     <SidebarGroup {...props}>
@@ -43,17 +43,17 @@ export function NavSecondary({
                 <span>Theme</span>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                side={isMobile ? "bottom" : "right"}
+                side={isMobile ? 'bottom' : 'right'}
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuItem onClick={() => setTheme("light")}>
+                <DropdownMenuItem onClick={() => setTheme('light')}>
                   Light
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("dark")}>
+                <DropdownMenuItem onClick={() => setTheme('dark')}>
                   Dark
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("system")}>
+                <DropdownMenuItem onClick={() => setTheme('system')}>
                   System
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -65,8 +65,8 @@ export function NavSecondary({
                 render={
                   <a
                     href={item.url}
-                    target={item.newTab ? "_blank" : undefined}
-                    rel={item.newTab ? "noreferrer noopener" : undefined}
+                    target={item.newTab ? '_blank' : undefined}
+                    rel={item.newTab ? 'noreferrer noopener' : undefined}
                   />
                 }
               >
@@ -82,5 +82,5 @@ export function NavSecondary({
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
-  )
+  );
 }

@@ -1,10 +1,10 @@
-import * as React from "react"
+import * as React from 'react';
 import {
   flexRender,
   getCoreRowModel,
   useReactTable,
-} from "@tanstack/react-table"
-import type { ColumnDef, SortingState } from "@tanstack/react-table"
+} from '@tanstack/react-table';
+import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import {
   IconArrowDown,
   IconArrowUp,
@@ -14,23 +14,23 @@ import {
   IconChevronsLeft,
   IconChevronsRight,
   IconDotsVertical,
-} from "@tabler/icons-react"
-import { Button } from "@workspace/ui/components/button"
+} from '@tabler/icons-react';
+import { Button } from '@workspace/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu"
-import { Label } from "@workspace/ui/components/label"
+} from '@workspace/ui/components/dropdown-menu';
+import { Label } from '@workspace/ui/components/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select"
-import { Skeleton } from "@workspace/ui/components/skeleton"
+} from '@workspace/ui/components/select';
+import { Skeleton } from '@workspace/ui/components/skeleton';
 import {
   Table,
   TableBody,
@@ -38,37 +38,37 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table"
+} from '@workspace/ui/components/table';
 
 export interface WorkspaceMemberRow {
-  id: string
-  userId: string
-  email: string
-  role: string
+  id: string;
+  userId: string;
+  email: string;
+  role: string;
 }
 
 interface WorkspaceMembersTableProps {
-  data: Array<WorkspaceMemberRow>
-  total: number
-  page: number
-  pageSize: number
-  totalPages: number
-  sorting: SortingState
-  isLoading?: boolean
-  removingMemberId?: string | null
-  leavingWorkspace?: boolean
-  currentUserId: string | null
-  currentUserRole: string | null
-  onSortingChange: (sorting: SortingState) => void
-  onPageChange: (page: number) => void
-  onPageSizeChange: (pageSize: number) => void
-  onRemoveMember: (memberId: string) => void
-  onLeave: () => void
+  data: Array<WorkspaceMemberRow>;
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  sorting: SortingState;
+  isLoading?: boolean;
+  removingMemberId?: string | null;
+  leavingWorkspace?: boolean;
+  currentUserId: string | null;
+  currentUserRole: string | null;
+  onSortingChange: (sorting: SortingState) => void;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+  onRemoveMember: (memberId: string) => void;
+  onLeave: () => void;
 }
 
-const PAGE_SIZE_OPTIONS = ["10", "25", "50"]
-const MAX_SKELETON_ROWS = 10
-const ACTIONS_COLUMN_CLASS = "text-right w-14"
+const PAGE_SIZE_OPTIONS = ['10', '25', '50'];
+const MAX_SKELETON_ROWS = 10;
+const ACTIONS_COLUMN_CLASS = 'text-right w-14';
 
 export function WorkspaceMembersTable({
   data,
@@ -91,7 +91,7 @@ export function WorkspaceMembersTable({
   const columns = React.useMemo<Array<ColumnDef<WorkspaceMemberRow>>>(
     () => [
       {
-        accessorKey: "email",
+        accessorKey: 'email',
         header: ({ column }) => (
           <SortableHeader column={column} label="Email Address" />
         ),
@@ -99,21 +99,21 @@ export function WorkspaceMembersTable({
         enableSorting: true,
       },
       {
-        accessorKey: "role",
-        header: "Role",
+        accessorKey: 'role',
+        header: 'Role',
         cell: ({ row }) => normalizeRole(row.original.role),
         enableSorting: false,
       },
       {
-        id: "actions",
-        header: "",
+        id: 'actions',
+        header: '',
         enableSorting: false,
         cell: ({ row }) => {
-          const { id, userId, role } = row.original
-          const isOwnerRow = role === "owner"
-          const isCurrentUserRow = userId === currentUserId
+          const { id, userId, role } = row.original;
+          const isOwnerRow = role === 'owner';
+          const isCurrentUserRow = userId === currentUserId;
           const showDisabledRemove =
-            isOwnerRow || (currentUserRole === "member" && !isCurrentUserRow)
+            isOwnerRow || (currentUserRole === 'member' && !isCurrentUserRow);
 
           return (
             <DropdownMenu>
@@ -158,7 +158,7 @@ export function WorkspaceMembersTable({
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
-          )
+          );
         },
       },
     ],
@@ -171,7 +171,7 @@ export function WorkspaceMembersTable({
       onRemoveMember,
       removingMemberId,
     ]
-  )
+  );
 
   const table = useReactTable({
     data,
@@ -181,26 +181,26 @@ export function WorkspaceMembersTable({
     manualPagination: true,
     pageCount: totalPages,
     getCoreRowModel: getCoreRowModel(),
-  })
+  });
 
-  const totalPagesSafe = Math.max(totalPages, 1)
-  const skeletonRowCount = Math.min(pageSize, MAX_SKELETON_ROWS)
+  const totalPagesSafe = Math.max(totalPages, 1);
+  const skeletonRowCount = Math.min(pageSize, MAX_SKELETON_ROWS);
 
   const handleHeaderSort = React.useCallback(
     (columnId: string) => {
-      const current = sorting.find((item) => item.id === columnId)
+      const current = sorting.find((item) => item.id === columnId);
       if (!current) {
-        onSortingChange([{ id: columnId, desc: false }])
-        return
+        onSortingChange([{ id: columnId, desc: false }]);
+        return;
       }
       if (!current.desc) {
-        onSortingChange([{ id: columnId, desc: true }])
-        return
+        onSortingChange([{ id: columnId, desc: true }]);
+        return;
       }
-      onSortingChange([])
+      onSortingChange([]);
     },
     [onSortingChange, sorting]
-  )
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -218,10 +218,10 @@ export function WorkspaceMembersTable({
                         : undefined
                     }
                     className={
-                      header.id === "actions"
+                      header.id === 'actions'
                         ? ACTIONS_COLUMN_CLASS
                         : header.column.getCanSort()
-                          ? "cursor-pointer select-none"
+                          ? 'cursor-pointer select-none'
                           : undefined
                     }
                   >
@@ -258,7 +258,7 @@ export function WorkspaceMembersTable({
                     <TableCell
                       key={cell.id}
                       className={
-                        cell.column.id === "actions"
+                        cell.column.id === 'actions'
                           ? ACTIONS_COLUMN_CLASS
                           : undefined
                       }
@@ -290,7 +290,7 @@ export function WorkspaceMembersTable({
           {isLoading ? (
             <Skeleton className="h-4 w-20" />
           ) : (
-            `${total} member${total === 1 ? "" : "s"}`
+            `${total} member${total === 1 ? '' : 's'}`
           )}
         </div>
         <div className="flex items-center gap-6">
@@ -304,8 +304,8 @@ export function WorkspaceMembersTable({
             <Select
               value={String(pageSize)}
               onValueChange={(value) => {
-                if (!value) return
-                onPageSizeChange(Number(value))
+                if (!value) return;
+                onPageSizeChange(Number(value));
               }}
               disabled={isLoading}
             >
@@ -369,36 +369,36 @@ export function WorkspaceMembersTable({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function SortableHeader({
   column,
   label,
 }: {
-  column: { getIsSorted: () => false | "asc" | "desc" }
-  label: string
+  column: { getIsSorted: () => false | 'asc' | 'desc' };
+  label: string;
 }) {
-  const sorted = column.getIsSorted()
+  const sorted = column.getIsSorted();
   return (
     <div className="flex items-center gap-1">
       {label}
-      {sorted === "asc" ? (
+      {sorted === 'asc' ? (
         <IconArrowUp className="size-3.5" />
-      ) : sorted === "desc" ? (
+      ) : sorted === 'desc' ? (
         <IconArrowDown className="size-3.5" />
       ) : (
         <IconArrowsSort className="size-3.5 text-muted-foreground/50" />
       )}
     </div>
-  )
+  );
 }
 
 function normalizeRole(role: string): string {
-  if (!role) return "-"
+  if (!role) return '-';
   return role
-    .split(",")
+    .split(',')
     .map((item) => item.trim())
     .filter(Boolean)
-    .join(", ")
+    .join(', ');
 }

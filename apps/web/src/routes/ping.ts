@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute } from '@tanstack/react-router';
 
-export const Route = createFileRoute("/ping")({
+export const Route = createFileRoute('/ping')({
   server: {
     handlers: {
       GET: () => {
-        return new Response("pong")
+        return new Response('pong');
       },
     },
   },
-})
+});

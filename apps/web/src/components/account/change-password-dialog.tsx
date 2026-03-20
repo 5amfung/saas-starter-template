@@ -1,8 +1,8 @@
-import * as React from "react"
-import { useForm } from "@tanstack/react-form"
-import { useMutation } from "@tanstack/react-query"
-import { IconLoader2 } from "@tabler/icons-react"
-import { toast } from "sonner"
+import * as React from 'react';
+import { useForm } from '@tanstack/react-form';
+import { useMutation } from '@tanstack/react-query';
+import { IconLoader2 } from '@tabler/icons-react';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,50 +13,50 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@workspace/ui/components/alert-dialog"
-import { Button } from "@workspace/ui/components/button"
+} from '@workspace/ui/components/alert-dialog';
+import { Button } from '@workspace/ui/components/button';
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
-import { authClient } from "@workspace/auth/client"
-import { changePasswordSchema } from "@/account/schemas"
-import { toFieldErrorItem } from "@/lib/form-utils"
+} from '@workspace/ui/components/field';
+import { Input } from '@workspace/ui/components/input';
+import { authClient } from '@workspace/auth/client';
+import { changePasswordSchema } from '@/account/schemas';
+import { toFieldErrorItem } from '@/lib/form-utils';
 
 export function ChangePasswordDialog() {
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = React.useState(false);
 
   const mutation = useMutation({
     mutationFn: async (payload: {
-      currentPassword: string
-      newPassword: string
+      currentPassword: string;
+      newPassword: string;
     }) => {
       const { error } = await authClient.changePassword({
         currentPassword: payload.currentPassword,
         newPassword: payload.newPassword,
         revokeOtherSessions: true,
-      })
+      });
 
       if (error) {
-        throw new Error(error.message)
+        throw new Error(error.message);
       }
     },
     onSuccess: () => {
-      toast.success("Password updated.")
+      toast.success('Password updated.');
     },
     onError: (err) => {
-      toast.error(err.message || "Failed to update password.")
+      toast.error(err.message || 'Failed to update password.');
     },
-  })
+  });
 
   const form = useForm({
     defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
     },
     validators: {
       onBlur: changePasswordSchema,
@@ -66,20 +66,20 @@ export function ChangePasswordDialog() {
       await mutation.mutateAsync({
         currentPassword: value.currentPassword,
         newPassword: value.newPassword,
-      })
-      setOpen(false)
-      form.reset()
+      });
+      setOpen(false);
+      form.reset();
     },
-  })
+  });
 
   return (
     <AlertDialog
       open={open}
       onOpenChange={(nextOpen) => {
-        setOpen(nextOpen)
+        setOpen(nextOpen);
         if (!nextOpen) {
-          form.reset()
-          mutation.reset()
+          form.reset();
+          mutation.reset();
         }
       }}
     >
@@ -101,8 +101,8 @@ export function ChangePasswordDialog() {
 
         <form
           onSubmit={(e) => {
-            e.preventDefault()
-            form.handleSubmit()
+            e.preventDefault();
+            form.handleSubmit();
           }}
         >
           <FieldGroup className="gap-4">
@@ -112,7 +112,7 @@ export function ChangePasswordDialog() {
                 const isInvalid =
                   field.state.meta.isDirty &&
                   field.state.meta.isBlurred &&
-                  !field.state.meta.isValid
+                  !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid || undefined}>
                     <FieldLabel htmlFor={field.name}>
@@ -132,7 +132,7 @@ export function ChangePasswordDialog() {
                       />
                     )}
                   </Field>
-                )
+                );
               }}
             />
 
@@ -142,7 +142,7 @@ export function ChangePasswordDialog() {
                 const isInvalid =
                   field.state.meta.isDirty &&
                   field.state.meta.isBlurred &&
-                  !field.state.meta.isValid
+                  !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid || undefined}>
                     <FieldLabel htmlFor={field.name}>New password</FieldLabel>
@@ -160,7 +160,7 @@ export function ChangePasswordDialog() {
                       />
                     )}
                   </Field>
-                )
+                );
               }}
             />
 
@@ -170,7 +170,7 @@ export function ChangePasswordDialog() {
                 const isInvalid =
                   field.state.meta.isDirty &&
                   field.state.meta.isBlurred &&
-                  !field.state.meta.isValid
+                  !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid || undefined}>
                     <FieldLabel htmlFor={field.name}>
@@ -190,7 +190,7 @@ export function ChangePasswordDialog() {
                       />
                     )}
                   </Field>
-                )
+                );
               }}
             />
           </FieldGroup>
@@ -206,8 +206,8 @@ export function ChangePasswordDialog() {
               <AlertDialogAction
                 disabled={!canSubmit || isSubmitting || mutation.isPending}
                 onClick={(e) => {
-                  e.preventDefault()
-                  form.handleSubmit()
+                  e.preventDefault();
+                  form.handleSubmit();
                 }}
               >
                 {(isSubmitting || mutation.isPending) && (
@@ -220,5 +220,5 @@ export function ChangePasswordDialog() {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }

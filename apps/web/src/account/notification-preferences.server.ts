@@ -1,25 +1,25 @@
-import { getRequestHeaders } from "@tanstack/react-start/server"
-import { redirect } from "@tanstack/react-router"
-import { eq } from "drizzle-orm"
-import { notificationPreferences } from "@workspace/db/schema"
+import { getRequestHeaders } from '@tanstack/react-start/server';
+import { redirect } from '@tanstack/react-router';
+import { eq } from 'drizzle-orm';
+import { notificationPreferences } from '@workspace/db/schema';
 import type {
   NotificationPreferences,
   NotificationPreferencesPatch,
-} from "@/account/notification-preferences.schemas"
-import { auth, db } from "@/init"
+} from '@/account/notification-preferences.schemas';
+import { auth, db } from '@/init';
 
 const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   emailUpdates: true,
   marketingEmails: false,
-}
+};
 
 export async function requireVerifiedSession() {
-  const headers = getRequestHeaders()
-  const session = await auth.api.getSession({ headers })
+  const headers = getRequestHeaders();
+  const session = await auth.api.getSession({ headers });
   if (!session || !session.user.emailVerified) {
-    throw redirect({ to: "/signin" })
+    throw redirect({ to: '/signin' });
   }
-  return session
+  return session;
 }
 
 export async function getNotificationPreferencesForUser(
@@ -31,21 +31,21 @@ export async function getNotificationPreferencesForUser(
       .from(notificationPreferences)
       .where(eq(notificationPreferences.userId, userId))
       .limit(1)
-  ).at(0)
+  ).at(0);
 
   return {
     ...DEFAULT_NOTIFICATION_PREFERENCES,
     marketingEmails:
       row?.marketingEmails ?? DEFAULT_NOTIFICATION_PREFERENCES.marketingEmails,
-  }
+  };
 }
 
 export async function upsertNotificationPreferencesForUser(
   userId: string,
   patch: NotificationPreferencesPatch
 ): Promise<NotificationPreferences> {
-  if (typeof patch.marketingEmails !== "boolean") {
-    return getNotificationPreferencesForUser(userId)
+  if (typeof patch.marketingEmails !== 'boolean') {
+    return getNotificationPreferencesForUser(userId);
   }
 
   await db
@@ -60,7 +60,7 @@ export async function upsertNotificationPreferencesForUser(
         marketingEmails: patch.marketingEmails,
         updatedAt: new Date(),
       },
-    })
+    });
 
-  return getNotificationPreferencesForUser(userId)
+  return getNotificationPreferencesForUser(userId);
 }

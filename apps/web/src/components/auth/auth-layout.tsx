@@ -1,4 +1,4 @@
-import { IconStack2 } from "@tabler/icons-react"
+import { IconStack2 } from '@tabler/icons-react';
 
 export function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,5 +13,5 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
         <div className="flex flex-col gap-6">{children}</div>
       </div>
     </div>
-  )
+  );
 }

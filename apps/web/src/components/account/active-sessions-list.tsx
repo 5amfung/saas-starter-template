@@ -1,12 +1,12 @@
-import * as React from "react"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import * as React from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   IconDeviceDesktop,
   IconDeviceMobile,
   IconLoader2,
   IconTrash,
-} from "@tabler/icons-react"
-import { toast } from "sonner"
+} from '@tabler/icons-react';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,117 +16,117 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@workspace/ui/components/alert-dialog"
-import { Badge } from "@workspace/ui/components/badge"
-import { Button } from "@workspace/ui/components/button"
+} from '@workspace/ui/components/alert-dialog';
+import { Badge } from '@workspace/ui/components/badge';
+import { Button } from '@workspace/ui/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
-import { Skeleton } from "@workspace/ui/components/skeleton"
-import { authClient } from "@workspace/auth/client"
-import { useSessionQuery } from "@/hooks/use-session-query"
+} from '@workspace/ui/components/card';
+import { Skeleton } from '@workspace/ui/components/skeleton';
+import { authClient } from '@workspace/auth/client';
+import { useSessionQuery } from '@/hooks/use-session-query';
 import {
   SESSIONS_QUERY_KEY,
   useSessionsQuery,
-} from "@/hooks/use-sessions-query"
+} from '@/hooks/use-sessions-query';
 
 interface SessionItem {
-  id: string
-  token: string
-  updatedAt: unknown
-  ipAddress?: string | null
-  userAgent?: string | null
+  id: string;
+  token: string;
+  updatedAt: unknown;
+  ipAddress?: string | null;
+  userAgent?: string | null;
 }
 
 function toTimestamp(value: unknown): number {
-  if (value instanceof Date) return value.getTime()
-  if (typeof value === "string" || typeof value === "number") {
-    const timestamp = new Date(value).getTime()
-    return Number.isNaN(timestamp) ? 0 : timestamp
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === 'string' || typeof value === 'number') {
+    const timestamp = new Date(value).getTime();
+    return Number.isNaN(timestamp) ? 0 : timestamp;
   }
-  return 0
+  return 0;
 }
 
 function formatLastActive(value: unknown) {
-  const timestamp = toTimestamp(value)
-  if (!timestamp) return "Unknown"
-  return new Date(timestamp).toLocaleString()
+  const timestamp = toTimestamp(value);
+  if (!timestamp) return 'Unknown';
+  return new Date(timestamp).toLocaleString();
 }
 
 function isMobileDevice(userAgent?: string | null) {
-  if (!userAgent) return false
-  return /mobile|iphone|ipad|android|tablet/i.test(userAgent)
+  if (!userAgent) return false;
+  return /mobile|iphone|ipad|android|tablet/i.test(userAgent);
 }
 
 function getDeviceName(userAgent?: string | null) {
-  if (!userAgent) return "Unknown device"
-  if (/iphone/i.test(userAgent)) return "iPhone"
-  if (/ipad/i.test(userAgent)) return "iPad"
-  if (/android/i.test(userAgent)) return "Android device"
-  if (/macintosh|mac os/i.test(userAgent)) return "Mac"
-  if (/windows/i.test(userAgent)) return "Windows PC"
-  if (/linux/i.test(userAgent)) return "Linux device"
-  return "Browser session"
+  if (!userAgent) return 'Unknown device';
+  if (/iphone/i.test(userAgent)) return 'iPhone';
+  if (/ipad/i.test(userAgent)) return 'iPad';
+  if (/android/i.test(userAgent)) return 'Android device';
+  if (/macintosh|mac os/i.test(userAgent)) return 'Mac';
+  if (/windows/i.test(userAgent)) return 'Windows PC';
+  if (/linux/i.test(userAgent)) return 'Linux device';
+  return 'Browser session';
 }
 
 function getBrowserFamily(userAgent?: string | null) {
-  if (!userAgent) return "Unknown browser"
-  if (/edg\//i.test(userAgent)) return "Edge"
-  if (/firefox\//i.test(userAgent)) return "Firefox"
-  if (/opr\/|opera/i.test(userAgent)) return "Opera"
-  if (/chrome\//i.test(userAgent) && !/edg\//i.test(userAgent)) return "Chrome"
+  if (!userAgent) return 'Unknown browser';
+  if (/edg\//i.test(userAgent)) return 'Edge';
+  if (/firefox\//i.test(userAgent)) return 'Firefox';
+  if (/opr\/|opera/i.test(userAgent)) return 'Opera';
+  if (/chrome\//i.test(userAgent) && !/edg\//i.test(userAgent)) return 'Chrome';
   if (/safari\//i.test(userAgent) && !/chrome\//i.test(userAgent))
-    return "Safari"
-  return "Unknown browser"
+    return 'Safari';
+  return 'Unknown browser';
 }
 
 function formatLoginMethod(method: string | null | undefined) {
-  if (!method) return "unknown"
-  return method.charAt(0).toUpperCase() + method.slice(1)
+  if (!method) return 'unknown';
+  return method.charAt(0).toUpperCase() + method.slice(1);
 }
 
 export function ActiveSessionsList() {
-  const queryClient = useQueryClient()
-  const { data: currentSessionData } = useSessionQuery()
-  const { data: sessions, isPending, error, refetch } = useSessionsQuery()
+  const queryClient = useQueryClient();
+  const { data: currentSessionData } = useSessionQuery();
+  const { data: sessions, isPending, error, refetch } = useSessionsQuery();
   const [selectedSession, setSelectedSession] =
-    React.useState<SessionItem | null>(null)
+    React.useState<SessionItem | null>(null);
 
   const revokeSessionMutation = useMutation({
     mutationFn: async (token: string) => {
-      const { error: revokeError } = await authClient.revokeSession({ token })
-      if (revokeError) throw new Error(revokeError.message)
+      const { error: revokeError } = await authClient.revokeSession({ token });
+      if (revokeError) throw new Error(revokeError.message);
     },
     onSuccess: async () => {
-      toast.success("Session revoked.")
-      setSelectedSession(null)
-      await queryClient.invalidateQueries({ queryKey: SESSIONS_QUERY_KEY })
+      toast.success('Session revoked.');
+      setSelectedSession(null);
+      await queryClient.invalidateQueries({ queryKey: SESSIONS_QUERY_KEY });
     },
     onError: (mutationError) => {
-      toast.error(mutationError.message || "Failed to revoke session.")
+      toast.error(mutationError.message || 'Failed to revoke session.');
     },
-  })
+  });
 
-  const currentSessionToken = currentSessionData?.session.token ?? null
+  const currentSessionToken = currentSessionData?.session.token ?? null;
   const { data: lastLoginMethod = null } = useQuery({
-    queryKey: ["last-login-method"],
+    queryKey: ['last-login-method'],
     queryFn: () => authClient.getLastUsedLoginMethod(),
     staleTime: Infinity,
-  })
-  const lastSignInAt = currentSessionData?.user.lastSignInAt ?? null
+  });
+  const lastSignInAt = currentSessionData?.user.lastSignInAt ?? null;
 
   const sortedSessions = React.useMemo(() => {
-    const safeSessions = (sessions ?? []) as Array<SessionItem>
+    const safeSessions = (sessions ?? []) as Array<SessionItem>;
     return [...safeSessions].sort(
       (firstSession, secondSession) =>
         toTimestamp(secondSession.updatedAt) -
         toTimestamp(firstSession.updatedAt)
-    )
-  }, [sessions])
+    );
+  }, [sessions]);
 
   return (
     <>
@@ -138,8 +138,8 @@ export function ActiveSessionsList() {
               Last signed in
               {lastLoginMethod
                 ? ` with ${formatLoginMethod(lastLoginMethod)}`
-                : ""}
-              {lastSignInAt ? ` on ${formatLastActive(lastSignInAt)}` : ""}.
+                : ''}
+              {lastSignInAt ? ` on ${formatLastActive(lastSignInAt)}` : ''}.
             </p>
           ) : null}
           <CardDescription>
@@ -165,7 +165,7 @@ export function ActiveSessionsList() {
                 variant="link"
                 className="mt-1 h-auto px-0 text-destructive"
                 onClick={() => {
-                  void refetch()
+                  void refetch();
                 }}
               >
                 Retry
@@ -182,10 +182,10 @@ export function ActiveSessionsList() {
           {!isPending &&
             !error &&
             sortedSessions.map((session) => {
-              const isCurrentSession = session.token === currentSessionToken
+              const isCurrentSession = session.token === currentSessionToken;
               const DeviceIcon = isMobileDevice(session.userAgent)
                 ? IconDeviceMobile
-                : IconDeviceDesktop
+                : IconDeviceDesktop;
 
               return (
                 <div
@@ -199,7 +199,7 @@ export function ActiveSessionsList() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium">
-                          {getDeviceName(session.userAgent)} ·{" "}
+                          {getDeviceName(session.userAgent)} ·{' '}
                           {getBrowserFamily(session.userAgent)}
                         </p>
                         {isCurrentSession && (
@@ -210,7 +210,7 @@ export function ActiveSessionsList() {
                         Last active: {formatLastActive(session.updatedAt)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        IP: {session.ipAddress || "Unknown"}
+                        IP: {session.ipAddress || 'Unknown'}
                       </p>
                     </div>
                   </div>
@@ -228,7 +228,7 @@ export function ActiveSessionsList() {
                     </Button>
                   )}
                 </div>
-              )
+              );
             })}
         </CardContent>
       </Card>
@@ -236,7 +236,7 @@ export function ActiveSessionsList() {
       <AlertDialog
         open={selectedSession !== null}
         onOpenChange={(open) => {
-          if (!open) setSelectedSession(null)
+          if (!open) setSelectedSession(null);
         }}
       >
         <AlertDialogContent>
@@ -254,9 +254,9 @@ export function ActiveSessionsList() {
               variant="destructive"
               disabled={!selectedSession || revokeSessionMutation.isPending}
               onClick={(event) => {
-                event.preventDefault()
-                if (!selectedSession) return
-                revokeSessionMutation.mutate(selectedSession.token)
+                event.preventDefault();
+                if (!selectedSession) return;
+                revokeSessionMutation.mutate(selectedSession.token);
               }}
             >
               {revokeSessionMutation.isPending && (
@@ -268,5 +268,5 @@ export function ActiveSessionsList() {
         </AlertDialogContent>
       </AlertDialog>
     </>
-  )
+  );
 }

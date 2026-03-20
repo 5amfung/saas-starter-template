@@ -1,16 +1,16 @@
-import * as React from "react"
-import { Link } from "@tanstack/react-router"
+import * as React from 'react';
+import { Link } from '@tanstack/react-router';
 import {
   flexRender,
   getCoreRowModel,
   useReactTable,
-} from "@tanstack/react-table"
+} from '@tanstack/react-table';
 import type {
   ColumnDef,
   Table as ReactTable,
   SortingState,
   VisibilityState,
-} from "@tanstack/react-table"
+} from '@tanstack/react-table';
 import {
   IconArrowDown,
   IconArrowUp,
@@ -27,26 +27,26 @@ import {
   IconLayoutColumns,
   IconUser,
   IconX,
-} from "@tabler/icons-react"
-import { Badge } from "@workspace/ui/components/badge"
-import { Button } from "@workspace/ui/components/button"
+} from '@tabler/icons-react';
+import { Badge } from '@workspace/ui/components/badge';
+import { Button } from '@workspace/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu"
-import { Input } from "@workspace/ui/components/input"
-import { Label } from "@workspace/ui/components/label"
+} from '@workspace/ui/components/dropdown-menu';
+import { Input } from '@workspace/ui/components/input';
+import { Label } from '@workspace/ui/components/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select"
-import { Skeleton } from "@workspace/ui/components/skeleton"
+} from '@workspace/ui/components/select';
+import { Skeleton } from '@workspace/ui/components/skeleton';
 import {
   Table,
   TableBody,
@@ -54,45 +54,45 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table"
-import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/tabs"
+} from '@workspace/ui/components/table';
+import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
 
 interface UserRow {
-  id: string
-  name: string
-  email: string
-  emailVerified: boolean
-  image?: string | null
-  role?: string | null
-  banned?: boolean | null
-  banReason?: string | null
-  banExpires?: Date | string | null
-  createdAt: Date | string
-  updatedAt: Date | string
+  id: string;
+  name: string;
+  email: string;
+  emailVerified: boolean;
+  image?: string | null;
+  role?: string | null;
+  banned?: boolean | null;
+  banReason?: string | null;
+  banExpires?: Date | string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
 interface AdminUserTableProps {
-  data: Array<UserRow>
-  total: number
-  page: number
-  pageSize: number
-  totalPages: number
-  search: string
-  filter: string
-  sorting: SortingState
-  onSearchChange: (search: string) => void
-  onSearchSubmit: (search?: string) => void
-  onSearchClear: () => void
-  onFilterChange: (filter: string) => void
-  onSortingChange: (sorting: SortingState) => void
-  onPageChange: (page: number) => void
-  onPageSizeChange: (pageSize: number) => void
-  isLoading?: boolean
+  data: Array<UserRow>;
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  search: string;
+  filter: string;
+  sorting: SortingState;
+  onSearchChange: (search: string) => void;
+  onSearchSubmit: (search?: string) => void;
+  onSearchClear: () => void;
+  onFilterChange: (filter: string) => void;
+  onSortingChange: (sorting: SortingState) => void;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+  isLoading?: boolean;
 }
 
-const PAGE_SIZE_OPTIONS = ["10", "50", "100"]
-const MAX_SKELETON_ROWS = 10
-const ACTIONS_COLUMN_CLASS = "text-right w-14"
+const PAGE_SIZE_OPTIONS = ['10', '50', '100'];
+const MAX_SKELETON_ROWS = 10;
+const ACTIONS_COLUMN_CLASS = 'text-right w-14';
 
 export function AdminUserTable({
   data,
@@ -118,14 +118,14 @@ export function AdminUserTable({
       banReason: false,
       banExpires: false,
       updatedAt: false,
-    })
-  const searchInputRef = React.useRef<HTMLInputElement>(null)
+    });
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   const columns = React.useMemo<Array<ColumnDef<UserRow>>>(
     () => [
       {
-        accessorKey: "id",
-        header: "ID",
+        accessorKey: 'id',
+        header: 'ID',
         cell: ({ row }) => (
           <span className="font-mono text-xs text-muted-foreground">
             {row.original.id}
@@ -134,7 +134,7 @@ export function AdminUserTable({
         enableHiding: true,
       },
       {
-        accessorKey: "name",
+        accessorKey: 'name',
         header: ({ column }) => <SortableHeader column={column} label="Name" />,
         cell: ({ row }) => (
           <Link
@@ -149,7 +149,7 @@ export function AdminUserTable({
         enableSorting: true,
       },
       {
-        accessorKey: "email",
+        accessorKey: 'email',
         header: ({ column }) => (
           <SortableHeader column={column} label="Email" />
         ),
@@ -166,8 +166,8 @@ export function AdminUserTable({
         enableSorting: true,
       },
       {
-        accessorKey: "emailVerified",
-        header: "Email Verified",
+        accessorKey: 'emailVerified',
+        header: 'Email Verified',
         cell: ({ row }) =>
           row.original.emailVerified ? (
             <Badge variant="outline" className="gap-1">
@@ -179,13 +179,13 @@ export function AdminUserTable({
         enableSorting: false,
       },
       {
-        accessorKey: "role",
-        header: "Role",
+        accessorKey: 'role',
+        header: 'Role',
         cell: ({ row }) =>
           row.original.role ? (
             <Badge variant="secondary" className="gap-1">
-              {row.original.role === "admin" && <IconBolt className="size-3" />}
-              {row.original.role === "user" && <IconUser className="size-3" />}
+              {row.original.role === 'admin' && <IconBolt className="size-3" />}
+              {row.original.role === 'user' && <IconUser className="size-3" />}
               {row.original.role}
             </Badge>
           ) : null,
@@ -193,8 +193,8 @@ export function AdminUserTable({
         enableSorting: false,
       },
       {
-        accessorKey: "banned",
-        header: "Banned",
+        accessorKey: 'banned',
+        header: 'Banned',
         cell: ({ row }) =>
           row.original.banned ? (
             <Badge variant="destructive" className="gap-1">
@@ -206,19 +206,19 @@ export function AdminUserTable({
         enableSorting: false,
       },
       {
-        accessorKey: "banReason",
-        header: "Ban Reason",
+        accessorKey: 'banReason',
+        header: 'Ban Reason',
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground">
-            {row.original.banReason ?? ""}
+            {row.original.banReason ?? ''}
           </span>
         ),
         enableHiding: true,
         enableSorting: false,
       },
       {
-        accessorKey: "banExpires",
-        header: "Ban Expires",
+        accessorKey: 'banExpires',
+        header: 'Ban Expires',
         cell: ({ row }) =>
           row.original.banExpires
             ? new Date(row.original.banExpires).toLocaleDateString()
@@ -227,7 +227,7 @@ export function AdminUserTable({
         enableSorting: false,
       },
       {
-        accessorKey: "createdAt",
+        accessorKey: 'createdAt',
         header: ({ column }) => (
           <SortableHeader column={column} label="Created" />
         ),
@@ -236,7 +236,7 @@ export function AdminUserTable({
         enableSorting: true,
       },
       {
-        accessorKey: "updatedAt",
+        accessorKey: 'updatedAt',
         header: ({ column }) => (
           <SortableHeader column={column} label="Updated" />
         ),
@@ -245,7 +245,7 @@ export function AdminUserTable({
         enableSorting: true,
       },
       {
-        id: "actions",
+        id: 'actions',
         enableHiding: false,
         enableSorting: false,
         cell: ({ row }) => (
@@ -280,7 +280,7 @@ export function AdminUserTable({
       },
     ],
     []
-  )
+  );
 
   const table = useReactTable({
     data,
@@ -291,28 +291,28 @@ export function AdminUserTable({
     manualSorting: true,
     manualPagination: true,
     pageCount: totalPages,
-  })
-  const totalPagesSafe = Math.max(totalPages, 1)
-  const visibleColumnCount = table.getVisibleLeafColumns().length
-  const skeletonRowCount = Math.min(pageSize, MAX_SKELETON_ROWS)
+  });
+  const totalPagesSafe = Math.max(totalPages, 1);
+  const visibleColumnCount = table.getVisibleLeafColumns().length;
+  const skeletonRowCount = Math.min(pageSize, MAX_SKELETON_ROWS);
 
   // Map internal sorting state to parent handler.
   const handleHeaderSort = React.useCallback(
     (columnId: string) => {
-      const current = sorting.find((s) => s.id === columnId)
-      let next: SortingState
+      const current = sorting.find((s) => s.id === columnId);
+      let next: SortingState;
       if (!current) {
-        next = [{ id: columnId, desc: false }]
+        next = [{ id: columnId, desc: false }];
       } else if (!current.desc) {
-        next = [{ id: columnId, desc: true }]
+        next = [{ id: columnId, desc: true }];
       } else {
         // Clear sort.
-        next = []
+        next = [];
       }
-      onSortingChange(next)
+      onSortingChange(next);
     },
     [sorting, onSortingChange]
-  )
+  );
 
   return (
     <Tabs
@@ -327,8 +327,8 @@ export function AdminUserTable({
         <Select
           value={filter}
           onValueChange={(value) => {
-            if (!value) return
-            onFilterChange(value)
+            if (!value) return;
+            onFilterChange(value);
           }}
         >
           <SelectTrigger
@@ -359,14 +359,14 @@ export function AdminUserTable({
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault()
-                  onSearchSubmit(e.currentTarget.value)
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  onSearchSubmit(e.currentTarget.value);
                 }
-                if (e.key === "Escape" && search.length > 0) {
-                  e.preventDefault()
-                  onSearchClear()
-                  requestAnimationFrame(() => searchInputRef.current?.focus())
+                if (e.key === 'Escape' && search.length > 0) {
+                  e.preventDefault();
+                  onSearchClear();
+                  requestAnimationFrame(() => searchInputRef.current?.focus());
                 }
               }}
               className="h-8 w-40 pr-8 sm:w-56 lg:w-72"
@@ -377,8 +377,8 @@ export function AdminUserTable({
                 variant="ghost"
                 size="icon"
                 onClick={() => {
-                  onSearchClear()
-                  requestAnimationFrame(() => searchInputRef.current?.focus())
+                  onSearchClear();
+                  requestAnimationFrame(() => searchInputRef.current?.focus());
                 }}
                 className="absolute top-1/2 right-1 size-6 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 aria-label="Clear search"
@@ -406,10 +406,10 @@ export function AdminUserTable({
                           : undefined
                       }
                       className={
-                        header.id === "actions"
+                        header.id === 'actions'
                           ? ACTIONS_COLUMN_CLASS
                           : header.column.getCanSort()
-                            ? "cursor-pointer select-none"
+                            ? 'cursor-pointer select-none'
                             : undefined
                       }
                     >
@@ -430,8 +430,8 @@ export function AdminUserTable({
                   <TableRow key={`loading-row-${rowIdx}`}>
                     {Array.from({ length: visibleColumnCount }).map(
                       (__, colIdx) => {
-                        const column = table.getVisibleLeafColumns()[colIdx]
-                        const isActionsColumn = column.id === "actions"
+                        const column = table.getVisibleLeafColumns()[colIdx];
+                        const isActionsColumn = column.id === 'actions';
                         return (
                           <TableCell
                             key={`loading-cell-${rowIdx}-${colIdx}`}
@@ -442,12 +442,12 @@ export function AdminUserTable({
                             <Skeleton
                               className={
                                 isActionsColumn
-                                  ? "ml-auto h-8 w-8 rounded-md"
-                                  : "h-4 w-24"
+                                  ? 'ml-auto h-8 w-8 rounded-md'
+                                  : 'h-4 w-24'
                               }
                             />
                           </TableCell>
-                        )
+                        );
                       }
                     )}
                   </TableRow>
@@ -459,7 +459,7 @@ export function AdminUserTable({
                       <TableCell
                         key={cell.id}
                         className={
-                          cell.column.id === "actions"
+                          cell.column.id === 'actions'
                             ? ACTIONS_COLUMN_CLASS
                             : undefined
                         }
@@ -478,9 +478,9 @@ export function AdminUserTable({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    {search || filter !== "all"
-                      ? "No results. Clear filters."
-                      : "No users found."}
+                    {search || filter !== 'all'
+                      ? 'No results. Clear filters.'
+                      : 'No users found.'}
                   </TableCell>
                 </TableRow>
               )}
@@ -493,7 +493,7 @@ export function AdminUserTable({
             {isLoading ? (
               <Skeleton className="h-4 w-24" />
             ) : (
-              `${total} user${total !== 1 ? "s" : ""} total`
+              `${total} user${total !== 1 ? 's' : ''} total`
             )}
           </div>
           <div className="flex w-full items-center gap-8 lg:w-fit">
@@ -504,8 +504,8 @@ export function AdminUserTable({
               <Select
                 value={String(pageSize)}
                 onValueChange={(value) => {
-                  if (!value) return
-                  onPageSizeChange(Number(value))
+                  if (!value) return;
+                  onPageSizeChange(Number(value));
                 }}
                 disabled={isLoading}
               >
@@ -573,7 +573,7 @@ export function AdminUserTable({
         </div>
       </div>
     </Tabs>
-  )
+  );
 }
 
 // --- Internal components ---
@@ -582,30 +582,30 @@ function SortableHeader({
   column,
   label,
 }: {
-  column: { getIsSorted: () => false | "asc" | "desc" }
-  label: string
+  column: { getIsSorted: () => false | 'asc' | 'desc' };
+  label: string;
 }) {
-  const sorted = column.getIsSorted()
+  const sorted = column.getIsSorted();
   return (
     <div className="flex items-center gap-1">
       {label}
-      {sorted === "asc" ? (
+      {sorted === 'asc' ? (
         <IconArrowUp className="size-3.5" />
-      ) : sorted === "desc" ? (
+      ) : sorted === 'desc' ? (
         <IconArrowDown className="size-3.5" />
       ) : (
         <IconArrowsSort className="size-3.5 text-muted-foreground/50" />
       )}
     </div>
-  )
+  );
 }
 
 function ColumnVisibilityDropdown({ table }: { table: ReactTable<UserRow> }) {
   const toggleableColumns = table
     .getAllColumns()
-    .filter((col) => col.getCanHide())
+    .filter((col) => col.getCanHide());
 
-  if (toggleableColumns.length === 0) return null
+  if (toggleableColumns.length === 0) return null;
 
   return (
     <DropdownMenu>
@@ -632,13 +632,13 @@ function ColumnVisibilityDropdown({ table }: { table: ReactTable<UserRow> }) {
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
 
 function formatDate(date: Date | string) {
-  return new Date(date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  })
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }

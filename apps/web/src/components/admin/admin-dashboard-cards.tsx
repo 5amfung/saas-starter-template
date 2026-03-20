@@ -3,22 +3,22 @@ import {
   IconUserCheck,
   IconUserPlus,
   IconUserX,
-} from "@tabler/icons-react"
+} from '@tabler/icons-react';
 import {
   Card,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
-import { Skeleton } from "@workspace/ui/components/skeleton"
+} from '@workspace/ui/components/card';
+import { Skeleton } from '@workspace/ui/components/skeleton';
 
 interface AdminDashboardCardsProps {
-  totalUsers: number
-  verifiedUsers: number
-  unverifiedUsers: number
-  signupsToday: number
-  verifiedToday: number
-  unverifiedToday: number
+  totalUsers: number;
+  verifiedUsers: number;
+  unverifiedUsers: number;
+  signupsToday: number;
+  verifiedToday: number;
+  unverifiedToday: number;
 }
 
 export function AdminDashboardCards({
@@ -66,7 +66,7 @@ export function AdminDashboardCards({
         }
       />
     </div>
-  )
+  );
 }
 
 function MetricCard({
@@ -76,11 +76,11 @@ function MetricCard({
   icon,
   secondary,
 }: {
-  title: string
-  value: number
-  valueSuffix?: React.ReactNode
-  icon: React.ReactNode
-  secondary?: React.ReactNode
+  title: string;
+  value: number;
+  valueSuffix?: React.ReactNode;
+  icon: React.ReactNode;
+  secondary?: React.ReactNode;
 }) {
   return (
     <Card>
@@ -96,7 +96,7 @@ function MetricCard({
         {secondary}
       </CardHeader>
     </Card>
-  )
+  );
 }
 
 export function AdminDashboardCardsSkeleton() {
@@ -105,7 +105,7 @@ export function AdminDashboardCardsSkeleton() {
       <MetricCardSkeleton withSecondary />
       <MetricCardSkeleton withSecondary />
     </div>
-  )
+  );
 }
 
 function MetricCardSkeleton({ withSecondary }: { withSecondary?: boolean }) {
@@ -125,5 +125,5 @@ function MetricCardSkeleton({ withSecondary }: { withSecondary?: boolean }) {
         ) : null}
       </CardHeader>
     </Card>
-  )
+  );
 }

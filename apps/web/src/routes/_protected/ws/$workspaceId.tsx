@@ -1,39 +1,39 @@
-import { Outlet, createFileRoute, notFound } from "@tanstack/react-router"
-import { getWorkspaceById } from "@/workspace/workspace.functions"
+import { Outlet, createFileRoute, notFound } from '@tanstack/react-router';
+import { getWorkspaceById } from '@/workspace/workspace.functions';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null
+  typeof value === 'object' && value !== null;
 
 const isWorkspaceNotFoundError = (error: unknown): boolean => {
-  if (!isRecord(error)) return false
-  if (error.code === "NOT_FOUND") return true
-  if (error.status === 404) return true
+  if (!isRecord(error)) return false;
+  if (error.code === 'NOT_FOUND') return true;
+  if (error.status === 404) return true;
   if (
     isRecord(error.body) &&
-    error.body.code === "NOT_FOUND" &&
-    error.body.message === "Workspace not found."
+    error.body.code === 'NOT_FOUND' &&
+    error.body.message === 'Workspace not found.'
   ) {
-    return true
+    return true;
   }
-  return error.message === "Workspace not found."
-}
+  return error.message === 'Workspace not found.';
+};
 
-export const Route = createFileRoute("/_protected/ws/$workspaceId")({
+export const Route = createFileRoute('/_protected/ws/$workspaceId')({
   component: WorkspaceLayout,
   loader: async ({ params }) => {
     try {
       return await getWorkspaceById({
         data: { workspaceId: params.workspaceId },
-      })
+      });
     } catch (error) {
       if (isWorkspaceNotFoundError(error)) {
-        throw notFound({ routeId: "__root__" })
+        throw notFound({ routeId: '__root__' });
       }
-      throw error
+      throw error;
     }
   },
-})
+});
 
 function WorkspaceLayout() {
-  return <Outlet />
+  return <Outlet />;
 }

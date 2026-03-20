@@ -1,8 +1,8 @@
-import { IconStack2 } from "@tabler/icons-react"
-import { createFileRoute } from "@tanstack/react-router"
-import { SigninForm } from "@/components/auth/signin-form"
+import { IconStack2 } from '@tabler/icons-react';
+import { createFileRoute } from '@tanstack/react-router';
+import { SigninForm } from '@/components/auth/signin-form';
 
-export const Route = createFileRoute("/")({ component: App })
+export const Route = createFileRoute('/')({ component: App });
 
 function App() {
   return (
@@ -17,5 +17,5 @@ function App() {
         <SigninForm />
       </div>
     </div>
-  )
+  );
 }

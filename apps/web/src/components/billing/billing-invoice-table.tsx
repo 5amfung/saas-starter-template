@@ -1,13 +1,13 @@
-import React from "react"
-import { IconExternalLink } from "@tabler/icons-react"
-import { Badge } from "@workspace/ui/components/badge"
+import React from 'react';
+import { IconExternalLink } from '@tabler/icons-react';
+import { Badge } from '@workspace/ui/components/badge';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select"
+} from '@workspace/ui/components/select';
 import {
   Table,
   TableBody,
@@ -15,88 +15,88 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table"
+} from '@workspace/ui/components/table';
 
 export interface Invoice {
-  id: string
-  date: number // Unix timestamp seconds
-  status: string | null
-  amount: number // Cents
-  currency: string
-  invoiceUrl: string | null | undefined
-  invoicePdf: string | null | undefined
+  id: string;
+  date: number; // Unix timestamp seconds
+  status: string | null;
+  amount: number; // Cents
+  currency: string;
+  invoiceUrl: string | null | undefined;
+  invoicePdf: string | null | undefined;
 }
 
 interface BillingInvoiceTableProps {
-  invoices: Array<Invoice>
-  isLoading?: boolean
+  invoices: Array<Invoice>;
+  isLoading?: boolean;
 }
 
-const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-})
+const DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+});
 
-const MONTH_FORMAT = new Intl.DateTimeFormat("en-US", {
-  month: "long",
-  year: "numeric",
-})
+const MONTH_FORMAT = new Intl.DateTimeFormat('en-US', {
+  month: 'long',
+  year: 'numeric',
+});
 
 function formatAmount(amount: number, currency: string): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
     currency: currency.toUpperCase(),
-  }).format(amount / 100)
+  }).format(amount / 100);
 }
 
 function getStatusVariant(
   status: string | null
-): "default" | "secondary" | "destructive" {
-  if (status === "paid") return "default"
-  if (status === "open") return "secondary"
-  return "destructive"
+): 'default' | 'secondary' | 'destructive' {
+  if (status === 'paid') return 'default';
+  if (status === 'open') return 'secondary';
+  return 'destructive';
 }
 
 /** Returns a YYYY-MM key for grouping invoices by month. */
 function monthKey(timestampSeconds: number): string {
-  const d = new Date(timestampSeconds * 1000)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+  const d = new Date(timestampSeconds * 1000);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
 interface MonthOption {
-  key: string // YYYY-MM for filtering.
-  label: string // Human-readable label shown in dropdown.
+  key: string; // YYYY-MM for filtering.
+  label: string; // Human-readable label shown in dropdown.
 }
 
 /** Generates month options for the last 12 months, newest first. */
 function getLast12Months(): Array<MonthOption> {
-  const options: Array<MonthOption> = []
-  const now = new Date()
+  const options: Array<MonthOption> = [];
+  const now = new Date();
   for (let i = 0; i < 12; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     options.push({
-      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
       label: MONTH_FORMAT.format(d),
-    })
+    });
   }
-  return options
+  return options;
 }
 
 export function BillingInvoiceTable({
   invoices,
   isLoading,
 }: BillingInvoiceTableProps) {
-  const monthOptions = getLast12Months()
-  const [selectedKey, setSelectedKey] = React.useState(monthOptions[0].key)
+  const monthOptions = getLast12Months();
+  const [selectedKey, setSelectedKey] = React.useState(monthOptions[0].key);
 
-  const filtered = invoices.filter((inv) => monthKey(inv.date) === selectedKey)
+  const filtered = invoices.filter((inv) => monthKey(inv.date) === selectedKey);
 
   /** Maps a label back to its YYYY-MM key. */
   const labelToKey = React.useMemo(
     () => new Map(monthOptions.map((o) => [o.label, o.key])),
     [monthOptions]
-  )
+  );
 
   return (
     <div className="flex flex-col gap-3">
@@ -105,9 +105,9 @@ export function BillingInvoiceTable({
         <Select
           defaultValue={monthOptions[0].label}
           onValueChange={(v) => {
-            if (!v) return
-            const key = labelToKey.get(v)
-            if (key) setSelectedKey(key)
+            if (!v) return;
+            const key = labelToKey.get(v);
+            if (key) setSelectedKey(key);
           }}
         >
           <SelectTrigger className="w-44">
@@ -155,7 +155,7 @@ export function BillingInvoiceTable({
                   </TableCell>
                   <TableCell>
                     <Badge variant={getStatusVariant(invoice.status)}>
-                      {invoice.status ?? "unknown"}
+                      {invoice.status ?? 'unknown'}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm">
@@ -183,5 +183,5 @@ export function BillingInvoiceTable({
         </Table>
       )}
     </div>
-  )
+  );
 }

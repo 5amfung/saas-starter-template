@@ -14,15 +14,15 @@ import {
   Tailwind,
   Text,
   pixelBasedPreset,
-} from "@react-email/components"
-import { EmailSecurityNotice } from "./email-security-notice"
-import type { EmailRequestContext } from "../request-context"
+} from '@react-email/components';
+import { EmailSecurityNotice } from './email-security-notice';
+import type { EmailRequestContext } from '../request-context';
 
 export interface ChangeEmailApprovalEmailProps {
-  appName: string
-  newEmail: string
-  approvalUrl: string
-  requestContext: EmailRequestContext
+  appName: string;
+  newEmail: string;
+  approvalUrl: string;
+  requestContext: EmailRequestContext;
 }
 
 export function ChangeEmailApprovalEmail({
@@ -46,7 +46,7 @@ export function ChangeEmailApprovalEmail({
                 Do NOT click the button if you didn't request email change!
               </Heading>
               <Text className="mb-6 text-[15px] leading-6 text-zinc-700">
-                A request was made to change your account email to{" "}
+                A request was made to change your account email to{' '}
                 <strong>{newEmail}</strong>. Click the button below to approve
                 this change.
               </Text>
@@ -68,7 +68,7 @@ export function ChangeEmailApprovalEmail({
                 {approvalUrl}
               </Link>
               <Text className="mb-6 text-sm leading-5 text-zinc-500">
-                After you approve, we will send a verification email to{" "}
+                After you approve, we will send a verification email to{' '}
                 <strong>{newEmail}</strong>. Your account email updates only
                 after you click the link in that email.
               </Text>
@@ -84,18 +84,18 @@ export function ChangeEmailApprovalEmail({
         </Body>
       </Tailwind>
     </Html>
-  )
+  );
 }
 
-export default ChangeEmailApprovalEmail
+export default ChangeEmailApprovalEmail;
 ChangeEmailApprovalEmail.PreviewProps = {
-  appName: "My App",
-  newEmail: "new@example.com",
-  approvalUrl: "https://example.com/api/auth/verify-email?token=abc123",
+  appName: 'My App',
+  newEmail: 'new@example.com',
+  approvalUrl: 'https://example.com/api/auth/verify-email?token=abc123',
   requestContext: {
-    requestedAtUtc: "13 February 2026, 21:11 UTC",
-    ip: "136.24.244.114",
-    city: "San Francisco",
-    country: "US",
+    requestedAtUtc: '13 February 2026, 21:11 UTC',
+    ip: '136.24.244.114',
+    city: 'San Francisco',
+    country: 'US',
   },
-} satisfies ChangeEmailApprovalEmailProps
+} satisfies ChangeEmailApprovalEmailProps;

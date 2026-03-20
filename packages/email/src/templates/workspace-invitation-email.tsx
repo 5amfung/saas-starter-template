@@ -14,13 +14,13 @@ import {
   Tailwind,
   Text,
   pixelBasedPreset,
-} from "@react-email/components"
+} from '@react-email/components';
 
 export interface WorkspaceInvitationEmailProps {
-  appName: string
-  workspaceName: string
-  inviterEmail: string
-  invitationUrl: string
+  appName: string;
+  workspaceName: string;
+  inviterEmail: string;
+  invitationUrl: string;
 }
 
 export function WorkspaceInvitationEmail({
@@ -44,7 +44,7 @@ export function WorkspaceInvitationEmail({
                 Workspace invitation
               </Heading>
               <Text className="mb-6 text-[15px] leading-6 text-zinc-700">
-                {inviterEmail} invited you to join{" "}
+                {inviterEmail} invited you to join{' '}
                 <strong>{workspaceName}</strong>.
               </Text>
               <Section className="mb-6">
@@ -75,13 +75,13 @@ export function WorkspaceInvitationEmail({
         </Body>
       </Tailwind>
     </Html>
-  )
+  );
 }
 
-export default WorkspaceInvitationEmail
+export default WorkspaceInvitationEmail;
 WorkspaceInvitationEmail.PreviewProps = {
-  appName: "My App",
-  workspaceName: "Acme Workspace",
-  inviterEmail: "owner@example.com",
-  invitationUrl: "https://example.com/accept-invite?token=abc123",
-} satisfies WorkspaceInvitationEmailProps
+  appName: 'My App',
+  workspaceName: 'Acme Workspace',
+  inviterEmail: 'owner@example.com',
+  invitationUrl: 'https://example.com/accept-invite?token=abc123',
+} satisfies WorkspaceInvitationEmailProps;

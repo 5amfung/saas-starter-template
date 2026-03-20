@@ -1,6 +1,6 @@
-"use client"
+'use client';
 
-import * as React from "react"
+import * as React from 'react';
 import {
   IconDashboard,
   IconFolder,
@@ -10,92 +10,92 @@ import {
   IconSettings,
   IconStack2,
   IconUsers,
-} from "@tabler/icons-react"
+} from '@tabler/icons-react';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-} from "@workspace/ui/components/sidebar"
-import { authClient } from "@workspace/auth/client"
-import { NavAdmin } from "@/components/nav-admin"
-import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
-import { WorkspaceSwitcher } from "@/components/workspace-switcher"
-import { NavUser, NavUserSkeleton } from "@/components/nav-user"
+} from '@workspace/ui/components/sidebar';
+import { authClient } from '@workspace/auth/client';
+import { NavAdmin } from '@/components/nav-admin';
+import { NavMain } from '@/components/nav-main';
+import { NavSecondary } from '@/components/nav-secondary';
+import { WorkspaceSwitcher } from '@/components/workspace-switcher';
+import { NavUser, NavUserSkeleton } from '@/components/nav-user';
 
 const data = {
   navSecondary: [
     {
-      title: "Search",
-      url: "#",
+      title: 'Search',
+      url: '#',
       icon: <IconSearch />,
     },
     {
-      title: "Get Help",
-      url: "https://github.com/5amfung",
+      title: 'Get Help',
+      url: 'https://github.com/5amfung',
       icon: <IconHelp />,
       newTab: true,
     },
     {
-      title: "Home Page",
-      url: "https://github.com/5amfung",
+      title: 'Home Page',
+      url: 'https://github.com/5amfung',
       icon: <IconHome />,
       newTab: true,
     },
   ],
   navAdmin: [
-    { title: "Dashboard", url: "/admin/dashboard", icon: <IconDashboard /> },
-    { title: "User", url: "/admin/user", icon: <IconUsers /> },
+    { title: 'Dashboard', url: '/admin/dashboard', icon: <IconDashboard /> },
+    { title: 'User', url: '/admin/user', icon: <IconUsers /> },
   ],
-}
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { data: session, isPending } = authClient.useSession()
-  const { data: organizations } = authClient.useListOrganizations()
-  const { data: activeOrganization } = authClient.useActiveOrganization()
+  const { data: session, isPending } = authClient.useSession();
+  const { data: organizations } = authClient.useListOrganizations();
+  const { data: activeOrganization } = authClient.useActiveOrganization();
 
   const activeWorkspaceId =
-    activeOrganization?.id ?? organizations?.at(0)?.id ?? null
+    activeOrganization?.id ?? organizations?.at(0)?.id ?? null;
 
   const navMain = activeWorkspaceId
     ? [
         {
-          title: "Overview",
+          title: 'Overview',
           url: `/ws/${activeWorkspaceId}/overview`,
           icon: <IconDashboard />,
         },
         {
-          title: "Projects",
+          title: 'Projects',
           url: `/ws/${activeWorkspaceId}/projects`,
           icon: <IconFolder />,
         },
         {
-          title: "Members",
+          title: 'Members',
           url: `/ws/${activeWorkspaceId}/members`,
           icon: <IconUsers />,
         },
         {
-          title: "Settings",
+          title: 'Settings',
           url: `/ws/${activeWorkspaceId}/settings`,
           icon: <IconSettings />,
         },
       ]
-    : []
+    : [];
 
   const workspaces = (organizations ?? []).map((organization) => ({
     id: organization.id,
     name: organization.name,
     logo: <IconStack2 className="size-4" />,
-  }))
+  }));
 
   const user = session?.user
     ? {
         name: session.user.name,
         email: session.user.email,
-        avatar: session.user.image ?? "",
+        avatar: session.user.image ?? '',
       }
-    : null
+    : null;
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -107,7 +107,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMain} />
-        {session?.user.role === "admin" && <NavAdmin items={data.navAdmin} />}
+        {session?.user.role === 'admin' && <NavAdmin items={data.navAdmin} />}
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
@@ -118,5 +118,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ) : null}
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

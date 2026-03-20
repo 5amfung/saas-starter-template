@@ -1,45 +1,45 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute } from '@tanstack/react-router';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
-import { Field, FieldLabel } from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
-import { ActiveSessionsList } from "@/components/account/active-sessions-list"
-import { LinkedAccountsCard } from "@/components/account/linked-accounts-card"
-import { AccountProfileForm } from "@/components/account/account-profile-form"
-import { ChangeEmailDialog } from "@/components/account/change-email-dialog"
-import { ChangePasswordDialog } from "@/components/account/change-password-dialog"
-import { SetPasswordButton } from "@/components/account/set-password-button"
-import { useSessionQuery } from "@/hooks/use-session-query"
-import { useLinkedAccountsQuery } from "@/hooks/use-linked-accounts-query"
+} from '@workspace/ui/components/card';
+import { Field, FieldLabel } from '@workspace/ui/components/field';
+import { Input } from '@workspace/ui/components/input';
+import { ActiveSessionsList } from '@/components/account/active-sessions-list';
+import { LinkedAccountsCard } from '@/components/account/linked-accounts-card';
+import { AccountProfileForm } from '@/components/account/account-profile-form';
+import { ChangeEmailDialog } from '@/components/account/change-email-dialog';
+import { ChangePasswordDialog } from '@/components/account/change-password-dialog';
+import { SetPasswordButton } from '@/components/account/set-password-button';
+import { useSessionQuery } from '@/hooks/use-session-query';
+import { useLinkedAccountsQuery } from '@/hooks/use-linked-accounts-query';
 
-export const Route = createFileRoute("/_protected/_account/account")({
+export const Route = createFileRoute('/_protected/_account/account')({
   component: AccountPage,
-  staticData: { title: "Account" },
-})
+  staticData: { title: 'Account' },
+});
 
 const PAGE_LAYOUT_CLASS =
-  "mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6"
+  'mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6';
 
-const READ_ONLY_INPUT_CLASS = "bg-muted text-sm"
+const READ_ONLY_INPUT_CLASS = 'bg-muted text-sm';
 
 function AccountPage() {
-  const { data: session, isPending } = useSessionQuery()
-  const { data: accounts } = useLinkedAccountsQuery()
+  const { data: session, isPending } = useSessionQuery();
+  const { data: accounts } = useLinkedAccountsQuery();
 
   if (isPending || !session) {
-    return null
+    return null;
   }
 
-  const user = session.user
+  const user = session.user;
   const hasPassword =
     accounts != null
-      ? accounts.some((a) => a.providerId === "credential")
-      : null
+      ? accounts.some((a) => a.providerId === 'credential')
+      : null;
 
   return (
     <div className={PAGE_LAYOUT_CLASS}>
@@ -81,7 +81,7 @@ function AccountPage() {
           <CardDescription>
             {hasPassword === false
               ? "You signed in with Google. To set a password and sign in with email too, you'll be signed out and we'll send you an email with a link to set a password for this account."
-              : "Update your sign-in password here. When you change it, you will be signed out on this device and all other active sessions will be signed out. Use your new password to sign in again."}
+              : 'Update your sign-in password here. When you change it, you will be signed out on this device and all other active sessions will be signed out. Use your new password to sign in again.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex justify-end">
@@ -93,5 +93,5 @@ function AccountPage() {
       <LinkedAccountsCard />
       <ActiveSessionsList />
     </div>
-  )
+  );
 }

@@ -1,8 +1,8 @@
-import * as React from "react"
-import { useNavigate } from "@tanstack/react-router"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
-import { IconAlertTriangle, IconLoader2 } from "@tabler/icons-react"
+import * as React from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { IconAlertTriangle, IconLoader2 } from '@tabler/icons-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,17 +14,17 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@workspace/ui/components/alert-dialog"
-import { Button } from "@workspace/ui/components/button"
-import { Input } from "@workspace/ui/components/input"
-import { authClient } from "@workspace/auth/client"
+} from '@workspace/ui/components/alert-dialog';
+import { Button } from '@workspace/ui/components/button';
+import { Input } from '@workspace/ui/components/input';
+import { authClient } from '@workspace/auth/client';
 
-const CONFIRMATION_TEXT = "DELETE"
+const CONFIRMATION_TEXT = 'DELETE';
 
 interface AdminDeleteUserDialogProps {
-  userId: string
-  userEmail: string
-  disabled?: boolean
+  userId: string;
+  userEmail: string;
+  disabled?: boolean;
 }
 
 export function AdminDeleteUserDialog({
@@ -32,32 +32,32 @@ export function AdminDeleteUserDialog({
   userEmail,
   disabled,
 }: AdminDeleteUserDialogProps) {
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const [open, setOpen] = React.useState(false)
-  const [confirmation, setConfirmation] = React.useState("")
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [open, setOpen] = React.useState(false);
+  const [confirmation, setConfirmation] = React.useState('');
 
-  const isConfirmed = confirmation === CONFIRMATION_TEXT
+  const isConfirmed = confirmation === CONFIRMATION_TEXT;
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const { error } = await authClient.admin.removeUser({ userId })
-      if (error) throw new Error(error.message)
+      const { error } = await authClient.admin.removeUser({ userId });
+      if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      toast.success("User deleted successfully.")
-      queryClient.invalidateQueries({ queryKey: ["admin", "users"] })
-      navigate({ to: "/admin/user" })
+      toast.success('User deleted successfully.');
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      navigate({ to: '/admin/user' });
     },
     onError: (err) => {
-      toast.error(err.message || "Failed to delete user.")
+      toast.error(err.message || 'Failed to delete user.');
     },
-  })
+  });
 
   // Reset confirmation when dialog opens/closes.
   React.useEffect(() => {
-    if (!open) setConfirmation("")
-  }, [open])
+    if (!open) setConfirmation('');
+  }, [open]);
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
@@ -99,8 +99,8 @@ export function AdminDeleteUserDialog({
             variant="destructive"
             disabled={!isConfirmed || mutation.isPending}
             onClick={(e) => {
-              e.preventDefault()
-              mutation.mutate()
+              e.preventDefault();
+              mutation.mutate();
             }}
           >
             {mutation.isPending && (
@@ -111,5 +111,5 @@ export function AdminDeleteUserDialog({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }

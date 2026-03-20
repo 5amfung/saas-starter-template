@@ -14,14 +14,14 @@ import {
   Tailwind,
   Text,
   pixelBasedPreset,
-} from "@react-email/components"
-import { EmailSecurityNotice } from "./email-security-notice"
-import type { EmailRequestContext } from "../request-context"
+} from '@react-email/components';
+import { EmailSecurityNotice } from './email-security-notice';
+import type { EmailRequestContext } from '../request-context';
 
 export interface EmailVerificationEmailProps {
-  appName: string
-  verificationUrl: string
-  requestContext: EmailRequestContext
+  appName: string;
+  verificationUrl: string;
+  requestContext: EmailRequestContext;
 }
 
 export function EmailVerificationEmail({
@@ -80,17 +80,17 @@ export function EmailVerificationEmail({
         </Body>
       </Tailwind>
     </Html>
-  )
+  );
 }
 
-export default EmailVerificationEmail
+export default EmailVerificationEmail;
 EmailVerificationEmail.PreviewProps = {
-  appName: "My App",
-  verificationUrl: "https://example.com/api/auth/verify-email?token=abc123",
+  appName: 'My App',
+  verificationUrl: 'https://example.com/api/auth/verify-email?token=abc123',
   requestContext: {
-    requestedAtUtc: "13 February 2026, 21:11 UTC",
-    ip: "136.24.244.114",
-    city: "San Francisco",
-    country: "US",
+    requestedAtUtc: '13 February 2026, 21:11 UTC',
+    ip: '136.24.244.114',
+    city: 'San Francisco',
+    country: 'US',
   },
-} satisfies EmailVerificationEmailProps
+} satisfies EmailVerificationEmailProps;

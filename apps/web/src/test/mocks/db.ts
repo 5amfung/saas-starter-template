@@ -17,14 +17,14 @@ export function mockDbChain(
   dbSelectMock: ReturnType<typeof vi.fn>,
   result: Array<unknown>
 ) {
-  const limitMock = vi.fn().mockResolvedValue(result)
+  const limitMock = vi.fn().mockResolvedValue(result);
   const whereResult = Object.assign(Promise.resolve(result), {
     limit: limitMock,
-  })
-  const whereMock = vi.fn().mockReturnValue(whereResult)
-  const fromMock = vi.fn().mockReturnValue({ where: whereMock })
-  dbSelectMock.mockReturnValue({ from: fromMock })
-  return { fromMock, whereMock, limitMock }
+  });
+  const whereMock = vi.fn().mockReturnValue(whereResult);
+  const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+  dbSelectMock.mockReturnValue({ from: fromMock });
+  return { fromMock, whereMock, limitMock };
 }
 
 /**
@@ -34,10 +34,10 @@ export function mockDbInsertChain(
   dbInsertMock: ReturnType<typeof vi.fn>,
   result: Array<unknown> = []
 ) {
-  const onConflictDoUpdateMock = vi.fn().mockResolvedValue(result)
+  const onConflictDoUpdateMock = vi.fn().mockResolvedValue(result);
   const valuesMock = vi
     .fn()
-    .mockReturnValue({ onConflictDoUpdate: onConflictDoUpdateMock })
-  dbInsertMock.mockReturnValue({ values: valuesMock })
-  return { valuesMock, onConflictDoUpdateMock }
+    .mockReturnValue({ onConflictDoUpdate: onConflictDoUpdateMock });
+  dbInsertMock.mockReturnValue({ values: valuesMock });
+  return { valuesMock, onConflictDoUpdateMock };
 }

@@ -1,76 +1,78 @@
-import { APIError } from "better-auth/api"
-import { auth } from "@/init"
-import { pickDefaultWorkspace } from "@/workspace/workspace"
+import { APIError } from 'better-auth/api';
+import { auth } from '@/init';
+import { pickDefaultWorkspace } from '@/workspace/workspace';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null
+  typeof value === 'object' && value !== null;
 
 const getActiveOrganizationId = (session: unknown): string | null => {
-  if (!isRecord(session)) return null
+  if (!isRecord(session)) return null;
   if (
     isRecord(session.session) &&
-    typeof session.session.activeOrganizationId === "string"
+    typeof session.session.activeOrganizationId === 'string'
   ) {
-    return session.session.activeOrganizationId
+    return session.session.activeOrganizationId;
   }
-  return null
-}
+  return null;
+};
 
 export async function listUserWorkspaces(headers: Headers) {
-  return auth.api.listOrganizations({ headers })
+  return auth.api.listOrganizations({ headers });
 }
 
 export async function ensureActiveWorkspaceForSession(
   headers: Headers,
   session: {
     user: {
-      id: string
-    }
+      id: string;
+    };
     session?: {
-      activeOrganizationId?: string | null
-    }
+      activeOrganizationId?: string | null;
+    };
   }
 ) {
-  const workspaces = await listUserWorkspaces(headers)
-  const activeOrganizationId = getActiveOrganizationId(session)
+  const workspaces = await listUserWorkspaces(headers);
+  const activeOrganizationId = getActiveOrganizationId(session);
   const activeWorkspace =
     activeOrganizationId === null
       ? null
       : (workspaces.find(
           (workspace) => workspace.id === activeOrganizationId
-        ) ?? null)
-  if (activeWorkspace) return activeWorkspace
+        ) ?? null);
+  if (activeWorkspace) return activeWorkspace;
 
-  const targetWorkspace = pickDefaultWorkspace(workspaces, session.user.id)
+  const targetWorkspace = pickDefaultWorkspace(workspaces, session.user.id);
   if (!targetWorkspace) {
-    const error = new APIError("INTERNAL_SERVER_ERROR", {
-      message: "Personal workspace is missing for this user.",
-    })
-    console.error(error)
-    throw error
+    const error = new APIError('INTERNAL_SERVER_ERROR', {
+      message: 'Personal workspace is missing for this user.',
+    });
+    console.error(error);
+    throw error;
   }
 
   await auth.api.setActiveOrganization({
     body: { organizationId: targetWorkspace.id },
     headers,
-  })
+  });
 
-  return targetWorkspace
+  return targetWorkspace;
 }
 
 export async function ensureWorkspaceMembership(
   headers: Headers,
   workspaceId: string
 ) {
-  const workspaces = await listUserWorkspaces(headers)
-  const workspace = workspaces.find((candidate) => candidate.id === workspaceId)
+  const workspaces = await listUserWorkspaces(headers);
+  const workspace = workspaces.find(
+    (candidate) => candidate.id === workspaceId
+  );
   if (!workspace) {
-    const error = new APIError("NOT_FOUND", {
-      message: "Workspace not found.",
-    })
-    console.error(error)
-    throw error
+    const error = new APIError('NOT_FOUND', {
+      message: 'Workspace not found.',
+    });
+    console.error(error);
+    throw error;
   }
 
-  return workspace
+  return workspace;
 }

@@ -1,13 +1,13 @@
-import { useForm } from "@tanstack/react-form"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
-import { IconLoader2 } from "@tabler/icons-react"
+import { useForm } from '@tanstack/react-form';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { IconLoader2 } from '@tabler/icons-react';
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@workspace/ui/components/avatar"
-import { Button } from "@workspace/ui/components/button"
+} from '@workspace/ui/components/avatar';
+import { Button } from '@workspace/ui/components/button';
 import {
   Card,
   CardContent,
@@ -15,76 +15,76 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
-import { Checkbox } from "@workspace/ui/components/checkbox"
+} from '@workspace/ui/components/card';
+import { Checkbox } from '@workspace/ui/components/checkbox';
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
+} from '@workspace/ui/components/field';
+import { Input } from '@workspace/ui/components/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select"
-import { Separator } from "@workspace/ui/components/separator"
-import { Skeleton } from "@workspace/ui/components/skeleton"
-import { Textarea } from "@workspace/ui/components/textarea"
-import { cn } from "@workspace/ui/lib/utils"
-import { authClient } from "@workspace/auth/client"
-import { adminUserFormSchema } from "@/admin/schemas"
-import { getInitials } from "@/lib/get-initials"
-import { toFieldErrorItem } from "@/lib/form-utils"
+} from '@workspace/ui/components/select';
+import { Separator } from '@workspace/ui/components/separator';
+import { Skeleton } from '@workspace/ui/components/skeleton';
+import { Textarea } from '@workspace/ui/components/textarea';
+import { cn } from '@workspace/ui/lib/utils';
+import { authClient } from '@workspace/auth/client';
+import { adminUserFormSchema } from '@/admin/schemas';
+import { getInitials } from '@/lib/get-initials';
+import { toFieldErrorItem } from '@/lib/form-utils';
 
 interface UserData {
-  id: string
-  name: string
-  email: string
-  emailVerified: boolean
-  image?: string | null
-  role?: string | null
-  banned?: boolean | null
-  banReason?: string | null
-  banExpires?: Date | string | null
-  createdAt: Date | string
-  updatedAt: Date | string
+  id: string;
+  name: string;
+  email: string;
+  emailVerified: boolean;
+  image?: string | null;
+  role?: string | null;
+  banned?: boolean | null;
+  banReason?: string | null;
+  banExpires?: Date | string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
   /** Custom field — present at runtime but may not exist in Better Auth's typed response. */
-  lastSignInAt?: Date | string | null
+  lastSignInAt?: Date | string | null;
 }
 
 interface AdminUserFormProps {
-  user: UserData
+  user: UserData;
 }
 
-const ROLE_OPTIONS = ["user", "admin"]
+const ROLE_OPTIONS = ['user', 'admin'];
 
-const TWO_COLUMN_GRID = "grid grid-cols-1 gap-4 sm:grid-cols-2"
-const THREE_COLUMN_GRID = "grid grid-cols-1 gap-4 sm:grid-cols-3"
-const READ_ONLY_INPUT_CLASS = "bg-muted text-sm"
-const READ_ONLY_MONO_INPUT_CLASS = "bg-muted font-mono text-sm"
-const CARD_FOOTER_CLASS = "flex justify-end gap-2 pt-6"
+const TWO_COLUMN_GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2';
+const THREE_COLUMN_GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-3';
+const READ_ONLY_INPUT_CLASS = 'bg-muted text-sm';
+const READ_ONLY_MONO_INPUT_CLASS = 'bg-muted font-mono text-sm';
+const CARD_FOOTER_CLASS = 'flex justify-end gap-2 pt-6';
 
 type AdminUserUpdatePayload = {
-  name: string
-  email: string
-  emailVerified: boolean
-  image: string | null
-  role: string | null
-  banned: boolean
-  banReason: string | null
-  banExpires: string | null
-}
+  name: string;
+  email: string;
+  emailVerified: boolean;
+  image: string | null;
+  role: string | null;
+  banned: boolean;
+  banReason: string | null;
+  banExpires: string | null;
+};
 
 function FormSection({
   title,
   children,
 }: {
-  title: string
-  children: React.ReactNode
+  title: string;
+  children: React.ReactNode;
 }) {
   return (
     <div className="space-y-4 pt-2">
@@ -92,33 +92,33 @@ function FormSection({
       <h3 className="text-sm font-medium">{title}</h3>
       {children}
     </div>
-  )
+  );
 }
 
-function SkeletonField({ labelWidth = "w-20" }: { labelWidth?: string }) {
+function SkeletonField({ labelWidth = 'w-20' }: { labelWidth?: string }) {
   return (
     <div className="flex flex-col gap-2">
-      <Skeleton className={cn("h-4", labelWidth)} />
+      <Skeleton className={cn('h-4', labelWidth)} />
       <Skeleton className="h-9 w-full" />
     </div>
-  )
+  );
 }
 
 export function AdminUserForm({ user }: AdminUserFormProps) {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   const form = useForm({
     defaultValues: {
       name: user.name,
       email: user.email,
       emailVerified: user.emailVerified,
-      image: user.image ?? "",
-      role: user.role ?? "user",
+      image: user.image ?? '',
+      role: user.role ?? 'user',
       banned: user.banned ?? false,
-      banReason: user.banReason ?? "",
+      banReason: user.banReason ?? '',
       banExpires: user.banExpires
         ? formatDatetimeLocal(new Date(user.banExpires))
-        : "",
+        : '',
     },
     validators: {
       onBlur: adminUserFormSchema,
@@ -134,11 +134,11 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
         banned: value.banned,
         banReason: value.banReason || null,
         banExpires: value.banExpires || null,
-      })
+      });
 
-      form.reset(value)
+      form.reset(value);
     },
-  })
+  });
 
   const mutation = useMutation({
     mutationFn: async (values: AdminUserUpdatePayload) => {
@@ -148,23 +148,23 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
           ...values,
           banExpires: values.banExpires ? new Date(values.banExpires) : null,
         },
-      })
+      });
       if (error) {
         // Better Auth may return a generic HTTP status text (e.g. "Internal Server
         // Error") when the database throws a constraint violation. Only surface the
         // API message when it is more descriptive than the status text.
         const hasDescriptiveMessage =
-          error.message && error.message !== error.statusText
+          error.message && error.message !== error.statusText;
         throw new Error(
           hasDescriptiveMessage
             ? error.message
-            : "Failed to update user. The email address may already be in use."
-        )
+            : 'Failed to update user. The email address may already be in use.'
+        );
       }
     },
     onSuccess: (_data, variables) => {
       queryClient.setQueryData(
-        ["admin", "user", user.id],
+        ['admin', 'user', user.id],
         (prev: UserData | undefined) =>
           prev
             ? {
@@ -181,26 +181,26 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
                   : null,
               }
             : prev
-      )
-      toast.success("User updated successfully.")
-      queryClient.invalidateQueries({ queryKey: ["admin", "users"] })
+      );
+      toast.success('User updated successfully.');
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
       queryClient.invalidateQueries({
-        queryKey: ["admin", "user", user.id],
-      })
+        queryKey: ['admin', 'user', user.id],
+      });
     },
     onError: (err) => {
-      toast.error(err.message)
+      toast.error(err.message);
     },
-  })
+  });
 
-  const initials = getInitials(user.name, user.email)
-  const avatarSrc = user.image ?? undefined
+  const initials = getInitials(user.name, user.email);
+  const avatarSrc = user.image ?? undefined;
 
   return (
     <form
       onSubmit={(e) => {
-        e.preventDefault()
-        form.handleSubmit()
+        e.preventDefault();
+        form.handleSubmit();
       }}
     >
       <Card>
@@ -238,7 +238,7 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
                 name="name"
                 children={(field) => {
                   const isInvalid =
-                    field.state.meta.isBlurred && !field.state.meta.isValid
+                    field.state.meta.isBlurred && !field.state.meta.isValid;
                   return (
                     <Field data-invalid={isInvalid || undefined}>
                       <FieldLabel htmlFor={field.name}>Full Name</FieldLabel>
@@ -254,7 +254,7 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
                         />
                       )}
                     </Field>
-                  )
+                  );
                 }}
               />
               <Field>
@@ -274,7 +274,7 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
                 name="email"
                 children={(field) => {
                   const isInvalid =
-                    field.state.meta.isBlurred && !field.state.meta.isValid
+                    field.state.meta.isBlurred && !field.state.meta.isValid;
                   return (
                     <Field data-invalid={isInvalid || undefined}>
                       <FieldLabel htmlFor={field.name}>Email</FieldLabel>
@@ -291,7 +291,7 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
                         />
                       )}
                     </Field>
-                  )
+                  );
                 }}
               />
               <form.Field
@@ -323,7 +323,7 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
                     <Select
                       value={field.state.value}
                       onValueChange={(v) => {
-                        if (v) field.handleChange(v)
+                        if (v) field.handleChange(v);
                       }}
                     >
                       <SelectTrigger id={field.name}>
@@ -402,17 +402,17 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
               <div className={THREE_COLUMN_GRID}>
                 {[
                   {
-                    label: "Last Sign In",
+                    label: 'Last Sign In',
                     value: user.lastSignInAt
                       ? new Date(user.lastSignInAt).toLocaleString()
-                      : "Never",
+                      : 'Never',
                   },
                   {
-                    label: "Created At",
+                    label: 'Created At',
                     value: new Date(user.createdAt).toLocaleString(),
                   },
                   {
-                    label: "Updated At",
+                    label: 'Updated At',
                     value: new Date(user.updatedAt).toLocaleString(),
                   },
                 ].map(({ label, value }) => (
@@ -461,7 +461,7 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
         </CardFooter>
       </Card>
     </form>
-  )
+  );
 }
 
 export function AdminUserFormSkeleton() {
@@ -533,11 +533,11 @@ export function AdminUserFormSkeleton() {
         <Skeleton className="h-9 w-24" />
       </CardFooter>
     </Card>
-  )
+  );
 }
 
 /** Format a Date to the `datetime-local` input format. */
 function formatDatetimeLocal(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }

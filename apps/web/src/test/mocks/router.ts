@@ -7,7 +7,7 @@ export function createRouterMocks() {
   return {
     navigate: vi.fn(),
     redirect: vi.fn((opts: unknown) => {
-      throw opts
+      throw opts;
     }),
-  }
+  };
 }

@@ -1,40 +1,43 @@
-import { useEffect } from "react"
-import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router"
-import { SidebarInset, SidebarProvider } from "@workspace/ui/components/sidebar"
-import { authClient } from "@workspace/auth/client"
-import { AppSidebar } from "@/components/app-sidebar"
-import { SiteHeader } from "@/components/site-header"
-import { authMiddleware } from "@/middleware/auth"
+import { useEffect } from 'react';
+import { Outlet, createFileRoute, useNavigate } from '@tanstack/react-router';
+import {
+  SidebarInset,
+  SidebarProvider,
+} from '@workspace/ui/components/sidebar';
+import { authClient } from '@workspace/auth/client';
+import { AppSidebar } from '@/components/app-sidebar';
+import { SiteHeader } from '@/components/site-header';
+import { authMiddleware } from '@/middleware/auth';
 
-export const Route = createFileRoute("/_protected")({
+export const Route = createFileRoute('/_protected')({
   component: ProtectedLayout,
   server: {
     middleware: [authMiddleware],
   },
-})
+});
 
 function ProtectedLayout() {
-  const navigate = useNavigate()
-  const { data: session, isPending } = authClient.useSession()
+  const navigate = useNavigate();
+  const { data: session, isPending } = authClient.useSession();
 
-  const isAuthenticated = session && session.user.emailVerified
+  const isAuthenticated = session && session.user.emailVerified;
 
   useEffect(() => {
     if (!isPending && !isAuthenticated) {
-      navigate({ to: "/signin" })
+      navigate({ to: '/signin' });
     }
-  }, [isAuthenticated, isPending, navigate])
+  }, [isAuthenticated, isPending, navigate]);
 
   if (isPending || !isAuthenticated) {
-    return null
+    return null;
   }
 
   return (
     <SidebarProvider
       style={
         {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
+          '--sidebar-width': 'calc(var(--spacing) * 72)',
+          '--header-height': 'calc(var(--spacing) * 12)',
         } as React.CSSProperties
       }
     >
@@ -48,5 +51,5 @@ function ProtectedLayout() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

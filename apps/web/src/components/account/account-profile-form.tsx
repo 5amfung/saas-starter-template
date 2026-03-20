@@ -1,13 +1,13 @@
-import { useForm } from "@tanstack/react-form"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
-import { IconLoader2 } from "@tabler/icons-react"
+import { useForm } from '@tanstack/react-form';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { IconLoader2 } from '@tabler/icons-react';
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@workspace/ui/components/avatar"
-import { Button } from "@workspace/ui/components/button"
+} from '@workspace/ui/components/avatar';
+import { Button } from '@workspace/ui/components/button';
 import {
   Card,
   CardContent,
@@ -15,32 +15,32 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
+} from '@workspace/ui/components/card';
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
-import { authClient } from "@workspace/auth/client"
-import { accountProfileSchema } from "@/account/schemas"
-import { SESSION_QUERY_KEY } from "@/hooks/use-session-query"
-import { getInitials } from "@/lib/get-initials"
-import { toFieldErrorItem } from "@/lib/form-utils"
+} from '@workspace/ui/components/field';
+import { Input } from '@workspace/ui/components/input';
+import { authClient } from '@workspace/auth/client';
+import { accountProfileSchema } from '@/account/schemas';
+import { SESSION_QUERY_KEY } from '@/hooks/use-session-query';
+import { getInitials } from '@/lib/get-initials';
+import { toFieldErrorItem } from '@/lib/form-utils';
 
-const CARD_FOOTER_CLASS = "flex justify-end gap-2 pt-6"
+const CARD_FOOTER_CLASS = 'flex justify-end gap-2 pt-6';
 
 interface AccountProfileFormProps {
   user: {
-    name: string
-    email: string
-    image?: string | null
-  }
+    name: string;
+    email: string;
+    image?: string | null;
+  };
 }
 
 export function AccountProfileForm({ user }: AccountProfileFormProps) {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   const form = useForm({
     defaultValues: {
@@ -51,15 +51,15 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
       onSubmit: accountProfileSchema,
     },
     onSubmit: async ({ value }) => {
-      await mutation.mutateAsync({ name: value.name })
-      form.reset(value)
+      await mutation.mutateAsync({ name: value.name });
+      form.reset(value);
     },
-  })
+  });
 
   const mutation = useMutation({
     mutationFn: async (payload: { name: string }) => {
-      const { error } = await authClient.updateUser({ name: payload.name })
-      if (error) throw new Error(error.message)
+      const { error } = await authClient.updateUser({ name: payload.name });
+      if (error) throw new Error(error.message);
     },
     onSuccess: (_data, variables) => {
       // Optimistic update.
@@ -69,23 +69,23 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
           prev
             ? { ...prev, user: { ...prev.user, name: variables.name } }
             : prev
-      )
-      toast.success("Profile updated.")
-      queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY })
+      );
+      toast.success('Profile updated.');
+      queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
     },
     onError: (err) => {
-      toast.error(err.message || "Failed to update profile.")
+      toast.error(err.message || 'Failed to update profile.');
     },
-  })
+  });
 
-  const initials = getInitials(user.name, user.email)
-  const avatarSrc = user.image ?? undefined
+  const initials = getInitials(user.name, user.email);
+  const avatarSrc = user.image ?? undefined;
 
   return (
     <form
       onSubmit={(e) => {
-        e.preventDefault()
-        form.handleSubmit()
+        e.preventDefault();
+        form.handleSubmit();
       }}
     >
       <Card>
@@ -118,7 +118,7 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
               name="name"
               children={(field) => {
                 const isInvalid =
-                  field.state.meta.isBlurred && !field.state.meta.isValid
+                  field.state.meta.isBlurred && !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid || undefined}>
                     <FieldLabel htmlFor={field.name}>Full Name</FieldLabel>
@@ -134,7 +134,7 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
                       />
                     )}
                   </Field>
-                )
+                );
               }}
             />
           </FieldGroup>
@@ -171,5 +171,5 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
         </CardFooter>
       </Card>
     </form>
-  )
+  );
 }

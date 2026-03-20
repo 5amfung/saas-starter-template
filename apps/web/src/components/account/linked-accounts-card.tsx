@@ -1,7 +1,7 @@
-import * as React from "react"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { IconLoader2 } from "@tabler/icons-react"
-import { toast } from "sonner"
+import * as React from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { IconLoader2 } from '@tabler/icons-react';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,117 +11,117 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@workspace/ui/components/alert-dialog"
-import { Button } from "@workspace/ui/components/button"
+} from '@workspace/ui/components/alert-dialog';
+import { Button } from '@workspace/ui/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
-import { Skeleton } from "@workspace/ui/components/skeleton"
-import { authClient } from "@workspace/auth/client"
+} from '@workspace/ui/components/card';
+import { Skeleton } from '@workspace/ui/components/skeleton';
+import { authClient } from '@workspace/auth/client';
 import {
   LINKED_ACCOUNTS_QUERY_KEY,
   useLinkedAccountsQuery,
-} from "@/hooks/use-linked-accounts-query"
-import { GoogleIcon } from "@/components/icons/google-icon"
+} from '@/hooks/use-linked-accounts-query';
+import { GoogleIcon } from '@/components/icons/google-icon';
 
 interface Provider {
-  id: string
-  label: string
-  Icon: React.ComponentType<{ className?: string }>
+  id: string;
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
 }
 
 const PROVIDERS: Array<Provider> = [
-  { id: "google", label: "Google", Icon: GoogleIcon },
-]
+  { id: 'google', label: 'Google', Icon: GoogleIcon },
+];
 
 const LINK_ERROR_MESSAGES: Record<string, string> = {
   "email_doesn't_match":
-    "Could not connect Google account. Make sure you sign in with the same email address as your account.",
+    'Could not connect Google account. Make sure you sign in with the same email address as your account.',
   account_already_linked_to_different_user:
-    "This Google account is already connected to another account.",
-}
+    'This Google account is already connected to another account.',
+};
 
 function getLinkErrorMessage(code: string): string {
   return (
-    LINK_ERROR_MESSAGES[code] ?? "Failed to connect account. Please try again."
-  )
+    LINK_ERROR_MESSAGES[code] ?? 'Failed to connect account. Please try again.'
+  );
 }
 
 export function LinkedAccountsCard() {
-  const queryClient = useQueryClient()
-  const { data: accounts, isPending } = useLinkedAccountsQuery()
+  const queryClient = useQueryClient();
+  const { data: accounts, isPending } = useLinkedAccountsQuery();
   const [confirmDisconnect, setConfirmDisconnect] = React.useState<
     string | null
-  >(null)
-  const [connectingId, setConnectingId] = React.useState<string | null>(null)
+  >(null);
+  const [connectingId, setConnectingId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    if (!params.has("link_error")) return
-    const errorCode = params.get("error") ?? ""
-    toast.error(getLinkErrorMessage(errorCode))
-    params.delete("link_error")
-    params.delete("error")
-    const newSearch = params.toString()
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has('link_error')) return;
+    const errorCode = params.get('error') ?? '';
+    toast.error(getLinkErrorMessage(errorCode));
+    params.delete('link_error');
+    params.delete('error');
+    const newSearch = params.toString();
     window.history.replaceState(
       null,
-      "",
-      window.location.pathname + (newSearch ? `?${newSearch}` : "")
-    )
-  }, [])
+      '',
+      window.location.pathname + (newSearch ? `?${newSearch}` : '')
+    );
+  }, []);
 
   const linkedProviderIds = React.useMemo(() => {
-    if (!accounts) return new Set<string>()
+    if (!accounts) return new Set<string>();
     return new Set(
       accounts
-        .filter((a) => a.providerId !== "credential")
+        .filter((a) => a.providerId !== 'credential')
         .map((a) => a.providerId)
-    )
-  }, [accounts])
+    );
+  }, [accounts]);
 
   const hasPassword =
     accounts != null
-      ? accounts.some((a) => a.providerId === "credential")
-      : false
+      ? accounts.some((a) => a.providerId === 'credential')
+      : false;
 
-  const totalAuthMethods = (hasPassword ? 1 : 0) + linkedProviderIds.size
+  const totalAuthMethods = (hasPassword ? 1 : 0) + linkedProviderIds.size;
 
   async function handleConnect(providerId: string) {
-    setConnectingId(providerId)
+    setConnectingId(providerId);
     const { error } = await authClient.linkSocial({
       provider: providerId as Parameters<
         typeof authClient.linkSocial
-      >[0]["provider"],
-      callbackURL: "/account",
-      errorCallbackURL: "/account?link_error=1",
-    })
+      >[0]['provider'],
+      callbackURL: '/account',
+      errorCallbackURL: '/account?link_error=1',
+    });
     if (error) {
-      toast.error(error.message || "Failed to connect account.")
-      setConnectingId(null)
+      toast.error(error.message || 'Failed to connect account.');
+      setConnectingId(null);
     }
     // On success the browser is redirected; no further action needed.
   }
 
   const disconnectMutation = useMutation({
     mutationFn: async (providerId: string) => {
-      const { error } = await authClient.unlinkAccount({ providerId })
-      if (error) throw new Error(error.message)
+      const { error } = await authClient.unlinkAccount({ providerId });
+      if (error) throw new Error(error.message);
     },
     onSuccess: async () => {
-      toast.success("Account disconnected.")
-      setConfirmDisconnect(null)
+      toast.success('Account disconnected.');
+      setConfirmDisconnect(null);
       await queryClient.invalidateQueries({
         queryKey: LINKED_ACCOUNTS_QUERY_KEY,
-      })
+      });
     },
     onError: (err) => {
-      toast.error(err.message || "Failed to disconnect account.")
+      toast.error(err.message || 'Failed to disconnect account.');
     },
-  })
+  });
 
   return (
     <>
@@ -137,9 +137,9 @@ export function LinkedAccountsCard() {
 
           {!isPending &&
             PROVIDERS.map(({ id, label, Icon }) => {
-              const isLinked = linkedProviderIds.has(id)
-              const isLastMethod = totalAuthMethods <= 1
-              const isConnecting = connectingId === id
+              const isLinked = linkedProviderIds.has(id);
+              const isLastMethod = totalAuthMethods <= 1;
+              const isConnecting = connectingId === id;
 
               return (
                 <div
@@ -157,7 +157,7 @@ export function LinkedAccountsCard() {
                     <span
                       title={
                         isLastMethod
-                          ? "You cannot remove your only sign-in method."
+                          ? 'You cannot remove your only sign-in method.'
                           : undefined
                       }
                     >
@@ -187,7 +187,7 @@ export function LinkedAccountsCard() {
                     </Button>
                   )}
                 </div>
-              )
+              );
             })}
         </CardContent>
       </Card>
@@ -195,7 +195,7 @@ export function LinkedAccountsCard() {
       <AlertDialog
         open={confirmDisconnect !== null}
         onOpenChange={(open) => {
-          if (!open) setConfirmDisconnect(null)
+          if (!open) setConfirmDisconnect(null);
         }}
       >
         <AlertDialogContent>
@@ -213,9 +213,9 @@ export function LinkedAccountsCard() {
               variant="destructive"
               disabled={!confirmDisconnect || disconnectMutation.isPending}
               onClick={(event) => {
-                event.preventDefault()
-                if (!confirmDisconnect) return
-                disconnectMutation.mutate(confirmDisconnect)
+                event.preventDefault();
+                if (!confirmDisconnect) return;
+                disconnectMutation.mutate(confirmDisconnect);
               }}
             >
               {disconnectMutation.isPending && (
@@ -227,5 +227,5 @@ export function LinkedAccountsCard() {
         </AlertDialogContent>
       </AlertDialog>
     </>
-  )
+  );
 }

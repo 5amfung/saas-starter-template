@@ -1,62 +1,63 @@
-import * as React from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { toast } from "sonner"
-import { Button } from "@workspace/ui/components/button"
+import * as React from 'react';
+import { createFileRoute } from '@tanstack/react-router';
+import { toast } from 'sonner';
+import { Button } from '@workspace/ui/components/button';
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@workspace/ui/components/tabs"
-import { checkPlanLimit } from "@/billing/billing.functions"
-import { UpgradePromptDialog } from "@/components/billing/upgrade-prompt-dialog"
-import { useUpgradePrompt } from "@/hooks/use-upgrade-prompt"
-import { WorkspaceInviteDialog } from "@/components/workspace/workspace-invite-dialog"
-import { WorkspaceInvitationsTable } from "@/components/workspace/workspace-invitations-table"
-import { WorkspaceMembersTable } from "@/components/workspace/workspace-members-table"
-import { DEFAULT_INVITE_ROLES } from "@/workspace/workspace-members.types"
-import { useInvitationsTable } from "@/workspace/use-invitations-table"
-import { useMembersTable } from "@/workspace/use-members-table"
+} from '@workspace/ui/components/tabs';
+import { checkPlanLimit } from '@/billing/billing.functions';
+import { UpgradePromptDialog } from '@/components/billing/upgrade-prompt-dialog';
+import { useUpgradePrompt } from '@/hooks/use-upgrade-prompt';
+import { WorkspaceInviteDialog } from '@/components/workspace/workspace-invite-dialog';
+import { WorkspaceInvitationsTable } from '@/components/workspace/workspace-invitations-table';
+import { WorkspaceMembersTable } from '@/components/workspace/workspace-members-table';
+import { DEFAULT_INVITE_ROLES } from '@/workspace/workspace-members.types';
+import { useInvitationsTable } from '@/workspace/use-invitations-table';
+import { useMembersTable } from '@/workspace/use-members-table';
 
-export const Route = createFileRoute("/_protected/ws/$workspaceId/members")({
+export const Route = createFileRoute('/_protected/ws/$workspaceId/members')({
   component: WorkspaceMembersPage,
-  staticData: { title: "Members" },
-})
+  staticData: { title: 'Members' },
+});
 
 function WorkspaceMembersPage() {
-  const { workspaceId } = Route.useParams()
-  const [activeTab, setActiveTab] = React.useState<"members" | "invitations">(
-    "members"
-  )
+  const { workspaceId } = Route.useParams();
+  const [activeTab, setActiveTab] = React.useState<'members' | 'invitations'>(
+    'members'
+  );
 
-  const { currentUserRole, ...membersTableProps } = useMembersTable(workspaceId)
+  const { currentUserRole, ...membersTableProps } =
+    useMembersTable(workspaceId);
 
   const { inviteDialog, ...invitationsTableProps } =
-    useInvitationsTable(workspaceId)
+    useInvitationsTable(workspaceId);
 
-  const canInvite = currentUserRole === "owner" || currentUserRole === "admin"
-  const membersTablePropsWithRole = { ...membersTableProps, currentUserRole }
+  const canInvite = currentUserRole === 'owner' || currentUserRole === 'admin';
+  const membersTablePropsWithRole = { ...membersTableProps, currentUserRole };
 
-  const upgradePrompt = useUpgradePrompt()
+  const upgradePrompt = useUpgradePrompt();
 
   const handleInviteClick = async () => {
     try {
       const result = await checkPlanLimit({
-        data: { feature: "member", workspaceId },
-      })
+        data: { feature: 'member', workspaceId },
+      });
       if (result.allowed) {
-        inviteDialog.onOpenChange(true)
+        inviteDialog.onOpenChange(true);
       } else {
         upgradePrompt.show(
-          "Member limit reached",
+          'Member limit reached',
           `This workspace has ${result.current}/${result.limit} members on the ${result.planName} plan. Upgrade to invite more.`,
           result.upgradePlan
-        )
+        );
       }
     } catch {
-      toast.error("Something went wrong. Please try again.")
+      toast.error('Something went wrong. Please try again.');
     }
-  }
+  };
 
   return (
     <div className="flex flex-col gap-4 py-4 md:py-6">
@@ -64,7 +65,7 @@ function WorkspaceMembersPage() {
         <Tabs
           value={activeTab}
           onValueChange={(value) =>
-            setActiveTab(value as "members" | "invitations")
+            setActiveTab(value as 'members' | 'invitations')
           }
           className="w-full"
         >
@@ -92,7 +93,7 @@ function WorkspaceMembersPage() {
                     inviteDialog.setDraft((current) => ({ ...current, role }))
                   }
                   onSubmit={() => {
-                    void inviteDialog.onSubmit()
+                    void inviteDialog.onSubmit();
                   }}
                 />
               </>
@@ -110,5 +111,5 @@ function WorkspaceMembersPage() {
       </div>
       <UpgradePromptDialog {...upgradePrompt.dialogProps} />
     </div>
-  )
+  );
 }

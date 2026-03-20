@@ -1,33 +1,33 @@
 /**
  * Server-only: used when rendering emails; do not import from client code.
  */
-import { Section, Text } from "@react-email/components"
-import type { EmailRequestContext } from "../request-context"
+import { Section, Text } from '@react-email/components';
+import type { EmailRequestContext } from '../request-context';
 
-const SECURITY_HEADING = "Didn't request this?"
+const SECURITY_HEADING = "Didn't request this?";
 const REASSURANCE_SENTENCE =
-  "If you didn't make this request, you can safely ignore this email."
+  "If you didn't make this request, you can safely ignore this email.";
 
 function buildOriginSentence(context: EmailRequestContext): string {
-  const location = [context.city, context.country].filter(Boolean).join(", ")
+  const location = [context.city, context.country].filter(Boolean).join(', ');
   const fromPart = context.ip
     ? location
       ? `${context.ip}, ${location}`
       : context.ip
-    : null
+    : null;
   return fromPart
     ? `This request was made from ${fromPart} at ${context.requestedAtUtc}.`
-    : `This request was made at ${context.requestedAtUtc}.`
+    : `This request was made at ${context.requestedAtUtc}.`;
 }
 
 export interface EmailSecurityNoticeProps {
-  requestContext: EmailRequestContext
+  requestContext: EmailRequestContext;
 }
 
 export function EmailSecurityNotice({
   requestContext,
 }: EmailSecurityNoticeProps) {
-  const originSentence = buildOriginSentence(requestContext)
+  const originSentence = buildOriginSentence(requestContext);
 
   return (
     <Section className="mt-6">
@@ -38,5 +38,5 @@ export function EmailSecurityNotice({
         {originSentence} {REASSURANCE_SENTENCE}
       </Text>
     </Section>
-  )
+  );
 }

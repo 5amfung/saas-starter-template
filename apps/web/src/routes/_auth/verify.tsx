@@ -1,21 +1,21 @@
-import { useState } from "react"
-import { IconLoader } from "@tabler/icons-react"
-import { Link, createFileRoute } from "@tanstack/react-router"
-import { toast } from "sonner"
-import { Button } from "@workspace/ui/components/button"
-import { authClient } from "@workspace/auth/client"
-import { verifySearchSchema } from "@workspace/auth/schemas"
-import { CheckEmailCard } from "@/components/auth/check-email-card"
-import { getWebmailLinkForEmail } from "@/lib/email-provider"
+import { useState } from 'react';
+import { IconLoader } from '@tabler/icons-react';
+import { Link, createFileRoute } from '@tanstack/react-router';
+import { toast } from 'sonner';
+import { Button } from '@workspace/ui/components/button';
+import { authClient } from '@workspace/auth/client';
+import { verifySearchSchema } from '@workspace/auth/schemas';
+import { CheckEmailCard } from '@/components/auth/check-email-card';
+import { getWebmailLinkForEmail } from '@/lib/email-provider';
 
-export const Route = createFileRoute("/_auth/verify")({
+export const Route = createFileRoute('/_auth/verify')({
   component: VerifyPage,
   validateSearch: (search) => verifySearchSchema.parse(search),
-})
+});
 
 function VerifyPage() {
-  const { email } = Route.useSearch()
-  const [isResending, setIsResending] = useState(false)
+  const { email } = Route.useSearch();
+  const [isResending, setIsResending] = useState(false);
 
   if (!email) {
     return (
@@ -28,26 +28,26 @@ function VerifyPage() {
           </Link>
         }
       />
-    )
+    );
   }
 
-  const webmail = getWebmailLinkForEmail(email)
+  const webmail = getWebmailLinkForEmail(email);
 
   async function handleResend() {
-    if (!email) return
-    setIsResending(true)
+    if (!email) return;
+    setIsResending(true);
     try {
       const { error } = await authClient.sendVerificationEmail({
         email,
-        callbackURL: "/ws",
-      })
+        callbackURL: '/ws',
+      });
       if (error) {
-        toast.error(error.message ?? "Failed to resend verification email.")
+        toast.error(error.message ?? 'Failed to resend verification email.');
       } else {
-        toast.success("Verification email sent. Check your inbox.")
+        toast.success('Verification email sent. Check your inbox.');
       }
     } finally {
-      setIsResending(false)
+      setIsResending(false);
     }
   }
 
@@ -84,5 +84,5 @@ function VerifyPage() {
         ) : undefined
       }
     />
-  )
+  );
 }

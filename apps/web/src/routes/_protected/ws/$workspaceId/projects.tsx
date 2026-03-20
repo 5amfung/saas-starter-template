@@ -1,9 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute } from '@tanstack/react-router';
 
-export const Route = createFileRoute("/_protected/ws/$workspaceId/projects")({
+export const Route = createFileRoute('/_protected/ws/$workspaceId/projects')({
   component: WorkspaceProjectsPage,
-  staticData: { title: "Projects" },
-})
+  staticData: { title: 'Projects' },
+});
 
 function WorkspaceProjectsPage() {
   return (
@@ -13,5 +13,5 @@ function WorkspaceProjectsPage() {
         <p className="text-sm text-muted-foreground">Coming soon.</p>
       </div>
     </div>
-  )
+  );
 }

@@ -1,35 +1,35 @@
-import { useState } from "react"
-import { useForm } from "@tanstack/react-form"
-import { Link } from "@tanstack/react-router"
-import { IconLoader } from "@tabler/icons-react"
-import { Button } from "@workspace/ui/components/button"
+import { useState } from 'react';
+import { useForm } from '@tanstack/react-form';
+import { Link } from '@tanstack/react-router';
+import { IconLoader } from '@tabler/icons-react';
+import { Button } from '@workspace/ui/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
+} from '@workspace/ui/components/card';
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
-import { authClient } from "@workspace/auth/client"
-import { resetPasswordSchema } from "@workspace/auth/schemas"
-import { FormError } from "@/components/auth/form-error"
-import { toFieldErrorItem } from "@/lib/form-utils"
+} from '@workspace/ui/components/field';
+import { Input } from '@workspace/ui/components/input';
+import { authClient } from '@workspace/auth/client';
+import { resetPasswordSchema } from '@workspace/auth/schemas';
+import { FormError } from '@/components/auth/form-error';
+import { toFieldErrorItem } from '@/lib/form-utils';
 
 interface ResetPasswordFormProps {
-  token?: string
-  error?: string
+  token?: string;
+  error?: string;
 }
 
 export function ResetPasswordForm({ token, error }: ResetPasswordFormProps) {
-  const [isSuccess, setIsSuccess] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false);
 
   if (error || !token) {
     return (
@@ -53,36 +53,36 @@ export function ResetPasswordForm({ token, error }: ResetPasswordFormProps) {
           </FieldDescription>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   const form = useForm({
     defaultValues: {
-      newPassword: "",
-      confirmPassword: "",
+      newPassword: '',
+      confirmPassword: '',
     },
     validators: {
       onBlur: resetPasswordSchema,
       onSubmit: resetPasswordSchema,
     },
     onSubmit: async ({ value, formApi }) => {
-      if (!token) return
+      if (!token) return;
       const { error: resetError } = await authClient.resetPassword({
         newPassword: value.newPassword,
         token,
-      })
+      });
       if (resetError) {
         const message =
-          resetError.message ?? "Something went wrong. Please try again."
+          resetError.message ?? 'Something went wrong. Please try again.';
         formApi.setErrorMap({
           ...formApi.state.errorMap,
           onSubmit: { form: message, fields: {} },
-        })
-        return
+        });
+        return;
       }
-      setIsSuccess(true)
+      setIsSuccess(true);
     },
-  })
+  });
 
   if (isSuccess) {
     return (
@@ -102,7 +102,7 @@ export function ResetPasswordForm({ token, error }: ResetPasswordFormProps) {
           </FieldDescription>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -114,8 +114,8 @@ export function ResetPasswordForm({ token, error }: ResetPasswordFormProps) {
       <CardContent>
         <form
           onSubmit={(e) => {
-            e.preventDefault()
-            form.handleSubmit()
+            e.preventDefault();
+            form.handleSubmit();
           }}
         >
           <FieldGroup>
@@ -123,7 +123,7 @@ export function ResetPasswordForm({ token, error }: ResetPasswordFormProps) {
               name="newPassword"
               children={(field) => {
                 const isInvalid =
-                  field.state.meta.isBlurred && !field.state.meta.isValid
+                  field.state.meta.isBlurred && !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>New password</FieldLabel>
@@ -143,14 +143,14 @@ export function ResetPasswordForm({ token, error }: ResetPasswordFormProps) {
                       />
                     )}
                   </Field>
-                )
+                );
               }}
             />
             <form.Field
               name="confirmPassword"
               children={(field) => {
                 const isInvalid =
-                  field.state.meta.isBlurred && !field.state.meta.isValid
+                  field.state.meta.isBlurred && !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>
@@ -172,7 +172,7 @@ export function ResetPasswordForm({ token, error }: ResetPasswordFormProps) {
                       />
                     )}
                   </Field>
-                )
+                );
               }}
             />
             <form.Subscribe
@@ -180,7 +180,7 @@ export function ResetPasswordForm({ token, error }: ResetPasswordFormProps) {
               children={(errors) => (
                 <FormError
                   errors={errors
-                    .flatMap((e) => (typeof e === "string" ? [e] : []))
+                    .flatMap((e) => (typeof e === 'string' ? [e] : []))
                     .filter(Boolean)}
                 />
               )}
@@ -208,5 +208,5 @@ export function ResetPasswordForm({ token, error }: ResetPasswordFormProps) {
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }

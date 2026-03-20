@@ -1,10 +1,10 @@
-import * as React from "react"
+import * as React from 'react';
 import {
   flexRender,
   getCoreRowModel,
   useReactTable,
-} from "@tanstack/react-table"
-import type { ColumnDef, SortingState } from "@tanstack/react-table"
+} from '@tanstack/react-table';
+import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import {
   IconArrowDown,
   IconArrowUp,
@@ -14,23 +14,23 @@ import {
   IconChevronsLeft,
   IconChevronsRight,
   IconDotsVertical,
-} from "@tabler/icons-react"
-import { Button } from "@workspace/ui/components/button"
+} from '@tabler/icons-react';
+import { Button } from '@workspace/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu"
-import { Label } from "@workspace/ui/components/label"
+} from '@workspace/ui/components/dropdown-menu';
+import { Label } from '@workspace/ui/components/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select"
-import { Skeleton } from "@workspace/ui/components/skeleton"
+} from '@workspace/ui/components/select';
+import { Skeleton } from '@workspace/ui/components/skeleton';
 import {
   Table,
   TableBody,
@@ -38,39 +38,39 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table"
+} from '@workspace/ui/components/table';
 
 export interface WorkspaceInvitationRow {
-  id: string
-  email: string
-  role: string
-  invitedAt: string | Date
+  id: string;
+  email: string;
+  role: string;
+  invitedAt: string | Date;
 }
 
 interface WorkspaceInvitationsTableProps {
-  data: Array<WorkspaceInvitationRow>
-  total: number
-  page: number
-  pageSize: number
-  totalPages: number
-  sorting: SortingState
-  isLoading?: boolean
-  removingInvitationId?: string | null
-  resendingInvitationId?: string | null
-  onSortingChange: (sorting: SortingState) => void
-  onPageChange: (page: number) => void
-  onPageSizeChange: (pageSize: number) => void
-  onRemoveInvitation: (invitationId: string) => void
+  data: Array<WorkspaceInvitationRow>;
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  sorting: SortingState;
+  isLoading?: boolean;
+  removingInvitationId?: string | null;
+  resendingInvitationId?: string | null;
+  onSortingChange: (sorting: SortingState) => void;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+  onRemoveInvitation: (invitationId: string) => void;
   onResendInvitation: (invitation: {
-    id: string
-    email: string
-    role: string
-  }) => void
+    id: string;
+    email: string;
+    role: string;
+  }) => void;
 }
 
-const PAGE_SIZE_OPTIONS = ["10", "25", "50"]
-const MAX_SKELETON_ROWS = 10
-const ACTIONS_COLUMN_CLASS = "text-right w-14"
+const PAGE_SIZE_OPTIONS = ['10', '25', '50'];
+const MAX_SKELETON_ROWS = 10;
+const ACTIONS_COLUMN_CLASS = 'text-right w-14';
 
 export function WorkspaceInvitationsTable({
   data,
@@ -91,7 +91,7 @@ export function WorkspaceInvitationsTable({
   const columns = React.useMemo<Array<ColumnDef<WorkspaceInvitationRow>>>(
     () => [
       {
-        accessorKey: "email",
+        accessorKey: 'email',
         header: ({ column }) => (
           <SortableHeader column={column} label="Email" />
         ),
@@ -99,13 +99,13 @@ export function WorkspaceInvitationsTable({
         enableSorting: true,
       },
       {
-        accessorKey: "role",
-        header: "Role",
+        accessorKey: 'role',
+        header: 'Role',
         cell: ({ row }) => normalizeRole(row.original.role),
         enableSorting: false,
       },
       {
-        accessorKey: "invitedAt",
+        accessorKey: 'invitedAt',
         header: ({ column }) => (
           <SortableHeader column={column} label="Invited Date" />
         ),
@@ -113,13 +113,13 @@ export function WorkspaceInvitationsTable({
         enableSorting: true,
       },
       {
-        id: "actions",
-        header: "",
+        id: 'actions',
+        header: '',
         enableSorting: false,
         cell: ({ row }) => {
-          const { id, email, role } = row.original
+          const { id, email, role } = row.original;
           const isRowPending =
-            removingInvitationId === id || resendingInvitationId === id
+            removingInvitationId === id || resendingInvitationId === id;
           return (
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -152,7 +152,7 @@ export function WorkspaceInvitationsTable({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          )
+          );
         },
       },
     ],
@@ -163,7 +163,7 @@ export function WorkspaceInvitationsTable({
       removingInvitationId,
       resendingInvitationId,
     ]
-  )
+  );
 
   const table = useReactTable({
     data,
@@ -173,26 +173,26 @@ export function WorkspaceInvitationsTable({
     manualPagination: true,
     pageCount: totalPages,
     getCoreRowModel: getCoreRowModel(),
-  })
+  });
 
-  const totalPagesSafe = Math.max(totalPages, 1)
-  const skeletonRowCount = Math.min(pageSize, MAX_SKELETON_ROWS)
+  const totalPagesSafe = Math.max(totalPages, 1);
+  const skeletonRowCount = Math.min(pageSize, MAX_SKELETON_ROWS);
 
   const handleHeaderSort = React.useCallback(
     (columnId: string) => {
-      const current = sorting.find((item) => item.id === columnId)
+      const current = sorting.find((item) => item.id === columnId);
       if (!current) {
-        onSortingChange([{ id: columnId, desc: false }])
-        return
+        onSortingChange([{ id: columnId, desc: false }]);
+        return;
       }
       if (!current.desc) {
-        onSortingChange([{ id: columnId, desc: true }])
-        return
+        onSortingChange([{ id: columnId, desc: true }]);
+        return;
       }
-      onSortingChange([])
+      onSortingChange([]);
     },
     [onSortingChange, sorting]
-  )
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -210,10 +210,10 @@ export function WorkspaceInvitationsTable({
                         : undefined
                     }
                     className={
-                      header.id === "actions"
+                      header.id === 'actions'
                         ? ACTIONS_COLUMN_CLASS
                         : header.column.getCanSort()
-                          ? "cursor-pointer select-none"
+                          ? 'cursor-pointer select-none'
                           : undefined
                     }
                   >
@@ -253,7 +253,7 @@ export function WorkspaceInvitationsTable({
                     <TableCell
                       key={cell.id}
                       className={
-                        cell.column.id === "actions"
+                        cell.column.id === 'actions'
                           ? ACTIONS_COLUMN_CLASS
                           : undefined
                       }
@@ -285,7 +285,7 @@ export function WorkspaceInvitationsTable({
           {isLoading ? (
             <Skeleton className="h-4 w-28" />
           ) : (
-            `${total} invitation${total === 1 ? "" : "s"}`
+            `${total} invitation${total === 1 ? '' : 's'}`
           )}
         </div>
         <div className="flex items-center gap-6">
@@ -299,8 +299,8 @@ export function WorkspaceInvitationsTable({
             <Select
               value={String(pageSize)}
               onValueChange={(value) => {
-                if (!value) return
-                onPageSizeChange(Number(value))
+                if (!value) return;
+                onPageSizeChange(Number(value));
               }}
               disabled={isLoading}
             >
@@ -364,44 +364,44 @@ export function WorkspaceInvitationsTable({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function SortableHeader({
   column,
   label,
 }: {
-  column: { getIsSorted: () => false | "asc" | "desc" }
-  label: string
+  column: { getIsSorted: () => false | 'asc' | 'desc' };
+  label: string;
 }) {
-  const sorted = column.getIsSorted()
+  const sorted = column.getIsSorted();
   return (
     <div className="flex items-center gap-1">
       {label}
-      {sorted === "asc" ? (
+      {sorted === 'asc' ? (
         <IconArrowUp className="size-3.5" />
-      ) : sorted === "desc" ? (
+      ) : sorted === 'desc' ? (
         <IconArrowDown className="size-3.5" />
       ) : (
         <IconArrowsSort className="size-3.5 text-muted-foreground/50" />
       )}
     </div>
-  )
+  );
 }
 
 function normalizeRole(role: string): string {
-  if (!role) return "-"
+  if (!role) return '-';
   return role
-    .split(",")
+    .split(',')
     .map((item) => item.trim())
     .filter(Boolean)
-    .join(", ")
+    .join(', ');
 }
 
 function formatDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  })
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }

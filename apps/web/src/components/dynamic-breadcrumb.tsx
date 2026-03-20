@@ -1,5 +1,5 @@
-import * as React from "react"
-import { Link, useMatches } from "@tanstack/react-router"
+import * as React from 'react';
+import { Link, useMatches } from '@tanstack/react-router';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -7,17 +7,17 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@workspace/ui/components/breadcrumb"
+} from '@workspace/ui/components/breadcrumb';
 
 export function DynamicBreadcrumb() {
-  const matches = useMatches()
-  const crumbs = matches.filter((m) => m.staticData.title)
+  const matches = useMatches();
+  const crumbs = matches.filter((m) => m.staticData.title);
 
   return (
     <Breadcrumb>
       <BreadcrumbList>
         {crumbs.map((match, i) => {
-          const isLast = i === crumbs.length - 1
+          const isLast = i === crumbs.length - 1;
           return (
             <React.Fragment key={match.id}>
               <BreadcrumbItem>
@@ -37,9 +37,9 @@ export function DynamicBreadcrumb() {
               </BreadcrumbItem>
               {!isLast && <BreadcrumbSeparator />}
             </React.Fragment>
-          )
+          );
         })}
       </BreadcrumbList>
     </Breadcrumb>
-  )
+  );
 }

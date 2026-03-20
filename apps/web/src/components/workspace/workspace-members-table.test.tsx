@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
-import type { SortingState } from "@tanstack/react-table"
-import { createMockMemberRow } from "@workspace/test-utils"
-import { WorkspaceMembersTable } from "@/components/workspace/workspace-members-table"
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import type { SortingState } from '@tanstack/react-table';
+import { createMockMemberRow } from '@workspace/test-utils';
+import { WorkspaceMembersTable } from '@/components/workspace/workspace-members-table';
 
 const defaultProps = {
   data: [],
@@ -13,57 +13,61 @@ const defaultProps = {
   totalPages: 1,
   sorting: [] as SortingState,
   isLoading: false,
-  currentUserId: "user-1",
-  currentUserRole: "owner",
+  currentUserId: 'user-1',
+  currentUserRole: 'owner',
   onSortingChange: vi.fn(),
   onPageChange: vi.fn(),
   onPageSizeChange: vi.fn(),
   onRemoveMember: vi.fn(),
   onLeave: vi.fn(),
-}
+};
 
-describe("WorkspaceMembersTable", () => {
+describe('WorkspaceMembersTable', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-  })
+    vi.clearAllMocks();
+  });
 
-  it("renders all member rows with emails", () => {
+  it('renders all member rows with emails', () => {
     const members = [
-      createMockMemberRow({ id: "member-1", email: "alice@example.com" }),
+      createMockMemberRow({ id: 'member-1', email: 'alice@example.com' }),
       createMockMemberRow({
-        id: "member-2",
-        userId: "user-2",
-        email: "bob@example.com",
+        id: 'member-2',
+        userId: 'user-2',
+        email: 'bob@example.com',
       }),
-    ]
+    ];
 
-    render(<WorkspaceMembersTable {...defaultProps} data={members} total={2} />)
+    render(
+      <WorkspaceMembersTable {...defaultProps} data={members} total={2} />
+    );
 
-    expect(screen.getByText("alice@example.com")).toBeInTheDocument()
-    expect(screen.getByText("bob@example.com")).toBeInTheDocument()
-  })
+    expect(screen.getByText('alice@example.com')).toBeInTheDocument();
+    expect(screen.getByText('bob@example.com')).toBeInTheDocument();
+  });
 
-  it("displays role for each member", () => {
+  it('displays role for each member', () => {
     const members = [
-      createMockMemberRow({ id: "member-1", role: "owner" }),
-      createMockMemberRow({ id: "member-2", userId: "user-2", role: "member" }),
-    ]
+      createMockMemberRow({ id: 'member-1', role: 'owner' }),
+      createMockMemberRow({ id: 'member-2', userId: 'user-2', role: 'member' }),
+    ];
 
-    render(<WorkspaceMembersTable {...defaultProps} data={members} total={2} />)
+    render(
+      <WorkspaceMembersTable {...defaultProps} data={members} total={2} />
+    );
 
-    const ownerCells = screen.getAllByText("owner")
-    const memberCells = screen.getAllByText("member")
-    expect(ownerCells.length).toBeGreaterThan(0)
-    expect(memberCells.length).toBeGreaterThan(0)
-  })
+    const ownerCells = screen.getAllByText('owner');
+    const memberCells = screen.getAllByText('member');
+    expect(ownerCells.length).toBeGreaterThan(0);
+    expect(memberCells.length).toBeGreaterThan(0);
+  });
 
-  it("shows empty state when no members", () => {
-    render(<WorkspaceMembersTable {...defaultProps} data={[]} total={0} />)
+  it('shows empty state when no members', () => {
+    render(<WorkspaceMembersTable {...defaultProps} data={[]} total={0} />);
 
-    expect(screen.getByText("No team members found.")).toBeInTheDocument()
-  })
+    expect(screen.getByText('No team members found.')).toBeInTheDocument();
+  });
 
-  it("shows skeleton loaders when loading", () => {
+  it('shows skeleton loaders when loading', () => {
     render(
       <WorkspaceMembersTable
         {...defaultProps}
@@ -72,49 +76,55 @@ describe("WorkspaceMembersTable", () => {
         isLoading={true}
         pageSize={5}
       />
-    )
+    );
 
     // Skeleton elements are rendered — the empty state text should not appear.
-    expect(screen.queryByText("No team members found.")).not.toBeInTheDocument()
-  })
+    expect(
+      screen.queryByText('No team members found.')
+    ).not.toBeInTheDocument();
+  });
 
-  it("shows member count", () => {
+  it('shows member count', () => {
     const members = [
-      createMockMemberRow({ id: "member-1", email: "alice@example.com" }),
+      createMockMemberRow({ id: 'member-1', email: 'alice@example.com' }),
       createMockMemberRow({
-        id: "member-2",
-        userId: "user-2",
-        email: "bob@example.com",
+        id: 'member-2',
+        userId: 'user-2',
+        email: 'bob@example.com',
       }),
-    ]
+    ];
 
-    render(<WorkspaceMembersTable {...defaultProps} data={members} total={2} />)
+    render(
+      <WorkspaceMembersTable {...defaultProps} data={members} total={2} />
+    );
 
-    expect(screen.getByText("2 members")).toBeInTheDocument()
-  })
+    expect(screen.getByText('2 members')).toBeInTheDocument();
+  });
 
-  it("shows singular member count for one member", () => {
+  it('shows singular member count for one member', () => {
     const members = [
-      createMockMemberRow({ id: "member-1", email: "alice@example.com" }),
-    ]
+      createMockMemberRow({ id: 'member-1', email: 'alice@example.com' }),
+    ];
 
-    render(<WorkspaceMembersTable {...defaultProps} data={members} total={1} />)
+    render(
+      <WorkspaceMembersTable {...defaultProps} data={members} total={1} />
+    );
 
-    expect(screen.getByText("1 member")).toBeInTheDocument()
-  })
+    expect(screen.getByText('1 member')).toBeInTheDocument();
+  });
 
-  it("calls onRemoveMember when remove action is clicked for another member", async () => {
-    const user = userEvent.setup()
-    const onRemoveMember = vi.fn()
+  it('calls onRemoveMember when remove action is clicked for another member', async () => {
+    const user = userEvent.setup();
+    const onRemoveMember = vi.fn();
     const members = [
       // Current user is 'user-1' with role 'owner', this member is a different user.
       createMockMemberRow({
-        id: "member-2",
-        userId: "user-2",
-        email: "bob@example.com",
-        role: "member",
+        id: 'member-2',
+        userId: 'user-2',
+        email: 'bob@example.com',
+        role: 'member',
       }),
-    ]
+    ];
 
     render(
       <WorkspaceMembersTable
@@ -125,29 +135,29 @@ describe("WorkspaceMembersTable", () => {
         currentUserRole="owner"
         onRemoveMember={onRemoveMember}
       />
-    )
+    );
 
-    const triggerButton = screen.getByRole("button", { name: /row actions/i })
-    await user.click(triggerButton)
+    const triggerButton = screen.getByRole('button', { name: /row actions/i });
+    await user.click(triggerButton);
 
-    const removeItem = await screen.findByRole("menuitem", { name: /remove/i })
-    await user.click(removeItem)
+    const removeItem = await screen.findByRole('menuitem', { name: /remove/i });
+    await user.click(removeItem);
 
-    expect(onRemoveMember).toHaveBeenCalledWith("member-2")
-  })
+    expect(onRemoveMember).toHaveBeenCalledWith('member-2');
+  });
 
-  it("calls onLeave when current user clicks leave", async () => {
-    const user = userEvent.setup()
-    const onLeave = vi.fn()
+  it('calls onLeave when current user clicks leave', async () => {
+    const user = userEvent.setup();
+    const onLeave = vi.fn();
     const members = [
       // Current user's own row with role 'member' (not owner).
       createMockMemberRow({
-        id: "member-1",
-        userId: "user-1",
-        email: "me@example.com",
-        role: "member",
+        id: 'member-1',
+        userId: 'user-1',
+        email: 'me@example.com',
+        role: 'member',
       }),
-    ]
+    ];
 
     render(
       <WorkspaceMembersTable
@@ -158,21 +168,21 @@ describe("WorkspaceMembersTable", () => {
         currentUserRole="member"
         onLeave={onLeave}
       />
-    )
+    );
 
-    const triggerButton = screen.getByRole("button", { name: /row actions/i })
-    await user.click(triggerButton)
+    const triggerButton = screen.getByRole('button', { name: /row actions/i });
+    await user.click(triggerButton);
 
-    const leaveItem = await screen.findByRole("menuitem", { name: /leave/i })
-    await user.click(leaveItem)
+    const leaveItem = await screen.findByRole('menuitem', { name: /leave/i });
+    await user.click(leaveItem);
 
-    expect(onLeave).toHaveBeenCalled()
-  })
+    expect(onLeave).toHaveBeenCalled();
+  });
 
-  it("disables next and last pagination buttons on single page", () => {
+  it('disables next and last pagination buttons on single page', () => {
     const members = [
-      createMockMemberRow({ id: "member-1", email: "alice@example.com" }),
-    ]
+      createMockMemberRow({ id: 'member-1', email: 'alice@example.com' }),
+    ];
 
     render(
       <WorkspaceMembersTable
@@ -182,14 +192,14 @@ describe("WorkspaceMembersTable", () => {
         page={1}
         totalPages={1}
       />
-    )
+    );
 
-    const prevButton = screen.getByRole("button", {
+    const prevButton = screen.getByRole('button', {
       name: /go to previous page/i,
-    })
-    const nextButton = screen.getByRole("button", { name: /go to next page/i })
+    });
+    const nextButton = screen.getByRole('button', { name: /go to next page/i });
 
-    expect(prevButton).toBeDisabled()
-    expect(nextButton).toBeDisabled()
-  })
-})
+    expect(prevButton).toBeDisabled();
+    expect(nextButton).toBeDisabled();
+  });
+});

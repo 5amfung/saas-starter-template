@@ -1,10 +1,10 @@
-import * as React from "react"
-import { IconLoader2, IconPlus, IconSelector } from "@tabler/icons-react"
-import { z } from "zod"
-import { useMutation } from "@tanstack/react-query"
-import { useNavigate } from "@tanstack/react-router"
-import { toast } from "sonner"
-import { Input } from "@workspace/ui/components/input"
+import * as React from 'react';
+import { IconLoader2, IconPlus, IconSelector } from '@tabler/icons-react';
+import { z } from 'zod';
+import { useMutation } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
+import { toast } from 'sonner';
+import { Input } from '@workspace/ui/components/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +13,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu"
+} from '@workspace/ui/components/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,85 +23,85 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@workspace/ui/components/alert-dialog"
+} from '@workspace/ui/components/alert-dialog';
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@workspace/ui/components/sidebar"
-import { authClient } from "@workspace/auth/client"
-import { checkPlanLimit } from "@/billing/billing.functions"
-import { UpgradePromptDialog } from "@/components/billing/upgrade-prompt-dialog"
-import { useUpgradePrompt } from "@/hooks/use-upgrade-prompt"
+} from '@workspace/ui/components/sidebar';
+import { authClient } from '@workspace/auth/client';
+import { checkPlanLimit } from '@/billing/billing.functions';
+import { UpgradePromptDialog } from '@/components/billing/upgrade-prompt-dialog';
+import { useUpgradePrompt } from '@/hooks/use-upgrade-prompt';
 import {
   STANDARD_WORKSPACE_TYPE,
   buildWorkspaceSlug,
-} from "@/workspace/workspace"
+} from '@/workspace/workspace';
 
 const workspaceNameSchema = z
   .string()
   .trim()
-  .min(1, { error: "Workspace name is required." })
+  .min(1, { error: 'Workspace name is required.' })
   .regex(/^[a-zA-Z0-9_\- ]+$/, {
-    error: "Only letters, numbers, spaces, -, and _ are allowed.",
-  })
+    error: 'Only letters, numbers, spaces, -, and _ are allowed.',
+  });
 
 export function WorkspaceSwitcher({
   workspaces,
   activeWorkspaceId,
 }: {
   workspaces: Array<{
-    id: string
-    name: string
-    logo: React.ReactNode
-  }>
-  activeWorkspaceId: string | null
+    id: string;
+    name: string;
+    logo: React.ReactNode;
+  }>;
+  activeWorkspaceId: string | null;
 }) {
-  const { isMobile } = useSidebar()
-  const navigate = useNavigate()
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false)
-  const [workspaceName, setWorkspaceName] = React.useState("")
+  const { isMobile } = useSidebar();
+  const navigate = useNavigate();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
+  const [workspaceName, setWorkspaceName] = React.useState('');
   const [validationError, setValidationError] = React.useState<string | null>(
     null
-  )
-  const upgradePrompt = useUpgradePrompt()
+  );
+  const upgradePrompt = useUpgradePrompt();
 
   const handleCreateDialogOpenChange = (isOpen: boolean) => {
-    setIsCreateDialogOpen(isOpen)
+    setIsCreateDialogOpen(isOpen);
     if (!isOpen) {
-      setWorkspaceName("")
-      setValidationError(null)
+      setWorkspaceName('');
+      setValidationError(null);
     }
-  }
+  };
 
   const matchedWorkspace = workspaces.find(
     (workspace) => workspace.id === activeWorkspaceId
-  )
+  );
   const activeWorkspace = matchedWorkspace ||
     workspaces[0] || {
-      id: "placeholder-workspace",
-      name: "",
+      id: 'placeholder-workspace',
+      name: '',
       logo: <IconPlus className="size-4" />,
-    }
+    };
 
   const setActiveMutation = useMutation({
     mutationFn: async (organizationId: string) => {
       const { error } = await authClient.organization.setActive({
         organizationId,
-      })
-      if (error) throw new Error(error.message)
+      });
+      if (error) throw new Error(error.message);
     },
     onSuccess: (_value, organizationId) => {
       navigate({
-        to: "/ws/$workspaceId/overview",
+        to: '/ws/$workspaceId/overview',
         params: { workspaceId: organizationId },
-      })
+      });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to switch workspace.")
+      toast.error(error.message || 'Failed to switch workspace.');
     },
-  })
+  });
 
   const createWorkspaceMutation = useMutation({
     mutationFn: async (name: string) => {
@@ -109,53 +109,53 @@ export function WorkspaceSwitcher({
         name,
         slug: buildWorkspaceSlug(name),
         workspaceType: STANDARD_WORKSPACE_TYPE,
-      })
-      if (error) throw new Error(error.message)
-      if (!data.id) throw new Error("Failed to create workspace.")
-      return data.id
+      });
+      if (error) throw new Error(error.message);
+      if (!data.id) throw new Error('Failed to create workspace.');
+      return data.id;
     },
     onSuccess: async (workspaceId) => {
       const { error } = await authClient.organization.setActive({
         organizationId: workspaceId,
-      })
+      });
       if (error) {
         toast.error(
-          error.message || "Workspace was created but could not be activated."
-        )
-        return
+          error.message || 'Workspace was created but could not be activated.'
+        );
+        return;
       }
-      setWorkspaceName("")
-      setValidationError(null)
-      setIsCreateDialogOpen(false)
-      toast.success("Workspace created.")
+      setWorkspaceName('');
+      setValidationError(null);
+      setIsCreateDialogOpen(false);
+      toast.success('Workspace created.');
       navigate({
-        to: "/ws/$workspaceId/overview",
+        to: '/ws/$workspaceId/overview',
         params: { workspaceId },
-      })
+      });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create workspace.")
+      toast.error(error.message || 'Failed to create workspace.');
     },
-  })
+  });
 
-  const canCreateWorkspace = workspaceName.trim().length > 0
+  const canCreateWorkspace = workspaceName.trim().length > 0;
 
   const handleAddWorkspace = async () => {
     try {
-      const result = await checkPlanLimit({ data: { feature: "workspace" } })
+      const result = await checkPlanLimit({ data: { feature: 'workspace' } });
       if (result.allowed) {
-        setIsCreateDialogOpen(true)
+        setIsCreateDialogOpen(true);
       } else {
         upgradePrompt.show(
-          "Workspace limit reached",
+          'Workspace limit reached',
           `You're using ${result.current}/${result.limit} workspaces on the ${result.planName} plan. Upgrade to create more.`,
           result.upgradePlan
-        )
+        );
       }
     } catch {
-      toast.error("Something went wrong. Please try again.")
+      toast.error('Something went wrong. Please try again.');
     }
-  }
+  };
 
   return (
     <SidebarMenu>
@@ -182,7 +182,7 @@ export function WorkspaceSwitcher({
           <DropdownMenuContent
             className="min-w-56 rounded-lg"
             align="start"
-            side={isMobile ? "bottom" : "right"}
+            side={isMobile ? 'bottom' : 'right'}
             sideOffset={4}
           >
             <DropdownMenuGroup>
@@ -234,14 +234,14 @@ export function WorkspaceSwitcher({
             <Input
               value={workspaceName}
               onChange={(event) => {
-                setWorkspaceName(event.target.value)
-                setValidationError(null)
+                setWorkspaceName(event.target.value);
+                setValidationError(null);
               }}
               placeholder="Workspace name"
               autoFocus
               aria-invalid={!!validationError}
               aria-describedby={
-                validationError ? "workspace-name-error" : undefined
+                validationError ? 'workspace-name-error' : undefined
               }
             />
             {validationError ? (
@@ -263,14 +263,14 @@ export function WorkspaceSwitcher({
                 !canCreateWorkspace || createWorkspaceMutation.isPending
               }
               onClick={(event) => {
-                event.preventDefault()
-                const result = workspaceNameSchema.safeParse(workspaceName)
+                event.preventDefault();
+                const result = workspaceNameSchema.safeParse(workspaceName);
                 if (!result.success) {
-                  setValidationError(result.error.issues[0].message)
-                  return
+                  setValidationError(result.error.issues[0].message);
+                  return;
                 }
-                setValidationError(null)
-                createWorkspaceMutation.mutate(result.data)
+                setValidationError(null);
+                createWorkspaceMutation.mutate(result.data);
               }}
             >
               {createWorkspaceMutation.isPending && (
@@ -283,5 +283,5 @@ export function WorkspaceSwitcher({
       </AlertDialog>
       <UpgradePromptDialog {...upgradePrompt.dialogProps} />
     </SidebarMenu>
-  )
+  );
 }

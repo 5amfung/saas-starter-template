@@ -1,4 +1,4 @@
-import { IconLoader2, IconSend } from "@tabler/icons-react"
+import { IconLoader2, IconSend } from '@tabler/icons-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,28 +8,28 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@workspace/ui/components/alert-dialog"
-import { Input } from "@workspace/ui/components/input"
-import { Label } from "@workspace/ui/components/label"
+} from '@workspace/ui/components/alert-dialog';
+import { Input } from '@workspace/ui/components/input';
+import { Label } from '@workspace/ui/components/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select"
-import type { InviteRole } from "@/workspace/workspace-members.types"
+} from '@workspace/ui/components/select';
+import type { InviteRole } from '@/workspace/workspace-members.types';
 
 interface WorkspaceInviteDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  email: string
-  role: InviteRole
-  roles: ReadonlyArray<InviteRole>
-  isPending: boolean
-  onEmailChange: (email: string) => void
-  onRoleChange: (role: InviteRole) => void
-  onSubmit: () => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  email: string;
+  role: InviteRole;
+  roles: ReadonlyArray<InviteRole>;
+  isPending: boolean;
+  onEmailChange: (email: string) => void;
+  onRoleChange: (role: InviteRole) => void;
+  onSubmit: () => void;
 }
 
 export function WorkspaceInviteDialog({
@@ -68,9 +68,9 @@ export function WorkspaceInviteDialog({
             <Select
               value={role}
               onValueChange={(value) => {
-                const nextRole = roles.find((r) => r === value)
+                const nextRole = roles.find((r) => r === value);
                 if (nextRole) {
-                  onRoleChange(nextRole)
+                  onRoleChange(nextRole);
                 }
               }}
             >
@@ -93,8 +93,8 @@ export function WorkspaceInviteDialog({
           <AlertDialogAction
             disabled={isPending}
             onClick={(event) => {
-              event.preventDefault()
-              onSubmit()
+              event.preventDefault();
+              onSubmit();
             }}
           >
             {isPending ? (
@@ -107,5 +107,5 @@ export function WorkspaceInviteDialog({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }

@@ -23,5 +23,5 @@ export function GoogleIcon({ className }: { className?: string }) {
         fill="#EA4335"
       />
     </svg>
-  )
+  );
 }

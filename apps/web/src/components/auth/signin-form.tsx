@@ -1,14 +1,14 @@
-import { useForm } from "@tanstack/react-form"
-import { Link, useNavigate } from "@tanstack/react-router"
-import { IconLoader } from "@tabler/icons-react"
-import { Button } from "@workspace/ui/components/button"
+import { useForm } from '@tanstack/react-form';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { IconLoader } from '@tabler/icons-react';
+import { Button } from '@workspace/ui/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
+} from '@workspace/ui/components/card';
 import {
   Field,
   FieldDescription,
@@ -16,21 +16,21 @@ import {
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
-import { authClient } from "@workspace/auth/client"
-import { loginSchema } from "@workspace/auth/schemas"
-import { FormError } from "@/components/auth/form-error"
-import { GoogleSignInButton } from "@/components/auth/google-sign-in-button"
-import { toFieldErrorItem } from "@/lib/form-utils"
+} from '@workspace/ui/components/field';
+import { Input } from '@workspace/ui/components/input';
+import { authClient } from '@workspace/auth/client';
+import { loginSchema } from '@workspace/auth/schemas';
+import { FormError } from '@/components/auth/form-error';
+import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
+import { toFieldErrorItem } from '@/lib/form-utils';
 
 export function SigninForm({ oauthError }: { oauthError?: string }) {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const form = useForm({
     defaultValues: {
-      email: "",
-      password: "",
+      email: '',
+      password: '',
     },
     validators: {
       onBlur: loginSchema,
@@ -40,25 +40,25 @@ export function SigninForm({ oauthError }: { oauthError?: string }) {
       const { error } = await authClient.signIn.email({
         email: value.email,
         password: value.password,
-        callbackURL: "/ws",
-      })
+        callbackURL: '/ws',
+      });
       if (error) {
         if (error.status === 403) {
-          navigate({ to: "/verify", search: { email: value.email } })
-          return
+          navigate({ to: '/verify', search: { email: value.email } });
+          return;
         }
         const message =
           error.status === 401
             ? 'Invalid email or password. If you signed up with Google, use "Sign in with Google" or reset your password.'
-            : (error.message ?? "Something went wrong.")
+            : (error.message ?? 'Something went wrong.');
         formApi.setErrorMap({
           ...formApi.state.errorMap,
           onSubmit: { form: message, fields: {} },
-        })
-        return
+        });
+        return;
       }
     },
-  })
+  });
 
   return (
     <>
@@ -70,8 +70,8 @@ export function SigninForm({ oauthError }: { oauthError?: string }) {
         <CardContent>
           <form
             onSubmit={(e) => {
-              e.preventDefault()
-              form.handleSubmit()
+              e.preventDefault();
+              form.handleSubmit();
             }}
           >
             <FieldGroup>
@@ -79,7 +79,7 @@ export function SigninForm({ oauthError }: { oauthError?: string }) {
               {oauthError && (
                 <FormError
                   errors={[
-                    "Google sign-in was cancelled or failed. Please try again.",
+                    'Google sign-in was cancelled or failed. Please try again.',
                   ]}
                 />
               )}
@@ -90,7 +90,7 @@ export function SigninForm({ oauthError }: { oauthError?: string }) {
                 name="email"
                 children={(field) => {
                   const isInvalid =
-                    field.state.meta.isBlurred && !field.state.meta.isValid
+                    field.state.meta.isBlurred && !field.state.meta.isValid;
                   return (
                     <Field data-invalid={isInvalid}>
                       <FieldLabel htmlFor={field.name}>Email</FieldLabel>
@@ -111,14 +111,14 @@ export function SigninForm({ oauthError }: { oauthError?: string }) {
                         />
                       )}
                     </Field>
-                  )
+                  );
                 }}
               />
               <form.Field
                 name="password"
                 children={(field) => {
                   const isInvalid =
-                    field.state.meta.isBlurred && !field.state.meta.isValid
+                    field.state.meta.isBlurred && !field.state.meta.isValid;
                   return (
                     <Field data-invalid={isInvalid}>
                       <div className="flex items-center">
@@ -146,7 +146,7 @@ export function SigninForm({ oauthError }: { oauthError?: string }) {
                         />
                       )}
                     </Field>
-                  )
+                  );
                 }}
               />
               <form.Subscribe
@@ -154,7 +154,7 @@ export function SigninForm({ oauthError }: { oauthError?: string }) {
                 children={(errors) => (
                   <FormError
                     errors={errors
-                      .flatMap((e) => (typeof e === "string" ? [e] : []))
+                      .flatMap((e) => (typeof e === 'string' ? [e] : []))
                       .filter(Boolean)}
                   />
                 )}
@@ -178,9 +178,9 @@ export function SigninForm({ oauthError }: { oauthError?: string }) {
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
+        By clicking continue, you agree to our <a href="#">Terms of Service</a>{' '}
         and <a href="#">Privacy Policy</a>.
       </FieldDescription>
     </>
-  )
+  );
 }

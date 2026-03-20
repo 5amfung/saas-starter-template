@@ -1,39 +1,39 @@
-import type { QueryClient } from "@tanstack/react-query"
-import { TanStackDevtools } from "@tanstack/react-devtools"
+import type { QueryClient } from '@tanstack/react-query';
+import { TanStackDevtools } from '@tanstack/react-devtools';
 import {
   HeadContent,
   Scripts,
   createRootRouteWithContext,
-} from "@tanstack/react-router"
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
-import { formDevtoolsPlugin } from "@tanstack/react-form-devtools"
-import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools"
-import { Toaster } from "@workspace/ui/components/sonner"
-import appCss from "@workspace/ui/globals.css?url"
-import { ThemeProvider, useTheme } from "@/components/theme-provider"
-import { NotFound } from "@/components/not-found"
+} from '@tanstack/react-router';
+import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
+import { formDevtoolsPlugin } from '@tanstack/react-form-devtools';
+import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools';
+import { Toaster } from '@workspace/ui/components/sonner';
+import appCss from '@workspace/ui/globals.css?url';
+import { ThemeProvider, useTheme } from '@/components/theme-provider';
+import { NotFound } from '@/components/not-found';
 
 interface RouterContext {
-  queryClient: QueryClient
+  queryClient: QueryClient;
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   head: () => ({
     meta: [
       {
-        charSet: "utf-8",
+        charSet: 'utf-8',
       },
       {
-        name: "viewport",
-        content: "width=device-width, initial-scale=1",
+        name: 'viewport',
+        content: 'width=device-width, initial-scale=1',
       },
       {
-        title: "TanStack Start Starter",
+        title: 'TanStack Start Starter',
       },
     ],
     links: [
       {
-        rel: "stylesheet",
+        rel: 'stylesheet',
         href: appCss,
       },
     ],
@@ -41,12 +41,12 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
   shellComponent: RootDocument,
   notFoundComponent: NotFound,
-})
+});
 
 /** Passes the resolved theme from ThemeProvider to the UI Toaster. */
 function ThemedToaster() {
-  const { resolvedTheme } = useTheme()
-  return <Toaster theme={resolvedTheme} />
+  const { resolvedTheme } = useTheme();
+  return <Toaster theme={resolvedTheme} />;
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
@@ -61,16 +61,16 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <ThemedToaster />
           <TanStackDevtools
             config={{
-              position: "bottom-right",
+              position: 'bottom-right',
             }}
             plugins={[
               {
-                name: "TanStack Query",
+                name: 'TanStack Query',
                 render: <ReactQueryDevtoolsPanel />,
                 defaultOpen: false,
               },
               {
-                name: "Tanstack Router",
+                name: 'Tanstack Router',
                 render: <TanStackRouterDevtoolsPanel />,
               },
               formDevtoolsPlugin(),
@@ -80,5 +80,5 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }

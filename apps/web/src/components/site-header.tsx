@@ -1,6 +1,6 @@
-import { Separator } from "@workspace/ui/components/separator"
-import { SidebarTrigger } from "@workspace/ui/components/sidebar"
-import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb"
+import { Separator } from '@workspace/ui/components/separator';
+import { SidebarTrigger } from '@workspace/ui/components/sidebar';
+import { DynamicBreadcrumb } from '@/components/dynamic-breadcrumb';
 
 export function SiteHeader() {
   return (
@@ -14,5 +14,5 @@ export function SiteHeader() {
         <DynamicBreadcrumb />
       </div>
     </header>
-  )
+  );
 }

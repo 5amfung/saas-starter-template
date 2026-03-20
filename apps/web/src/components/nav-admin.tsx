@@ -1,22 +1,22 @@
-import { Link, useMatchRoute } from "@tanstack/react-router"
+import { Link, useMatchRoute } from '@tanstack/react-router';
 import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@workspace/ui/components/sidebar"
+} from '@workspace/ui/components/sidebar';
 
 export function NavAdmin({
   items,
 }: {
   items: Array<{
-    title: string
-    url: string
-    icon: React.ReactNode
-  }>
+    title: string;
+    url: string;
+    icon: React.ReactNode;
+  }>;
 }) {
-  const matchRoute = useMatchRoute()
+  const matchRoute = useMatchRoute();
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -35,5 +35,5 @@ export function NavAdmin({
         ))}
       </SidebarMenu>
     </SidebarGroup>
-  )
+  );
 }

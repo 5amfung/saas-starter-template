@@ -1,50 +1,50 @@
-import * as React from "react"
-import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query"
-import { useNavigate } from "@tanstack/react-router"
-import type { SortingState } from "@tanstack/react-table"
-import { toast } from "sonner"
-import { authClient } from "@workspace/auth/client"
-import { useSessionQuery } from "@/hooks/use-session-query"
-import type { WorkspaceMemberRow } from "@/components/workspace/workspace-members-table"
+import * as React from 'react';
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
+import type { SortingState } from '@tanstack/react-table';
+import { toast } from 'sonner';
+import { authClient } from '@workspace/auth/client';
+import { useSessionQuery } from '@/hooks/use-session-query';
+import type { WorkspaceMemberRow } from '@/components/workspace/workspace-members-table';
 import {
   MEMBER_PAGE_SIZE_DEFAULT,
   withPendingId,
-} from "./workspace-members.types"
+} from './workspace-members.types';
 
 export function useMembersTable(workspaceId: string) {
-  const navigate = useNavigate()
-  const { data: session } = useSessionQuery()
-  const currentUserId = session?.user.id ?? null
+  const navigate = useNavigate();
+  const { data: session } = useSessionQuery();
+  const currentUserId = session?.user.id ?? null;
 
   const roleQuery = useQuery({
-    queryKey: ["workspace", "activeRole", workspaceId],
+    queryKey: ['workspace', 'activeRole', workspaceId],
     queryFn: async () => {
       const { data, error } =
-        await authClient.organization.getActiveMemberRole()
-      if (error) return null
-      return typeof data.role === "string" ? data.role : null
+        await authClient.organization.getActiveMemberRole();
+      if (error) return null;
+      return typeof data.role === 'string' ? data.role : null;
     },
-  })
-  const currentUserRole = roleQuery.data ?? null
+  });
+  const currentUserRole = roleQuery.data ?? null;
 
-  const [page, setPage] = React.useState(1)
-  const [pageSize, setPageSize] = React.useState(MEMBER_PAGE_SIZE_DEFAULT)
-  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [page, setPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(MEMBER_PAGE_SIZE_DEFAULT);
+  const [sorting, setSorting] = React.useState<SortingState>([]);
   const [removingMemberId, setRemovingMemberId] = React.useState<string | null>(
     null
-  )
+  );
 
   React.useEffect(() => {
-    setPage(1)
-  }, [pageSize, sorting])
+    setPage(1);
+  }, [pageSize, sorting]);
 
-  const sortBy = sorting[0]?.id
-  const sortDirection = sorting[0]?.desc ? ("desc" as const) : ("asc" as const)
+  const sortBy = sorting[0]?.id;
+  const sortDirection = sorting[0]?.desc ? ('desc' as const) : ('asc' as const);
 
   const membersQuery = useQuery({
     queryKey: [
-      "workspace",
-      "members",
+      'workspace',
+      'members',
       workspaceId,
       page,
       pageSize,
@@ -60,9 +60,9 @@ export function useMembersTable(workspaceId: string) {
           offset: (page - 1) * pageSize,
           ...(sortBy ? { sortBy, sortDirection } : {}),
         },
-      })
+      });
 
-      if (error) throw new Error(error.message)
+      if (error) throw new Error(error.message);
 
       return {
         members: data.members.map((member) => ({
@@ -73,46 +73,46 @@ export function useMembersTable(workspaceId: string) {
         })),
         total: data.total,
         totalPages: Math.max(1, Math.ceil(data.total / pageSize)),
-      }
+      };
     },
-  })
+  });
 
   const leaveMutation = useMutation({
     mutationFn: async () => {
       const { error } = await authClient.organization.leave({
         organizationId: workspaceId,
-      })
-      if (error) throw new Error(error.message)
+      });
+      if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      toast.success("You have left the workspace.")
-      void navigate({ to: "/ws" })
+      toast.success('You have left the workspace.');
+      void navigate({ to: '/ws' });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to leave workspace.")
+      toast.error(error.message || 'Failed to leave workspace.');
     },
-  })
+  });
 
   const removeMemberMutation = useMutation({
     mutationFn: async (memberId: string) => {
       const { error } = await authClient.organization.removeMember({
         memberIdOrEmail: memberId,
         organizationId: workspaceId,
-      })
-      if (error) throw new Error(error.message)
+      });
+      if (error) throw new Error(error.message);
     },
     onSuccess: async () => {
-      toast.success("Membership removed.")
-      await membersQuery.refetch()
+      toast.success('Membership removed.');
+      await membersQuery.refetch();
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to remove membership.")
+      toast.error(error.message || 'Failed to remove membership.');
     },
-  })
+  });
 
-  const members = membersQuery.data?.members ?? []
-  const total = membersQuery.data?.total ?? 0
-  const totalPages = membersQuery.data?.totalPages ?? 1
+  const members = membersQuery.data?.members ?? [];
+  const total = membersQuery.data?.total ?? 0;
+  const totalPages = membersQuery.data?.totalPages ?? 1;
 
   return {
     currentUserId,
@@ -131,11 +131,11 @@ export function useMembersTable(workspaceId: string) {
     onPageSizeChange: setPageSize,
     onRemoveMember: async (memberId: string) => {
       await withPendingId(setRemovingMemberId, memberId, async () => {
-        await removeMemberMutation.mutateAsync(memberId)
-      })
+        await removeMemberMutation.mutateAsync(memberId);
+      });
     },
     onLeave: async () => {
-      await leaveMutation.mutateAsync()
+      await leaveMutation.mutateAsync();
     },
-  }
+  };
 }

@@ -1,34 +1,34 @@
-import { useState } from "react"
-import { useForm } from "@tanstack/react-form"
-import { Link } from "@tanstack/react-router"
-import { IconLoader } from "@tabler/icons-react"
-import { Button } from "@workspace/ui/components/button"
+import { useState } from 'react';
+import { useForm } from '@tanstack/react-form';
+import { Link } from '@tanstack/react-router';
+import { IconLoader } from '@tabler/icons-react';
+import { Button } from '@workspace/ui/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
+} from '@workspace/ui/components/card';
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
-import { authClient } from "@workspace/auth/client"
-import { forgotPasswordSchema } from "@workspace/auth/schemas"
-import { FormError } from "@/components/auth/form-error"
-import { toFieldErrorItem } from "@/lib/form-utils"
+} from '@workspace/ui/components/field';
+import { Input } from '@workspace/ui/components/input';
+import { authClient } from '@workspace/auth/client';
+import { forgotPasswordSchema } from '@workspace/auth/schemas';
+import { FormError } from '@/components/auth/form-error';
+import { toFieldErrorItem } from '@/lib/form-utils';
 
 export function ForgotPasswordForm() {
-  const [isSuccess, setIsSuccess] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const form = useForm({
     defaultValues: {
-      email: "",
+      email: '',
     },
     validators: {
       onBlur: forgotPasswordSchema,
@@ -37,19 +37,19 @@ export function ForgotPasswordForm() {
     onSubmit: async ({ value, formApi }) => {
       const { error } = await authClient.requestPasswordReset({
         email: value.email,
-        redirectTo: "/reset-password",
-      })
+        redirectTo: '/reset-password',
+      });
       if (error) {
-        const message = error.message ?? "Something went wrong."
+        const message = error.message ?? 'Something went wrong.';
         formApi.setErrorMap({
           ...formApi.state.errorMap,
           onSubmit: { form: message, fields: {} },
-        })
-        return
+        });
+        return;
       }
-      setIsSuccess(true)
+      setIsSuccess(true);
     },
-  })
+  });
 
   if (isSuccess) {
     return (
@@ -69,7 +69,7 @@ export function ForgotPasswordForm() {
           </FieldDescription>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -83,8 +83,8 @@ export function ForgotPasswordForm() {
       <CardContent>
         <form
           onSubmit={(e) => {
-            e.preventDefault()
-            form.handleSubmit()
+            e.preventDefault();
+            form.handleSubmit();
           }}
         >
           <FieldGroup>
@@ -92,7 +92,7 @@ export function ForgotPasswordForm() {
               name="email"
               children={(field) => {
                 const isInvalid =
-                  field.state.meta.isBlurred && !field.state.meta.isValid
+                  field.state.meta.isBlurred && !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid}>
                     <FieldLabel htmlFor={field.name}>Email</FieldLabel>
@@ -113,7 +113,7 @@ export function ForgotPasswordForm() {
                       />
                     )}
                   </Field>
-                )
+                );
               }}
             />
             <form.Subscribe
@@ -121,7 +121,7 @@ export function ForgotPasswordForm() {
               children={(errors) => (
                 <FormError
                   errors={errors
-                    .flatMap((e) => (typeof e === "string" ? [e] : []))
+                    .flatMap((e) => (typeof e === 'string' ? [e] : []))
                     .filter(Boolean)}
                 />
               )}
@@ -149,5 +149,5 @@ export function ForgotPasswordForm() {
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }

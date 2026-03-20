@@ -1,26 +1,26 @@
-import { useState } from "react"
-import { IconLoader } from "@tabler/icons-react"
-import { Button } from "@workspace/ui/components/button"
-import { authClient } from "@workspace/auth/client"
-import { GoogleIcon } from "@/components/icons/google-icon"
+import { useState } from 'react';
+import { IconLoader } from '@tabler/icons-react';
+import { Button } from '@workspace/ui/components/button';
+import { authClient } from '@workspace/auth/client';
+import { GoogleIcon } from '@/components/icons/google-icon';
 
 export function GoogleSignInButton() {
-  const [isPending, setIsPending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleClick = async () => {
-    setIsPending(true)
-    setError(null)
+    setIsPending(true);
+    setError(null);
     const { error: signInError } = await authClient.signIn.social({
-      provider: "google",
-      callbackURL: "/ws",
-      errorCallbackURL: "/signin",
-    })
+      provider: 'google',
+      callbackURL: '/ws',
+      errorCallbackURL: '/signin',
+    });
     if (signInError) {
-      setError(signInError.message ?? "Something went wrong.")
-      setIsPending(false)
+      setError(signInError.message ?? 'Something went wrong.');
+      setIsPending(false);
     }
-  }
+  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -39,5 +39,5 @@ export function GoogleSignInButton() {
       </Button>
       {error && <p className="text-center text-sm text-destructive">{error}</p>}
     </div>
-  )
+  );
 }

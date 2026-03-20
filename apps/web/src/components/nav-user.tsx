@@ -1,19 +1,19 @@
-"use client"
+'use client';
 
-import { useNavigate } from "@tanstack/react-router"
+import { useNavigate } from '@tanstack/react-router';
 import {
   IconCreditCard,
   IconDotsVertical,
   IconLogout,
   IconNotification,
   IconUserCircle,
-} from "@tabler/icons-react"
-import { toast } from "sonner"
+} from '@tabler/icons-react';
+import { toast } from 'sonner';
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@workspace/ui/components/avatar"
+} from '@workspace/ui/components/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,15 +22,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu"
+} from '@workspace/ui/components/dropdown-menu';
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@workspace/ui/components/sidebar"
-import { Skeleton } from "@workspace/ui/components/skeleton"
-import { authClient } from "@workspace/auth/client"
+} from '@workspace/ui/components/sidebar';
+import { Skeleton } from '@workspace/ui/components/skeleton';
+import { authClient } from '@workspace/auth/client';
 
 export function NavUserSkeleton() {
   return (
@@ -45,28 +45,28 @@ export function NavUserSkeleton() {
         </SidebarMenuButton>
       </SidebarMenuItem>
     </SidebarMenu>
-  )
+  );
 }
 
 export function NavUser({
   user,
 }: {
   user: {
-    name: string
-    email: string
-    avatar: string
-  }
+    name: string;
+    email: string;
+    avatar: string;
+  };
 }) {
-  const navigate = useNavigate()
-  const { isMobile } = useSidebar()
+  const navigate = useNavigate();
+  const { isMobile } = useSidebar();
 
   async function handleLogout() {
     try {
-      await authClient.signOut()
-      navigate({ to: "/" })
+      await authClient.signOut();
+      navigate({ to: '/' });
     } catch (error) {
-      console.error("Logout failed:", error)
-      toast.error("Logout failed. Please try again.")
+      console.error('Logout failed:', error);
+      toast.error('Logout failed. Please try again.');
     }
   }
 
@@ -93,7 +93,7 @@ export function NavUser({
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="min-w-56"
-            side={isMobile ? "bottom" : "right"}
+            side={isMobile ? 'bottom' : 'right'}
             align="end"
             sideOffset={4}
           >
@@ -115,16 +115,16 @@ export function NavUser({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => navigate({ to: "/account" })}>
+              <DropdownMenuItem onClick={() => navigate({ to: '/account' })}>
                 <IconUserCircle />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate({ to: "/billing" })}>
+              <DropdownMenuItem onClick={() => navigate({ to: '/billing' })}>
                 <IconCreditCard />
                 Billing
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => navigate({ to: "/notifications" })}
+                onClick={() => navigate({ to: '/notifications' })}
               >
                 <IconNotification />
                 Notifications
@@ -139,5 +139,5 @@ export function NavUser({
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
-  )
+  );
 }

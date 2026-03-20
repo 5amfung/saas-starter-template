@@ -4,11 +4,11 @@
  * Creates hoisted auth mock functions for use with vi.mock('@workspace/auth/client').
  */
 export function createAuthClientMocks() {
-  const signInEmail = vi.fn()
-  const signUpEmail = vi.fn()
-  const getSession = vi.fn()
-  const listAccounts = vi.fn()
-  const listSessions = vi.fn()
+  const signInEmail = vi.fn();
+  const signUpEmail = vi.fn();
+  const getSession = vi.fn();
+  const listAccounts = vi.fn();
+  const listSessions = vi.fn();
 
   const authClient = {
     signIn: { email: signInEmail },
@@ -20,7 +20,7 @@ export function createAuthClientMocks() {
       setActive: vi.fn(),
       list: vi.fn(),
     },
-  }
+  };
 
   return {
     authClient,
@@ -29,5 +29,5 @@ export function createAuthClientMocks() {
     getSession,
     listAccounts,
     listSessions,
-  }
+  };
 }

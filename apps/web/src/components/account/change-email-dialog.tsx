@@ -1,7 +1,7 @@
-import * as React from "react"
-import { useMutation } from "@tanstack/react-query"
-import { toast } from "sonner"
-import { IconLoader2 } from "@tabler/icons-react"
+import * as React from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { IconLoader2 } from '@tabler/icons-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,65 +12,65 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@workspace/ui/components/alert-dialog"
-import { Button } from "@workspace/ui/components/button"
-import { Field, FieldError, FieldLabel } from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
-import { authClient } from "@workspace/auth/client"
-import { changeEmailSchema } from "@/account/schemas"
+} from '@workspace/ui/components/alert-dialog';
+import { Button } from '@workspace/ui/components/button';
+import { Field, FieldError, FieldLabel } from '@workspace/ui/components/field';
+import { Input } from '@workspace/ui/components/input';
+import { authClient } from '@workspace/auth/client';
+import { changeEmailSchema } from '@/account/schemas';
 
-const CONFIRMATION_TEXT = "CHANGE"
+const CONFIRMATION_TEXT = 'CHANGE';
 
 interface ChangeEmailDialogProps {
-  currentEmail: string
+  currentEmail: string;
 }
 
 export function ChangeEmailDialog({ currentEmail }: ChangeEmailDialogProps) {
-  const [open, setOpen] = React.useState(false)
-  const [confirmation, setConfirmation] = React.useState("")
-  const [newEmail, setNewEmail] = React.useState("")
+  const [open, setOpen] = React.useState(false);
+  const [confirmation, setConfirmation] = React.useState('');
+  const [newEmail, setNewEmail] = React.useState('');
 
   function toBase64Url(input: string) {
     const base64 =
-      typeof window === "undefined"
-        ? Buffer.from(input, "utf8").toString("base64")
-        : window.btoa(unescape(encodeURIComponent(input)))
+      typeof window === 'undefined'
+        ? Buffer.from(input, 'utf8').toString('base64')
+        : window.btoa(unescape(encodeURIComponent(input)));
 
-    return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "")
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
   }
 
-  const isConfirmed = confirmation === CONFIRMATION_TEXT
-  const parsedEmail = changeEmailSchema.safeParse({ newEmail })
+  const isConfirmed = confirmation === CONFIRMATION_TEXT;
+  const parsedEmail = changeEmailSchema.safeParse({ newEmail });
   const isEmailValid =
     parsedEmail.success &&
-    newEmail.trim().toLowerCase() !== currentEmail.toLowerCase()
-  const canSubmit = isConfirmed && isEmailValid
+    newEmail.trim().toLowerCase() !== currentEmail.toLowerCase();
+  const canSubmit = isConfirmed && isEmailValid;
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const normalizedEmail = newEmail.trim().toLowerCase()
-      const emailToken = toBase64Url(normalizedEmail)
+      const normalizedEmail = newEmail.trim().toLowerCase();
+      const emailToken = toBase64Url(normalizedEmail);
       const { error } = await authClient.changeEmail({
         newEmail: normalizedEmail,
         callbackURL: `/verify-email-change/${emailToken}`,
-      })
-      if (error) throw new Error(error.message)
+      });
+      if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      toast.success("Check your current email to approve this change.")
-      setOpen(false)
+      toast.success('Check your current email to approve this change.');
+      setOpen(false);
     },
     onError: (err) => {
-      toast.error(err.message || "Failed to initiate email change.")
+      toast.error(err.message || 'Failed to initiate email change.');
     },
-  })
+  });
 
   React.useEffect(() => {
     if (!open) {
-      setConfirmation("")
-      setNewEmail("")
+      setConfirmation('');
+      setNewEmail('');
     }
-  }, [open])
+  }, [open]);
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
@@ -125,7 +125,7 @@ export function ChangeEmailDialog({ currentEmail }: ChangeEmailDialogProps) {
             {parsedEmail.success &&
               newEmail.trim().toLowerCase() === currentEmail.toLowerCase() && (
                 <FieldError
-                  errors={[{ message: "New email must differ from current." }]}
+                  errors={[{ message: 'New email must differ from current.' }]}
                 />
               )}
           </Field>
@@ -149,8 +149,8 @@ export function ChangeEmailDialog({ currentEmail }: ChangeEmailDialogProps) {
           <AlertDialogAction
             disabled={!canSubmit || mutation.isPending}
             onClick={(e) => {
-              e.preventDefault()
-              if (canSubmit) mutation.mutate()
+              e.preventDefault();
+              if (canSubmit) mutation.mutate();
             }}
           >
             {mutation.isPending && (
@@ -161,5 +161,5 @@ export function ChangeEmailDialog({ currentEmail }: ChangeEmailDialogProps) {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }

@@ -1,14 +1,14 @@
-import { useForm } from "@tanstack/react-form"
-import { Link, useNavigate } from "@tanstack/react-router"
-import { IconLoader } from "@tabler/icons-react"
-import { Button } from "@workspace/ui/components/button"
+import { useForm } from '@tanstack/react-form';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { IconLoader } from '@tabler/icons-react';
+import { Button } from '@workspace/ui/components/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
+} from '@workspace/ui/components/card';
 import {
   Field,
   FieldDescription,
@@ -16,22 +16,22 @@ import {
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
-import { authClient } from "@workspace/auth/client"
-import { signupSchema } from "@workspace/auth/schemas"
-import { FormError } from "@/components/auth/form-error"
-import { GoogleSignInButton } from "@/components/auth/google-sign-in-button"
-import { toFieldErrorItem } from "@/lib/form-utils"
+} from '@workspace/ui/components/field';
+import { Input } from '@workspace/ui/components/input';
+import { authClient } from '@workspace/auth/client';
+import { signupSchema } from '@workspace/auth/schemas';
+import { FormError } from '@/components/auth/form-error';
+import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
+import { toFieldErrorItem } from '@/lib/form-utils';
 
 export function SignupForm() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const form = useForm({
     defaultValues: {
-      email: "",
-      password: "",
-      confirmPassword: "",
+      email: '',
+      password: '',
+      confirmPassword: '',
     },
     validators: {
       onBlur: signupSchema,
@@ -41,23 +41,23 @@ export function SignupForm() {
       const { error } = await authClient.signUp.email({
         email: value.email,
         password: value.password,
-        name: value.email.split("@")[0] ?? "",
-        callbackURL: "/ws",
-      })
+        name: value.email.split('@')[0] ?? '',
+        callbackURL: '/ws',
+      });
       if (error) {
         const message =
           error.status === 422
-            ? "An account with this email already exists. Try signing in with Google or reset your password."
-            : (error.message ?? "Something went wrong.")
+            ? 'An account with this email already exists. Try signing in with Google or reset your password.'
+            : (error.message ?? 'Something went wrong.');
         formApi.setErrorMap({
           ...formApi.state.errorMap,
           onSubmit: { form: message, fields: {} },
-        })
-        return
+        });
+        return;
       }
-      navigate({ to: "/verify", search: { email: value.email } })
+      navigate({ to: '/verify', search: { email: value.email } });
     },
-  })
+  });
 
   return (
     <>
@@ -71,8 +71,8 @@ export function SignupForm() {
         <CardContent>
           <form
             onSubmit={(e) => {
-              e.preventDefault()
-              form.handleSubmit()
+              e.preventDefault();
+              form.handleSubmit();
             }}
           >
             <FieldGroup>
@@ -84,7 +84,7 @@ export function SignupForm() {
                 name="email"
                 children={(field) => {
                   const isInvalid =
-                    field.state.meta.isBlurred && !field.state.meta.isValid
+                    field.state.meta.isBlurred && !field.state.meta.isValid;
                   return (
                     <Field data-invalid={isInvalid}>
                       <FieldLabel htmlFor={field.name}>Email</FieldLabel>
@@ -105,7 +105,7 @@ export function SignupForm() {
                         />
                       )}
                     </Field>
-                  )
+                  );
                 }}
               />
               <Field>
@@ -114,7 +114,7 @@ export function SignupForm() {
                     name="password"
                     children={(field) => {
                       const isInvalid =
-                        field.state.meta.isBlurred && !field.state.meta.isValid
+                        field.state.meta.isBlurred && !field.state.meta.isValid;
                       return (
                         <Field data-invalid={isInvalid}>
                           <FieldLabel htmlFor={field.name}>Password</FieldLabel>
@@ -136,23 +136,23 @@ export function SignupForm() {
                             />
                           )}
                         </Field>
-                      )
+                      );
                     }}
                   />
                   <form.Field
                     name="confirmPassword"
                     validators={{
-                      onChangeListenTo: ["password"],
+                      onChangeListenTo: ['password'],
                       onChange: ({ value, fieldApi }) => {
-                        if (value !== fieldApi.form.getFieldValue("password")) {
-                          return "Passwords do not match."
+                        if (value !== fieldApi.form.getFieldValue('password')) {
+                          return 'Passwords do not match.';
                         }
-                        return undefined
+                        return undefined;
                       },
                     }}
                     children={(field) => {
                       const isInvalid =
-                        field.state.meta.isBlurred && !field.state.meta.isValid
+                        field.state.meta.isBlurred && !field.state.meta.isValid;
                       return (
                         <Field data-invalid={isInvalid}>
                           <FieldLabel htmlFor={field.name}>
@@ -176,7 +176,7 @@ export function SignupForm() {
                             />
                           )}
                         </Field>
-                      )
+                      );
                     }}
                   />
                 </Field>
@@ -189,7 +189,7 @@ export function SignupForm() {
                 children={(errors) => (
                   <FormError
                     errors={errors
-                      .flatMap((e) => (typeof e === "string" ? [e] : []))
+                      .flatMap((e) => (typeof e === 'string' ? [e] : []))
                       .filter(Boolean)}
                   />
                 )}
@@ -213,9 +213,9 @@ export function SignupForm() {
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
+        By clicking continue, you agree to our <a href="#">Terms of Service</a>{' '}
         and <a href="#">Privacy Policy</a>.
       </FieldDescription>
     </>
-  )
+  );
 }

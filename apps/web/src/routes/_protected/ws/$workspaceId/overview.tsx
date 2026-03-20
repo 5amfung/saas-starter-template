@@ -1,13 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { DataTable } from "@/components/data-table"
-import { SectionCards } from "@/components/section-cards"
-import data from "../../data.json"
+import { createFileRoute } from '@tanstack/react-router';
+import { ChartAreaInteractive } from '@/components/chart-area-interactive';
+import { DataTable } from '@/components/data-table';
+import { SectionCards } from '@/components/section-cards';
+import data from '../../data.json';
 
-export const Route = createFileRoute("/_protected/ws/$workspaceId/overview")({
+export const Route = createFileRoute('/_protected/ws/$workspaceId/overview')({
   component: WorkspaceOverviewPage,
-  staticData: { title: "Overview" },
-})
+  staticData: { title: 'Overview' },
+});
 
 function WorkspaceOverviewPage() {
   return (
@@ -18,5 +18,5 @@ function WorkspaceOverviewPage() {
       </div>
       <DataTable data={data} />
     </div>
-  )
+  );
 }

@@ -1,33 +1,33 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { sql } from "drizzle-orm"
-import { db } from "@/init"
+import { createFileRoute } from '@tanstack/react-router';
+import { sql } from 'drizzle-orm';
+import { db } from '@/init';
 
-export const Route = createFileRoute("/health")({
+export const Route = createFileRoute('/health')({
   server: {
     handlers: {
       GET: async () => {
         const checks = {
-          status: "healthy",
+          status: 'healthy',
           timestamp: new Date().toISOString(),
           uptime: process.uptime(),
           memory: process.memoryUsage(),
           database: await checkDatabase(),
-        }
+        };
 
-        return Response.json(checks)
+        return Response.json(checks);
       },
     },
   },
-})
+});
 
 async function checkDatabase() {
   try {
-    await db.execute(sql`SELECT 1`)
-    return { status: "connected", latency: 0 }
+    await db.execute(sql`SELECT 1`);
+    return { status: 'connected', latency: 0 };
   } catch (error) {
     return {
-      status: "error",
-      error: error instanceof Error ? error.message : "Unknown error.",
-    }
+      status: 'error',
+      error: error instanceof Error ? error.message : 'Unknown error.',
+    };
   }
 }

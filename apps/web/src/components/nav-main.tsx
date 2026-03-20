@@ -1,4 +1,4 @@
-import { Link, useMatchRoute } from "@tanstack/react-router"
+import { Link, useMatchRoute } from '@tanstack/react-router';
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -6,18 +6,18 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@workspace/ui/components/sidebar"
+} from '@workspace/ui/components/sidebar';
 
 export function NavMain({
   items,
 }: {
   items: Array<{
-    title: string
-    url: string
-    icon?: React.ReactNode
-  }>
+    title: string;
+    url: string;
+    icon?: React.ReactNode;
+  }>;
 }) {
-  const matchRoute = useMatchRoute()
+  const matchRoute = useMatchRoute();
 
   return (
     <SidebarGroup>
@@ -39,5 +39,5 @@ export function NavMain({
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
-  )
+  );
 }
