@@ -19,7 +19,7 @@ A production-ready SaaS foundation with authentication, multi-tenant workspaces,
 | Charts      | Recharts                                          |
 | Data Tables | TanStack Table                                    |
 | Validation  | Zod v4                                            |
-| Testing     | Vitest + Testing Library                          |
+| Testing     | Vitest + Testing Library, Playwright (E2E)        |
 | Build       | Vite 7, Nitro, Turborepo                          |
 
 ## Features
@@ -172,45 +172,45 @@ saas-starter-template/
 
 ### Workspace Packages
 
-| Package                  | Description                                              |
-| ------------------------ | -------------------------------------------------------- |
-| `@workspace/web`         | Main SaaS application (TanStack Start + Vite)            |
-| `@workspace/auth`        | Authentication logic (Better Auth server/client setup)   |
-| `@workspace/db`          | Database schema and client (Drizzle ORM + Neon)          |
-| `@workspace/email`       | Email sending and React Email templates                  |
-| `@workspace/ui`          | Shared UI components (shadcn/ui, Recharts, styles)       |
+| Package                    | Description                                            |
+| -------------------------- | ------------------------------------------------------ |
+| `@workspace/web`           | Main SaaS application (TanStack Start + Vite)          |
+| `@workspace/auth`          | Authentication logic (Better Auth server/client setup) |
+| `@workspace/db`            | Database schema and client (Drizzle ORM + Neon)        |
+| `@workspace/email`         | Email sending and React Email templates                |
+| `@workspace/ui`            | Shared UI components (shadcn/ui, Recharts, styles)     |
 | `@workspace/eslint-config` | Shared ESLint configuration (TanStack + React presets) |
-| `@workspace/test-utils`  | Shared test setup and utilities                          |
+| `@workspace/test-utils`    | Shared test setup and utilities                        |
 
 ## Available Scripts
 
 ### Root Commands (via Turborepo)
 
-| Command                       | Description                          |
-| ----------------------------- | ------------------------------------ |
-| `pnpm dev`                    | Start all dev servers                |
-| `pnpm run build`              | Production build (all packages)      |
-| `pnpm test`                   | Run all tests with Vitest            |
-| `pnpm run check`              | Type-check + lint (all packages)     |
-| `pnpm run lint`               | Lint all packages                    |
-| `pnpm run format`             | Format code with Prettier            |
+| Command           | Description                      |
+| ----------------- | -------------------------------- |
+| `pnpm dev`        | Start all dev servers            |
+| `pnpm run build`  | Production build (all packages)  |
+| `pnpm test`       | Run all tests with Vitest        |
+| `pnpm run check`  | Type-check + lint (all packages) |
+| `pnpm run lint`   | Lint all packages                |
+| `pnpm run format` | Format code with Prettier        |
 
 ### Database Commands
 
-| Command                       | Description                          |
-| ----------------------------- | ------------------------------------ |
-| `pnpm run db:generate`        | Generate Drizzle migration files     |
-| `pnpm run db:migrate`         | Apply migrations                     |
-| `pnpm run db:push`            | Push schema directly (dev only)      |
-| `pnpm run db:studio`          | Open Drizzle Studio                  |
-| `pnpm run gen-auth-schema`    | Regenerate auth schema from config   |
+| Command                    | Description                        |
+| -------------------------- | ---------------------------------- |
+| `pnpm run db:generate`     | Generate Drizzle migration files   |
+| `pnpm run db:migrate`      | Apply migrations                   |
+| `pnpm run db:push`         | Push schema directly (dev only)    |
+| `pnpm run db:studio`       | Open Drizzle Studio                |
+| `pnpm run gen-auth-schema` | Regenerate auth schema from config |
 
 ### App-Specific Commands
 
-| Command                       | Description                                |
-| ----------------------------- | ------------------------------------------ |
-| `pnpm run web:dev`            | Start only the web app dev server          |
-| `pnpm run dev:stripe-webhook` | Forward Stripe webhooks to localhost:3000  |
+| Command                       | Description                               |
+| ----------------------------- | ----------------------------------------- |
+| `pnpm run web:dev`            | Start only the web app dev server         |
+| `pnpm run dev:stripe-webhook` | Forward Stripe webhooks to localhost:3000 |
 
 ### Running Commands in a Specific Package
 
@@ -219,6 +219,62 @@ pnpm --filter @workspace/web <command>
 pnpm --filter @workspace/db <command>
 pnpm --filter @workspace/email dev:email    # Preview email templates on port 3001
 ```
+
+## End-to-End Testing with Playwright
+
+This project includes AI-assisted Playwright agents that can plan, generate, and heal end-to-end tests through natural language prompts.
+
+### Prerequisites
+
+The Playwright MCP (Model Context Protocol) server must be running for the agents to interact with the browser. The server is configured in `apps/web/.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "playwright-test": {
+      "command": "npx",
+      "args": ["playwright", "run-test-mcp-server"]
+    }
+  }
+}
+```
+
+Make sure Playwright browsers are installed:
+
+```bash
+pnpm --filter @workspace/web exec playwright install
+```
+
+### Playwright Agents
+
+Three specialized agents handle different phases of the E2E testing workflow:
+
+| Agent              | Purpose                                                                                                                         |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Test Planner**   | Navigates your app in a real browser, explores the UI, and produces a comprehensive test plan saved to `apps/web/specs/`.       |
+| **Test Generator** | Takes a test plan and executes each step in a real browser, then writes a working `.spec.ts` file from the recorded actions.    |
+| **Test Healer**    | Runs existing tests, debugs failures by inspecting the browser state, and fixes broken selectors, assertions, or timing issues. |
+
+### Workflow
+
+See [Playwright test agents](https://playwright.dev/docs/test-agents).
+
+### Running E2E Tests
+
+```bash
+# Run all E2E tests
+pnpm test:e2e
+
+# Run a specific test file
+pnpm --filter @workspace/web test:e2e test/e2e/example.spec.ts
+
+# View the HTML test report
+pnpm --filter @workspace/web test:e2e:report
+```
+
+### Test Plan Directory
+
+Test plans generated by the planner agent are saved to `apps/web/specs/`. See `apps/web/specs/README.md` for details on the format.
 
 ## Deployment
 
