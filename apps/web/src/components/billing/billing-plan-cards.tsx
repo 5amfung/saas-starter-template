@@ -1,5 +1,5 @@
-import { IconCheck } from "@tabler/icons-react"
-import { Button } from "@workspace/ui/components/button"
+import { IconCheck } from '@tabler/icons-react';
+import { Button } from '@workspace/ui/components/button';
 import {
   Card,
   CardContent,
@@ -7,30 +7,30 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
-import { Toggle } from "@workspace/ui/components/toggle"
-import { formatPlanPrice, getPlanFeatures } from "@workspace/billing/plans"
-import type { Plan, PlanId } from "@workspace/billing/plans"
+} from '@workspace/ui/components/card';
+import { Toggle } from '@workspace/ui/components/toggle';
+import { formatPlanPrice, getPlanFeatures } from '@workspace/auth/plans';
+import type { Plan, PlanId } from '@workspace/auth/plans';
 
 interface BillingPlanCardsProps {
-  currentPlan: Plan
-  upgradePlan: Plan | null
+  currentPlan: Plan;
+  upgradePlan: Plan | null;
   /** Next billing date for paid plans. null for free tier. */
-  nextBillingDate: Date | null
+  nextBillingDate: Date | null;
   /** Whether the user is on annual billing. */
-  isAnnual: boolean
-  onToggleInterval: (annual: boolean) => void
-  onManage: () => void
-  onUpgrade: (planId: PlanId) => void
-  isManaging: boolean
-  isUpgrading: boolean
+  isAnnual: boolean;
+  onToggleInterval: (annual: boolean) => void;
+  onManage: () => void;
+  onUpgrade: (planId: PlanId) => void;
+  isManaging: boolean;
+  isUpgrading: boolean;
 }
 
-const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
-  month: "long",
-  day: "numeric",
-  year: "numeric",
-})
+const DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
+  month: 'long',
+  day: 'numeric',
+  year: 'numeric',
+});
 
 export function BillingPlanCards({
   currentPlan,
@@ -54,7 +54,7 @@ export function BillingPlanCards({
         <CardContent className="flex flex-col gap-3">
           <p className="text-sm text-muted-foreground">
             {!currentPlan.pricing
-              ? "Free forever"
+              ? 'Free forever'
               : formatPlanPrice(currentPlan, false)}
           </p>
           {nextBillingDate && (
@@ -79,7 +79,7 @@ export function BillingPlanCards({
               onClick={onManage}
               disabled={isManaging}
             >
-              {isManaging ? "Opening portal..." : "Manage subscription"}
+              {isManaging ? 'Opening portal...' : 'Manage subscription'}
             </Button>
           </CardFooter>
         )}
@@ -136,7 +136,7 @@ export function BillingPlanCards({
               disabled={isUpgrading}
             >
               {isUpgrading
-                ? "Redirecting..."
+                ? 'Redirecting...'
                 : `Upgrade to ${upgradePlan.name}`}
             </Button>
           </CardFooter>
@@ -156,5 +156,5 @@ export function BillingPlanCards({
         </Card>
       )}
     </div>
-  )
+  );
 }

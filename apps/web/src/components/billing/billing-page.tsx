@@ -1,93 +1,93 @@
-import { useState } from "react"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
-import { Card, CardContent } from "@workspace/ui/components/card"
-import { getUpgradePlan } from "@workspace/billing/plans"
-import type { PlanId } from "@workspace/billing/plans"
+import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { Card, CardContent } from '@workspace/ui/components/card';
+import { getUpgradePlan } from '@workspace/auth/plans';
+import type { PlanId } from '@workspace/auth/plans';
 import {
   createCheckoutSession,
   createPortalSession,
   getInvoices,
   getUserBillingData,
   reactivateSubscription,
-} from "@/billing/billing.functions"
-import { SESSION_QUERY_KEY } from "@/hooks/use-session-query"
-import { BillingDowngradeBanner } from "./billing-downgrade-banner"
-import { BillingInvoiceTable } from "./billing-invoice-table"
-import { BillingPlanCards } from "./billing-plan-cards"
+} from '@/billing/billing.functions';
+import { SESSION_QUERY_KEY } from '@/hooks/use-session-query';
+import { BillingDowngradeBanner } from './billing-downgrade-banner';
+import { BillingInvoiceTable } from './billing-invoice-table';
+import { BillingPlanCards } from './billing-plan-cards';
 
 const PAGE_LAYOUT_CLASS =
-  "mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6"
+  'mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6';
 
-const INVOICES_QUERY_KEY = ["billing", "invoices"] as const
-const BILLING_DATA_QUERY_KEY = ["billing", "data"] as const
+const INVOICES_QUERY_KEY = ['billing', 'invoices'] as const;
+const BILLING_DATA_QUERY_KEY = ['billing', 'data'] as const;
 
 export function BillingPage() {
-  const queryClient = useQueryClient()
-  const [isAnnual, setIsAnnual] = useState(false)
+  const queryClient = useQueryClient();
+  const [isAnnual, setIsAnnual] = useState(false);
 
   const billingQuery = useQuery({
     queryKey: BILLING_DATA_QUERY_KEY,
     queryFn: () => getUserBillingData(),
-  })
+  });
 
   const invoicesQuery = useQuery({
     queryKey: INVOICES_QUERY_KEY,
     queryFn: () => getInvoices(),
-  })
+  });
 
   const manageMutation = useMutation({
     mutationFn: () => createPortalSession(),
     onSuccess: (result) => {
       if (result.url) {
-        window.location.href = result.url
+        window.location.href = result.url;
       }
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to open billing portal.")
+      toast.error(error.message || 'Failed to open billing portal.');
     },
-  })
+  });
 
   const upgradeMutation = useMutation({
     mutationFn: ({ planId, annual }: { planId: PlanId; annual: boolean }) =>
       createCheckoutSession({ data: { planId, annual } }),
     onSuccess: (result) => {
       if (result.url) {
-        window.location.href = result.url
+        window.location.href = result.url;
       }
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to start checkout.")
+      toast.error(error.message || 'Failed to start checkout.');
     },
-  })
+  });
 
   const reactivateMutation = useMutation({
     mutationFn: () => reactivateSubscription(),
     onSuccess: () => {
-      toast.success("Subscription reactivated.")
-      void queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY })
-      void queryClient.invalidateQueries({ queryKey: BILLING_DATA_QUERY_KEY })
+      toast.success('Subscription reactivated.');
+      void queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: BILLING_DATA_QUERY_KEY });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to reactivate subscription.")
+      toast.error(error.message || 'Failed to reactivate subscription.');
     },
-  })
+  });
 
-  if (billingQuery.isPending || !billingQuery.data) return null
+  if (billingQuery.isPending || !billingQuery.data) return null;
 
-  const { plan: currentPlan, subscription } = billingQuery.data
-  const upgradePlan = getUpgradePlan(currentPlan)
+  const { plan: currentPlan, subscription } = billingQuery.data;
+  const upgradePlan = getUpgradePlan(currentPlan);
 
   // Stripe Flexible Billing uses cancelAt instead of cancelAtPeriodEnd.
   // Check both to match Better Auth's isPendingCancel logic.
   const isPendingCancel =
-    (subscription?.cancelAtPeriodEnd ?? false) || !!subscription?.cancelAt
+    (subscription?.cancelAtPeriodEnd ?? false) || !!subscription?.cancelAt;
   const periodEnd = subscription?.periodEnd
     ? new Date(subscription.periodEnd)
-    : null
+    : null;
   const effectiveCancelDate =
     periodEnd ??
-    (subscription?.cancelAt ? new Date(subscription.cancelAt) : null)
+    (subscription?.cancelAt ? new Date(subscription.cancelAt) : null);
 
   return (
     <div className={PAGE_LAYOUT_CLASS}>
@@ -122,5 +122,5 @@ export function BillingPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -1,27 +1,27 @@
-import { IconCheck, IconLoader2, IconSparkles } from "@tabler/icons-react"
+import { IconCheck, IconLoader2, IconSparkles } from '@tabler/icons-react';
 import {
   AlertDialog,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogTitle,
-} from "@workspace/ui/components/alert-dialog"
-import { Button } from "@workspace/ui/components/button"
-import { Toggle } from "@workspace/ui/components/toggle"
-import { formatPlanPrice, getPlanFeatures } from "@workspace/billing/plans"
-import type { Plan } from "@workspace/billing/plans"
+} from '@workspace/ui/components/alert-dialog';
+import { Button } from '@workspace/ui/components/button';
+import { Toggle } from '@workspace/ui/components/toggle';
+import { formatPlanPrice, getPlanFeatures } from '@workspace/auth/plans';
+import type { Plan } from '@workspace/auth/plans';
 
 interface UpgradePromptDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  title: string
-  description: string
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
   /** The plan to offer. null = show limit-reached message. */
-  upgradePlan: Plan | null
-  isUpgrading: boolean
-  onUpgrade: () => void
-  isAnnual: boolean
-  onToggleInterval: (annual: boolean) => void
+  upgradePlan: Plan | null;
+  isUpgrading: boolean;
+  onUpgrade: () => void;
+  isAnnual: boolean;
+  onToggleInterval: (annual: boolean) => void;
 }
 
 export function UpgradePromptDialog({
@@ -137,5 +137,5 @@ export function UpgradePromptDialog({
         </div>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }
