@@ -1,4 +1,4 @@
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import {
   Card,
   CardAction,
@@ -6,42 +6,42 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
+} from '@workspace/ui/components/card';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@workspace/ui/components/chart"
-import type { ChartConfig } from "@workspace/ui/components/chart"
-import { Skeleton } from "@workspace/ui/components/skeleton"
+} from '@workspace/ui/components/chart';
+import type { ChartConfig } from '@workspace/ui/components/chart';
+import { Skeleton } from '@workspace/ui/components/skeleton';
 import {
   ToggleGroup,
   ToggleGroupItem,
-} from "@workspace/ui/components/toggle-group"
+} from '@workspace/ui/components/toggle-group';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select"
+} from '@workspace/ui/components/select';
 
 const chartConfig = {
   mau: {
-    label: "Monthly Active Users",
-    color: "var(--color-chart-1)",
+    label: 'Monthly Active Users',
+    color: 'var(--color-chart-1)',
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
 interface MauChartData {
-  date: string
-  mau: number
+  date: string;
+  mau: number;
 }
 
 interface AdminMauChartProps {
-  data: Array<MauChartData>
-  timeRange: string
-  onTimeRangeChange: (range: string) => void
+  data: Array<MauChartData>;
+  timeRange: string;
+  onTimeRangeChange: (range: string) => void;
 }
 
 export function AdminMauChart({
@@ -49,8 +49,8 @@ export function AdminMauChart({
   timeRange,
   onTimeRangeChange,
 }: AdminMauChartProps) {
-  const isEmpty = data.every((d) => d.mau === 0)
-  const chartData = isEmpty ? [] : data
+  const isEmpty = data.every((d) => d.mau === 0);
+  const chartData = isEmpty ? [] : data;
 
   return (
     <Card className="@container/card">
@@ -112,7 +112,7 @@ export function AdminMauChart({
         </ChartContainer>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 export function AdminMauChartSkeleton() {
@@ -126,22 +126,22 @@ export function AdminMauChartSkeleton() {
         <Skeleton className="h-[250px] w-full" />
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function TimeRangeToggle({
   value,
   onChange,
 }: {
-  value: string
-  onChange: (v: string) => void
+  value: string;
+  onChange: (v: string) => void;
 }) {
   return (
     <>
       <ToggleGroup
         multiple={false}
         value={value ? [value] : []}
-        onValueChange={(v) => onChange(v[0] ?? "7d")}
+        onValueChange={(v) => onChange(v[0] ?? '7d')}
         variant="outline"
         className="hidden *:data-[slot=toggle-group-item]:px-4! @[767px]/card:flex"
       >
@@ -152,7 +152,7 @@ function TimeRangeToggle({
       <Select
         value={value}
         onValueChange={(v) => {
-          if (v) onChange(v)
+          if (v) onChange(v);
         }}
       >
         <SelectTrigger
@@ -175,19 +175,19 @@ function TimeRangeToggle({
         </SelectContent>
       </Select>
     </>
-  )
+  );
 }
 
 function formatDateTick(value: string) {
-  const date = new Date(value + "T00:00:00")
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+  const date = new Date(value + 'T00:00:00');
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function formatDateLabel(value: string) {
-  const date = new Date(value + "T00:00:00")
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  })
+function formatDateLabel(value: React.ReactNode) {
+  const date = new Date(String(value) + 'T00:00:00');
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }

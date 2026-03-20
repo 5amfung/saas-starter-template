@@ -34,8 +34,6 @@
       "@workspace/email/*": ["../../packages/email/src/*"],
       "@workspace/auth": ["../../packages/auth/src/index.ts"],
       "@workspace/auth/*": ["../../packages/auth/src/*"],
-      "@workspace/billing": ["../../packages/billing/src/index.ts"],
-      "@workspace/billing/*": ["../../packages/billing/src/*"],
       "@workspace/test-utils": ["../../packages/test-utils/src/index.ts"]
     }
   }

@@ -1,4 +1,4 @@
-import { Area, AreaChart, CartesianGrid, Legend, XAxis, YAxis } from "recharts"
+import { Area, AreaChart, CartesianGrid, Legend, XAxis, YAxis } from 'recharts';
 import {
   Card,
   CardAction,
@@ -6,47 +6,47 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
+} from '@workspace/ui/components/card';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@workspace/ui/components/chart"
-import type { ChartConfig } from "@workspace/ui/components/chart"
-import { Skeleton } from "@workspace/ui/components/skeleton"
+} from '@workspace/ui/components/chart';
+import type { ChartConfig } from '@workspace/ui/components/chart';
+import { Skeleton } from '@workspace/ui/components/skeleton';
 import {
   ToggleGroup,
   ToggleGroupItem,
-} from "@workspace/ui/components/toggle-group"
+} from '@workspace/ui/components/toggle-group';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select"
+} from '@workspace/ui/components/select';
 
 const chartConfig = {
   verified: {
-    label: "Verified",
-    color: "var(--color-chart-1)",
+    label: 'Verified',
+    color: 'var(--color-chart-1)',
   },
   unverified: {
-    label: "Unverified",
-    color: "var(--color-chart-2)",
+    label: 'Unverified',
+    color: 'var(--color-chart-2)',
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
 interface SignupChartData {
-  date: string
-  verified: number
-  unverified: number
+  date: string;
+  verified: number;
+  unverified: number;
 }
 
 interface AdminSignupChartProps {
-  data: Array<SignupChartData>
-  timeRange: string
-  onTimeRangeChange: (range: string) => void
+  data: Array<SignupChartData>;
+  timeRange: string;
+  onTimeRangeChange: (range: string) => void;
 }
 
 export function AdminSignupChart({
@@ -133,7 +133,7 @@ export function AdminSignupChart({
         </ChartContainer>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 export function AdminSignupChartSkeleton() {
@@ -147,22 +147,22 @@ export function AdminSignupChartSkeleton() {
         <Skeleton className="h-[250px] w-full" />
       </CardContent>
     </Card>
-  )
+  );
 }
 
 function TimeRangeToggle({
   value,
   onChange,
 }: {
-  value: string
-  onChange: (v: string) => void
+  value: string;
+  onChange: (v: string) => void;
 }) {
   return (
     <>
       <ToggleGroup
         multiple={false}
         value={value ? [value] : []}
-        onValueChange={(v) => onChange(v[0] ?? "7d")}
+        onValueChange={(v) => onChange(v[0] ?? '7d')}
         variant="outline"
         className="hidden *:data-[slot=toggle-group-item]:px-4! @[767px]/card:flex"
       >
@@ -173,7 +173,7 @@ function TimeRangeToggle({
       <Select
         value={value}
         onValueChange={(v) => {
-          if (v) onChange(v)
+          if (v) onChange(v);
         }}
       >
         <SelectTrigger
@@ -196,19 +196,19 @@ function TimeRangeToggle({
         </SelectContent>
       </Select>
     </>
-  )
+  );
 }
 
 function formatDateTick(value: string) {
-  const date = new Date(value + "T00:00:00")
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+  const date = new Date(value + 'T00:00:00');
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function formatDateLabel(value: string) {
-  const date = new Date(value + "T00:00:00")
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  })
+function formatDateLabel(value: React.ReactNode) {
+  const date = new Date(String(value) + 'T00:00:00');
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
