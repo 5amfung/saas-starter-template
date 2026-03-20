@@ -9,6 +9,7 @@ export default [
       'prettier.config.js',
       '.output/**',
       'test/e2e/seed.spec.ts',
+      'routeTree.gen.ts',
     ],
   },
   ...config,
