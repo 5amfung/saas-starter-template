@@ -23,15 +23,10 @@ import {
   isSignInPath,
 } from './auth-hooks.server';
 import { createAuthEmails } from './auth-emails.server';
-import type { EmailClient } from '@workspace/email';
+import { PLANS, getPlanLimitsForPlanId } from './plans';
+import { createBillingHelpers } from './billing.server';
 import type { Database } from '@workspace/db';
-
-/** Shape of a subscription plan passed to the Better Auth Stripe plugin. */
-export interface StripePlanConfig {
-  name: string;
-  priceId: string;
-  annualDiscountPriceId?: string;
-}
+import type { EmailClient } from '@workspace/email';
 
 export interface AuthConfig {
   db: Database;
@@ -45,15 +40,12 @@ export interface AuthConfig {
   stripe: {
     secretKey: string;
     webhookSecret: string;
-    /** Subscription plans passed to the Better Auth Stripe plugin. */
-    plans: Array<StripePlanConfig>;
   };
   adminUserIds?: Array<string>;
   trustedOrigins?: Array<string>;
-  hooks?: AuthHooks;
   /** Logger callback. Falls back to console.log when not provided. */
   logger?: (
-    level: string,
+    level: 'debug' | 'info' | 'warn' | 'error',
     message: string,
     meta?: Record<string, unknown>
   ) => void;
@@ -61,19 +53,22 @@ export interface AuthConfig {
   getRequestHeaders?: () => Headers;
 }
 
-export interface AuthHooks {
-  /** Called before creating an organization to check workspace limits. */
-  beforeCreateOrganization?: (
-    userId: string,
-    organization: Record<string, unknown>
-  ) => Promise<void>;
-  /** Called before creating an invitation to check member limits. */
-  beforeCreateInvitation?: (organizationId: string) => Promise<void>;
-}
-
 export function createAuth(config: AuthConfig) {
   const log = config.logger ?? console.log;
   const stripeClient = new Stripe(config.stripe.secretKey);
+
+  // Build Stripe plan config from PLANS — reads price IDs from process.env.
+  const stripePlans = PLANS.filter((p) => p.pricing !== null).map((p) => {
+    const key = p.id.toUpperCase();
+    return {
+      name: p.id,
+      priceId: process.env[`STRIPE_${key}_MONTHLY_PRICE_ID`]!,
+      annualDiscountPriceId: process.env[`STRIPE_${key}_ANNUAL_PRICE_ID`]!,
+    };
+  });
+
+  // Create billing helpers for limit enforcement and app-level queries.
+  const billing = createBillingHelpers(config.db, config.stripe.secretKey);
 
   const authEmails = createAuthEmails({
     emailClient: config.emailClient,
@@ -186,7 +181,7 @@ export function createAuth(config: AuthConfig) {
         }),
         subscription: {
           enabled: true,
-          plans: config.stripe.plans,
+          plans: stripePlans,
           onSubscriptionComplete: async ({ subscription, plan }) => {
             log('info', 'subscription complete', {
               subscriptionId: subscription.id,
@@ -315,12 +310,18 @@ export function createAuth(config: AuthConfig) {
             // user's maxWorkspaces quota.
             if (isPersonalWorkspace(organization)) return;
 
-            // Delegate billing limit check to app-provided hook.
-            if (user.id && config.hooks?.beforeCreateOrganization) {
-              await config.hooks.beforeCreateOrganization(
-                user.id,
-                organization
+            if (user.id) {
+              const planId = await billing.resolveUserPlanIdFromDb(user.id);
+              const limits = getPlanLimitsForPlanId(planId);
+              if (limits.maxWorkspaces === -1) return;
+              const workspaceCount = await billing.countOwnedWorkspaces(
+                user.id
               );
+              if (workspaceCount >= limits.maxWorkspaces) {
+                throw new APIError('FORBIDDEN', {
+                  message: `Your plan allows a maximum of ${limits.maxWorkspaces} workspace(s). Please upgrade to create more.`,
+                });
+              }
             }
           },
           beforeUpdateOrganization: async ({ organization }) => {
@@ -337,9 +338,20 @@ export function createAuth(config: AuthConfig) {
             await Promise.resolve();
           },
           beforeCreateInvitation: async ({ organization }) => {
-            // Delegate member limit check to app-provided hook.
-            if (config.hooks?.beforeCreateInvitation) {
-              await config.hooks.beforeCreateInvitation(organization.id);
+            const owner = await billing.getWorkspaceOwnerUserId(
+              organization.id
+            );
+            if (!owner) return;
+            const planId = await billing.resolveUserPlanIdFromDb(owner);
+            const limits = getPlanLimitsForPlanId(planId);
+            if (limits.maxMembersPerWorkspace === -1) return;
+            const memberCount = await billing.countWorkspaceMembers(
+              organization.id
+            );
+            if (memberCount >= limits.maxMembersPerWorkspace) {
+              throw new APIError('FORBIDDEN', {
+                message: `This workspace has reached its member limit (${limits.maxMembersPerWorkspace}). The workspace owner needs to upgrade their plan.`,
+              });
             }
           },
         },
@@ -351,7 +363,7 @@ export function createAuth(config: AuthConfig) {
     ],
   });
 
-  return auth;
+  return Object.assign(auth, { billing });
 }
 
 export type Auth = ReturnType<typeof createAuth>;
