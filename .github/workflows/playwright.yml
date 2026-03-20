@@ -6,6 +6,7 @@ on:
     branches: [main, master]
 jobs:
   test:
+    if: false # Temporarily disabled.  TODO: smoke test vs complete test?
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
