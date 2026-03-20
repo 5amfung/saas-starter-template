@@ -78,7 +78,7 @@ packages/
 | `pnpm run db:studio`       | Open Drizzle Studio                                                 |
 | `pnpm run gen-auth-schema` | Regenerate `packages/db/src/auth.schema.ts` from Better Auth config |
 
-To run a single test file: `pnpm --filter @workspace/web test src/workspace/workspace.test.ts`
+To run a single test file: `pnpm --filter @workspace/web test test/unit/workspace/workspace.test.ts`
 
 ## Architecture
 

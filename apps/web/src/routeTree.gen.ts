@@ -610,7 +610,7 @@ const ProtectedAdminRouteChildren: ProtectedAdminRouteChildren = {
 };
 
 const ProtectedAdminRouteWithChildren = ProtectedAdminRoute._addFileChildren(
-  ProtectedAdminRouteChildren
+  ProtectedAdminRouteChildren,
 );
 
 interface ProtectedWsWorkspaceIdRouteChildren {
@@ -630,7 +630,7 @@ const ProtectedWsWorkspaceIdRouteChildren: ProtectedWsWorkspaceIdRouteChildren =
 
 const ProtectedWsWorkspaceIdRouteWithChildren =
   ProtectedWsWorkspaceIdRoute._addFileChildren(
-    ProtectedWsWorkspaceIdRouteChildren
+    ProtectedWsWorkspaceIdRouteChildren,
   );
 
 interface ProtectedWsRouteChildren {
@@ -644,7 +644,7 @@ const ProtectedWsRouteChildren: ProtectedWsRouteChildren = {
 };
 
 const ProtectedWsRouteWithChildren = ProtectedWsRoute._addFileChildren(
-  ProtectedWsRouteChildren
+  ProtectedWsRouteChildren,
 );
 
 interface ProtectedRouteChildren {
@@ -664,7 +664,7 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
 };
 
 const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
-  ProtectedRouteChildren
+  ProtectedRouteChildren,
 );
 
 const rootRouteChildren: RootRouteChildren = {
