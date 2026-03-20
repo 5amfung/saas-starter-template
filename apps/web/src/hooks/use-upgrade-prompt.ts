@@ -1,23 +1,23 @@
-import { useState } from "react"
-import { useMutation } from "@tanstack/react-query"
-import { toast } from "sonner"
-import type { Plan, PlanId } from "@workspace/billing/plans"
-import { createCheckoutSession } from "@/billing/billing.functions"
+import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import type { Plan, PlanId } from '@workspace/auth/plans';
+import { createCheckoutSession } from '@/billing/billing.functions';
 
 interface UpgradePromptState {
-  open: boolean
-  title: string
-  description: string
+  open: boolean;
+  title: string;
+  description: string;
   /** The plan to offer. null = highest tier, show limit-reached message. */
-  upgradePlan: Plan | null
+  upgradePlan: Plan | null;
 }
 
 const INITIAL_STATE: UpgradePromptState = {
   open: false,
-  title: "",
-  description: "",
+  title: '',
+  description: '',
   upgradePlan: null,
-}
+};
 
 /**
  * Encapsulates upgrade prompt dialog state, billing interval toggle,
@@ -28,29 +28,29 @@ const INITIAL_STATE: UpgradePromptState = {
  * "limit reached" message instead of a checkout offer.
  */
 export function useUpgradePrompt() {
-  const [prompt, setPrompt] = useState<UpgradePromptState>(INITIAL_STATE)
-  const [isAnnual, setIsAnnual] = useState(false)
+  const [prompt, setPrompt] = useState<UpgradePromptState>(INITIAL_STATE);
+  const [isAnnual, setIsAnnual] = useState(false);
 
   const upgradeMutation = useMutation({
     mutationFn: ({ planId, annual }: { planId: PlanId; annual: boolean }) =>
       createCheckoutSession({ data: { planId, annual } }),
     onSuccess: (result) => {
       if (result.url) {
-        window.location.href = result.url
+        window.location.href = result.url;
       }
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to start checkout.")
+      toast.error(error.message || 'Failed to start checkout.');
     },
-  })
+  });
 
   const show = (
     title: string,
     description: string,
     upgradePlan: Plan | null
   ) => {
-    setPrompt({ open: true, title, description, upgradePlan })
-  }
+    setPrompt({ open: true, title, description, upgradePlan });
+  };
 
   const dialogProps = {
     open: prompt.open,
@@ -64,12 +64,12 @@ export function useUpgradePrompt() {
         upgradeMutation.mutate({
           planId: prompt.upgradePlan.id,
           annual: isAnnual,
-        })
+        });
       }
     },
     isAnnual,
     onToggleInterval: setIsAnnual,
-  }
+  };
 
-  return { show, dialogProps }
+  return { show, dialogProps };
 }
