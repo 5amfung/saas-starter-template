@@ -20,7 +20,7 @@ A production-ready SaaS foundation with authentication, multi-tenant workspaces,
 | Data Tables | TanStack Table                                    |
 | Validation  | Zod v4                                            |
 | Testing     | Vitest + Testing Library                          |
-| Build       | Vite 7, Nitro                                     |
+| Build       | Vite 7, Nitro, Turborepo                          |
 
 ## Features
 
@@ -94,7 +94,7 @@ A production-ready SaaS foundation with authentication, multi-tenant workspaces,
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) v22+
+- [Node.js](https://nodejs.org/) v20+
 - [pnpm](https://pnpm.io/)
 - [Neon](https://neon.tech/) PostgreSQL database
 - [Stripe](https://stripe.com/) account with products and prices configured
@@ -119,7 +119,8 @@ A production-ready SaaS foundation with authentication, multi-tenant workspaces,
 3. **Set up environment variables**
 
    ```bash
-   cp .env.example .env
+   cp apps/web/.env.example apps/web/.env
+   cp packages/db/.env.example packages/db/.env
    ```
 
    Fill in the values for Neon, Resend, Stripe, Google OAuth, and Better Auth secret.
@@ -138,40 +139,86 @@ A production-ready SaaS foundation with authentication, multi-tenant workspaces,
 
    Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-## Project Structure
+## Monorepo Structure
+
+This project is organized as a monorepo using [pnpm workspaces](https://pnpm.io/workspaces) and [Turborepo](https://turbo.build/repo).
 
 ```
-src/
-├── account/        # Account settings server functions and schemas
-├── admin/          # Admin server functions and validation
-├── auth/           # Better Auth server/client setup and permissions
-├── billing/        # Stripe billing logic, plans, and server functions
-├── components/     # Reusable UI and feature components
-├── db/             # Drizzle ORM schema and database client
-├── email/          # Email provider integration and helpers
-├── hooks/          # Shared custom React hooks
-├── lib/            # Framework-agnostic utilities
-├── middleware/     # Auth and admin request middleware
-├── routes/         # TanStack Router file-based route modules
-├── types/          # Project-level TypeScript type declarations
-└── workspace/      # Workspace/multi-tenancy logic and tests
+saas-starter-template/
+├── apps/
+│   └── web/                  # TanStack Start application (main SaaS app)
+│       └── src/
+│           ├── account/      # Account settings server functions and schemas
+│           ├── admin/        # Admin server functions and validation
+│           ├── billing/      # Stripe billing logic, plans, and server functions
+│           ├── components/   # App-specific feature components
+│           ├── hooks/        # Custom React hooks
+│           ├── lib/          # App-level utilities
+│           ├── middleware/   # Auth and admin request middleware
+│           ├── routes/       # TanStack Router file-based route modules
+│           ├── types/        # TypeScript type declarations
+│           └── workspace/    # Workspace/multi-tenancy logic and tests
+├── packages/
+│   ├── auth/                 # Better Auth server/client setup, permissions, and schemas
+│   ├── db/                   # Drizzle ORM schema, database client, and migrations
+│   ├── email/                # Email provider integration and React Email templates
+│   ├── eslint-config/        # Shared ESLint configuration
+│   ├── test-utils/           # Shared testing utilities (Testing Library, etc.)
+│   └── ui/                   # shadcn/ui components, styles, and shared UI primitives
+├── turbo.json                # Turborepo task pipeline configuration
+├── pnpm-workspace.yaml       # pnpm workspace definition
+└── package.json              # Root scripts and shared dev dependencies
 ```
+
+### Workspace Packages
+
+| Package                  | Description                                              |
+| ------------------------ | -------------------------------------------------------- |
+| `@workspace/web`         | Main SaaS application (TanStack Start + Vite)            |
+| `@workspace/auth`        | Authentication logic (Better Auth server/client setup)   |
+| `@workspace/db`          | Database schema and client (Drizzle ORM + Neon)          |
+| `@workspace/email`       | Email sending and React Email templates                  |
+| `@workspace/ui`          | Shared UI components (shadcn/ui, Recharts, styles)       |
+| `@workspace/eslint-config` | Shared ESLint configuration (TanStack + React presets) |
+| `@workspace/test-utils`  | Shared test setup and utilities                          |
 
 ## Available Scripts
 
-| Command                | Description                          |
-| ---------------------- | ------------------------------------ |
-| `pnpm dev`             | Start dev server on port 3000        |
-| `pnpm run build`       | Production build                     |
-| `pnpm run preview`     | Preview production build             |
-| `pnpm test`            | Run all tests with Vitest            |
-| `pnpm run check`       | Type-check + lint                    |
-| `pnpm run format`      | Format code with Prettier            |
-| `pnpm run db:generate` | Generate Drizzle migration files     |
-| `pnpm run db:migrate`  | Apply migrations                     |
-| `pnpm run db:push`     | Push schema directly (dev only)      |
-| `pnpm run db:studio`   | Open Drizzle Studio                  |
-| `pnpm run email:dev`   | Preview email templates on port 3001 |
+### Root Commands (via Turborepo)
+
+| Command                       | Description                          |
+| ----------------------------- | ------------------------------------ |
+| `pnpm dev`                    | Start all dev servers                |
+| `pnpm run build`              | Production build (all packages)      |
+| `pnpm test`                   | Run all tests with Vitest            |
+| `pnpm run check`              | Type-check + lint (all packages)     |
+| `pnpm run lint`               | Lint all packages                    |
+| `pnpm run format`             | Format code with Prettier            |
+
+### Database Commands
+
+| Command                       | Description                          |
+| ----------------------------- | ------------------------------------ |
+| `pnpm run db:generate`        | Generate Drizzle migration files     |
+| `pnpm run db:migrate`         | Apply migrations                     |
+| `pnpm run db:push`            | Push schema directly (dev only)      |
+| `pnpm run db:studio`          | Open Drizzle Studio                  |
+| `pnpm run gen-auth-schema`    | Regenerate auth schema from config   |
+
+### App-Specific Commands
+
+| Command                       | Description                                |
+| ----------------------------- | ------------------------------------------ |
+| `pnpm run web:dev`            | Start only the web app dev server          |
+| `pnpm run dev:stripe-webhook` | Forward Stripe webhooks to localhost:3000  |
+
+### Running Commands in a Specific Package
+
+```bash
+pnpm --filter @workspace/web <command>
+pnpm --filter @workspace/db <command>
+pnpm --filter @workspace/email dev:email    # Preview email templates on port 3001
+```
 
 ## Deployment
 
