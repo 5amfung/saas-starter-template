@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@workspace/db/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "drizzle.config.ts",
+    "vitest.config.ts",
+    "scripts/**/*.ts",
+    "eslint.config.ts"
+  ]
+}
