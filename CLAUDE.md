@@ -240,7 +240,5 @@ When unsure: research the recommended approach for the library, fix the architec
 - **Always run from the project root.** Never `cd` into subdirectories.
 - **Be consistent.** Use the same CLI tool and invocation pattern every time. Never mix `npx`/`pnpm exec`/direct paths for the same tool.
 - **Use `pnpm` for package management.** Never use `npm`, `yarn`, `bun`, or `npx`.
-- **Turbo tasks**: `pnpm run <task>` from root (e.g., `pnpm run build`, `pnpm test`).
-- **Workspace-specific commands**: `pnpm --filter <workspace> <cmd>` (e.g., `pnpm --filter @workspace/web dev`). Never `cd apps/web && pnpm dev`.
-- **Pre-approve CLIs**: Before executing a multi-step task, identify **all** CLI tools needed (`pnpm`, `git`, `node`, `find`, `python3`, etc.) and run a benign command for each (e.g., `--version`) to trigger permission approval upfront. This avoids interruptions mid-task.
+- **Pre-approve CLIs**: Before executing a multi-step task, identify **all** CLI tools needed (`pnpm`, `git`, `node`, `find`, `python3`, etc.) and run a benign command for each (e.g., `--version`) to trigger permission approval upfront. Avoids and minimizes interruptions mid-task.
 - **Subagents follow the same rules.** Include these rules in subagent prompts.
