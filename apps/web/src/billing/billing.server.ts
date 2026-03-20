@@ -1,23 +1,23 @@
-import { getRequestHeaders } from "@tanstack/react-start/server"
-import { redirect } from "@tanstack/react-router"
+import { getRequestHeaders } from '@tanstack/react-start/server';
+import { redirect } from '@tanstack/react-router';
 import {
   getFreePlan,
   getPlanById,
   getPlanLimitsForPlanId,
   getUpgradePlan,
   resolveUserPlanId,
-} from "@workspace/billing/plans"
-import { resolveSubscriptionDetails } from "@workspace/billing/server"
-import type { Plan, PlanId, PlanLimits } from "@workspace/billing/plans"
-import { auth, billingService } from "@/init"
+} from '@workspace/auth/plans';
+import { resolveSubscriptionDetails } from '@workspace/auth/billing';
+import type { Plan, PlanId, PlanLimits } from '@workspace/auth/plans';
+import { auth } from '@/init';
 
 export async function requireVerifiedSession() {
-  const headers = getRequestHeaders()
-  const session = await auth.api.getSession({ headers })
+  const headers = getRequestHeaders();
+  const session = await auth.api.getSession({ headers });
   if (!session || !session.user.emailVerified) {
-    throw redirect({ to: "/signin" })
+    throw redirect({ to: '/signin' });
   }
-  return session
+  return session;
 }
 
 /**
@@ -31,16 +31,16 @@ export async function getUserActivePlanId(
   const subscriptions = await auth.api.listActiveSubscriptions({
     headers,
     query: { referenceId: userId },
-  })
-  return resolveUserPlanId(Array.from(subscriptions))
+  });
+  return resolveUserPlanId(Array.from(subscriptions));
 }
 
 export interface UserPlanContext {
-  planId: PlanId
-  plan: Plan
-  planName: string
-  limits: PlanLimits
-  upgradePlan: Plan | null
+  planId: PlanId;
+  plan: Plan;
+  planName: string;
+  limits: PlanLimits;
+  upgradePlan: Plan | null;
 }
 
 /**
@@ -52,10 +52,10 @@ export async function getUserPlanContext(
   headers: Headers,
   userId: string
 ): Promise<UserPlanContext> {
-  const planId = await getUserActivePlanId(headers, userId)
-  const plan = getPlanById(planId) ?? getFreePlan()
-  const limits = getPlanLimitsForPlanId(planId)
-  const upgradePlan = getUpgradePlan(plan)
+  const planId = await getUserActivePlanId(headers, userId);
+  const plan = getPlanById(planId) ?? getFreePlan();
+  const limits = getPlanLimitsForPlanId(planId);
+  const upgradePlan = getUpgradePlan(plan);
 
   return {
     planId,
@@ -63,7 +63,7 @@ export async function getUserPlanContext(
     planName: plan.name,
     limits,
     upgradePlan,
-  }
+  };
 }
 
 /**
@@ -75,22 +75,22 @@ export async function getBillingData(headers: Headers, userId: string) {
   const subscriptions = await auth.api.listActiveSubscriptions({
     headers,
     query: { referenceId: userId },
-  })
-  const subArray = Array.from(subscriptions)
+  });
+  const subArray = Array.from(subscriptions);
 
-  const planId = resolveUserPlanId(subArray)
-  const plan = getPlanById(planId) ?? getFreePlan()
-  const subscription = resolveSubscriptionDetails(subArray, planId)
+  const planId = resolveUserPlanId(subArray);
+  const plan = getPlanById(planId) ?? getFreePlan();
+  const subscription = resolveSubscriptionDetails(subArray, planId);
 
-  return { planId, plan, subscription }
+  return { planId, plan, subscription };
 }
 
 export interface CheckPlanLimitResult {
-  allowed: boolean
-  current: number
-  limit: number
-  planName: string
-  upgradePlan: Plan | null
+  allowed: boolean;
+  current: number;
+  limit: number;
+  planName: string;
+  upgradePlan: Plan | null;
 }
 
 /**
@@ -101,12 +101,12 @@ export interface CheckPlanLimitResult {
 export async function checkUserPlanLimit(
   headers: Headers,
   userId: string,
-  feature: "workspace" | "member",
+  feature: 'workspace' | 'member',
   workspaceId?: string
 ): Promise<CheckPlanLimitResult> {
-  if (feature === "workspace") {
-    const ctx = await getUserPlanContext(headers, userId)
-    const limit = ctx.limits.maxWorkspaces
+  if (feature === 'workspace') {
+    const ctx = await getUserPlanContext(headers, userId);
+    const limit = ctx.limits.maxWorkspaces;
     if (limit === -1) {
       return {
         allowed: true,
@@ -114,38 +114,38 @@ export async function checkUserPlanLimit(
         limit: -1,
         planName: ctx.planName,
         upgradePlan: ctx.upgradePlan,
-      }
+      };
     }
-    const current = await billingService.countOwnedWorkspaces(userId)
+    const current = await auth.billing.countOwnedWorkspaces(userId);
     return {
       allowed: current < limit,
       current,
       limit,
       planName: ctx.planName,
       upgradePlan: ctx.upgradePlan,
-    }
+    };
   }
 
   if (!workspaceId) {
-    throw new Error("workspaceId is required for member limit check.")
+    throw new Error('workspaceId is required for member limit check.');
   }
 
   // Member limits are based on the workspace owner's plan, not the
   // current user's plan. This mirrors the beforeCreateInvitation hook.
-  const ownerId = await billingService.getWorkspaceOwnerUserId(workspaceId)
+  const ownerId = await auth.billing.getWorkspaceOwnerUserId(workspaceId);
   if (!ownerId) {
-    const ctx = await getUserPlanContext(headers, userId)
+    const ctx = await getUserPlanContext(headers, userId);
     return {
       allowed: true,
       current: 0,
       limit: -1,
       planName: ctx.planName,
       upgradePlan: ctx.upgradePlan,
-    }
+    };
   }
 
-  const ctx = await getUserPlanContext(headers, ownerId)
-  const limit = ctx.limits.maxMembersPerWorkspace
+  const ctx = await getUserPlanContext(headers, ownerId);
+  const limit = ctx.limits.maxMembersPerWorkspace;
   if (limit === -1) {
     return {
       allowed: true,
@@ -153,16 +153,16 @@ export async function checkUserPlanLimit(
       limit: -1,
       planName: ctx.planName,
       upgradePlan: ctx.upgradePlan,
-    }
+    };
   }
-  const current = await billingService.countWorkspaceMembers(workspaceId)
+  const current = await auth.billing.countWorkspaceMembers(workspaceId);
   return {
     allowed: current < limit,
     current,
     limit,
     planName: ctx.planName,
     upgradePlan: ctx.upgradePlan,
-  }
+  };
 }
 
 /**
@@ -182,9 +182,9 @@ export async function createCheckoutForPlan(
       successUrl: `${process.env.BETTER_AUTH_URL}/billing?success=true`,
       cancelUrl: `${process.env.BETTER_AUTH_URL}/billing`,
     },
-  })
+  });
 
-  return { url: result.url, redirect: result.redirect }
+  return { url: result.url, redirect: result.redirect };
 }
 
 /**
@@ -196,8 +196,8 @@ export async function createUserBillingPortal(headers: Headers) {
     body: {
       returnUrl: `${process.env.BETTER_AUTH_URL}/billing`,
     },
-  })
-  return { url: result.url, redirect: result.redirect }
+  });
+  return { url: result.url, redirect: result.redirect };
 }
 
 /**
@@ -211,26 +211,26 @@ export async function reactivateUserSubscription(
   const subscriptions = await auth.api.listActiveSubscriptions({
     headers,
     query: { referenceId: userId },
-  })
+  });
 
   const active = subscriptions.filter(
-    (s) => s.status === "active" || s.status === "trialing"
-  )
+    (s) => s.status === 'active' || s.status === 'trialing'
+  );
 
   if (active.length === 0) {
-    throw new Error("No active subscription found.")
+    throw new Error('No active subscription found.');
   }
 
-  const bestPlanId = resolveUserPlanId(active)
-  const target = active.find((s) => s.plan === bestPlanId)
+  const bestPlanId = resolveUserPlanId(active);
+  const target = active.find((s) => s.plan === bestPlanId);
   if (!target?.stripeSubscriptionId) {
-    throw new Error("Could not find subscription to restore.")
+    throw new Error('Could not find subscription to restore.');
   }
 
   await auth.api.restoreSubscription({
     headers,
     body: { subscriptionId: target.stripeSubscriptionId },
-  })
+  });
 
-  return { success: true }
+  return { success: true };
 }
