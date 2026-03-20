@@ -137,8 +137,9 @@ export function createBillingHelpers(db: Database, stripeSecretKey: string) {
 
     if (!dbUser.stripeCustomerId) return [];
 
-    const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
-    const twelveMonthsAgo = Math.floor(Date.now() / 1000) - SECONDS_PER_YEAR;
+    const TWELVE_MONTHS_IN_SECONDS = 365 * 24 * 60 * 60;
+    const twelveMonthsAgo =
+      Math.floor(Date.now() / 1000) - TWELVE_MONTHS_IN_SECONDS;
     const invoices = await stripeClient.invoices.list({
       customer: dbUser.stripeCustomerId,
       limit: 100,
@@ -1091,7 +1092,7 @@ git commit -m "test(web): restructure billing test mocks — billingService → 
 
 Remove the line `"@workspace/billing": "workspace:*"` from `dependencies`.
 
-- [ ] **Step 2: Remove billing path aliases from `apps/web/tsconfig.json`**
+- [ ] **Step 2: Update `apps/web/tsconfig.json` path aliases**
 
 Remove these two lines from `compilerOptions.paths`:
 
@@ -1099,6 +1100,8 @@ Remove these two lines from `compilerOptions.paths`:
 "@workspace/billing": ["../../packages/billing/src/index.ts"],
 "@workspace/billing/*": ["../../packages/billing/src/*"],
 ```
+
+Note: The existing wildcard `"@workspace/auth/*": ["../../packages/auth/src/*"]` already covers `@workspace/auth/plans` and `@workspace/auth/billing` resolution, so no new path entries are needed.
 
 - [ ] **Step 3: Delete `packages/billing/` directory**
 
@@ -1139,7 +1142,7 @@ Expected: All tests pass.
 
 - [ ] **Step 3: Run typecheck on web app**
 
-Run: `pnpm run --filter ./apps/web typecheck`
+Run: `pnpm --filter @workspace/web typecheck`
 
 Expected: PASS (or only pre-existing errors unrelated to billing).
 
