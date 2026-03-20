@@ -10,7 +10,7 @@
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "typecheck": "turbo run typecheck",
-    "check": "turbo run check",
+    "check": "turbo run lint typecheck",
     "format": "turbo run format",
     "test": "turbo run test",
     "prepare": "husky || echo 'Skip installing husky'",

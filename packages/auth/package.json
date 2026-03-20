@@ -17,8 +17,7 @@
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
-    "typecheck": "tsc --noEmit",
-    "check": "tsc --noEmit && eslint"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@better-auth/core": "1.5.5",
