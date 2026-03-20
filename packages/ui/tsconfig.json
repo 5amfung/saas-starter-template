@@ -13,6 +13,8 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
+    "test/**/*.ts",
+    "test/**/*.tsx",
     "vitest.config.ts",
     "vitest.setup.ts",
     "eslint.config.ts"

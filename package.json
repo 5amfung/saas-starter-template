@@ -13,6 +13,7 @@
     "check": "turbo run lint typecheck",
     "format": "turbo run format",
     "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
     "prepare": "husky || echo 'Skip installing husky'",
     "clean": "npkill",
     "db:generate": "pnpm --filter @workspace/db db:generate",

@@ -8,30 +8,35 @@ Turborepo monorepo for a SaaS starter template. Main web app built with TanStack
 
 ## Tech Stack
 
-| Layer          | Technology                                              |
-| -------------- | ------------------------------------------------------- |
-| Framework      | TanStack Start + TanStack Router v1 + TanStack Query v5 |
-| UI             | React 19, shadcn/ui (base-vega style), Base UI          |
-| Styling        | Tailwind CSS v4, OKLCH color system, tw-animate         |
-| Icons          | Tabler Icons (`@tabler/icons-react`)                    |
-| Data tables    | TanStack Table v8                                       |
-| Charts         | Recharts                                                |
-| Validation     | Zod v4                                                  |
-| Testing        | Vitest + Testing Library                                |
-| Linting        | ESLint (TanStack config) + Prettier                     |
-| Build          | Vite 7, Nitro (server)                                  |
-| Monorepo       | Turborepo, pnpm workspaces                              |
-| Package mgr    | pnpm                                                    |
-| Language       | TypeScript 5.9 (strict mode)                            |
-| Database       | Neon PostgreSQL                                         |
-| ORM            | Drizzle ORM                                             |
-| Authentication | Better Auth                                             |
+| Layer          | Technology                                                    |
+| -------------- | ------------------------------------------------------------- |
+| Framework      | TanStack Start + TanStack Router v1 + TanStack Query v5       |
+| UI             | React 19, shadcn/ui (base-vega style), Base UI                |
+| Styling        | Tailwind CSS v4, OKLCH color system, tw-animate               |
+| Icons          | Tabler Icons (`@tabler/icons-react`)                          |
+| Data tables    | TanStack Table v8                                             |
+| Charts         | Recharts                                                      |
+| Validation     | Zod v4                                                        |
+| Testing        | Vitest + Testing Library (unit/integration), Playwright (e2e) |
+| Linting        | ESLint (TanStack config) + Prettier                           |
+| Build          | Vite 7, Nitro (server)                                        |
+| Monorepo       | Turborepo, pnpm workspaces                                    |
+| Package mgr    | pnpm                                                          |
+| Language       | TypeScript 5.9 (strict mode)                                  |
+| Database       | Neon PostgreSQL                                               |
+| ORM            | Drizzle ORM                                                   |
+| Authentication | Better Auth                                                   |
 
 ## Project Structure
 
 ```
 apps/
 └── web/                        # Main web application (@workspace/web)
+    ├── test/
+    │   ├── e2e/                # Playwright E2E tests (*.spec.ts)
+    │   ├── integration/        # Vitest integration tests (*.integration.test.tsx)
+    │   ├── unit/               # Vitest unit tests (*.test.{ts,tsx})
+    │   └── mocks/              # Shared test mocks (auth, db, router)
     └── src/
         ├── account/            # Account-domain server functions and schemas.
         ├── admin/              # Admin-domain server functions and schemas.
@@ -66,7 +71,8 @@ packages/
 | `pnpm dev`                 | Start dev server on port 3000                                       |
 | `pnpm run build`           | Production build                                                    |
 | `pnpm run preview`         | Preview production build                                            |
-| `pnpm test`                | Run all tests with Vitest                                           |
+| `pnpm test`                | Run unit + integration tests with Vitest                            |
+| `pnpm test:e2e`            | Run E2E tests with Playwright                                       |
 | `pnpm run lint`            | Lint with ESLint                                                    |
 | `pnpm run lint:fix`        | Fix lint issues                                                     |
 | `pnpm run typecheck`       | TypeScript type-check without emitting                              |
@@ -78,7 +84,8 @@ packages/
 | `pnpm run db:studio`       | Open Drizzle Studio                                                 |
 | `pnpm run gen-auth-schema` | Regenerate `packages/db/src/auth.schema.ts` from Better Auth config |
 
-To run a single test file: `pnpm --filter @workspace/web test src/workspace/workspace.test.ts`
+To run a single unit/integration test: `pnpm --filter @workspace/web test test/unit/workspace/workspace.test.ts`
+To run a single E2E test: `pnpm --filter @workspace/web test:e2e test/e2e/example.spec.ts`
 
 ## Architecture
 
@@ -154,6 +161,20 @@ Admin user IDs are whitelisted directly in `packages/auth/src/auth.server.ts` (`
 ### Database
 
 Drizzle ORM with PostgreSQL (Neon). Schema entry point: `packages/db/src/schema.ts` re-exports `auth.schema.ts` (Better Auth tables, managed by `gen-auth-schema` script) and `app.schema.ts` (application tables). Database client: `packages/db/src/index.ts`.
+
+### Testing
+
+Three test types, each in its own directory under `apps/web/test/` (or `packages/*/test/`):
+
+| Type        | Directory           | Runner     | File pattern                  |
+| ----------- | ------------------- | ---------- | ----------------------------- |
+| Unit        | `test/unit/`        | Vitest     | `*.test.{ts,tsx}`             |
+| Integration | `test/integration/` | Vitest     | `*.integration.test.{ts,tsx}` |
+| E2E         | `test/e2e/`         | Playwright | `*.spec.ts`                   |
+
+- Unit tests mirror `src/` structure (e.g., `test/unit/components/auth/signin-form.test.tsx`).
+- Shared mocks live in `test/mocks/` (auth, db, router).
+- Playwright config: `apps/web/playwright.config.ts`. Vitest config: `apps/web/vitest.config.ts`.
 
 ## Conventions
 

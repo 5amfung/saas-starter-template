@@ -73,3 +73,11 @@ dist/
 
 # Scaffold temp directory
 temp/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+.playwright-mcp/

@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "playwright-test": {
+      "command": "pnpm",
+      "args": [
+        "--filter",
+        "@workspace/web",
+        "exec",
+        "playwright",
+        "run-test-mcp-server"
+      ]
+    }
+  }
+}
