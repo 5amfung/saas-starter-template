@@ -52,7 +52,7 @@ jobs:
             actions: read
 
           # Optional: Give a custom prompt to Claude. If this is not specified, Claude will perform the instructions specified in the comment that tagged it.
-          prompt: ${{ github.event_name == 'pull_request' && 'Update the pull request description to include a summary of changes.' || '' }}
+          prompt: ${{ github.event_name == 'pull_request' && '**Append** summary of changes to pull request description if description is empty, otherwise add as comment.' || '' }}
 
           # Allow Claude to use git/gh CLI and read-only tools for reading changes and updating PRs/issues.
           claude_args: '--allowed-tools "Bash(git *)" "Bash(gh issue *)" "Bash(gh pr *)" "Read" "Glob" "Grep"'
