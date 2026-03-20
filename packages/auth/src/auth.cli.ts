@@ -30,7 +30,6 @@ export const auth = createAuth({
   stripe: {
     secretKey: 'sk_test_dummy',
     webhookSecret: 'whsec_dummy',
-    proMonthlyPriceId: 'price_dummy_monthly',
-    proAnnualPriceId: 'price_dummy_annual',
+    plans: [],
   },
 });

@@ -26,6 +26,13 @@ import { createAuthEmails } from './auth-emails.server';
 import type { EmailClient } from '@workspace/email';
 import type { Database } from '@workspace/db';
 
+/** Shape of a subscription plan passed to the Better Auth Stripe plugin. */
+export interface StripePlanConfig {
+  name: string;
+  priceId: string;
+  annualDiscountPriceId?: string;
+}
+
 export interface AuthConfig {
   db: Database;
   emailClient: EmailClient;
@@ -38,8 +45,8 @@ export interface AuthConfig {
   stripe: {
     secretKey: string;
     webhookSecret: string;
-    proMonthlyPriceId: string;
-    proAnnualPriceId: string;
+    /** Subscription plans passed to the Better Auth Stripe plugin. */
+    plans: Array<StripePlanConfig>;
   };
   adminUserIds?: Array<string>;
   trustedOrigins?: Array<string>;
@@ -179,13 +186,7 @@ export function createAuth(config: AuthConfig) {
         }),
         subscription: {
           enabled: true,
-          plans: [
-            {
-              name: 'pro',
-              priceId: config.stripe.proMonthlyPriceId,
-              annualDiscountPriceId: config.stripe.proAnnualPriceId,
-            },
-          ],
+          plans: config.stripe.plans,
           onSubscriptionComplete: async ({ subscription, plan }) => {
             log('info', 'subscription complete', {
               subscriptionId: subscription.id,
