@@ -1,21 +1,17 @@
-import { IconStack2 } from '@tabler/icons-react';
-import { createFileRoute } from '@tanstack/react-router';
-import { SigninForm } from '@/components/auth/signin-form';
+import { createFileRoute, redirect } from '@tanstack/react-router';
+import { createServerFn } from '@tanstack/react-start';
+import { getRequestHeaders } from '@tanstack/react-start/server';
+import { auth } from '@/init';
 
-export const Route = createFileRoute('/')({ component: App });
+const redirectByAuthStatus = createServerFn().handler(async () => {
+  const headers = getRequestHeaders();
+  const session = await auth.api.getSession({ headers });
+  if (session?.user.emailVerified) {
+    throw redirect({ to: '/ws' });
+  }
+  throw redirect({ to: '/signin' });
+});
 
-function App() {
-  return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
-      <div className="flex w-full max-w-sm flex-col gap-6">
-        <a href="/" className="flex items-center gap-2 self-center font-medium">
-          <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <IconStack2 className="size-4" />
-          </div>
-          Acme Inc.
-        </a>
-        <SigninForm />
-      </div>
-    </div>
-  );
-}
+export const Route = createFileRoute('/')({
+  beforeLoad: () => redirectByAuthStatus(),
+});
