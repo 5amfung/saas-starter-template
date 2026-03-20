@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SaaS starter template built with TanStack Start, React 19, and shadcn/ui. File-based routing, Tailwind CSS v4, strict TypeScript.
+Turborepo monorepo for a SaaS starter template. Main web app built with TanStack Start, React 19, and shadcn/ui. Shared packages for auth, database, email, and UI. File-based routing, Tailwind CSS v4, strict TypeScript.
 
 ## Tech Stack
 
@@ -20,6 +20,7 @@ SaaS starter template built with TanStack Start, React 19, and shadcn/ui. File-b
 | Testing        | Vitest + Testing Library                                |
 | Linting        | ESLint (TanStack config) + Prettier                     |
 | Build          | Vite 7, Nitro (server)                                  |
+| Monorepo       | Turborepo, pnpm workspaces                              |
 | Package mgr    | pnpm                                                    |
 | Language       | TypeScript 5.9 (strict mode)                            |
 | Database       | Neon PostgreSQL                                         |
@@ -29,55 +30,55 @@ SaaS starter template built with TanStack Start, React 19, and shadcn/ui. File-b
 ## Project Structure
 
 ```
-src/
-├── account/                  # Account-domain server functions, schemas, and settings logic.
-├── admin/                    # Admin-domain server functions and validation schemas.
-├── auth/                     # Better Auth server/client setup, permissions, and auth schemas.
-├── components/               # Reusable React UI and feature components.
-│   ├── account/              # Account management UI components.
-│   ├── admin/                # Admin dashboard UI components.
-│   ├── auth/                 # Authentication form and flow components.
-│   ├── email-template/       # Server-only React Email templates.
-│   ├── ui/                   # shadcn/ui primitive components.
-│   └── workspace/            # Workspace-specific UI components.
-├── db/                       # Drizzle ORM schema and database client entrypoints.
-├── email/                    # Email provider integration and request context helpers.
-├── hooks/                    # Shared custom React hooks.
-├── lib/                      # Framework-agnostic utilities and shared helpers.
-├── middleware/               # Request middleware for auth and admin gating.
-├── routes/                   # TanStack Router file-based route modules.
-│   ├── _auth/                # Public authentication route segment files.
-│   ├── _protected/           # Protected route segment files behind auth middleware.
-│   │   ├── _account/         # Protected account pages.
-│   │   ├── admin/            # Protected admin pages and nested admin routes.
-│   │   └── ws/               # Protected workspace routes.
-│   └── api/                  # API route segment files.
-│       └── auth/             # Better Auth API handler route.
-├── types/                    # Project-level TypeScript type declarations.
-└── workspace/                # Workspace-domain server/client logic and tests.
+apps/
+└── web/                        # Main web application (@workspace/web)
+    └── src/
+        ├── account/            # Account-domain server functions and schemas.
+        ├── admin/              # Admin-domain server functions and schemas.
+        ├── billing/            # Billing/subscription server functions and schemas.
+        ├── components/         # Reusable React UI and feature components.
+        │   └── (account/, admin/, auth/, workspace/ sub-dirs)
+        ├── hooks/              # Shared custom React hooks.
+        ├── lib/                # Framework-agnostic utilities and shared helpers.
+        ├── middleware/          # Request middleware for auth and admin gating.
+        ├── routes/             # TanStack Router file-based route modules.
+        │   ├── _auth/          # Public authentication route segment files.
+        │   ├── _protected/     # Protected route segment files behind auth middleware.
+        │   │   ├── _account/   # Protected account pages.
+        │   │   ├── admin/      # Protected admin pages and nested admin routes.
+        │   │   └── ws/         # Protected workspace routes.
+        │   └── api/            # API route segment files.
+        ├── types/              # Project-level TypeScript type declarations.
+        └── workspace/          # Workspace-domain client logic and server functions.
+packages/
+├── auth/                       # Better Auth server/client setup, permissions, schemas (@workspace/auth)
+├── db/                         # Drizzle ORM schema and database client (@workspace/db)
+├── email/                      # Email provider integration and templates (@workspace/email)
+├── eslint-config/              # Shared ESLint configuration (@workspace/eslint-config)
+├── test-utils/                 # Shared test utilities (@workspace/test-utils)
+└── ui/                         # shadcn/ui components, hooks, and styles (@workspace/ui)
 ```
 
 ## Commands
 
-| Command                    | Description                                                |
-| -------------------------- | ---------------------------------------------------------- |
-| `pnpm dev`                 | Start dev server on port 3000                              |
-| `pnpm run build`           | Production build                                           |
-| `pnpm run preview`         | Preview production build                                   |
-| `pnpm test`                | Run all tests with Vitest                                  |
-| `pnpm run lint`            | Lint with ESLint                                           |
-| `pnpm run lint:fix`        | Fix lint issues                                            |
-| `pnpm run typecheck`       | TypeScript type-check without emitting                     |
-| `pnpm run check`           | Type-check + lint                                          |
-| `pnpm run format`          | Format code with Prettier                                  |
-| `pnpm run db:generate`     | Generate Drizzle migration files                           |
-| `pnpm run db:migrate`      | Apply migrations                                           |
-| `pnpm run db:push`         | Push schema directly (dev only)                            |
-| `pnpm run db:studio`       | Open Drizzle Studio                                        |
-| `pnpm run email:dev`       | Preview email templates on port 3001                       |
-| `pnpm run gen-auth-schema` | Regenerate `src/db/auth.schema.ts` from Better Auth config |
+| Command                    | Description                                                         |
+| -------------------------- | ------------------------------------------------------------------- |
+| `pnpm dev`                 | Start dev server on port 3000                                       |
+| `pnpm run build`           | Production build                                                    |
+| `pnpm run preview`         | Preview production build                                            |
+| `pnpm test`                | Run all tests with Vitest                                           |
+| `pnpm run lint`            | Lint with ESLint                                                    |
+| `pnpm run lint:fix`        | Fix lint issues                                                     |
+| `pnpm run typecheck`       | TypeScript type-check without emitting                              |
+| `pnpm run check`           | Type-check + lint                                                   |
+| `pnpm run format`          | Format code with Prettier                                           |
+| `pnpm run db:generate`     | Generate Drizzle migration files                                    |
+| `pnpm run db:migrate`      | Apply migrations                                                    |
+| `pnpm run db:push`         | Push schema directly (dev only)                                     |
+| `pnpm run db:studio`       | Open Drizzle Studio                                                 |
+| `pnpm run gen-auth-schema` | Regenerate `packages/db/src/auth.schema.ts` from Better Auth config |
 
-To run a single test file: `pnpm test src/workspace/workspace.test.ts`
+To run a single test file: `pnpm --filter @workspace/web test src/workspace/workspace.test.ts`
 
 ## Architecture
 
@@ -88,11 +89,11 @@ Workspaces are implemented as **Better Auth organizations** with two additional 
 - `workspaceType`: `"personal"` | `"workspace"`
 - `personalOwnerUserId`: set only for personal workspaces
 
-Every user gets a personal workspace automatically created on sign-up (via `databaseHooks.user.create` in `src/auth/auth.server.ts`). The active workspace is tracked via Better Auth's `activeOrganizationId` on the session. Workspace logic lives in `src/workspace/`.
+Every user gets a personal workspace automatically created on sign-up (via `databaseHooks.user.create` in `packages/auth/src/auth.server.ts`). The active workspace is tracked via Better Auth's `activeOrganizationId` on the session. Workspace logic lives in `packages/auth/src/` (core) and `apps/web/src/workspace/` (UI/functions).
 
 ### Routing Architecture
 
-File-based routing in `src/routes/`. Key segments:
+File-based routing in `apps/web/src/routes/`. Key segments:
 
 - `__root.tsx` — HTML shell, global providers
 - `_auth.tsx` / `_auth/` — Pathless layout for public auth pages (`/signin`, `/signup`)
@@ -102,7 +103,7 @@ File-based routing in `src/routes/`. Key segments:
   - `_protected/ws/$workspaceId/` — Per-workspace pages (overview, members, settings, projects)
   - `_protected/_account/` — Account settings pages
   - `_protected/admin/` — Admin pages (gated by `adminMiddleware`)
-- `routeTree.gen.ts` — **Auto-generated; never edit manually**
+- `apps/web/src/routeTree.gen.ts` — **Auto-generated; never edit manually**
 
 Route conventions:
 
@@ -111,7 +112,7 @@ Route conventions:
 
 ### Server Functions & File Boundaries
 
-Data fetching and mutations use `createServerFn()` from `@tanstack/react-start`. These run on the server and are called from route loaders or client components. See `src/workspace/workspace.functions.ts` for examples.
+Data fetching and mutations use `createServerFn()` from `@tanstack/react-start`. These run on the server and are called from route loaders or client components. See `apps/web/src/workspace/workspace.functions.ts` for examples.
 
 Split server-side code by responsibility using these file roles:
 
@@ -135,32 +136,33 @@ import { updateUserRole } from '@/utils/users.function';
 import { updateUserRoleInDb } from '@/utils/users.server';
 ```
 
-`src/components/email-template/` is also server-only (imports `.server` modules) — never import from client code.
+`packages/email/src/templates/` is server-only — never import from client code.
 
 ### Auth
 
-Better Auth configured in `src/auth/auth.server.ts`. Client-side auth via `authClient` from `src/auth/auth-client.ts`.
+Better Auth configured in `packages/auth/src/auth.server.ts`. Client-side auth via `authClient` from `packages/auth/src/auth-client.ts`.
 
 Plugins active: `organization` (workspaces), `admin`, `lastLoginMethod`, `tanstackStartCookies`.
 
-Middleware in `src/middleware/auth.ts`:
+Middleware in `apps/web/src/middleware/auth.ts`:
 
 - `authMiddleware` — Checks session + email verification, ensures active workspace, used on `_protected.tsx`
 - `guestMiddleware` — Redirects authenticated users to `/ws`, used on `_auth.tsx`
 
-Admin user IDs are whitelisted directly in `auth.server.ts` (`admin({ adminUserIds: [...] })`).
+Admin user IDs are whitelisted directly in `packages/auth/src/auth.server.ts` (`admin({ adminUserIds: [...] })`).
 
 ### Database
 
-Drizzle ORM with PostgreSQL (Neon). Schema entry point: `src/db/schema.ts` re-exports `auth.schema.ts` (Better Auth tables, managed by `gen-auth-schema` script) and `app.schema.ts` (application tables). Database client: `src/db/index.ts`.
+Drizzle ORM with PostgreSQL (Neon). Schema entry point: `packages/db/src/schema.ts` re-exports `auth.schema.ts` (Better Auth tables, managed by `gen-auth-schema` script) and `app.schema.ts` (application tables). Database client: `packages/db/src/index.ts`.
 
 ## Conventions
 
 ### General
 
 - **Package manager**: pnpm only — never use npm, yarn, or bun.
-- **Path alias**: `@/*` maps to `src/*`.
-- **Imports**: React first, then external packages, then `@/*` aliases.
+- **Path alias**: `@/*` maps to `src/*` within each app/package.
+- **Workspace imports**: `@workspace/auth`, `@workspace/db`, `@workspace/email`, `@workspace/ui` for cross-package imports.
+- **Imports**: React first, then external packages, then `@workspace/*`, then `@/*` aliases.
 
 ### File Naming
 
@@ -180,7 +182,7 @@ Drizzle ORM with PostgreSQL (Neon). Schema entry point: `src/db/schema.ts` re-ex
 ### Styling
 
 - Tailwind CSS utility classes — no CSS modules or styled-components.
-- CSS custom properties (OKLCH) for theming — defined in `src/styles.css`.
+- CSS custom properties (OKLCH) for theming — defined in `packages/ui/src/styles/`.
 - Dark mode via `.dark` class; mobile-first responsive design.
 
 ### TypeScript
@@ -193,7 +195,7 @@ Drizzle ORM with PostgreSQL (Neon). Schema entry point: `src/db/schema.ts` re-ex
 
 - Style: `base-vega`; base color: `zinc`.
 - Add components via `pnpx shadcn@latest add <component>`.
-- Never manually edit files in `src/components/ui/`.
+- Never manually edit files in `packages/ui/src/components/`.
 
 ## Code Quality
 
@@ -225,13 +227,13 @@ When unsure: research the recommended approach for the library, fix the architec
 
 ## Do Not
 
-- Edit `src/routeTree.gen.ts` — it is auto-generated by the router plugin.
-- Manually edit files in `src/components/ui/` — use the shadcn CLI to update them.
+- Edit `apps/web/src/routeTree.gen.ts` — it is auto-generated by the router plugin.
+- Manually edit files in `packages/ui/src/components/` — use the shadcn CLI to update them.
 - Use `npm`, `yarn`, or `bun` — this project uses pnpm.
 - Commit `.env` files or secrets.
 - Use `any` type — prefer proper typing or `unknown` with guards.
 - Import `*.server.ts` modules from client-safe files or route components.
-- Import from `src/components/email-template/` in client code.
+- Import from `packages/email/src/templates/` in client code.
 
 ## Command Execution Rules
 
