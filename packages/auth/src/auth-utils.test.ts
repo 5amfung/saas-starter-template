@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  isDuplicateOrganizationError,
-  isSignInPath,
-} from './auth-hooks.server';
+import { isDuplicateOrganizationError, isSignInPath } from './auth-utils';
 
 describe('isSignInPath', () => {
   it.each(['/sign-in', '/sign-in/email', '/callback/', '/callback/google'])(

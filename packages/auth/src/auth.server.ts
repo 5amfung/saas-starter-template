@@ -12,10 +12,7 @@ import { eq } from 'drizzle-orm';
 import Stripe from 'stripe';
 import { user as userTable } from '@workspace/db/schema';
 import { createAuthEmails } from './auth-emails.server';
-import {
-  isDuplicateOrganizationError,
-  isSignInPath,
-} from './auth-hooks.server';
+import { isDuplicateOrganizationError, isSignInPath } from './auth-utils';
 import { isRecord, validateWorkspaceFields } from './auth-workspace.server';
 import { createBillingHelpers } from './billing.server';
 import { PLANS, getPlanLimitsForPlanId } from './plans';
