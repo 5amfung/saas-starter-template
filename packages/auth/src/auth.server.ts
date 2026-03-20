@@ -1,54 +1,57 @@
-import { betterAuth } from "better-auth/minimal"
-import { APIError, createAuthMiddleware } from "better-auth/api"
+import { betterAuth } from 'better-auth/minimal';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
 import {
   admin,
   lastLoginMethod,
   organization as organizationPlugin,
-} from "better-auth/plugins"
-import { drizzleAdapter } from "better-auth/adapters/drizzle"
-import { tanstackStartCookies } from "better-auth/tanstack-start"
-import { stripe } from "@better-auth/stripe"
-import Stripe from "stripe"
-import { eq } from "drizzle-orm"
-import { user as userTable } from "@workspace/db/schema"
-import type { Database } from "@workspace/db"
-import type { EmailClient } from "@workspace/email"
+} from 'better-auth/plugins';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { tanstackStartCookies } from 'better-auth/tanstack-start';
+import { stripe } from '@better-auth/stripe';
+import Stripe from 'stripe';
+import { eq } from 'drizzle-orm';
+import { user as userTable } from '@workspace/db/schema';
 import {
   PERSONAL_WORKSPACE_NAME,
   PERSONAL_WORKSPACE_TYPE,
   buildPersonalWorkspaceSlug,
   isPersonalWorkspace,
-} from "./workspace-types"
-import { isRecord, validateWorkspaceFields } from "./auth-workspace.server"
-import { isDuplicateOrganizationError, isSignInPath } from "./auth-hooks.server"
-import { createAuthEmails } from "./auth-emails.server"
+} from './workspace-types';
+import { isRecord, validateWorkspaceFields } from './auth-workspace.server';
+import {
+  isDuplicateOrganizationError,
+  isSignInPath,
+} from './auth-hooks.server';
+import { createAuthEmails } from './auth-emails.server';
+import type { EmailClient } from '@workspace/email';
+import type { Database } from '@workspace/db';
 
 export interface AuthConfig {
-  db: Database
-  emailClient: EmailClient
-  baseUrl: string
-  secret: string
+  db: Database;
+  emailClient: EmailClient;
+  baseUrl: string;
+  secret: string;
   google: {
-    clientId: string
-    clientSecret: string
-  }
+    clientId: string;
+    clientSecret: string;
+  };
   stripe: {
-    secretKey: string
-    webhookSecret: string
-    proMonthlyPriceId: string
-    proAnnualPriceId: string
-  }
-  adminUserIds?: Array<string>
-  trustedOrigins?: Array<string>
-  hooks?: AuthHooks
+    secretKey: string;
+    webhookSecret: string;
+    proMonthlyPriceId: string;
+    proAnnualPriceId: string;
+  };
+  adminUserIds?: Array<string>;
+  trustedOrigins?: Array<string>;
+  hooks?: AuthHooks;
   /** Logger callback. Falls back to console.log when not provided. */
   logger?: (
     level: string,
     message: string,
     meta?: Record<string, unknown>
-  ) => void
+  ) => void;
   /** Returns request headers in the current server context. Used by auth-emails to build email request context. */
-  getRequestHeaders?: () => Headers
+  getRequestHeaders?: () => Headers;
 }
 
 export interface AuthHooks {
@@ -56,39 +59,39 @@ export interface AuthHooks {
   beforeCreateOrganization?: (
     userId: string,
     organization: Record<string, unknown>
-  ) => Promise<void>
+  ) => Promise<void>;
   /** Called before creating an invitation to check member limits. */
-  beforeCreateInvitation?: (organizationId: string) => Promise<void>
+  beforeCreateInvitation?: (organizationId: string) => Promise<void>;
 }
 
 export function createAuth(config: AuthConfig) {
-  const log = config.logger ?? console.log
-  const stripeClient = new Stripe(config.stripe.secretKey)
+  const log = config.logger ?? console.log;
+  const stripeClient = new Stripe(config.stripe.secretKey);
 
   const authEmails = createAuthEmails({
     emailClient: config.emailClient,
     getRequestHeaders: config.getRequestHeaders,
     baseUrl: config.baseUrl,
-  })
+  });
 
   const auth = betterAuth({
     telemetry: {
       enabled: false,
     },
-    trustedOrigins: config.trustedOrigins ?? ["http://localhost:3000"],
+    trustedOrigins: config.trustedOrigins ?? ['http://localhost:3000'],
     account: {
       accountLinking: {
         allowDifferentEmails: false,
-        trustedProviders: ["google"],
+        trustedProviders: ['google'],
       },
     },
     database: drizzleAdapter(config.db, {
-      provider: "pg",
+      provider: 'pg',
     }),
     user: {
       additionalFields: {
         lastSignInAt: {
-          type: "date",
+          type: 'date',
           required: false,
           input: false,
         },
@@ -115,22 +118,22 @@ export function createAuth(config: AuthConfig) {
     },
     socialProviders: {
       google: {
-        prompt: "select_account consent",
-        accessType: "offline",
+        prompt: 'select_account consent',
+        accessType: 'offline',
         clientId: config.google.clientId,
         clientSecret: config.google.clientSecret,
       },
     },
     hooks: {
       after: createAuthMiddleware(async (ctx) => {
-        if (!isSignInPath(ctx.path)) return
-        const newSession = ctx.context.newSession
-        if (!newSession) return
+        if (!isSignInPath(ctx.path)) return;
+        const newSession = ctx.context.newSession;
+        if (!newSession) return;
 
         await config.db
           .update(userTable)
           .set({ lastSignInAt: new Date() })
-          .where(eq(userTable.id, newSession.user.id))
+          .where(eq(userTable.id, newSession.user.id));
       }),
     },
     databaseHooks: {
@@ -146,11 +149,11 @@ export function createAuth(config: AuthConfig) {
                   personalOwnerUserId: user.id,
                   userId: user.id,
                 },
-              })
+              });
             } catch (error) {
               if (!isDuplicateOrganizationError(error)) {
-                console.error(error)
-                throw error
+                console.error(error);
+                throw error;
               }
             }
           },
@@ -164,10 +167,10 @@ export function createAuth(config: AuthConfig) {
         createCustomerOnSignUp: true,
         onCustomerCreate: async ({ stripeCustomer, user }) => {
           log(
-            "info",
+            'info',
             `Strip customer ${stripeCustomer.id} created for user ${user.id} on signup`
-          )
-          return Promise.resolve()
+          );
+          return Promise.resolve();
         },
         getCheckoutSessionParams: () => ({
           params: {
@@ -178,13 +181,13 @@ export function createAuth(config: AuthConfig) {
           enabled: true,
           plans: [
             {
-              name: "pro",
+              name: 'pro',
               priceId: config.stripe.proMonthlyPriceId,
               annualDiscountPriceId: config.stripe.proAnnualPriceId,
             },
           ],
           onSubscriptionComplete: async ({ subscription, plan }) => {
-            log("info", "subscription complete", {
+            log('info', 'subscription complete', {
               subscriptionId: subscription.id,
               plan: subscription.plan,
               planName: plan.name,
@@ -198,11 +201,11 @@ export function createAuth(config: AuthConfig) {
               canceledAt: subscription.canceledAt,
               cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
               endedAt: subscription.endedAt,
-            })
-            await Promise.resolve()
+            });
+            await Promise.resolve();
           },
           onSubscriptionCreated: async ({ subscription, plan }) => {
-            log("info", "subscription created", {
+            log('info', 'subscription created', {
               subscriptionId: subscription.id,
               plan: subscription.plan,
               planName: plan.name,
@@ -216,11 +219,11 @@ export function createAuth(config: AuthConfig) {
               canceledAt: subscription.canceledAt,
               cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
               endedAt: subscription.endedAt,
-            })
-            await Promise.resolve()
+            });
+            await Promise.resolve();
           },
           onSubscriptionUpdate: async ({ subscription }) => {
-            log("info", "subscription updated", {
+            log('info', 'subscription updated', {
               subscriptionId: subscription.id,
               plan: subscription.plan,
               referenceId: subscription.referenceId,
@@ -233,14 +236,14 @@ export function createAuth(config: AuthConfig) {
               canceledAt: subscription.canceledAt,
               cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
               endedAt: subscription.endedAt,
-            })
-            await Promise.resolve()
+            });
+            await Promise.resolve();
           },
           onSubscriptionCancel: async ({
             subscription,
             cancellationDetails,
           }) => {
-            log("info", "subscription canceled", {
+            log('info', 'subscription canceled', {
               subscriptionId: subscription.id,
               plan: subscription.plan,
               referenceId: subscription.referenceId,
@@ -254,11 +257,11 @@ export function createAuth(config: AuthConfig) {
               endedAt: subscription.endedAt,
               reason: cancellationDetails?.reason,
               feedback: cancellationDetails?.feedback,
-            })
-            await Promise.resolve()
+            });
+            await Promise.resolve();
           },
           onSubscriptionDeleted: async ({ subscription }) => {
-            log("info", "subscription deleted", {
+            log('info', 'subscription deleted', {
               subscriptionId: subscription.id,
               plan: subscription.plan,
               referenceId: subscription.referenceId,
@@ -271,8 +274,8 @@ export function createAuth(config: AuthConfig) {
               canceledAt: subscription.canceledAt,
               cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
               endedAt: subscription.endedAt,
-            })
-            await Promise.resolve()
+            });
+            await Promise.resolve();
           },
         },
       }),
@@ -281,19 +284,19 @@ export function createAuth(config: AuthConfig) {
       }),
       organizationPlugin({
         allowUserToCreateOrganization: true,
-        creatorRole: "owner",
+        creatorRole: 'owner',
         requireEmailVerificationOnInvitation: true,
         sendInvitationEmail: authEmails.sendInvitationEmail,
         schema: {
           organization: {
             additionalFields: {
               workspaceType: {
-                type: "string",
+                type: 'string',
                 input: true,
                 required: false,
               },
               personalOwnerUserId: {
-                type: "string",
+                type: 'string',
                 input: true,
                 required: false,
               },
@@ -302,37 +305,40 @@ export function createAuth(config: AuthConfig) {
         },
         organizationHooks: {
           beforeCreateOrganization: async ({ organization, user }) => {
-            if (!isRecord(organization)) return
-            validateWorkspaceFields(organization, "create")
+            if (!isRecord(organization)) return;
+            validateWorkspaceFields(organization, 'create');
 
             // Personal workspaces are created during sign-up (before a session
             // exists), so auth.api calls would fail with 401. Skip the limit
             // check here -- the personal workspace still counts toward the
             // user's maxWorkspaces quota.
-            if (isPersonalWorkspace(organization)) return
+            if (isPersonalWorkspace(organization)) return;
 
             // Delegate billing limit check to app-provided hook.
             if (user.id && config.hooks?.beforeCreateOrganization) {
-              await config.hooks.beforeCreateOrganization(user.id, organization)
+              await config.hooks.beforeCreateOrganization(
+                user.id,
+                organization
+              );
             }
           },
           beforeUpdateOrganization: async ({ organization }) => {
-            if (!isRecord(organization)) return
-            validateWorkspaceFields(organization, "update")
-            await Promise.resolve()
+            if (!isRecord(organization)) return;
+            validateWorkspaceFields(organization, 'update');
+            await Promise.resolve();
           },
           beforeDeleteOrganization: async ({ organization }) => {
             if (isPersonalWorkspace(organization)) {
-              throw new APIError("BAD_REQUEST", {
-                message: "Personal workspace can not be deleted",
-              })
+              throw new APIError('BAD_REQUEST', {
+                message: 'Personal workspace can not be deleted',
+              });
             }
-            await Promise.resolve()
+            await Promise.resolve();
           },
           beforeCreateInvitation: async ({ organization }) => {
             // Delegate member limit check to app-provided hook.
             if (config.hooks?.beforeCreateInvitation) {
-              await config.hooks.beforeCreateInvitation(organization.id)
+              await config.hooks.beforeCreateInvitation(organization.id);
             }
           },
         },
@@ -342,9 +348,9 @@ export function createAuth(config: AuthConfig) {
       }),
       tanstackStartCookies(),
     ],
-  })
+  });
 
-  return auth
+  return auth;
 }
 
-export type Auth = ReturnType<typeof createAuth>
+export type Auth = ReturnType<typeof createAuth>;

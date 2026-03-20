@@ -18,7 +18,7 @@
     "db:migrate": "dotenv -e .env -- drizzle-kit migrate",
     "db:push": "dotenv -e .env -- drizzle-kit push",
     "db:studio": "dotenv -e .env -- drizzle-kit studio",
-    "gen-auth-schema": "dotenv -e .env -- pnpx @better-auth/cli generate --config ../auth/src/auth.server.ts --output ./src/auth.schema.ts --yes && node --experimental-strip-types scripts/patch-auth-schema.ts && eslint --fix ./src/auth.schema.ts && prettier --write ./src/auth.schema.ts"
+    "gen-auth-schema": "dotenv -e .env -- pnpx @better-auth/cli generate --config ../auth/src/auth.cli.ts --output ./src/auth.schema.ts --yes && node --experimental-strip-types scripts/patch-auth-schema.ts && eslint --fix ./src/auth.schema.ts && prettier --write ./src/auth.schema.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
