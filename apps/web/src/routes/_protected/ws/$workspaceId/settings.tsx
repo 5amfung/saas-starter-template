@@ -1,10 +1,11 @@
 import * as React from 'react';
+import { IconLoader2 } from '@tabler/icons-react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { createFileRoute, getRouteApi } from '@tanstack/react-router';
-import { IconLoader2 } from '@tabler/icons-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { authClient } from '@workspace/auth/client';
 import { Button } from '@workspace/ui/components/button';
 import {
   Card,
@@ -22,7 +23,6 @@ import {
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
 import { Separator } from '@workspace/ui/components/separator';
-import { authClient } from '@workspace/auth/client';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
 import { toFieldErrorItem } from '@/lib/form-utils';
 import { isPersonalWorkspace } from '@/workspace/workspace';

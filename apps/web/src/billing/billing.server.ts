@@ -1,5 +1,6 @@
-import { getRequestHeaders } from '@tanstack/react-start/server';
 import { redirect } from '@tanstack/react-router';
+import { getRequestHeaders } from '@tanstack/react-start/server';
+import { resolveSubscriptionDetails } from '@workspace/auth/billing';
 import {
   getFreePlan,
   getPlanById,
@@ -7,7 +8,6 @@ import {
   getUpgradePlan,
   resolveUserPlanId,
 } from '@workspace/auth/plans';
-import { resolveSubscriptionDetails } from '@workspace/auth/billing';
 import type { Plan, PlanId, PlanLimits } from '@workspace/auth/plans';
 import { auth } from '@/init';
 

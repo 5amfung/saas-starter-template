@@ -12,12 +12,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@workspace/ui/components/chart';
-import type { ChartConfig } from '@workspace/ui/components/chart';
-import { Skeleton } from '@workspace/ui/components/skeleton';
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from '@workspace/ui/components/toggle-group';
 import {
   Select,
   SelectContent,
@@ -25,6 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@workspace/ui/components/select';
+import { Skeleton } from '@workspace/ui/components/skeleton';
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from '@workspace/ui/components/toggle-group';
+import type { ChartConfig } from '@workspace/ui/components/chart';
 
 const chartConfig = {
   mau: {

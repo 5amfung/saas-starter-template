@@ -1,6 +1,5 @@
 'use client';
 
-import { useNavigate } from '@tanstack/react-router';
 import {
   IconCreditCard,
   IconDotsVertical,
@@ -8,7 +7,9 @@ import {
   IconNotification,
   IconUserCircle,
 } from '@tabler/icons-react';
+import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
+import { authClient } from '@workspace/auth/client';
 import {
   Avatar,
   AvatarFallback,
@@ -30,7 +31,6 @@ import {
   useSidebar,
 } from '@workspace/ui/components/sidebar';
 import { Skeleton } from '@workspace/ui/components/skeleton';
-import { authClient } from '@workspace/auth/client';
 
 export function NavUserSkeleton() {
   return (

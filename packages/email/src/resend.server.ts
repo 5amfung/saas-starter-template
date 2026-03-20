@@ -1,5 +1,5 @@
-import type { ReactElement } from 'react';
 import { Resend } from 'resend';
+import type { ReactElement } from 'react';
 
 export interface EmailConfig {
   apiKey: string;

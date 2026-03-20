@@ -10,11 +10,11 @@ import {
 } from '@workspace/ui/components/card';
 import { Separator } from '@workspace/ui/components/separator';
 import { Switch } from '@workspace/ui/components/switch';
+import type { NotificationPreferences } from '@/account/notification-preferences.schemas';
 import {
   getNotificationPreferences,
   updateNotificationPreferences,
 } from '@/account/notification-preferences.functions';
-import type { NotificationPreferences } from '@/account/notification-preferences.schemas';
 
 export const Route = createFileRoute('/_protected/_account/notifications')({
   component: NotificationsPage,

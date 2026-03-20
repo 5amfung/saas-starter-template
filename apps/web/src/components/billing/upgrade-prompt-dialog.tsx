@@ -1,4 +1,5 @@
 import { IconCheck, IconLoader2, IconSparkles } from '@tabler/icons-react';
+import { formatPlanPrice, getPlanFeatures } from '@workspace/auth/plans';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -8,7 +9,6 @@ import {
 } from '@workspace/ui/components/alert-dialog';
 import { Button } from '@workspace/ui/components/button';
 import { Toggle } from '@workspace/ui/components/toggle';
-import { formatPlanPrice, getPlanFeatures } from '@workspace/auth/plans';
 import type { Plan } from '@workspace/auth/plans';
 
 interface UpgradePromptDialogProps {

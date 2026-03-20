@@ -1,30 +1,30 @@
-import { betterAuth } from 'better-auth/minimal';
+import { stripe } from '@better-auth/stripe';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
+import { betterAuth } from 'better-auth/minimal';
 import {
   admin,
   lastLoginMethod,
   organization as organizationPlugin,
 } from 'better-auth/plugins';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { tanstackStartCookies } from 'better-auth/tanstack-start';
-import { stripe } from '@better-auth/stripe';
-import Stripe from 'stripe';
 import { eq } from 'drizzle-orm';
+import Stripe from 'stripe';
 import { user as userTable } from '@workspace/db/schema';
+import { createAuthEmails } from './auth-emails.server';
+import {
+  isDuplicateOrganizationError,
+  isSignInPath,
+} from './auth-hooks.server';
+import { isRecord, validateWorkspaceFields } from './auth-workspace.server';
+import { createBillingHelpers } from './billing.server';
+import { PLANS, getPlanLimitsForPlanId } from './plans';
 import {
   PERSONAL_WORKSPACE_NAME,
   PERSONAL_WORKSPACE_TYPE,
   buildPersonalWorkspaceSlug,
   isPersonalWorkspace,
 } from './workspace-types';
-import { isRecord, validateWorkspaceFields } from './auth-workspace.server';
-import {
-  isDuplicateOrganizationError,
-  isSignInPath,
-} from './auth-hooks.server';
-import { createAuthEmails } from './auth-emails.server';
-import { PLANS, getPlanLimitsForPlanId } from './plans';
-import { createBillingHelpers } from './billing.server';
 import type { EmailClient } from '@workspace/email';
 import type { Database } from '@workspace/db';
 

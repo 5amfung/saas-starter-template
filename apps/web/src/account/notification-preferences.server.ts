@@ -1,5 +1,5 @@
-import { getRequestHeaders } from '@tanstack/react-start/server';
 import { redirect } from '@tanstack/react-router';
+import { getRequestHeaders } from '@tanstack/react-start/server';
 import { eq } from 'drizzle-orm';
 import { notificationPreferences } from '@workspace/db/schema';
 import type {

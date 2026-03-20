@@ -21,9 +21,9 @@
     "resend": "^6.9.2"
   },
   "devDependencies": {
-    "@workspace/eslint-config": "workspace:*",
     "@react-email/preview-server": "5.2.9",
     "@react-email/render": "^1.0.7",
+    "@workspace/eslint-config": "workspace:*",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-email": "^5.2.8",

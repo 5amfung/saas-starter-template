@@ -1,11 +1,5 @@
 import * as React from 'react';
 import {
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
-import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import {
   IconArrowDown,
   IconArrowUp,
   IconArrowsSort,
@@ -15,6 +9,11 @@ import {
   IconChevronsRight,
   IconDotsVertical,
 } from '@tabler/icons-react';
+import {
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 import { Button } from '@workspace/ui/components/button';
 import {
   DropdownMenu,
@@ -39,6 +38,7 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table';
+import type { ColumnDef, SortingState } from '@tanstack/react-table';
 
 export interface WorkspaceInvitationRow {
   id: string;

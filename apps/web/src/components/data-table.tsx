@@ -10,7 +10,6 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import type { DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import {
   SortableContext,
@@ -43,17 +42,9 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import type {
-  ColumnDef,
-  ColumnFiltersState,
-  Row,
-  SortingState,
-  VisibilityState,
-} from '@tanstack/react-table';
 import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { useIsMobile } from '@workspace/ui/hooks/use-mobile';
 import { Badge } from '@workspace/ui/components/badge';
 import { Button } from '@workspace/ui/components/button';
 import {
@@ -61,7 +52,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@workspace/ui/components/chart';
-import type { ChartConfig } from '@workspace/ui/components/chart';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import {
   Drawer,
@@ -105,6 +95,16 @@ import {
   TabsList,
   TabsTrigger,
 } from '@workspace/ui/components/tabs';
+import { useIsMobile } from '@workspace/ui/hooks/use-mobile';
+import type { ChartConfig } from '@workspace/ui/components/chart';
+import type {
+  ColumnDef,
+  ColumnFiltersState,
+  Row,
+  SortingState,
+  VisibilityState,
+} from '@tanstack/react-table';
+import type { DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
 
 export const schema = z.object({
   id: z.number(),

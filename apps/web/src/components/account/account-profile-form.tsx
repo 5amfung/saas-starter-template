@@ -1,7 +1,8 @@
+import { IconLoader2 } from '@tabler/icons-react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { IconLoader2 } from '@tabler/icons-react';
+import { authClient } from '@workspace/auth/client';
 import {
   Avatar,
   AvatarFallback,
@@ -23,11 +24,10 @@ import {
   FieldLabel,
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
-import { authClient } from '@workspace/auth/client';
 import { accountProfileSchema } from '@/account/schemas';
 import { SESSION_QUERY_KEY } from '@/hooks/use-session-query';
-import { getInitials } from '@/lib/get-initials';
 import { toFieldErrorItem } from '@/lib/form-utils';
+import { getInitials } from '@/lib/get-initials';
 
 const CARD_FOOTER_CLASS = 'flex justify-end gap-2 pt-6';
 

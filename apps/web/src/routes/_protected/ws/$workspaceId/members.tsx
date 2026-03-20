@@ -10,13 +10,13 @@ import {
 } from '@workspace/ui/components/tabs';
 import { checkPlanLimit } from '@/billing/billing.functions';
 import { UpgradePromptDialog } from '@/components/billing/upgrade-prompt-dialog';
-import { useUpgradePrompt } from '@/hooks/use-upgrade-prompt';
-import { WorkspaceInviteDialog } from '@/components/workspace/workspace-invite-dialog';
 import { WorkspaceInvitationsTable } from '@/components/workspace/workspace-invitations-table';
+import { WorkspaceInviteDialog } from '@/components/workspace/workspace-invite-dialog';
 import { WorkspaceMembersTable } from '@/components/workspace/workspace-members-table';
-import { DEFAULT_INVITE_ROLES } from '@/workspace/workspace-members.types';
+import { useUpgradePrompt } from '@/hooks/use-upgrade-prompt';
 import { useInvitationsTable } from '@/workspace/use-invitations-table';
 import { useMembersTable } from '@/workspace/use-members-table';
+import { DEFAULT_INVITE_ROLES } from '@/workspace/workspace-members.types';
 
 export const Route = createFileRoute('/_protected/ws/$workspaceId/members')({
   component: WorkspaceMembersPage,

@@ -1,8 +1,9 @@
 import * as React from 'react';
+import { IconLoader2 } from '@tabler/icons-react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { IconLoader2 } from '@tabler/icons-react';
 import { toast } from 'sonner';
+import { authClient } from '@workspace/auth/client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +23,6 @@ import {
   FieldLabel,
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
-import { authClient } from '@workspace/auth/client';
 import { changePasswordSchema } from '@/account/schemas';
 import { toFieldErrorItem } from '@/lib/form-utils';
 

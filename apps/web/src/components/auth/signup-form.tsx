@@ -1,6 +1,8 @@
+import { IconLoader } from '@tabler/icons-react';
 import { useForm } from '@tanstack/react-form';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { IconLoader } from '@tabler/icons-react';
+import { authClient } from '@workspace/auth/client';
+import { signupSchema } from '@workspace/auth/schemas';
 import { Button } from '@workspace/ui/components/button';
 import {
   Card,
@@ -18,8 +20,6 @@ import {
   FieldSeparator,
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
-import { authClient } from '@workspace/auth/client';
-import { signupSchema } from '@workspace/auth/schemas';
 import { FormError } from '@/components/auth/form-error';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 import { toFieldErrorItem } from '@/lib/form-utils';

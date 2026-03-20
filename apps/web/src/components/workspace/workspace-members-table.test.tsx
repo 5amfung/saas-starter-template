@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { SortingState } from '@tanstack/react-table';
 import { createMockMemberRow } from '@workspace/test-utils';
+import type { SortingState } from '@tanstack/react-table';
 import { WorkspaceMembersTable } from '@/components/workspace/workspace-members-table';
 
 const defaultProps = {

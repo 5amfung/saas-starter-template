@@ -1,12 +1,13 @@
 import * as React from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   IconDeviceDesktop,
   IconDeviceMobile,
   IconLoader2,
   IconTrash,
 } from '@tabler/icons-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { authClient } from '@workspace/auth/client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,7 +28,6 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card';
 import { Skeleton } from '@workspace/ui/components/skeleton';
-import { authClient } from '@workspace/auth/client';
 import { useSessionQuery } from '@/hooks/use-session-query';
 import {
   SESSIONS_QUERY_KEY,

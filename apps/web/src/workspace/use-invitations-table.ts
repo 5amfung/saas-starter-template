@@ -1,9 +1,7 @@
 import * as React from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import type { SortingState } from '@tanstack/react-table';
 import { toast } from 'sonner';
 import { authClient } from '@workspace/auth/client';
-import type { WorkspaceInvitationRow } from '@/components/workspace/workspace-invitations-table';
 import {
   DEFAULT_INVITE_ROLES,
   INVITATION_PAGE_SIZE_DEFAULT,
@@ -11,6 +9,8 @@ import {
   emailSchema,
   withPendingId,
 } from './workspace-members.types';
+import type { WorkspaceInvitationRow } from '@/components/workspace/workspace-invitations-table';
+import type { SortingState } from '@tanstack/react-table';
 import type { InviteDraft, InviteRole } from './workspace-members.types';
 
 export function useInvitationsTable(workspaceId: string) {

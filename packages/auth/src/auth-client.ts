@@ -1,4 +1,4 @@
-import { createAuthClient } from 'better-auth/react';
+import { stripeClient } from '@better-auth/stripe/client';
 import {
   adminClient,
   inferAdditionalFields,
@@ -6,7 +6,7 @@ import {
   lastLoginMethodClient,
   organizationClient,
 } from 'better-auth/client/plugins';
-import { stripeClient } from '@better-auth/stripe/client';
+import { createAuthClient } from 'better-auth/react';
 import type { createAuth } from './auth.server';
 
 // Use the return type of createAuth to infer additional fields.

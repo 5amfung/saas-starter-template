@@ -4,8 +4,8 @@ import { ChangeEmailApprovalEmail } from '@workspace/email/templates/change-emai
 import { EmailVerificationEmail } from '@workspace/email/templates/email-verification-email';
 import { ResetPasswordEmail } from '@workspace/email/templates/reset-password-email';
 import { WorkspaceInvitationEmail } from '@workspace/email/templates/workspace-invitation-email';
-import type { EmailClient } from '@workspace/email';
 import { buildAcceptInviteUrl } from './auth-workspace.server';
+import type { EmailClient } from '@workspace/email';
 
 interface AuthEmailDeps {
   emailClient: EmailClient;

@@ -1,7 +1,8 @@
 import * as React from 'react';
+import { IconLoader2 } from '@tabler/icons-react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { IconLoader2 } from '@tabler/icons-react';
+import { authClient } from '@workspace/auth/client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +17,6 @@ import {
 import { Button } from '@workspace/ui/components/button';
 import { Field, FieldError, FieldLabel } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
-import { authClient } from '@workspace/auth/client';
 import { changeEmailSchema } from '@/account/schemas';
 
 const CONFIRMATION_TEXT = 'CHANGE';

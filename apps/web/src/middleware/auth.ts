@@ -4,8 +4,8 @@ import {
   getVerifiedSession,
   validateGuestSession as validateGuest,
 } from '@workspace/auth/validators';
-import { ensureActiveWorkspaceForSession } from '@/workspace/workspace.server';
 import { auth } from '@/init';
+import { ensureActiveWorkspaceForSession } from '@/workspace/workspace.server';
 
 /** Validates that the request has an authenticated, email-verified session and an active workspace. */
 export async function validateAuthSession(headers: Headers) {

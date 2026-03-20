@@ -1,7 +1,8 @@
+import { IconLoader2 } from '@tabler/icons-react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { IconLoader2 } from '@tabler/icons-react';
+import { authClient } from '@workspace/auth/client';
 import {
   Avatar,
   AvatarFallback,
@@ -35,10 +36,9 @@ import { Separator } from '@workspace/ui/components/separator';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { Textarea } from '@workspace/ui/components/textarea';
 import { cn } from '@workspace/ui/lib/utils';
-import { authClient } from '@workspace/auth/client';
 import { adminUserFormSchema } from '@/admin/schemas';
-import { getInitials } from '@/lib/get-initials';
 import { toFieldErrorItem } from '@/lib/form-utils';
+import { getInitials } from '@/lib/get-initials';
 
 interface UserData {
   id: string;

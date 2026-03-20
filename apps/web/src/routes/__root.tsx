@@ -1,17 +1,17 @@
-import type { QueryClient } from '@tanstack/react-query';
 import { TanStackDevtools } from '@tanstack/react-devtools';
+import { formDevtoolsPlugin } from '@tanstack/react-form-devtools';
+import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools';
 import {
   HeadContent,
   Scripts,
   createRootRouteWithContext,
 } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
-import { formDevtoolsPlugin } from '@tanstack/react-form-devtools';
-import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools';
 import { Toaster } from '@workspace/ui/components/sonner';
 import appCss from '@workspace/ui/globals.css?url';
-import { ThemeProvider, useTheme } from '@/components/theme-provider';
+import type { QueryClient } from '@tanstack/react-query';
 import { NotFound } from '@/components/not-found';
+import { ThemeProvider, useTheme } from '@/components/theme-provider';
 
 interface RouterContext {
   queryClient: QueryClient;

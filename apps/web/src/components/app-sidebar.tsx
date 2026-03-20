@@ -11,18 +11,18 @@ import {
   IconStack2,
   IconUsers,
 } from '@tabler/icons-react';
+import { authClient } from '@workspace/auth/client';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
 } from '@workspace/ui/components/sidebar';
-import { authClient } from '@workspace/auth/client';
 import { NavAdmin } from '@/components/nav-admin';
 import { NavMain } from '@/components/nav-main';
 import { NavSecondary } from '@/components/nav-secondary';
-import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 import { NavUser, NavUserSkeleton } from '@/components/nav-user';
+import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 
 const data = {
   navSecondary: [

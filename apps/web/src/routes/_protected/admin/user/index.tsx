@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { createFileRoute } from '@tanstack/react-router';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import type { SortingState } from '@tanstack/react-table';
-import { Button } from '@workspace/ui/components/button';
+import { createFileRoute } from '@tanstack/react-router';
 import { authClient } from '@workspace/auth/client';
+import { Button } from '@workspace/ui/components/button';
+import type { SortingState } from '@tanstack/react-table';
 import { AdminUserTable } from '@/components/admin/admin-user-table';
 
 export const Route = createFileRoute('/_protected/admin/user/')({

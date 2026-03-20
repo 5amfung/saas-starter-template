@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { mockDbChain, mockDbInsertChain } from '@/test/mocks/db';
 import {
   getNotificationPreferencesForUser,
   upsertNotificationPreferencesForUser,
 } from '@/account/notification-preferences.server';
+import { mockDbChain, mockDbInsertChain } from '@/test/mocks/db';
 
 const { dbSelectMock, dbInsertMock } = vi.hoisted(() => ({
   dbSelectMock: vi.fn(),

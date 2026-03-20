@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { IconLoader2 } from '@tabler/icons-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { authClient } from '@workspace/auth/client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,12 +22,11 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card';
 import { Skeleton } from '@workspace/ui/components/skeleton';
-import { authClient } from '@workspace/auth/client';
+import { GoogleIcon } from '@/components/icons/google-icon';
 import {
   LINKED_ACCOUNTS_QUERY_KEY,
   useLinkedAccountsQuery,
 } from '@/hooks/use-linked-accounts-query';
-import { GoogleIcon } from '@/components/icons/google-icon';
 
 interface Provider {
   id: string;

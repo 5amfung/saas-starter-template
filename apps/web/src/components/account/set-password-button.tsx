@@ -1,8 +1,8 @@
-import { useMutation } from '@tanstack/react-query';
 import { IconLoader2 } from '@tabler/icons-react';
+import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Button } from '@workspace/ui/components/button';
 import { authClient } from '@workspace/auth/client';
+import { Button } from '@workspace/ui/components/button';
 
 export function SetPasswordButton({ email }: { email: string }) {
   const mutation = useMutation({

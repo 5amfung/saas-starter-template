@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { SortingState } from '@tanstack/react-table';
 import { AdminUserTable } from './admin-user-table';
+import type { SortingState } from '@tanstack/react-table';
 
 // Mock TanStack Router Link component.
 vi.mock('@tanstack/react-router', async () => {

@@ -1,8 +1,8 @@
 import { createServerFn } from '@tanstack/react-start';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import * as z from 'zod';
-import type { PlanId } from '@workspace/auth/plans';
 import { PLANS } from '@workspace/auth/plans';
+import type { PlanId } from '@workspace/auth/plans';
 import {
   checkUserPlanLimit,
   createCheckoutForPlan,

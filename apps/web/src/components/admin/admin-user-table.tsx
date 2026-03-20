@@ -1,16 +1,4 @@
 import * as React from 'react';
-import { Link } from '@tanstack/react-router';
-import {
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
-import type {
-  ColumnDef,
-  Table as ReactTable,
-  SortingState,
-  VisibilityState,
-} from '@tanstack/react-table';
 import {
   IconArrowDown,
   IconArrowUp,
@@ -28,6 +16,12 @@ import {
   IconUser,
   IconX,
 } from '@tabler/icons-react';
+import { Link } from '@tanstack/react-router';
+import {
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 import { Badge } from '@workspace/ui/components/badge';
 import { Button } from '@workspace/ui/components/button';
 import {
@@ -56,6 +50,12 @@ import {
   TableRow,
 } from '@workspace/ui/components/table';
 import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
+import type {
+  ColumnDef,
+  Table as ReactTable,
+  SortingState,
+  VisibilityState,
+} from '@tanstack/react-table';
 
 interface UserRow {
   id: string;

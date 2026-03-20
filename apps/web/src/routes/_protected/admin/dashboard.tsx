@@ -1,24 +1,24 @@
 import * as React from 'react';
-import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
+import { createFileRoute } from '@tanstack/react-router';
 import { Button } from '@workspace/ui/components/button';
-import {
-  AdminDashboardCards,
-  AdminDashboardCardsSkeleton,
-} from '@/components/admin/admin-dashboard-cards';
-import {
-  AdminSignupChart,
-  AdminSignupChartSkeleton,
-} from '@/components/admin/admin-signup-chart';
-import {
-  AdminMauChart,
-  AdminMauChartSkeleton,
-} from '@/components/admin/admin-mau-chart';
 import {
   getAdminDashboardMetrics,
   getMauChartData,
   getSignupChartData,
 } from '@/admin/admin.functions';
+import {
+  AdminDashboardCards,
+  AdminDashboardCardsSkeleton,
+} from '@/components/admin/admin-dashboard-cards';
+import {
+  AdminMauChart,
+  AdminMauChartSkeleton,
+} from '@/components/admin/admin-mau-chart';
+import {
+  AdminSignupChart,
+  AdminSignupChartSkeleton,
+} from '@/components/admin/admin-signup-chart';
 
 export const Route = createFileRoute('/_protected/admin/dashboard')({
   component: AdminDashboardPage,

@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Card, CardContent } from '@workspace/ui/components/card';
 import { getUpgradePlan } from '@workspace/auth/plans';
+import { Card, CardContent } from '@workspace/ui/components/card';
+import { BillingDowngradeBanner } from './billing-downgrade-banner';
+import { BillingInvoiceTable } from './billing-invoice-table';
+import { BillingPlanCards } from './billing-plan-cards';
 import type { PlanId } from '@workspace/auth/plans';
+import { SESSION_QUERY_KEY } from '@/hooks/use-session-query';
 import {
   createCheckoutSession,
   createPortalSession,
@@ -11,10 +15,6 @@ import {
   getUserBillingData,
   reactivateSubscription,
 } from '@/billing/billing.functions';
-import { SESSION_QUERY_KEY } from '@/hooks/use-session-query';
-import { BillingDowngradeBanner } from './billing-downgrade-banner';
-import { BillingInvoiceTable } from './billing-invoice-table';
-import { BillingPlanCards } from './billing-plan-cards';
 
 const PAGE_LAYOUT_CLASS =
   'mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6';

@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { IconLoader } from '@tabler/icons-react';
 import { useForm } from '@tanstack/react-form';
 import { Link } from '@tanstack/react-router';
-import { IconLoader } from '@tabler/icons-react';
+import { authClient } from '@workspace/auth/client';
+import { forgotPasswordSchema } from '@workspace/auth/schemas';
 import { Button } from '@workspace/ui/components/button';
 import {
   Card,
@@ -18,8 +20,6 @@ import {
   FieldLabel,
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
-import { authClient } from '@workspace/auth/client';
-import { forgotPasswordSchema } from '@workspace/auth/schemas';
 import { FormError } from '@/components/auth/form-error';
 import { toFieldErrorItem } from '@/lib/form-utils';
 

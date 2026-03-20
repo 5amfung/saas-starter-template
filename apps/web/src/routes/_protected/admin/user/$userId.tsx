@@ -1,19 +1,19 @@
+import { IconArrowLeft } from '@tabler/icons-react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Link,
   createFileRoute,
   isNotFound,
   notFound,
 } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { authClient } from '@workspace/auth/client';
 import { Button } from '@workspace/ui/components/button';
 import { Separator } from '@workspace/ui/components/separator';
-import { authClient } from '@workspace/auth/client';
+import { AdminDeleteUserDialog } from '@/components/admin/admin-delete-user-dialog';
 import {
   AdminUserForm,
   AdminUserFormSkeleton,
 } from '@/components/admin/admin-user-form';
-import { AdminDeleteUserDialog } from '@/components/admin/admin-delete-user-dialog';
 import { useSessionQuery } from '@/hooks/use-session-query';
 
 export const Route = createFileRoute('/_protected/admin/user/$userId')({

@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
 import { IconLoader2 } from '@tabler/icons-react';
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
 import { z } from 'zod';
+import { authClient } from '@workspace/auth/client';
 import { Button } from '@workspace/ui/components/button';
 import {
   Card,
@@ -11,7 +12,6 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card';
 import { FieldDescription } from '@workspace/ui/components/field';
-import { authClient } from '@workspace/auth/client';
 import { AuthLayout } from '@/components/auth/auth-layout';
 
 export const Route = createFileRoute('/accept-invite')({

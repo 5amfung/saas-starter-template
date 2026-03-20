@@ -1,4 +1,5 @@
 import { IconCheck } from '@tabler/icons-react';
+import { formatPlanPrice, getPlanFeatures } from '@workspace/auth/plans';
 import { Button } from '@workspace/ui/components/button';
 import {
   Card,
@@ -9,7 +10,6 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card';
 import { Toggle } from '@workspace/ui/components/toggle';
-import { formatPlanPrice, getPlanFeatures } from '@workspace/auth/plans';
 import type { Plan, PlanId } from '@workspace/auth/plans';
 
 interface BillingPlanCardsProps {

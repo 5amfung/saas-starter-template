@@ -1,7 +1,7 @@
+import { getRequestHeaders } from '@tanstack/react-start/server';
+import { createAuth } from '@workspace/auth/server';
 import { createDb } from '@workspace/db';
 import { createEmailClient } from '@workspace/email';
-import { createAuth } from '@workspace/auth/server';
-import { getRequestHeaders } from '@tanstack/react-start/server';
 import { logger } from '@/lib/logger';
 
 export const db = createDb(process.env.DATABASE_URL!);

@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
-import { useIsMobile } from '@workspace/ui/hooks/use-mobile';
 import {
   Card,
   CardAction,
@@ -14,7 +13,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@workspace/ui/components/chart';
-import type { ChartConfig } from '@workspace/ui/components/chart';
 import {
   Select,
   SelectContent,
@@ -26,6 +24,8 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from '@workspace/ui/components/toggle-group';
+import { useIsMobile } from '@workspace/ui/hooks/use-mobile';
+import type { ChartConfig } from '@workspace/ui/components/chart';
 
 export const description = 'An interactive area chart';
 

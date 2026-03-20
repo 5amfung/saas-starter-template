@@ -1,8 +1,9 @@
 import * as React from 'react';
+import { IconAlertTriangle, IconLoader2 } from '@tabler/icons-react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { IconAlertTriangle, IconLoader2 } from '@tabler/icons-react';
 import { toast } from 'sonner';
+import { authClient } from '@workspace/auth/client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,7 +18,6 @@ import {
 } from '@workspace/ui/components/alert-dialog';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
-import { authClient } from '@workspace/auth/client';
 
 const CONFIRMATION_TEXT = 'DELETE';
 
