@@ -31,8 +31,6 @@ vi.mock('drizzle-orm', async (importOriginal) => {
 });
 vi.mock('@/init', () => ({
   auth: { api: {} },
-}));
-vi.mock('@/init', () => ({
   db: { select: dbSelectMock },
 }));
 vi.mock('@workspace/db/schema', () => ({
