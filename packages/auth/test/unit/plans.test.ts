@@ -173,7 +173,7 @@ describe('formatPlanPrice', () => {
   it('formats monthly price', () => {
     const pro = getPlanById('pro')!;
     const price = formatPlanPrice(pro, false);
-    expect(price).toMatch(/\$20\/mo$/);
+    expect(price).toMatch(/\$49\/mo$/);
   });
 
   it('formats annual price as monthly equivalent', () => {
@@ -188,14 +188,14 @@ describe('getPlanFeatures', () => {
   it('returns base features for monthly', () => {
     const pro = getPlanById('pro')!;
     const features = getPlanFeatures(pro, false);
-    expect(features).toContain('25 workspaces');
+    expect(features).toContain('10 workspaces');
     expect(features).not.toContain('2 months free');
   });
 
   it('returns base + bonus features for annual', () => {
     const pro = getPlanById('pro')!;
     const features = getPlanFeatures(pro, true);
-    expect(features).toContain('25 workspaces');
+    expect(features).toContain('10 workspaces');
     expect(features).toContain('2 months free');
   });
 });

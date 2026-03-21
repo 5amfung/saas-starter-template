@@ -83,7 +83,7 @@ export const PLANS: ReadonlyArray<Plan> = [
       annual: { price: 50_00 },
     },
     limits: STARTER_LIMITS,
-    features: ['5 personal workspace', '5 member'],
+    features: ['5 workspaces', '10 member'],
     annualBonusFeatures: ['2 months free'],
   },
   {
@@ -91,11 +91,15 @@ export const PLANS: ReadonlyArray<Plan> = [
     name: 'Pro',
     tier: 2,
     pricing: {
-      monthly: { price: 20_00 },
-      annual: { price: 200_00 },
+      monthly: { price: 49_00 },
+      annual: { price: 490_00 },
     },
     limits: PRO_LIMITS,
-    features: ['25 workspaces', '25 members per workspace'],
+    features: [
+      '10 workspaces',
+      '100 members per workspace',
+      'Email customer support',
+    ],
     annualBonusFeatures: ['2 months free'],
   },
 ] as const;
