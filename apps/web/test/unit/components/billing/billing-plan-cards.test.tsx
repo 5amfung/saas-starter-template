@@ -45,14 +45,14 @@ const PRO_PLAN: Plan = {
 describe('BillingPlanCards', () => {
   const defaultProps = {
     currentPlan: FREE_PLAN,
-    upgradePlan: STARTER_PLAN,
+    upgradePlans: [STARTER_PLAN],
     nextBillingDate: null,
-    isAnnual: false,
+    annualByPlan: {},
     onToggleInterval: vi.fn(),
     onManage: vi.fn(),
     onUpgrade: vi.fn(),
     isManaging: false,
-    isUpgrading: false,
+    upgradingPlanId: null,
   };
 
   beforeEach(() => {
@@ -76,7 +76,7 @@ describe('BillingPlanCards', () => {
         <BillingPlanCards
           {...defaultProps}
           currentPlan={STARTER_PLAN}
-          upgradePlan={PRO_PLAN}
+          upgradePlans={[PRO_PLAN]}
         />
       );
       // formatPlanPrice(STARTER_PLAN, false) = "$5/mo"
@@ -94,7 +94,7 @@ describe('BillingPlanCards', () => {
         <BillingPlanCards
           {...defaultProps}
           currentPlan={STARTER_PLAN}
-          upgradePlan={PRO_PLAN}
+          upgradePlans={[PRO_PLAN]}
           nextBillingDate={new Date('2026-05-15T12:00:00Z')}
         />
       );
@@ -119,7 +119,7 @@ describe('BillingPlanCards', () => {
         <BillingPlanCards
           {...defaultProps}
           currentPlan={STARTER_PLAN}
-          upgradePlan={PRO_PLAN}
+          upgradePlans={[PRO_PLAN]}
         />
       );
       expect(
@@ -134,7 +134,7 @@ describe('BillingPlanCards', () => {
         <BillingPlanCards
           {...defaultProps}
           currentPlan={STARTER_PLAN}
-          upgradePlan={PRO_PLAN}
+          upgradePlans={[PRO_PLAN]}
           onManage={onManage}
         />
       );
@@ -149,7 +149,7 @@ describe('BillingPlanCards', () => {
         <BillingPlanCards
           {...defaultProps}
           currentPlan={STARTER_PLAN}
-          upgradePlan={PRO_PLAN}
+          upgradePlans={[PRO_PLAN]}
           isManaging={true}
         />
       );
@@ -168,58 +168,58 @@ describe('BillingPlanCards', () => {
 
     it('shows monthly price by default', () => {
       renderWithProviders(
-        <BillingPlanCards {...defaultProps} isAnnual={false} />
+        <BillingPlanCards {...defaultProps} annualByPlan={{}} />
       );
       // formatPlanPrice(STARTER_PLAN, false) = "$5/mo"
       expect(screen.getByText('$5/mo')).toBeInTheDocument();
     });
 
-    it('shows annual price when isAnnual is true', () => {
+    it('shows annual price when annualByPlan has plan set to true', () => {
       renderWithProviders(
-        <BillingPlanCards {...defaultProps} isAnnual={true} />
+        <BillingPlanCards {...defaultProps} annualByPlan={{ starter: true }} />
       );
       // formatPlanPrice(STARTER_PLAN, true) = annual price / 12 / 100 = 5000/12/100 ≈ $4.17/mo
       expect(screen.getByText(/\$4/)).toBeInTheDocument();
     });
 
-    it('calls onToggleInterval with false when Monthly toggle is clicked', async () => {
+    it('calls onToggleInterval with planId and false when Monthly toggle is clicked', async () => {
       const user = userEvent.setup();
       const onToggleInterval = vi.fn();
       renderWithProviders(
         <BillingPlanCards
           {...defaultProps}
-          isAnnual={true}
+          annualByPlan={{ starter: true }}
           onToggleInterval={onToggleInterval}
         />
       );
       await user.click(
         screen.getByRole('button', { name: /monthly billing/i })
       );
-      expect(onToggleInterval).toHaveBeenCalledWith(false);
+      expect(onToggleInterval).toHaveBeenCalledWith('starter', false);
     });
 
-    it('calls onToggleInterval with true when Annual toggle is clicked', async () => {
+    it('calls onToggleInterval with planId and true when Annual toggle is clicked', async () => {
       const user = userEvent.setup();
       const onToggleInterval = vi.fn();
       renderWithProviders(
         <BillingPlanCards
           {...defaultProps}
-          isAnnual={false}
+          annualByPlan={{}}
           onToggleInterval={onToggleInterval}
         />
       );
       await user.click(screen.getByRole('button', { name: /annual billing/i }));
-      expect(onToggleInterval).toHaveBeenCalledWith(true);
+      expect(onToggleInterval).toHaveBeenCalledWith('starter', true);
     });
 
-    it('shows annual bonus features when isAnnual is true', () => {
+    it('shows annual bonus features when annualByPlan has plan set to true', () => {
       renderWithProviders(
-        <BillingPlanCards {...defaultProps} isAnnual={true} />
+        <BillingPlanCards {...defaultProps} annualByPlan={{ starter: true }} />
       );
       expect(screen.getByText('2 months free')).toBeInTheDocument();
     });
 
-    it('calls onUpgrade with the upgrade plan id when upgrade button is clicked', async () => {
+    it('calls onUpgrade with the upgrade plan id and annual state when upgrade button is clicked', async () => {
       const user = userEvent.setup();
       const onUpgrade = vi.fn();
       renderWithProviders(
@@ -228,26 +228,56 @@ describe('BillingPlanCards', () => {
       await user.click(
         screen.getByRole('button', { name: /upgrade to starter/i })
       );
-      expect(onUpgrade).toHaveBeenCalledWith('starter');
+      expect(onUpgrade).toHaveBeenCalledWith('starter', false);
     });
 
-    it('disables upgrade button and shows loading text when isUpgrading', () => {
+    it('disables upgrade button and shows loading text when upgradingPlanId matches', () => {
       renderWithProviders(
-        <BillingPlanCards {...defaultProps} isUpgrading={true} />
+        <BillingPlanCards {...defaultProps} upgradingPlanId="starter" />
       );
       expect(
         screen.getByRole('button', { name: /redirecting/i })
       ).toBeDisabled();
     });
+
+    it('disables all upgrade buttons when any plan is upgrading', () => {
+      renderWithProviders(
+        <BillingPlanCards
+          {...defaultProps}
+          upgradePlans={[STARTER_PLAN, PRO_PLAN]}
+          upgradingPlanId="starter"
+        />
+      );
+      // The starter button shows "Redirecting..." and is disabled.
+      expect(
+        screen.getByRole('button', { name: /redirecting/i })
+      ).toBeDisabled();
+      // The pro button is also disabled because upgradingPlanId is non-null.
+      expect(
+        screen.getByRole('button', { name: /upgrade to pro/i })
+      ).toBeDisabled();
+    });
+
+    it('renders multiple upgrade plan cards', () => {
+      renderWithProviders(
+        <BillingPlanCards
+          {...defaultProps}
+          upgradePlans={[STARTER_PLAN, PRO_PLAN]}
+        />
+      );
+      expect(screen.getAllByText('Upgrade to')).toHaveLength(2);
+      expect(screen.getByText('Starter')).toBeInTheDocument();
+      expect(screen.getByText('Pro')).toBeInTheDocument();
+    });
   });
 
   describe('no upgrade plan (highest tier)', () => {
-    it('shows custom plan card when upgradePlan is null', () => {
+    it('shows custom plan card when upgradePlans is empty', () => {
       renderWithProviders(
         <BillingPlanCards
           {...defaultProps}
           currentPlan={PRO_PLAN}
-          upgradePlan={null}
+          upgradePlans={[]}
         />
       );
       expect(screen.getByText('Need more?')).toBeInTheDocument();
