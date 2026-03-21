@@ -173,14 +173,6 @@ export function getHighestTierPlanId(planIds: Array<string>): PlanId {
  * Returns the next upgrade plan for a given plan (next tier up), or null
  * if the user is already on the highest tier.
  */
-export function getUpgradePlan(currentPlan: Plan): Plan | null {
-  const higherTierPlans = PLANS.filter((p) => p.tier > currentPlan.tier).sort(
-    (a, b) => a.tier - b.tier
-  );
-  if (higherTierPlans.length === 0) return null;
-  return higherTierPlans[0];
-}
-
 /**
  * Returns all plans above the current plan's tier, sorted by tier ascending.
  */
@@ -188,6 +180,10 @@ export function getUpgradePlans(currentPlan: Plan): Array<Plan> {
   return PLANS.filter((p) => p.tier > currentPlan.tier).sort(
     (a, b) => a.tier - b.tier
   );
+}
+
+export function getUpgradePlan(currentPlan: Plan): Plan | null {
+  return getUpgradePlans(currentPlan)[0] ?? null;
 }
 
 /**
