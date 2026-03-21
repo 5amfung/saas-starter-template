@@ -46,9 +46,11 @@ Server functions (`*.functions.ts`) are the auth + validation boundary between c
 **Mocks required:**
 
 - `@tanstack/react-start` — `createServerFn` builder
-- `@tanstack/react-start/server` — `getRequestHeaders`
+- `@tanstack/react-start/server` — `getRequestHeaders` (returns `new Headers()`)
 - `@/billing/billing.server` — `requireVerifiedSession`, `createCheckoutForPlan`, `createUserBillingPortal`, `getBillingData`, `reactivateUserSubscription`, `checkUserPlanLimit`
-- `@/init` — `auth.billing.getInvoicesForUser`
+- `@/init` — Full mock shape: `{ auth: { billing: { getInvoicesForUser: vi.fn() } } }`. Only `auth.billing` is used by this file; other `@/init` exports (`db`) are not needed.
+
+**Note:** `requireVerifiedSession` returns `{ user: { id: string }, session: {...} }`. Use `createMockSessionResponse()` from `@workspace/test-utils` for the mock return value.
 
 **Test cases (18):**
 
@@ -153,6 +155,8 @@ These hooks contain significant client-side business logic: data fetching, mutat
 
 - Calls `inviteMember` with `resend: true`
 - Falls back invalid role to `'member'`
+- On success: shows `'Invitation resent.'` toast, refetches invitations
+- On error: shows error toast with message or fallback `'Failed to resend invitation.'`
 
 ### 2.2 `use-members-table.test.ts`
 
@@ -162,8 +166,8 @@ These hooks contain significant client-side business logic: data fetching, mutat
 **Mocks required:**
 
 - `@workspace/auth/client` — `authClient.organization.listMembers`, `.getActiveMemberRole`, `.leave`, `.removeMember`
-- `@tanstack/react-router` — `useNavigate`
-- `@/hooks/use-session-query` — `useSessionQuery`
+- `@tanstack/react-router` — `useNavigate` (return `vi.fn()`)
+- `@/hooks/use-session-query` — `useSessionQuery` (return `{ data: createMockSessionResponse() }` shape, so `session.user.id` resolves to a known user ID for assertions)
 - `sonner` — `toast.success`, `toast.error`
 
 **Test cases (12):**
@@ -173,7 +177,7 @@ These hooks contain significant client-side business logic: data fetching, mutat
 - Fetches members with pagination params (limit, offset, sortBy, sortDirection)
 - Maps member data to `WorkspaceMemberRow` shape
 - Fetches current user's active role
-- Returns `currentUserId` from session
+- Returns `currentUserId` from session (sourced from mocked `useSessionQuery` return value)
 
 **Pagination:**
 
@@ -189,7 +193,7 @@ These hooks contain significant client-side business logic: data fetching, mutat
 
 **Remove member:**
 
-- Calls `removeMember` with member ID and `organizationId`
+- Calls `removeMember` with `{ memberIdOrEmail: memberId, organizationId: workspaceId }`
 - On success: shows success toast, refetches members
 - On error: shows error toast
 - Tracks `removingMemberId` during mutation
@@ -221,9 +225,11 @@ Integration tests render full component trees with `renderWithProviders()`, simu
 
 **Components involved:** `BillingPage`, `BillingPlanCards`, `UpgradePromptDialog`
 
+**Note:** `BillingPage` renders `null` while `billingQuery.isPending` — all assertions on rendered content must use `await waitFor(...)` to wait for the billing data query to resolve before asserting.
+
 **Test cases (6):**
 
-- Renders current plan details from billing data
+- Renders current plan details from billing data (use `waitFor` to wait for data load)
 - Click upgrade on a plan → `createCheckoutSession` called with plan ID and billing cycle
 - Checkout session creation fails → error feedback shown
 - Reactivate canceled subscription → `reactivateSubscription` called → success feedback
@@ -245,18 +251,12 @@ Integration tests render full component trees with `renderWithProviders()`, simu
 - Leave workspace fails → error toast shown
 - Shows loading state while data is fetching
 
-### 3.4 `account-notifications-flow.integration.test.tsx`
+### ~~3.4 `account-notifications-flow.integration.test.tsx`~~ — REMOVED
 
-**Location:** `apps/web/test/integration/components/account/account-notifications-flow.integration.test.tsx`
+The notification preferences UI lives inside a route component (`NotificationsPage` in `routes/_protected/_account/notifications.tsx`), bound to `createFileRoute()`. It cannot be imported and rendered standalone without mocking TanStack Router's file route infrastructure. This flow is better covered by:
 
-**Components involved:** Notification preferences form/switches
-
-**Test cases (4):**
-
-- Loads existing notification preferences on mount
-- Toggle a preference → save → `updateNotificationPreferences` called with updated values
-- Save fails → error feedback
-- All preferences default to expected initial state
+- Unit tests for the server functions (Section 1.3)
+- Future E2E tests (out of scope for this spec)
 
 ---
 
@@ -267,11 +267,13 @@ Integration tests render full component trees with `renderWithProviders()`, simu
 **File under test:** `apps/web/src/workspace/workspace-members.types.ts`
 **Location:** `apps/web/test/unit/workspace/workspace-members.types.test.ts`
 
+**Setup:** `withPendingId` accepts a `React.Dispatch<React.SetStateAction<string | null>>`, which is just a function type. Tests pass a plain `vi.fn()` as the setter — no jsdom or `renderHook` needed. This is a pure Node environment unit test.
+
 **Test cases (3):**
 
-- `withPendingId` sets pending ID before action runs
-- `withPendingId` clears pending ID after successful action
-- `withPendingId` clears pending ID even when action throws (finally block)
+- `withPendingId` sets pending ID before action runs (setter called with the ID)
+- `withPendingId` clears pending ID after successful action (setter called with `null`)
+- `withPendingId` clears pending ID even when action throws (finally block — setter called with `null`, error re-thrown)
 
 ---
 
@@ -290,16 +292,15 @@ All new tests follow established patterns:
 
 ## 6. File Summary
 
-| #   | Test File                                                                             | Type        | Est. Cases |
-| --- | ------------------------------------------------------------------------------------- | ----------- | ---------- |
-| 1   | `test/unit/admin/admin.functions.test.ts`                                             | Unit        | 9          |
-| 2   | `test/unit/billing/billing.functions.test.ts`                                         | Unit        | 18         |
-| 3   | `test/unit/account/notification-preferences.functions.test.ts`                        | Unit        | 6          |
-| 4   | `test/unit/workspace/use-invitations-table.test.ts`                                   | Unit        | 18         |
-| 5   | `test/unit/workspace/use-members-table.test.ts`                                       | Unit        | 12         |
-| 6   | `test/unit/workspace/workspace-members.types.test.ts`                                 | Unit        | 3          |
-| 7   | `test/integration/components/workspace/workspace-invite-flow.integration.test.tsx`    | Integration | 6          |
-| 8   | `test/integration/components/billing/billing-upgrade-flow.integration.test.tsx`       | Integration | 6          |
-| 9   | `test/integration/components/workspace/workspace-members-flow.integration.test.tsx`   | Integration | 6          |
-| 10  | `test/integration/components/account/account-notifications-flow.integration.test.tsx` | Integration | 4          |
-|     | **Total**                                                                             |             | **~88**    |
+| #   | Test File                                                                           | Type        | Est. Cases |
+| --- | ----------------------------------------------------------------------------------- | ----------- | ---------- |
+| 1   | `test/unit/admin/admin.functions.test.ts`                                           | Unit        | 9          |
+| 2   | `test/unit/billing/billing.functions.test.ts`                                       | Unit        | 18         |
+| 3   | `test/unit/account/notification-preferences.functions.test.ts`                      | Unit        | 6          |
+| 4   | `test/unit/workspace/use-invitations-table.test.ts`                                 | Unit        | 20         |
+| 5   | `test/unit/workspace/use-members-table.test.ts`                                     | Unit        | 12         |
+| 6   | `test/unit/workspace/workspace-members.types.test.ts`                               | Unit        | 3          |
+| 7   | `test/integration/components/workspace/workspace-invite-flow.integration.test.tsx`  | Integration | 6          |
+| 8   | `test/integration/components/billing/billing-upgrade-flow.integration.test.tsx`     | Integration | 6          |
+| 9   | `test/integration/components/workspace/workspace-members-flow.integration.test.tsx` | Integration | 6          |
+|     | **Total**                                                                           |             | **~86**    |
