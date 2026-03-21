@@ -66,7 +66,7 @@ vi.mock('@workspace/ui/components/dropdown-menu', () => ({
   ),
   DropdownMenuTrigger: ({
     children,
-    render: renderProp,
+    render: _renderProp,
   }: {
     children?: React.ReactNode;
     render?: React.ReactElement;

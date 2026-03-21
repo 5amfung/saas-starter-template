@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // apps/web/test/unit/components/billing/billing-invoice-table.test.tsx
 import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+
 import { renderWithProviders } from '@workspace/test-utils';
 import type { Invoice } from '@/components/billing/billing-invoice-table';
 import { BillingInvoiceTable } from '@/components/billing/billing-invoice-table';
