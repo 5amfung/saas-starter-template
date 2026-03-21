@@ -14,16 +14,17 @@ import type { Plan, PlanId } from '@workspace/auth/plans';
 
 interface BillingPlanCardsProps {
   currentPlan: Plan;
-  upgradePlan: Plan | null;
+  upgradePlans: Array<Plan>;
   /** Next billing date for paid plans. null for free tier. */
   nextBillingDate: Date | null;
-  /** Whether the user is on annual billing. */
-  isAnnual: boolean;
-  onToggleInterval: (annual: boolean) => void;
+  /** Per-plan annual toggle state. Missing keys default to monthly. */
+  annualByPlan: Record<PlanId, boolean>;
+  onToggleInterval: (planId: PlanId, annual: boolean) => void;
   onManage: () => void;
-  onUpgrade: (planId: PlanId) => void;
+  onUpgrade: (planId: PlanId, annual: boolean) => void;
   isManaging: boolean;
-  isUpgrading: boolean;
+  /** The plan ID currently being upgraded, or null if no checkout in progress. */
+  upgradingPlanId: PlanId | null;
 }
 
 const DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
@@ -34,17 +35,17 @@ const DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
 
 export function BillingPlanCards({
   currentPlan,
-  upgradePlan,
+  upgradePlans,
   nextBillingDate,
-  isAnnual,
+  annualByPlan,
   onToggleInterval,
   onManage,
   onUpgrade,
   isManaging,
-  isUpgrading,
+  upgradingPlanId,
 }: BillingPlanCardsProps) {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <div className="flex flex-col gap-4">
       {/* Current Plan Card */}
       <Card>
         <CardHeader>
@@ -85,62 +86,72 @@ export function BillingPlanCards({
         )}
       </Card>
 
-      {/* Upgrade Card */}
-      {upgradePlan ? (
-        <Card>
-          <CardHeader>
-            <CardDescription>Upgrade to</CardDescription>
-            <CardTitle className="text-2xl">{upgradePlan.name}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              {upgradePlan.pricing && (
-                <p className="text-sm font-medium">
-                  {formatPlanPrice(upgradePlan, isAnnual)}
-                </p>
-              )}
-              <div className="flex items-center gap-0.5 rounded-full border p-0.5">
-                <Toggle
-                  pressed={!isAnnual}
-                  onPressedChange={() => onToggleInterval(false)}
-                  size="sm"
-                  className="h-6 rounded-full px-2.5 text-xs aria-pressed:bg-foreground aria-pressed:text-background"
-                  aria-label="Monthly billing"
+      {/* Upgrade Cards */}
+      {upgradePlans.length > 0 ? (
+        upgradePlans.map((plan) => {
+          const isAnnual = annualByPlan[plan.id] ?? false;
+          const isThisPlanUpgrading = upgradingPlanId === plan.id;
+
+          return (
+            <Card key={plan.id}>
+              <CardHeader>
+                <CardDescription>Upgrade to</CardDescription>
+                <CardTitle className="text-2xl">{plan.name}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  {plan.pricing && (
+                    <p className="text-sm font-medium">
+                      {formatPlanPrice(plan, isAnnual)}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-0.5 rounded-full border p-0.5">
+                    <Toggle
+                      pressed={!isAnnual}
+                      onPressedChange={() => onToggleInterval(plan.id, false)}
+                      size="sm"
+                      className="h-6 rounded-full px-2.5 text-xs aria-pressed:bg-foreground aria-pressed:text-background"
+                      aria-label="Monthly billing"
+                    >
+                      Monthly
+                    </Toggle>
+                    <Toggle
+                      pressed={isAnnual}
+                      onPressedChange={() => onToggleInterval(plan.id, true)}
+                      size="sm"
+                      className="h-6 rounded-full px-2.5 text-xs aria-pressed:bg-foreground aria-pressed:text-background"
+                      aria-label="Annual billing"
+                    >
+                      Annual
+                    </Toggle>
+                  </div>
+                </div>
+                <ul className="mt-1 flex flex-col gap-2">
+                  {getPlanFeatures(plan, isAnnual).map((feature) => (
+                    <li
+                      key={feature}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <IconCheck className="size-3.5 shrink-0 text-primary" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+              <CardFooter>
+                <Button
+                  className="w-full"
+                  onClick={() => onUpgrade(plan.id, isAnnual)}
+                  disabled={upgradingPlanId !== null}
                 >
-                  Monthly
-                </Toggle>
-                <Toggle
-                  pressed={isAnnual}
-                  onPressedChange={() => onToggleInterval(true)}
-                  size="sm"
-                  className="h-6 rounded-full px-2.5 text-xs aria-pressed:bg-foreground aria-pressed:text-background"
-                  aria-label="Annual billing"
-                >
-                  Annual
-                </Toggle>
-              </div>
-            </div>
-            <ul className="mt-1 flex flex-col gap-2">
-              {getPlanFeatures(upgradePlan, isAnnual).map((feature) => (
-                <li key={feature} className="flex items-center gap-2 text-sm">
-                  <IconCheck className="size-3.5 shrink-0 text-primary" />
-                  {feature}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-          <CardFooter>
-            <Button
-              className="w-full"
-              onClick={() => onUpgrade(upgradePlan.id)}
-              disabled={isUpgrading}
-            >
-              {isUpgrading
-                ? 'Redirecting...'
-                : `Upgrade to ${upgradePlan.name}`}
-            </Button>
-          </CardFooter>
-        </Card>
+                  {isThisPlanUpgrading
+                    ? 'Redirecting...'
+                    : `Upgrade to ${plan.name}`}
+                </Button>
+              </CardFooter>
+            </Card>
+          );
+        })
       ) : (
         <Card>
           <CardHeader>
