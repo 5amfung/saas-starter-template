@@ -60,8 +60,7 @@ const proPlan = {
 };
 
 vi.mock('@workspace/auth/plans', async (importOriginal) => {
-  const original =
-    await importOriginal<typeof import('@workspace/auth/plans')>();
+  const original = await importOriginal<Record<string, unknown>>();
   return {
     ...original,
     // getUpgradePlans is re-configured per-test as needed; default returns proPlan.
