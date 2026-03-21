@@ -1,18 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createMockSessionResponse } from '@workspace/test-utils';
 import { mockDbChain, mockDbInsertChain } from '../../mocks/db';
 import {
   getNotificationPreferencesForUser,
+  requireVerifiedSession,
   upsertNotificationPreferencesForUser,
 } from '@/account/notification-preferences.server';
 
-const { dbSelectMock, dbInsertMock } = vi.hoisted(() => ({
-  dbSelectMock: vi.fn(),
-  dbInsertMock: vi.fn(),
-}));
+const { dbSelectMock, dbInsertMock, getSessionMock, getRequestHeadersMock } =
+  vi.hoisted(() => ({
+    dbSelectMock: vi.fn(),
+    dbInsertMock: vi.fn(),
+    getSessionMock: vi.fn(),
+    getRequestHeadersMock: vi.fn().mockReturnValue(new Headers()),
+  }));
 
 vi.mock('@/init', () => ({
   db: { select: dbSelectMock, insert: dbInsertMock },
-  auth: { api: {} },
+  auth: { api: { getSession: getSessionMock } },
 }));
 
 vi.mock('@workspace/db/schema', () => ({
@@ -32,10 +37,12 @@ vi.mock('drizzle-orm', async (importOriginal) => {
 
 // Mock server-only dependencies that notification-preferences.server.ts imports.
 vi.mock('@tanstack/react-start/server', () => ({
-  getRequestHeaders: vi.fn(),
+  getRequestHeaders: getRequestHeadersMock,
 }));
 vi.mock('@tanstack/react-router', () => ({
-  redirect: vi.fn(),
+  redirect: vi.fn((opts: unknown) => {
+    throw opts;
+  }),
 }));
 
 describe('getNotificationPreferencesForUser', () => {
@@ -90,5 +97,28 @@ describe('upsertNotificationPreferencesForUser', () => {
     });
     expect(dbInsertMock).toHaveBeenCalled();
     expect(result.marketingEmails).toBe(true);
+  });
+});
+
+describe('requireVerifiedSession', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getRequestHeadersMock.mockReturnValue(new Headers());
+  });
+
+  it('returns session for verified user', async () => {
+    const session = createMockSessionResponse();
+    getSessionMock.mockResolvedValue(session);
+
+    const result = await requireVerifiedSession();
+    expect(result).toEqual(session);
+  });
+
+  it('redirects when no session', async () => {
+    getSessionMock.mockResolvedValue(null);
+
+    await expect(requireVerifiedSession()).rejects.toEqual(
+      expect.objectContaining({ to: '/signin' })
+    );
   });
 });
