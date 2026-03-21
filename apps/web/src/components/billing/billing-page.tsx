@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { getUpgradePlan } from '@workspace/auth/plans';
+import { getUpgradePlans } from '@workspace/auth/plans';
 import { Card, CardContent } from '@workspace/ui/components/card';
 import { BillingDowngradeBanner } from './billing-downgrade-banner';
 import { BillingInvoiceTable } from './billing-invoice-table';
@@ -24,7 +24,8 @@ const BILLING_DATA_QUERY_KEY = ['billing', 'data'] as const;
 
 export function BillingPage() {
   const queryClient = useQueryClient();
-  const [isAnnual, setIsAnnual] = useState(false);
+  const [annualByPlan, setAnnualByPlan] = useState<Record<PlanId, boolean>>({});
+  const [upgradingPlanId, setUpgradingPlanId] = useState<PlanId | null>(null);
 
   const billingQuery = useQuery({
     queryKey: BILLING_DATA_QUERY_KEY,
@@ -51,6 +52,9 @@ export function BillingPage() {
   const upgradeMutation = useMutation({
     mutationFn: ({ planId, annual }: { planId: PlanId; annual: boolean }) =>
       createCheckoutSession({ data: { planId, annual } }),
+    onMutate: ({ planId }) => {
+      setUpgradingPlanId(planId);
+    },
     onSuccess: (result) => {
       if (result.url) {
         window.location.href = result.url;
@@ -58,6 +62,9 @@ export function BillingPage() {
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to start checkout.');
+    },
+    onSettled: () => {
+      setUpgradingPlanId(null);
     },
   });
 
@@ -76,7 +83,7 @@ export function BillingPage() {
   if (billingQuery.isPending || !billingQuery.data) return null;
 
   const { plan: currentPlan, subscription } = billingQuery.data;
-  const upgradePlan = getUpgradePlan(currentPlan);
+  const upgradePlans = getUpgradePlans(currentPlan);
 
   // Stripe Flexible Billing uses cancelAt instead of cancelAtPeriodEnd.
   // Check both to match Better Auth's isPendingCancel logic.
@@ -101,16 +108,18 @@ export function BillingPage() {
 
       <BillingPlanCards
         currentPlan={currentPlan}
-        upgradePlan={upgradePlan}
+        upgradePlans={upgradePlans}
         nextBillingDate={periodEnd}
-        isAnnual={isAnnual}
-        onToggleInterval={setIsAnnual}
+        annualByPlan={annualByPlan}
+        onToggleInterval={(planId, annual) =>
+          setAnnualByPlan((prev) => ({ ...prev, [planId]: annual }))
+        }
         onManage={() => manageMutation.mutate()}
-        onUpgrade={(id) =>
-          upgradeMutation.mutate({ planId: id, annual: isAnnual })
+        onUpgrade={(planId, annual) =>
+          upgradeMutation.mutate({ planId, annual })
         }
         isManaging={manageMutation.isPending}
-        isUpgrading={upgradeMutation.isPending}
+        upgradingPlanId={upgradingPlanId}
       />
 
       <Card>
