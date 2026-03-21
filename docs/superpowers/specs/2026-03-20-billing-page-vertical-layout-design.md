@@ -47,23 +47,53 @@ The existing `getUpgradePlan()` remains unchanged (used elsewhere).
 
 #### `apps/web/src/components/billing/billing-plan-cards.tsx`
 
-**Interface change:**
+**New interface:**
 
-- Replace `upgradePlan: Plan | null` with `upgradePlans: Array<Plan>`.
-- The `isAnnual` / `onToggleInterval` props change from a single boolean to per-plan state. The parent component manages `Record<PlanId, boolean>` instead of a single `boolean`.
+```ts
+interface BillingPlanCardsProps {
+  currentPlan: Plan;
+  upgradePlans: Array<Plan>;
+  nextBillingDate: Date | null;
+  annualByPlan: Record<PlanId, boolean>;
+  onToggleInterval: (planId: PlanId, annual: boolean) => void;
+  onManage: () => void;
+  onUpgrade: (planId: PlanId, annual: boolean) => void;
+  isManaging: boolean;
+  upgradingPlanId: PlanId | null;
+}
+```
+
+Key changes from current interface:
+
+- `upgradePlan: Plan | null` → `upgradePlans: Array<Plan>`.
+- `isAnnual: boolean` → `annualByPlan: Record<PlanId, boolean>` — per-plan toggle state.
+- `onToggleInterval` now takes `(planId, annual)` so the parent knows which plan's toggle changed.
+- `onUpgrade` now takes `(planId, annual)` — the card passes its own toggle value directly, eliminating the need for the parent to look it up.
+- `isUpgrading: boolean` → `upgradingPlanId: PlanId | null` — tracks which specific plan is upgrading. All upgrade buttons are disabled during checkout (only one checkout can happen at a time), but only the active card shows "Redirecting..." text.
 
 **Rendering:**
 
 - Outer container changes from grid to `flex flex-col gap-4`.
 - Current plan card: unchanged.
-- Upgrade cards: `.map()` over `upgradePlans`, rendering one card per plan.
+- Upgrade cards: `.map()` over `upgradePlans`, rendering one card per plan. Each card reads `annualByPlan[plan.id]` for its toggle state.
 - Custom plan card: shown when `upgradePlans.length === 0`.
 
 #### `apps/web/src/components/billing/billing-page.tsx`
 
-- Import `getUpgradePlans` instead of (or in addition to) `getUpgradePlan`.
-- Change `isAnnual` state from `boolean` to `Record<PlanId, boolean>` to track per-card toggle state.
-- Pass `upgradePlans` array and per-plan toggle handlers to `BillingPlanCards`.
+- Import `getUpgradePlans` instead of `getUpgradePlan`.
+- Change `isAnnual` state from `boolean` to `Record<PlanId, boolean>`, initialized with all upgrade plans defaulting to `false` (monthly):
+  ```ts
+  const [annualByPlan, setAnnualByPlan] = useState<Record<PlanId, boolean>>({});
+  // Toggle handler:
+  const handleToggleInterval = (planId: PlanId, annual: boolean) =>
+    setAnnualByPlan((prev) => ({ ...prev, [planId]: annual }));
+  ```
+  Missing keys default to `false` via `annualByPlan[planId] ?? false` in the cards component.
+- Track `upgradingPlanId` from the mutation state (set on mutate, clear on settle).
+- `onUpgrade` receives `(planId, annual)` directly from the card, no lookup needed:
+  ```ts
+  onUpgrade={(planId, annual) => upgradeMutation.mutate({ planId, annual })}
+  ```
 
 ### Edge Cases
 
