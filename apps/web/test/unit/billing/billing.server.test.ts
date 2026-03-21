@@ -4,8 +4,10 @@ import {
   createCheckoutForPlan,
   createUserBillingPortal,
   getBillingData,
+  getUserActivePlanId,
   getUserPlanContext,
   reactivateUserSubscription,
+  requireVerifiedSession,
 } from '@/billing/billing.server';
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────
@@ -19,6 +21,7 @@ const {
   countOwnedWorkspacesMock,
   countWorkspaceMembersMock,
   getWorkspaceOwnerUserIdMock,
+  getRequestHeadersMock,
 } = vi.hoisted(() => ({
   listActiveSubscriptionsMock: vi.fn(),
   createBillingPortalMock: vi.fn(),
@@ -28,6 +31,7 @@ const {
   countOwnedWorkspacesMock: vi.fn(),
   countWorkspaceMembersMock: vi.fn(),
   getWorkspaceOwnerUserIdMock: vi.fn(),
+  getRequestHeadersMock: vi.fn().mockReturnValue(new Headers()),
 }));
 
 // ── Module mocks ───────────────────────────────────────────────────────────
@@ -50,11 +54,13 @@ vi.mock('@/init', () => ({
 }));
 
 vi.mock('@tanstack/react-start/server', () => ({
-  getRequestHeaders: vi.fn(),
+  getRequestHeaders: getRequestHeadersMock,
 }));
 
 vi.mock('@tanstack/react-router', () => ({
-  redirect: vi.fn(),
+  redirect: vi.fn((opts: unknown) => {
+    throw opts;
+  }),
 }));
 
 const TEST_HEADERS = new Headers();
@@ -393,6 +399,57 @@ describe('billing.server', () => {
         body: {
           returnUrl: expect.stringContaining('/billing'),
         },
+      });
+    });
+  });
+
+  // ── requireVerifiedSession ────────────────────────────────────────────
+
+  describe('requireVerifiedSession', () => {
+    it('returns session for verified user', async () => {
+      getRequestHeadersMock.mockReturnValue(new Headers());
+      getSessionMock.mockResolvedValue({
+        user: { id: 'user_123', emailVerified: true },
+        session: { id: 'session_1' },
+      });
+
+      const session = await requireVerifiedSession();
+
+      expect(session.user.id).toBe('user_123');
+    });
+
+    it('throws redirect when no session', async () => {
+      getRequestHeadersMock.mockReturnValue(new Headers());
+      getSessionMock.mockResolvedValue(null);
+
+      await expect(requireVerifiedSession()).rejects.toEqual(
+        expect.objectContaining({ to: '/signin' })
+      );
+    });
+  });
+
+  // ── getUserActivePlanId ─────────────────────────────────────────────
+
+  describe('getUserActivePlanId', () => {
+    it('returns free plan when no subscriptions', async () => {
+      listActiveSubscriptionsMock.mockResolvedValue([]);
+
+      const planId = await getUserActivePlanId(TEST_HEADERS, TEST_USER_ID);
+
+      expect(planId).toBe('free');
+    });
+
+    it('delegates to resolveUserPlanId with subscription array', async () => {
+      listActiveSubscriptionsMock.mockResolvedValue([
+        { plan: 'pro', status: 'active' },
+      ]);
+
+      const planId = await getUserActivePlanId(TEST_HEADERS, TEST_USER_ID);
+
+      expect(planId).toBe('pro');
+      expect(listActiveSubscriptionsMock).toHaveBeenCalledWith({
+        headers: TEST_HEADERS,
+        query: { referenceId: TEST_USER_ID },
       });
     });
   });
