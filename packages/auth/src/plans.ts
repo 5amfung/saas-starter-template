@@ -182,6 +182,15 @@ export function getUpgradePlan(currentPlan: Plan): Plan | null {
 }
 
 /**
+ * Returns all plans above the current plan's tier, sorted by tier ascending.
+ */
+export function getUpgradePlans(currentPlan: Plan): Array<Plan> {
+  return PLANS.filter((p) => p.tier > currentPlan.tier).sort(
+    (a, b) => a.tier - b.tier
+  );
+}
+
+/**
  * Resolves a user's effective plan from a list of subscriptions.
  * Filters to active/trialing subscriptions, then picks the highest tier.
  * Falls back to FREE_PLAN_ID if no active subscriptions exist.

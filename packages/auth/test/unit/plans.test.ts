@@ -9,6 +9,7 @@ import {
   getPlanFeatures,
   getPlanLimitsForPlanId,
   getUpgradePlan,
+  getUpgradePlans,
   resolveUserPlanId,
 } from '../../src/plans';
 
@@ -88,6 +89,29 @@ describe('getUpgradePlan', () => {
     const pro = getPlanById('pro')!;
     const upgrade = getUpgradePlan(pro);
     expect(upgrade).toBeNull();
+  });
+});
+
+describe('getUpgradePlans', () => {
+  it('returns all higher-tier plans for free plan', () => {
+    const free = getPlanById('free')!;
+    const upgrades = getUpgradePlans(free);
+    expect(upgrades).toHaveLength(2);
+    expect(upgrades[0].id).toBe('starter');
+    expect(upgrades[1].id).toBe('pro');
+  });
+
+  it('returns only pro for starter plan', () => {
+    const starter = getPlanById('starter')!;
+    const upgrades = getUpgradePlans(starter);
+    expect(upgrades).toHaveLength(1);
+    expect(upgrades[0].id).toBe('pro');
+  });
+
+  it('returns empty array for highest tier plan', () => {
+    const pro = getPlanById('pro')!;
+    const upgrades = getUpgradePlans(pro);
+    expect(upgrades).toHaveLength(0);
   });
 });
 
