@@ -24,7 +24,9 @@ const BILLING_DATA_QUERY_KEY = ['billing', 'data'] as const;
 
 export function BillingPage() {
   const queryClient = useQueryClient();
-  const [annualByPlan, setAnnualByPlan] = useState<Record<PlanId, boolean>>({});
+  const [annualByPlan, setAnnualByPlan] = useState<
+    Partial<Record<PlanId, boolean>>
+  >({});
   const [upgradingPlanId, setUpgradingPlanId] = useState<PlanId | null>(null);
 
   const billingQuery = useQuery({

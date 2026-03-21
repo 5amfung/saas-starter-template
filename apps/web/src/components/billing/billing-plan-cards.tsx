@@ -18,7 +18,7 @@ interface BillingPlanCardsProps {
   /** Next billing date for paid plans. null for free tier. */
   nextBillingDate: Date | null;
   /** Per-plan annual toggle state. Missing keys default to monthly. */
-  annualByPlan: Record<PlanId, boolean>;
+  annualByPlan: Partial<Record<PlanId, boolean>>;
   onToggleInterval: (planId: PlanId, annual: boolean) => void;
   onManage: () => void;
   onUpgrade: (planId: PlanId, annual: boolean) => void;
