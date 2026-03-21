@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ensureActiveWorkspaceForSession,
   ensureWorkspaceMembership,
+  listUserWorkspaces,
 } from '@/workspace/workspace.server';
 
 const { listOrganizationsMock, setActiveOrganizationMock } = vi.hoisted(() => ({
@@ -171,5 +172,50 @@ describe('workspace.server', () => {
     ).rejects.toBeInstanceOf(APIError);
 
     consoleSpy.mockRestore();
+  });
+
+  describe('listUserWorkspaces', () => {
+    it('returns workspaces from auth API', async () => {
+      const workspaces = [
+        { id: 'org_1', name: 'WS 1' },
+        { id: 'org_2', name: 'WS 2' },
+      ];
+      listOrganizationsMock.mockResolvedValueOnce(workspaces);
+
+      const result = await listUserWorkspaces(new Headers());
+
+      expect(result).toEqual(workspaces);
+      expect(listOrganizationsMock).toHaveBeenCalledWith({
+        headers: expect.any(Headers),
+      });
+    });
+  });
+
+  describe('ensureWorkspaceMembership', () => {
+    it('returns workspace when user is a member', async () => {
+      listOrganizationsMock.mockResolvedValueOnce([
+        { id: 'org_target', name: 'Target WS' },
+      ]);
+
+      const workspace = await ensureWorkspaceMembership(
+        new Headers(),
+        'org_target'
+      );
+
+      expect(workspace).toEqual({ id: 'org_target', name: 'Target WS' });
+    });
+
+    it('throws NOT_FOUND for empty workspace list', async () => {
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+      listOrganizationsMock.mockResolvedValueOnce([]);
+
+      await expect(
+        ensureWorkspaceMembership(new Headers(), 'org_missing')
+      ).rejects.toBeInstanceOf(APIError);
+
+      consoleSpy.mockRestore();
+    });
   });
 });
