@@ -15,6 +15,23 @@ import {
 } from '@workspace/ui/components/select';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 
+// Static class maps keyed by breakpoint to avoid dynamic Tailwind class interpolation,
+// which would cause classes to be pruned in production builds.
+const BREAKPOINT_CLASSES = {
+  md: {
+    hiddenUntilBp: 'hidden md:flex',
+    countContainer: '',
+    outerContainer: '',
+    navContainer: '',
+  },
+  lg: {
+    hiddenUntilBp: 'hidden lg:flex',
+    countContainer: 'hidden flex-1 lg:flex',
+    outerContainer: 'w-full lg:w-fit',
+    navContainer: 'ml-auto lg:ml-0',
+  },
+} as const;
+
 interface TablePaginationProps {
   page: number;
   totalPages: number;
@@ -43,24 +60,21 @@ export function TablePagination({
   onPageSizeChange,
 }: TablePaginationProps) {
   const totalPagesSafe = Math.max(1, totalPages);
-  const bp = responsiveBreakpoint;
-  const hiddenUntilBp = `hidden ${bp}:flex`;
+  const classes = BREAKPOINT_CLASSES[responsiveBreakpoint];
 
   return (
     <div className="flex items-center justify-between gap-4 px-1">
       <div
-        className={`text-sm text-muted-foreground ${bp === 'lg' ? 'hidden flex-1 lg:flex' : ''}`}
+        className={`text-sm text-muted-foreground ${classes.countContainer}`}
       >
         {isLoading ? (
-          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-20" />
         ) : (
           `${totalCount} ${countLabel}${totalCount === 1 ? '' : 's'}`
         )}
       </div>
-      <div
-        className={`flex items-center gap-6 ${bp === 'lg' ? 'w-full lg:w-fit' : ''}`}
-      >
-        <div className={`${hiddenUntilBp} items-center gap-2`}>
+      <div className={`flex items-center gap-6 ${classes.outerContainer}`}>
+        <div className={`${classes.hiddenUntilBp} items-center gap-2`}>
           <Label htmlFor={selectId} className="text-sm font-medium">
             Rows per page
           </Label>
@@ -87,13 +101,11 @@ export function TablePagination({
         <div className="text-sm font-medium">
           {`Page ${page} of ${totalPagesSafe}`}
         </div>
-        <div
-          className={`flex items-center gap-2 ${bp === 'lg' ? 'ml-auto lg:ml-0' : ''}`}
-        >
+        <div className={`flex items-center gap-2 ${classes.navContainer}`}>
           <Button
             variant="outline"
             size="icon"
-            className={hiddenUntilBp}
+            className={classes.hiddenUntilBp}
             onClick={() => onPageChange(1)}
             disabled={isLoading || page <= 1}
           >
@@ -121,7 +133,7 @@ export function TablePagination({
           <Button
             variant="outline"
             size="icon"
-            className={hiddenUntilBp}
+            className={classes.hiddenUntilBp}
             onClick={() => onPageChange(totalPagesSafe)}
             disabled={isLoading || page >= totalPagesSafe}
           >

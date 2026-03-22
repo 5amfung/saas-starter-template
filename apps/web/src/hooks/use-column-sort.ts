@@ -4,6 +4,7 @@ import type { SortingState } from '@tanstack/react-table';
 /**
  * Hook that returns a memoized sort cycling callback.
  * Cycles: none → asc → desc → none.
+ * Always produces single-column sort; any prior sort state is replaced.
  */
 export function useColumnSort(
   sorting: SortingState,
