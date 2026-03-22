@@ -1,9 +1,24 @@
 import { IconLoader2 } from '@tabler/icons-react';
 import { Button } from '@workspace/ui/components/button';
-import type { FormApi } from '@tanstack/react-form';
+import type { ReactFormExtendedApi } from '@tanstack/react-form';
+
+type AnyReactFormApi = ReactFormExtendedApi<
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any
+>;
 
 interface FormSubmitButtonProps {
-  form: FormApi<any, any>;
+  form: AnyReactFormApi;
   label: string;
   disabled?: boolean;
 }

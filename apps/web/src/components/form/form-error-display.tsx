@@ -1,8 +1,23 @@
-import type { FormApi } from '@tanstack/react-form';
+import type { ReactFormExtendedApi } from '@tanstack/react-form';
 import { FormError } from '@/components/auth/form-error';
 
+type AnyReactFormApi = ReactFormExtendedApi<
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  any
+>;
+
 interface FormErrorDisplayProps {
-  form: FormApi<any, any>;
+  form: AnyReactFormApi;
 }
 
 export function FormErrorDisplay({ form }: FormErrorDisplayProps) {
