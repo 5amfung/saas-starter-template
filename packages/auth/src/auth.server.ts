@@ -195,7 +195,7 @@ export function createAuth(config: AuthConfig) {
         stripeClient,
         stripeWebhookSecret: config.stripe.webhookSecret,
         createCustomerOnSignUp: true,
-        onCustomerCreate: ({ stripeCustomer, user }) => {
+        onCustomerCreate: async ({ stripeCustomer, user }) => {
           log(
             'info',
             `Stripe customer ${stripeCustomer.id} created for user ${user.id} on signup`
@@ -209,33 +209,36 @@ export function createAuth(config: AuthConfig) {
         subscription: {
           enabled: true,
           plans: stripePlans,
-          onSubscriptionComplete: ({ subscription, plan }) => {
+          onSubscriptionComplete: async ({ subscription, plan }) => {
             log('info', 'subscription complete', {
               ...buildSubscriptionLogPayload(subscription),
               planName: plan.name,
             });
           },
-          onSubscriptionCreated: ({ subscription, plan }) => {
+          onSubscriptionCreated: async ({ subscription, plan }) => {
             log('info', 'subscription created', {
               ...buildSubscriptionLogPayload(subscription),
               planName: plan.name,
             });
           },
-          onSubscriptionUpdate: ({ subscription }) => {
+          onSubscriptionUpdate: async ({ subscription }) => {
             log(
               'info',
               'subscription updated',
               buildSubscriptionLogPayload(subscription)
             );
           },
-          onSubscriptionCancel: ({ subscription, cancellationDetails }) => {
+          onSubscriptionCancel: async ({
+            subscription,
+            cancellationDetails,
+          }) => {
             log('info', 'subscription canceled', {
               ...buildSubscriptionLogPayload(subscription),
               reason: cancellationDetails?.reason,
               feedback: cancellationDetails?.feedback,
             });
           },
-          onSubscriptionDeleted: ({ subscription }) => {
+          onSubscriptionDeleted: async ({ subscription }) => {
             log(
               'info',
               'subscription deleted',
@@ -293,11 +296,11 @@ export function createAuth(config: AuthConfig) {
               }
             }
           },
-          beforeUpdateOrganization: ({ organization }) => {
+          beforeUpdateOrganization: async ({ organization }) => {
             if (!isRecord(organization)) return;
             validateWorkspaceFields(organization, 'update');
           },
-          beforeDeleteOrganization: ({ organization }) => {
+          beforeDeleteOrganization: async ({ organization }) => {
             if (isPersonalWorkspace(organization)) {
               throw new APIError('BAD_REQUEST', {
                 message: 'Personal workspace can not be deleted',
