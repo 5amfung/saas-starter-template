@@ -1,9 +1,7 @@
 import { APIError } from 'better-auth/api';
+import { isRecord } from '@workspace/auth';
 import { auth } from '@/init';
 import { pickDefaultWorkspace } from '@/workspace/workspace';
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null;
 
 const getActiveOrganizationId = (session: unknown): string | null => {
   if (!isRecord(session)) return null;

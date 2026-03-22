@@ -1,5 +1,6 @@
 import { APIError } from 'better-auth/api';
 import {
+  isRecord,
   PERSONAL_WORKSPACE_TYPE,
   STANDARD_WORKSPACE_TYPE,
   WORKSPACE_TYPES,
@@ -14,8 +15,7 @@ export const isWorkspaceType = (value: unknown): value is WorkspaceType =>
 export const asOptionalString = (value: unknown): string | undefined =>
   typeof value === 'string' && value.length > 0 ? value : undefined;
 
-export const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null;
+export { isRecord };
 
 export const validateWorkspaceFields = (
   organization: Record<string, unknown>,

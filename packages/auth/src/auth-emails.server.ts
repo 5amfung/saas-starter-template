@@ -16,6 +16,9 @@ interface AuthEmailDeps {
 export function createAuthEmails(deps: AuthEmailDeps) {
   const { emailClient, getRequestHeaders, baseUrl } = deps;
 
+  const getRequestContext = () =>
+    buildEmailRequestContext(getRequestHeaders?.());
+
   const sendChangeEmailConfirmation = async ({
     user,
     newEmail,
@@ -25,7 +28,7 @@ export function createAuthEmails(deps: AuthEmailDeps) {
     newEmail: string;
     url: string;
   }) => {
-    const requestContext = buildEmailRequestContext(getRequestHeaders?.());
+    const requestContext = getRequestContext();
     await emailClient.sendEmail({
       to: user.email,
       subject: 'Approve your email change',
@@ -45,7 +48,7 @@ export function createAuthEmails(deps: AuthEmailDeps) {
     user: { email: string };
     url: string;
   }) => {
-    const requestContext = buildEmailRequestContext(getRequestHeaders?.());
+    const requestContext = getRequestContext();
     await emailClient.sendEmail({
       to: user.email,
       subject: 'Reset your password',
@@ -64,7 +67,7 @@ export function createAuthEmails(deps: AuthEmailDeps) {
     user: { email: string };
     url: string;
   }) => {
-    const requestContext = buildEmailRequestContext(getRequestHeaders?.());
+    const requestContext = getRequestContext();
     await emailClient.sendEmail({
       to: user.email,
       subject: 'Verify your email address',
