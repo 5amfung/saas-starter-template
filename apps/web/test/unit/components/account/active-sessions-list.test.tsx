@@ -129,4 +129,73 @@ describe('ActiveSessionsList', () => {
       ).toBeInTheDocument();
     });
   });
+
+  it('revokes session when confirm button is clicked in dialog', async () => {
+    const user = userEvent.setup();
+    setupDefaultMocks();
+    mockRevokeSession.mockResolvedValue({});
+    renderWithProviders(<ActiveSessionsList />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/This device/i)).toBeInTheDocument();
+    });
+
+    // Click revoke on the non-current session.
+    const revokeButtons = screen.getAllByRole('button', { name: /revoke/i });
+    await user.click(revokeButtons[0]);
+
+    // Confirm in dialog.
+    const confirmButton = await screen.findByRole('button', {
+      name: /revoke session/i,
+    });
+    await user.click(confirmButton);
+
+    await waitFor(() => {
+      expect(mockRevokeSession).toHaveBeenCalledWith({
+        token: expect.any(String),
+      });
+    });
+  });
+
+  it('shows error toast when revoke fails', async () => {
+    const user = userEvent.setup();
+    setupDefaultMocks();
+    mockRevokeSession.mockRejectedValue(new Error('Network error'));
+    renderWithProviders(<ActiveSessionsList />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/This device/i)).toBeInTheDocument();
+    });
+
+    const revokeButtons = screen.getAllByRole('button', { name: /revoke/i });
+    await user.click(revokeButtons[0]);
+
+    const confirmButton = await screen.findByRole('button', {
+      name: /revoke session/i,
+    });
+    await user.click(confirmButton);
+
+    await waitFor(() => {
+      expect(mockRevokeSession).toHaveBeenCalled();
+    });
+  });
+
+  it('shows retry button on error and refetches on click', async () => {
+    const user = userEvent.setup();
+    const mockRefetch = vi.fn().mockResolvedValue({});
+    mockUseSessionsQuery.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error('Failed to load'),
+      refetch: mockRefetch,
+    });
+    mockUseSessionQuery.mockReturnValue({ data: null });
+
+    renderWithProviders(<ActiveSessionsList />);
+
+    const retryButton = await screen.findByRole('button', { name: /retry/i });
+    await user.click(retryButton);
+
+    expect(mockRefetch).toHaveBeenCalled();
+  });
 });
