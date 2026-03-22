@@ -109,7 +109,7 @@ describe('useInvitationsTable', () => {
   });
 
   describe('pagination', () => {
-    it('defaults to page 1', async () => {
+    it('defaults to page 1', () => {
       setupQuery();
       const { result } = renderHook(() => useInvitationsTable(WORKSPACE_ID), {
         wrapper: createHookWrapper(),
@@ -117,7 +117,7 @@ describe('useInvitationsTable', () => {
       expect(result.current.page).toBe(1);
     });
 
-    it('resets page to 1 when pageSize changes', async () => {
+    it('resets page to 1 when pageSize changes', () => {
       setupQuery();
       const { result } = renderHook(() => useInvitationsTable(WORKSPACE_ID), {
         wrapper: createHookWrapper(),
@@ -134,7 +134,7 @@ describe('useInvitationsTable', () => {
       expect(result.current.page).toBe(1);
     });
 
-    it('resets page to 1 when sorting changes', async () => {
+    it('resets page to 1 when sorting changes', () => {
       setupQuery();
       const { result } = renderHook(() => useInvitationsTable(WORKSPACE_ID), {
         wrapper: createHookWrapper(),

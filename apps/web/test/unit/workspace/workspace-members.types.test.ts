@@ -10,7 +10,7 @@ describe('withPendingId', () => {
       if (value !== null) actionOrder.push('set');
     });
 
-    await withPendingId(setter, 'id-1', async () => {
+    await withPendingId(setter, 'id-1', () => {
       actionOrder.push('action');
     });
 
@@ -20,7 +20,7 @@ describe('withPendingId', () => {
 
   it('clears pending ID after successful action', async () => {
     const setter = vi.fn();
-    await withPendingId(setter, 'id-1', async () => {});
+    await withPendingId(setter, 'id-1', () => {});
     expect(setter).toHaveBeenCalledTimes(2);
     expect(setter).toHaveBeenLastCalledWith(null);
   });
@@ -30,7 +30,7 @@ describe('withPendingId', () => {
     const error = new Error('boom');
 
     await expect(
-      withPendingId(setter, 'id-1', async () => {
+      withPendingId(setter, 'id-1', () => {
         throw error;
       })
     ).rejects.toThrow('boom');

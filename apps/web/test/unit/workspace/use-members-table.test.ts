@@ -108,7 +108,7 @@ describe('useMembersTable', () => {
       });
     });
 
-    it('returns currentUserId from session', async () => {
+    it('returns currentUserId from session', () => {
       const { result } = renderHook(() => useMembersTable(WORKSPACE_ID), {
         wrapper: createHookWrapper(),
       });
@@ -128,7 +128,7 @@ describe('useMembersTable', () => {
   });
 
   describe('pagination', () => {
-    it('resets page to 1 when pageSize changes', async () => {
+    it('resets page to 1 when pageSize changes', () => {
       const { result } = renderHook(() => useMembersTable(WORKSPACE_ID), {
         wrapper: createHookWrapper(),
       });
@@ -144,7 +144,7 @@ describe('useMembersTable', () => {
       expect(result.current.page).toBe(1);
     });
 
-    it('resets page to 1 when sorting changes', async () => {
+    it('resets page to 1 when sorting changes', () => {
       const { result } = renderHook(() => useMembersTable(WORKSPACE_ID), {
         wrapper: createHookWrapper(),
       });

@@ -83,7 +83,7 @@ describe('withPendingId', () => {
     const setPendingId = vi.fn().mockImplementation((id) => {
       callOrder.push(id === null ? 'clear' : 'set');
     });
-    const action = vi.fn().mockImplementation(async () => {
+    const action = vi.fn().mockImplementation(() => {
       callOrder.push('action');
     });
 
