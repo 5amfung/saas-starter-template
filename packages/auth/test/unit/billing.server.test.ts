@@ -183,6 +183,43 @@ describe('createBillingHelpers', () => {
       expect(result).toEqual([]);
       expect(stripeInvoicesListMock).not.toHaveBeenCalled();
     });
+
+    it('returns mapped invoices when user has stripeCustomerId', async () => {
+      mockDbChain(dbSelectMock, [{ stripeCustomerId: 'cus_123' }]);
+      stripeInvoicesListMock.mockResolvedValue({
+        data: [
+          {
+            id: 'inv_1',
+            created: 1700000000,
+            status: 'paid',
+            amount_paid: 2000,
+            currency: 'usd',
+            hosted_invoice_url: 'https://stripe.com/inv/1',
+            invoice_pdf: 'https://stripe.com/inv/1.pdf',
+          },
+        ],
+      });
+
+      const result = await helpers.getInvoicesForUser('user-1');
+
+      expect(stripeInvoicesListMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customer: 'cus_123',
+          limit: 100,
+        })
+      );
+      expect(result).toEqual([
+        {
+          id: 'inv_1',
+          date: 1700000000,
+          status: 'paid',
+          amount: 2000,
+          currency: 'usd',
+          invoiceUrl: 'https://stripe.com/inv/1',
+          invoicePdf: 'https://stripe.com/inv/1.pdf',
+        },
+      ]);
+    });
   });
 
   describe('composability — resolveUserPlanIdFromDb + countOwnedWorkspaces', () => {
