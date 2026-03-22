@@ -27,12 +27,28 @@ Coverage analysis revealed an overall **83.4% statement / 73.7% branch** coverag
 
 **Mocks needed:** `@tanstack/react-start` (`createMiddleware`), `@tanstack/react-start/server` (`getRequestHeaders`).
 
-**Strategy:** Since `createMiddleware` returns a builder object, we need to either:
+**Strategy:** Mock `createMiddleware` to capture the server callback and invoke it directly:
 
-- (a) Mock it to capture the server callback and invoke it directly, or
-- (b) Test at the integration level by calling the middleware's handler.
+```ts
+let capturedServerFn: (opts: { next: () => Promise<void> }) => Promise<void>;
 
-Option (a) is cleaner — mock `createMiddleware` to return a spy that captures the server function, then invoke the captured function with a mock `next`.
+vi.mock('@tanstack/react-start', () => ({
+  createMiddleware: () => ({
+    server: (fn: typeof capturedServerFn) => {
+      capturedServerFn = fn;
+      return { handler: fn };
+    },
+  }),
+}));
+
+vi.mock('@tanstack/react-start/server', () => ({
+  getRequestHeaders: vi.fn(() => new Headers({ cookie: 'test' })),
+}));
+```
+
+Then test by calling `capturedServerFn({ next: mockNext })` and asserting `next()` was called (or that the error propagated). The existing `@/init` mock from the helper tests must also be carried over.
+
+**Note:** The helper functions (`validateAuthSession`, etc.) are already thoroughly tested. These wrapper tests cover only the thin `createMiddleware` → `getRequestHeaders` → delegate → `next()` glue. If this proves overly complex during implementation, the wrapper lines (3-4 per middleware) may be excluded from coverage scope since all business logic is tested via the helpers.
 
 ### 2. Account Components (apps/web)
 
@@ -58,7 +74,7 @@ Option (a) is cleaner — mock `createMiddleware` to return a spy that captures 
 - Disconnect success: render with linked Google account → click "Disconnect" → confirm in dialog → assert `authClient.unlinkAccount` called, `toast.success` fires, queries invalidated.
 - Disconnect error: mock `authClient.unlinkAccount` to reject → assert `toast.error` fires.
 - Disconnect dialog cancel: open dialog → close without confirming → assert state resets.
-- `link_error` URL param: render with `link_error` search param → assert `toast.error` called with mapped message.
+- `link_error` URL param: set `window.location.search = '?link_error=1&error=email_mismatch'` via `Object.defineProperty` before rendering → assert `toast.error` called with the mapped error message → assert `window.history.replaceState` was called to clean up the params.
 - Connect error: mock `authClient.linkSocial` to return error → assert `toast.error` fires.
 
 ### 3. Workspace + Data Table (apps/web)
@@ -68,12 +84,10 @@ Option (a) is cleaner — mock `createMiddleware` to return a spy that captures 
 **File:** `src/components/workspace/workspace-invite-dialog.tsx`
 **Existing test:** `test/unit/components/workspace/workspace-invite-dialog.test.tsx`
 
-**New test cases:**
+**New test cases** (submit and pending-state tests already exist):
 
 - Role select: render with `open={true}` → change role via Select → assert `onRoleChange` called with valid role.
 - Role select guard: fire `onValueChange` with value not in `roles` → assert `onRoleChange` NOT called.
-- Submit: click "Send Invitation" → assert `onSubmit` called.
-- Pending state: render with `isPending={true}` → assert spinner visible and buttons disabled.
 
 #### 3b. `data-table.tsx` (71% → target 80%+)
 
@@ -86,8 +100,8 @@ Option (a) is cleaner — mock `createMiddleware` to return a spy that captures 
 - Pagination: click "Last page", "Previous page", "First page" buttons.
 - Pagination disabled states: on page 1, "Previous" and "First" are disabled; on last page, "Next" and "Last" are disabled.
 - Rows-per-page: change Select value → assert `table.setPageSize` called.
-- Mobile vs desktop: mock `useIsMobile` to `false` → open `TableCellViewer` drawer → assert chart block renders.
-- Mock `useIsMobile` to `true` → assert chart block absent.
+- Mobile vs desktop: mock `useIsMobile` to `false` → click a row's header button to open the `TableCellViewer` Drawer → assert chart container renders inside the drawer. Mock Recharts to avoid SVG complexity.
+- Mock `useIsMobile` to `true` → open the same drawer → assert chart container is absent.
 
 ### 4. New Test Files (apps/web)
 
@@ -98,10 +112,12 @@ Option (a) is cleaner — mock `createMiddleware` to return a spy that captures 
 
 **Test cases:**
 
-- Renders chart container with default 90d range.
-- Time range select: change to `'30d'` → assert filtered data reflects ~30 day window.
-- Time range select: change to `'7d'` → assert filtered data reflects ~7 day window.
-- Mobile default: mock `useIsMobile` → `true` → assert range defaults to `'7d'`.
+Mock Recharts to intercept the `data` prop passed to `AreaChart` (avoids SVG assertion complexity). The component uses a hardcoded `referenceDate` of `2024-06-30`, so filtering is deterministic.
+
+- Renders chart container with default 90d range — intercept `AreaChart` data prop and assert full dataset length.
+- Time range select: change to `'30d'` → assert `AreaChart` receives ~30 data points.
+- Time range select: change to `'7d'` → assert `AreaChart` receives ~7 data points.
+- Mobile default: mock `useIsMobile` → `true` → assert Select value is `'7d'` after initial render.
 
 #### 4b. `section-cards.tsx` (0% → target 100%)
 
@@ -129,6 +145,7 @@ Option (a) is cleaner — mock `createMiddleware` to return a spy that captures 
 - `isPersonalWorkspaceOwnedByUser({ workspaceType: 'personal', personalOwnerUserId: 'u1' }, 'u1')` → `true`
 - `isPersonalWorkspaceOwnedByUser({ workspaceType: 'personal', personalOwnerUserId: 'u2' }, 'u1')` → `false`
 - `buildPersonalWorkspaceSlug('ABC')` → `'personal-abc'`
+- `buildPersonalWorkspaceSlug('abc')` → `'personal-abc'` (already lowercase passthrough)
 
 #### 5b. `billing.server.ts` (81% → target 90%+)
 
@@ -137,8 +154,9 @@ Option (a) is cleaner — mock `createMiddleware` to return a spy that captures 
 
 **New test cases:**
 
-- `getInvoicesForUser` when user has `stripeCustomerId`: mock `stripeClient.invoices.list` → assert return shape with mapped fields.
-- `resolveSubscriptionDetails` edge cases: `cancelAtPeriodEnd: null` defaults to `false`.
+- `getInvoicesForUser` when user has `stripeCustomerId`: mock `stripeClient.invoices.list` → assert return shape with mapped fields (the success path at lines 81-90).
+
+Note: `resolveSubscriptionDetails` with `cancelAtPeriodEnd: null` → `false` is already tested in the existing test file (line 97-108).
 
 ### 6. Coverage Thresholds
 
@@ -164,6 +182,8 @@ Threshold values will be set based on the actual achieved coverage with a 2-3% b
 | apps/web       | 85%          | 75%             | 80%              |
 | packages/auth  | 90%          | 88%             | 88%              |
 | packages/email | 95%          | 95%             | 100%             |
+
+Email package is already at 100%/97%/100%/100% — no new tests needed, just adding the threshold config to lock in the current level.
 
 ## Testing Patterns
 
