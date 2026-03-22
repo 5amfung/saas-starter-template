@@ -4,7 +4,10 @@ import { validateAdminSession } from '@/middleware/admin';
 
 const { mockGetSession, mockGetRequestHeaders, capturedServerFns } = vi.hoisted(
   () => {
-    const capturedServerFns: Record<string, Function> = {};
+    const capturedServerFns: Record<
+      string,
+      (opts: { next: () => Promise<unknown> }) => Promise<unknown>
+    > = {};
     return {
       mockGetSession: vi.fn(),
       mockGetRequestHeaders: vi.fn(() => new Headers({ cookie: 'test' })),
@@ -23,7 +26,9 @@ vi.mock('@tanstack/react-start/server', () => ({
 
 vi.mock('@tanstack/react-start', () => ({
   createMiddleware: () => ({
-    server: (fn: Function) => {
+    server: (
+      fn: (opts: { next: () => Promise<unknown> }) => Promise<unknown>
+    ) => {
       const index = Object.keys(capturedServerFns).length;
       const key = `middleware_${index}`;
       capturedServerFns[key] = fn;

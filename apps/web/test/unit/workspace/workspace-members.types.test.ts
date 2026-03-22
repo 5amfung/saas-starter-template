@@ -12,6 +12,7 @@ describe('withPendingId', () => {
 
     await withPendingId(setter, 'id-1', () => {
       actionOrder.push('action');
+      return Promise.resolve();
     });
 
     expect(actionOrder).toEqual(['set', 'action']);
@@ -20,7 +21,7 @@ describe('withPendingId', () => {
 
   it('clears pending ID after successful action', async () => {
     const setter = vi.fn();
-    await withPendingId(setter, 'id-1', () => {});
+    await withPendingId(setter, 'id-1', () => Promise.resolve());
     expect(setter).toHaveBeenCalledTimes(2);
     expect(setter).toHaveBeenLastCalledWith(null);
   });

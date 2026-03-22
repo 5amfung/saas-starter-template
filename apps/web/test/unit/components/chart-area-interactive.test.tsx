@@ -112,7 +112,7 @@ describe('ChartAreaInteractive', () => {
     render(<ChartAreaInteractive />);
     expect(mockAreaChart).toHaveBeenCalled();
     const dataLength = (
-      mockAreaChart.mock.calls[0][0] as { data: Array<unknown> }
+      mockAreaChart.mock.calls[0][0] as unknown as { data: Array<unknown> }
     ).data.length;
     // The chart data spans 2024-04-01 to 2024-06-30 (91 days). The 90d filter
     // uses startDate = referenceDate(2024-06-30) - 90 days = 2024-04-01, so
@@ -127,7 +127,9 @@ describe('ChartAreaInteractive', () => {
     const lastCall =
       mockAreaChart.mock.calls[mockAreaChart.mock.calls.length - 1];
     // 7d from reference date 2024-06-30 yields entries from June 23–30 (8 entries).
-    expect((lastCall[0] as { data: Array<unknown> }).data.length).toBe(8);
+    expect(
+      (lastCall[0] as unknown as { data: Array<unknown> }).data.length
+    ).toBe(8);
   });
 
   it('renders chart container', () => {
