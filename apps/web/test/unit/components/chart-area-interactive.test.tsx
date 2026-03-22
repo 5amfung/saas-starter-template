@@ -15,15 +15,15 @@ const { mockUseIsMobile } = vi.hoisted(() => ({
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
 vi.mock('recharts', () => ({
-  Area: (props: Record<string, unknown>) => (
-    <div data-testid="area" {...props} />
+  Area: ({ children }: { children?: React.ReactNode }) => (
+    <g data-testid="area">{children}</g>
   ),
   AreaChart: (props: { children: React.ReactNode; data?: Array<unknown> }) => {
     mockAreaChart(props);
-    return <div data-testid="area-chart">{props.children}</div>;
+    return <svg data-testid="area-chart">{props.children}</svg>;
   },
-  CartesianGrid: () => <div />,
-  XAxis: () => <div />,
+  CartesianGrid: () => <g />,
+  XAxis: () => <g />,
   ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),

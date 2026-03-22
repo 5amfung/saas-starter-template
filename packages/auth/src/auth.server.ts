@@ -40,12 +40,12 @@ export interface AuthConfig {
   };
   adminUserIds?: Array<string>;
   trustedOrigins?: Array<string>;
-  /** Logger callback. Falls back to console.log when not provided. */
+  /** Logger callback. Falls back to console.log when not provided. May return a promise for async loggers. */
   logger?: (
     level: 'debug' | 'info' | 'warn' | 'error',
     message: string,
     meta?: Record<string, unknown>
-  ) => void;
+  ) => void | Promise<void>;
   /** Returns request headers in the current server context. Used by auth-emails to build email request context. */
   getRequestHeaders?: () => Headers;
 }
@@ -196,7 +196,7 @@ export function createAuth(config: AuthConfig) {
         stripeWebhookSecret: config.stripe.webhookSecret,
         createCustomerOnSignUp: true,
         onCustomerCreate: async ({ stripeCustomer, user }) => {
-          log(
+          await log(
             'info',
             `Stripe customer ${stripeCustomer.id} created for user ${user.id} on signup`
           );
@@ -210,19 +210,19 @@ export function createAuth(config: AuthConfig) {
           enabled: true,
           plans: stripePlans,
           onSubscriptionComplete: async ({ subscription, plan }) => {
-            log('info', 'subscription complete', {
+            await log('info', 'subscription complete', {
               ...buildSubscriptionLogPayload(subscription),
               planName: plan.name,
             });
           },
           onSubscriptionCreated: async ({ subscription, plan }) => {
-            log('info', 'subscription created', {
+            await log('info', 'subscription created', {
               ...buildSubscriptionLogPayload(subscription),
               planName: plan.name,
             });
           },
           onSubscriptionUpdate: async ({ subscription }) => {
-            log(
+            await log(
               'info',
               'subscription updated',
               buildSubscriptionLogPayload(subscription)
@@ -232,14 +232,14 @@ export function createAuth(config: AuthConfig) {
             subscription,
             cancellationDetails,
           }) => {
-            log('info', 'subscription canceled', {
+            await log('info', 'subscription canceled', {
               ...buildSubscriptionLogPayload(subscription),
               reason: cancellationDetails?.reason,
               feedback: cancellationDetails?.feedback,
             });
           },
           onSubscriptionDeleted: async ({ subscription }) => {
-            log(
+            await log(
               'info',
               'subscription deleted',
               buildSubscriptionLogPayload(subscription)
@@ -296,10 +296,12 @@ export function createAuth(config: AuthConfig) {
               }
             }
           },
+          // eslint-disable-next-line @typescript-eslint/require-await -- Better Auth requires Promise<void> return type.
           beforeUpdateOrganization: async ({ organization }) => {
             if (!isRecord(organization)) return;
             validateWorkspaceFields(organization, 'update');
           },
+          // eslint-disable-next-line @typescript-eslint/require-await -- Better Auth requires Promise<void> return type.
           beforeDeleteOrganization: async ({ organization }) => {
             if (isPersonalWorkspace(organization)) {
               throw new APIError('BAD_REQUEST', {

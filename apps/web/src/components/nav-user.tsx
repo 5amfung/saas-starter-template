@@ -31,6 +31,7 @@ import {
   useSidebar,
 } from '@workspace/ui/components/sidebar';
 import { Skeleton } from '@workspace/ui/components/skeleton';
+import { logger } from '@/lib/logger';
 
 export function NavUserSkeleton() {
   return (
@@ -65,7 +66,7 @@ export function NavUser({
       await authClient.signOut();
       navigate({ to: '/' });
     } catch (error) {
-      console.error('Logout failed:', error);
+      logger('error', 'Logout failed', error);
       toast.error('Logout failed. Please try again.');
     }
   }
