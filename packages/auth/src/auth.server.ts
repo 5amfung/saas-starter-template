@@ -50,6 +50,37 @@ export interface AuthConfig {
   getRequestHeaders?: () => Headers;
 }
 
+/** Extract common subscription fields for structured logging. */
+function buildSubscriptionLogPayload(subscription: {
+  id: string;
+  plan: string;
+  referenceId: string;
+  status: string;
+  stripeSubscriptionId?: string | null;
+  periodStart?: unknown;
+  periodEnd?: unknown;
+  billingInterval?: string | null;
+  cancelAt?: unknown;
+  canceledAt?: unknown;
+  cancelAtPeriodEnd?: boolean | null;
+  endedAt?: unknown;
+}) {
+  return {
+    subscriptionId: subscription.id,
+    plan: subscription.plan,
+    referenceId: subscription.referenceId,
+    status: subscription.status,
+    stripeSubscriptionId: subscription.stripeSubscriptionId,
+    periodStart: subscription.periodStart,
+    periodEnd: subscription.periodEnd,
+    billingInterval: subscription.billingInterval,
+    cancelAt: subscription.cancelAt,
+    canceledAt: subscription.canceledAt,
+    cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+    endedAt: subscription.endedAt,
+  };
+}
+
 export function createAuth(config: AuthConfig) {
   const log = config.logger ?? console.log;
   const stripeClient = new Stripe(config.stripe.secretKey);
@@ -164,12 +195,11 @@ export function createAuth(config: AuthConfig) {
         stripeClient,
         stripeWebhookSecret: config.stripe.webhookSecret,
         createCustomerOnSignUp: true,
-        onCustomerCreate: async ({ stripeCustomer, user }) => {
+        onCustomerCreate: ({ stripeCustomer, user }) => {
           log(
             'info',
-            `Strip customer ${stripeCustomer.id} created for user ${user.id} on signup`
+            `Stripe customer ${stripeCustomer.id} created for user ${user.id} on signup`
           );
-          return Promise.resolve();
         },
         getCheckoutSessionParams: () => ({
           params: {
@@ -179,96 +209,38 @@ export function createAuth(config: AuthConfig) {
         subscription: {
           enabled: true,
           plans: stripePlans,
-          onSubscriptionComplete: async ({ subscription, plan }) => {
+          onSubscriptionComplete: ({ subscription, plan }) => {
             log('info', 'subscription complete', {
-              subscriptionId: subscription.id,
-              plan: subscription.plan,
+              ...buildSubscriptionLogPayload(subscription),
               planName: plan.name,
-              referenceId: subscription.referenceId,
-              status: subscription.status,
-              stripeSubscriptionId: subscription.stripeSubscriptionId,
-              periodStart: subscription.periodStart,
-              periodEnd: subscription.periodEnd,
-              billingInterval: subscription.billingInterval,
-              cancelAt: subscription.cancelAt,
-              canceledAt: subscription.canceledAt,
-              cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-              endedAt: subscription.endedAt,
             });
-            await Promise.resolve();
           },
-          onSubscriptionCreated: async ({ subscription, plan }) => {
+          onSubscriptionCreated: ({ subscription, plan }) => {
             log('info', 'subscription created', {
-              subscriptionId: subscription.id,
-              plan: subscription.plan,
+              ...buildSubscriptionLogPayload(subscription),
               planName: plan.name,
-              referenceId: subscription.referenceId,
-              status: subscription.status,
-              stripeSubscriptionId: subscription.stripeSubscriptionId,
-              periodStart: subscription.periodStart,
-              periodEnd: subscription.periodEnd,
-              billingInterval: subscription.billingInterval,
-              cancelAt: subscription.cancelAt,
-              canceledAt: subscription.canceledAt,
-              cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-              endedAt: subscription.endedAt,
             });
-            await Promise.resolve();
           },
-          onSubscriptionUpdate: async ({ subscription }) => {
-            log('info', 'subscription updated', {
-              subscriptionId: subscription.id,
-              plan: subscription.plan,
-              referenceId: subscription.referenceId,
-              status: subscription.status,
-              stripeSubscriptionId: subscription.stripeSubscriptionId,
-              periodStart: subscription.periodStart,
-              periodEnd: subscription.periodEnd,
-              billingInterval: subscription.billingInterval,
-              cancelAt: subscription.cancelAt,
-              canceledAt: subscription.canceledAt,
-              cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-              endedAt: subscription.endedAt,
-            });
-            await Promise.resolve();
+          onSubscriptionUpdate: ({ subscription }) => {
+            log(
+              'info',
+              'subscription updated',
+              buildSubscriptionLogPayload(subscription)
+            );
           },
-          onSubscriptionCancel: async ({
-            subscription,
-            cancellationDetails,
-          }) => {
+          onSubscriptionCancel: ({ subscription, cancellationDetails }) => {
             log('info', 'subscription canceled', {
-              subscriptionId: subscription.id,
-              plan: subscription.plan,
-              referenceId: subscription.referenceId,
-              status: subscription.status,
-              periodStart: subscription.periodStart,
-              periodEnd: subscription.periodEnd,
-              billingInterval: subscription.billingInterval,
-              cancelAt: subscription.cancelAt,
-              canceledAt: subscription.canceledAt,
-              cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-              endedAt: subscription.endedAt,
+              ...buildSubscriptionLogPayload(subscription),
               reason: cancellationDetails?.reason,
               feedback: cancellationDetails?.feedback,
             });
-            await Promise.resolve();
           },
-          onSubscriptionDeleted: async ({ subscription }) => {
-            log('info', 'subscription deleted', {
-              subscriptionId: subscription.id,
-              plan: subscription.plan,
-              referenceId: subscription.referenceId,
-              status: subscription.status,
-              stripeSubscriptionId: subscription.stripeSubscriptionId,
-              periodStart: subscription.periodStart,
-              periodEnd: subscription.periodEnd,
-              billingInterval: subscription.billingInterval,
-              cancelAt: subscription.cancelAt,
-              canceledAt: subscription.canceledAt,
-              cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-              endedAt: subscription.endedAt,
-            });
-            await Promise.resolve();
+          onSubscriptionDeleted: ({ subscription }) => {
+            log(
+              'info',
+              'subscription deleted',
+              buildSubscriptionLogPayload(subscription)
+            );
           },
         },
       }),
@@ -321,18 +293,16 @@ export function createAuth(config: AuthConfig) {
               }
             }
           },
-          beforeUpdateOrganization: async ({ organization }) => {
+          beforeUpdateOrganization: ({ organization }) => {
             if (!isRecord(organization)) return;
             validateWorkspaceFields(organization, 'update');
-            await Promise.resolve();
           },
-          beforeDeleteOrganization: async ({ organization }) => {
+          beforeDeleteOrganization: ({ organization }) => {
             if (isPersonalWorkspace(organization)) {
               throw new APIError('BAD_REQUEST', {
                 message: 'Personal workspace can not be deleted',
               });
             }
-            await Promise.resolve();
           },
           beforeCreateInvitation: async ({ organization }) => {
             const owner = await billing.getWorkspaceOwnerUserId(
