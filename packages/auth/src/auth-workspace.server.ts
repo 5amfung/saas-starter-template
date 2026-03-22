@@ -1,9 +1,9 @@
 import { APIError } from 'better-auth/api';
 import {
-  isRecord,
   PERSONAL_WORKSPACE_TYPE,
   STANDARD_WORKSPACE_TYPE,
   WORKSPACE_TYPES,
+  isRecord,
 } from './workspace-types';
 
 type WorkspaceType = (typeof WORKSPACE_TYPES)[number];
