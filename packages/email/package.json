@@ -9,6 +9,7 @@
   },
   "scripts": {
     "test": "vitest run",
+    "coverage": "vitest run --coverage",
     "dev:email": "pnpx react-email dev --dir src/templates --port 3001",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
@@ -20,9 +21,10 @@
     "resend": "^6.9.2"
   },
   "devDependencies": {
-    "@types/react": "^19.2.13",
     "@react-email/preview-server": "5.2.9",
     "@react-email/render": "^1.0.7",
+    "@types/react": "^19.2.13",
+    "@vitest/coverage-v8": "4.1.0",
     "@workspace/eslint-config": "workspace:*",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
