@@ -72,7 +72,7 @@ export function SetPasswordDialog({ email }: { email: string }) {
             {mutation.isPending && (
               <IconLoader2 className="size-4 animate-spin" />
             )}
-            Log Out
+            Log Out Now
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

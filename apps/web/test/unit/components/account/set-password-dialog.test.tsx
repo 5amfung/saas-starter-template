@@ -37,10 +37,14 @@ describe('SetPasswordDialog', () => {
 
     await user.click(screen.getByRole('button', { name: /set password/i }));
 
-    expect(screen.getByText(/set password/i, { selector: 'h2' })).toBeInTheDocument();
+    expect(
+      screen.getByText(/set password/i, { selector: 'h2' })
+    ).toBeInTheDocument();
     expect(screen.getByText(/password reset link/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /log out/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /log out now/i })
+    ).toBeInTheDocument();
   });
 
   it('closes dialog on cancel without calling auth methods', async () => {
@@ -51,7 +55,9 @@ describe('SetPasswordDialog', () => {
     await user.click(screen.getByRole('button', { name: /cancel/i }));
 
     await waitFor(() => {
-      expect(screen.queryByRole('button', { name: /log out/i })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /log out now/i })
+      ).not.toBeInTheDocument();
     });
     expect(requestPasswordResetMock).not.toHaveBeenCalled();
     expect(signOutMock).not.toHaveBeenCalled();
@@ -65,7 +71,7 @@ describe('SetPasswordDialog', () => {
     renderWithProviders(<SetPasswordDialog email={TEST_EMAIL} />);
 
     await user.click(screen.getByRole('button', { name: /set password/i }));
-    await user.click(screen.getByRole('button', { name: /log out/i }));
+    await user.click(screen.getByRole('button', { name: /log out now/i }));
 
     await waitFor(() => {
       expect(requestPasswordResetMock).toHaveBeenCalledWith({
