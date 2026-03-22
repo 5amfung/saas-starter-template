@@ -28,8 +28,10 @@ import {
   useLinkedAccountsQuery,
 } from '@/hooks/use-linked-accounts-query';
 
+type SocialProvider = Parameters<typeof authClient.linkSocial>[0]['provider'];
+
 interface Provider {
-  id: string;
+  id: SocialProvider;
   label: string;
   Icon: React.ComponentType<{ className?: string }>;
 }
@@ -57,7 +59,9 @@ export function LinkedAccountsCard() {
   const [confirmDisconnect, setConfirmDisconnect] = React.useState<
     string | null
   >(null);
-  const [connectingId, setConnectingId] = React.useState<string | null>(null);
+  const [connectingId, setConnectingId] = React.useState<SocialProvider | null>(
+    null
+  );
 
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -90,12 +94,10 @@ export function LinkedAccountsCard() {
 
   const totalAuthMethods = (hasPassword ? 1 : 0) + linkedProviderIds.size;
 
-  async function handleConnect(providerId: string) {
+  async function handleConnect(providerId: SocialProvider) {
     setConnectingId(providerId);
     const { error } = await authClient.linkSocial({
-      provider: providerId as Parameters<
-        typeof authClient.linkSocial
-      >[0]['provider'],
+      provider: providerId,
       callbackURL: '/account',
       errorCallbackURL: '/account?link_error=1',
     });

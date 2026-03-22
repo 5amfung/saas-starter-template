@@ -120,6 +120,8 @@ export function ActiveSessionsList() {
   const lastSignInAt = currentSessionData?.user.lastSignInAt ?? null;
 
   const sortedSessions = React.useMemo(() => {
+    // Better Auth's listSessions return type uses opaque Date wrappers for updatedAt.
+    // SessionItem uses `unknown` for updatedAt to handle both Date and string values safely.
     const safeSessions = (sessions ?? []) as Array<SessionItem>;
     return [...safeSessions].sort(
       (firstSession, secondSession) =>

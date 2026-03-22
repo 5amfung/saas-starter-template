@@ -46,7 +46,7 @@ function AdminUserListPage() {
   const [pageSize, setPageSize] = React.useState(DEFAULT_PAGE_SIZE);
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
-  const [filter, setFilter] = React.useState('all');
+  const [filter, setFilter] = React.useState<FilterTab>('all');
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
   const handleSearchSubmit = React.useCallback(
@@ -99,7 +99,7 @@ function AdminUserListPage() {
     ],
     placeholderData: keepPreviousData,
     queryFn: async () => {
-      const filterParams = getFilterParams(filter as FilterTab);
+      const filterParams = getFilterParams(filter);
       const { data, error } = await authClient.admin.listUsers({
         query: {
           limit: pageSize,
@@ -160,7 +160,7 @@ function AdminUserListPage() {
         onSearchChange={setSearch}
         onSearchSubmit={handleSearchSubmit}
         onSearchClear={handleSearchClear}
-        onFilterChange={setFilter}
+        onFilterChange={(value) => setFilter(value as FilterTab)}
         onSortingChange={setSorting}
         onPageChange={setPage}
         onPageSizeChange={setPageSize}
