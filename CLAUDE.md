@@ -263,4 +263,3 @@ When unsure: research the recommended approach for the library, fix the architec
 - **Use `pnpm` for package management.** Never use `npm`, `yarn`, `bun`, or `npx`.
 - **Pre-approve CLIs**: Before executing a multi-step task, identify **all** CLI tools needed (`pnpm`, `git`, `node`, `find`, `python3`, etc.) and run a benign command for each (e.g., `--version`) to trigger permission approval upfront. Avoids and minimizes interruptions mid-task.
 - **Subagents follow the same rules.** Include these rules in subagent prompts.
-- **Use rg (ripgrep) over grep** for performance gain.
