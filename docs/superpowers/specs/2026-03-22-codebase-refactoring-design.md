@@ -27,10 +27,11 @@
 
 **`apps/web/src/components/table-pagination.tsx`** — reusable pagination controls
 
-- Props: `table` (TanStack Table instance), `totalCount`, `pageSizeOptions`, `isLoading`
+- Props: `table` (TanStack Table instance), `totalCount`, `pageSizeOptions`, `isLoading`, `responsiveBreakpoint` (`'md' | 'lg'`, default `'md'`)
+- `responsiveBreakpoint` controls the breakpoint at which first/last page buttons and total count are shown (workspace tables use `md:`, admin table uses `lg:`)
 - Renders rows-per-page select + first/prev/next/last navigation buttons
 - Extracted from the 3 non-scaffold table components (skip `data-table.tsx`)
-- Consumers: `workspace-members-table.tsx`, `workspace-invitations-table.tsx`, `admin-user-table.tsx`
+- Consumers: `workspace-members-table.tsx`, `workspace-invitations-table.tsx` (default `'md'`), `admin-user-table.tsx` (`'lg'`)
 
 **`apps/web/src/lib/format.ts`** — shared formatting utilities
 
@@ -43,7 +44,8 @@
 
 **`apps/web/src/hooks/use-column-sort.ts`** — sort cycling hook
 
-- `useColumnSort(sorting, onSortingChange)` returns `handleHeaderSort(columnId)` callback
+- `useColumnSort(sorting, onSortingChange)` returns memoized `handleHeaderSort(columnId)` callback
+- Uses `useCallback` internally with `[sorting, onSortingChange]` deps to match current memoization behavior
 - Encapsulates 3-state cycle: none → asc → desc → none
 - Currently duplicated in `workspace-members-table.tsx`, `workspace-invitations-table.tsx`, `admin-user-table.tsx`
 
@@ -66,7 +68,7 @@
 - `TimeRangeToggle` component — renders ToggleGroup (desktop) + Select (mobile) for `'90d' | '30d' | '7d'` options
   - Currently duplicated in `admin-mau-chart.tsx` (lines 132-179) and `admin-signup-chart.tsx` (lines 153-200)
 - `formatDateTick(date: string): string` — X-axis tick label formatting
-- `formatDateLabel(date: string): string` — tooltip label formatting
+- `formatDateLabel(value: React.ReactNode): string` — Recharts tooltip `labelFormatter`; coerces `ReactNode` via `String(value)` before formatting
 
 ### Files Modified
 
@@ -83,8 +85,25 @@
 
 **`apps/web/src/components/form/validated-field.tsx`** — field wrapper
 
-- Encapsulates `isInvalid = field.state.meta.isBlurred && !field.state.meta.isValid`
-- Renders `<Field>` with `data-invalid`, children (via render prop receiving field), and `<FieldError>` when invalid
+- Thin wrapper around the shadcn `<Field>` component (NOT TanStack Form's `form.Field` subscriber)
+- Each form still calls `form.Field` directly with its own `name`, `validators`, and generics
+- This component receives the subscribed field state and handles only the validation display concern:
+  - Computes `isInvalid = field.state.meta.isBlurred && !field.state.meta.isValid`
+  - Sets `data-invalid` on the wrapper
+  - Renders `<FieldError>` when invalid
+- Usage example:
+  ```tsx
+  <form.Field name="email" validators={{ onChange: schema.shape.email }}>
+    {(field) => (
+      <ValidatedField field={field} label="Email">
+        <Input
+          value={field.state.value}
+          onChange={(e) => field.handleChange(e.target.value)}
+        />
+      </ValidatedField>
+    )}
+  </form.Field>
+  ```
 - Eliminates ~5 lines of boilerplate per field instance (~20+ instances across 7+ forms)
 
 **`apps/web/src/components/form/form-submit-button.tsx`** — submit button wrapper
@@ -150,7 +169,7 @@ Standardize on `IconLoader2` across all forms:
 
 ### Consistency
 
-- Remove explicit `import { describe, expect, it, vi } from 'vitest'` from ~8 older test files (after verifying `globals: true` in vitest config)
+- Remove explicit `import { describe, expect, it, vi } from 'vitest'` from all test files with redundant imports (after verifying `globals: true` in vitest config)
 
 ---
 
@@ -188,12 +207,12 @@ Apply same derivation pattern for all feature strings that reference limit const
 
 ### Package Cleanup
 
-| File                                              | Change                                                                                                                       |
-| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `auth.server.ts` (lines 182-271)                  | Extract `buildSubscriptionLogPayload(subscription)` helper. Remove 5x `await Promise.resolve()` no-ops.                      |
-| `workspace-types.ts` + `auth-workspace.server.ts` | Deduplicate `isRecord` — export from `workspace-types.ts` only, import in `auth-workspace.server.ts`.                        |
-| `auth-emails.server.ts`                           | Extract `const getRequestContext = () => buildEmailRequestContext(getRequestHeaders?.())` closure inside `createAuthEmails`. |
-| `patch-auth-schema.ts`                            | Replace `findMatchingBrace` + `findMatchingBracket` with single `findMatchingDelimiter(str, pos, openChar, closeChar)`.      |
+| File                                                                                             | Change                                                                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `auth.server.ts`                                                                                 | Extract `buildSubscriptionLogPayload(subscription)` helper returning common fields; each handler adds event-specific fields (`cancellationDetails`, etc.). Remove all `await Promise.resolve()` no-ops (7 occurrences across subscription hooks and organization hooks). |
+| `workspace-types.ts` + `auth-workspace.server.ts` + `apps/web/src/workspace/workspace.server.ts` | Deduplicate `isRecord` — export from `workspace-types.ts` only, import in both `auth-workspace.server.ts` and `workspace.server.ts`.                                                                                                                                     |
+| `auth-emails.server.ts`                                                                          | Extract `const getRequestContext = () => buildEmailRequestContext(getRequestHeaders?.())` closure inside `createAuthEmails`.                                                                                                                                             |
+| `patch-auth-schema.ts`                                                                           | Replace `findMatchingBrace` + `findMatchingBracket` with single `findMatchingDelimiter(str, pos, openChar, closeChar)`.                                                                                                                                                  |
 
 ### Email Template DRY
 
@@ -201,7 +220,8 @@ Apply same derivation pattern for all feature strings that reference limit const
 
 - Props: `preview`, `appName`, `children`, optional `requestContext`
 - Renders shared outer shell: `<Html>` → `<Tailwind>` → `<Body>` → `<Container>` → `<Section>` → optional `<EmailSecurityNotice>` → footer
-- Consumers: `change-email-approval-email.tsx`, `email-verification-email.tsx`, `reset-password-email.tsx`
+- Consumers: `change-email-approval-email.tsx`, `email-verification-email.tsx`, `reset-password-email.tsx`, `workspace-invitation-email.tsx`
+- `EmailSecurityNotice` renders only when `requestContext` is provided — `workspace-invitation-email.tsx` passes no `requestContext`, so it correctly omits the security notice
 - Each template reduces to just its unique content (heading, body copy, CTA button)
 
 ---
@@ -244,6 +264,15 @@ After all layers:
 
 4. Run `pnpm run build` — ensure production build succeeds
 5. Visual spot-check of affected pages (tables, charts, forms, emails)
+
+---
+
+## Implementation Notes
+
+- **No barrel files.** New shared modules are imported directly by path. The existing codebase does not use barrel files consistently, and adding them risks breaking tree-shaking.
+- **`data-table.tsx` retains its own `ACTIONS_COLUMN_CLASS` copy.** Since the scaffold is explicitly out of scope, its inline constant stays even though the shared version exists in `lib/table-constants.ts`.
+- **Consumers importing renamed query key constants automatically pick up the new values.** Only the 4 files where the constants are defined need changes; all import sites get the new keys transitively.
+- **Existing tests for consumer components may need mock/import path updates** after shared modules are extracted. The per-layer verification strategy (typecheck + test + lint) will surface these; fix them as part of each layer.
 
 ---
 
