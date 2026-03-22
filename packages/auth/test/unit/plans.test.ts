@@ -188,14 +188,14 @@ describe('getPlanFeatures', () => {
   it('returns base features for monthly', () => {
     const pro = getPlanById('pro')!;
     const features = getPlanFeatures(pro, false);
-    expect(features).toContain('10 workspaces');
+    expect(features).toContain('25 workspaces');
     expect(features).not.toContain('2 months free');
   });
 
   it('returns base + bonus features for annual', () => {
     const pro = getPlanById('pro')!;
     const features = getPlanFeatures(pro, true);
-    expect(features).toContain('10 workspaces');
+    expect(features).toContain('25 workspaces');
     expect(features).toContain('2 months free');
   });
 });
