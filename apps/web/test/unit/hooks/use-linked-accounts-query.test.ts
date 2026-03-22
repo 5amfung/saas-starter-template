@@ -65,6 +65,6 @@ describe('useLinkedAccountsQuery', () => {
   });
 
   it('exports correct query key', () => {
-    expect(LINKED_ACCOUNTS_QUERY_KEY).toEqual(['linked_accounts']);
+    expect(LINKED_ACCOUNTS_QUERY_KEY).toEqual(['account', 'linked-accounts']);
   });
 });

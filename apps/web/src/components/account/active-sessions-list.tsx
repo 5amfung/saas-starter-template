@@ -113,7 +113,7 @@ export function ActiveSessionsList() {
 
   const currentSessionToken = currentSessionData?.session.token ?? null;
   const { data: lastLoginMethod = null } = useQuery({
-    queryKey: ['last-login-method'],
+    queryKey: ['account', 'last-login-method'],
     queryFn: () => authClient.getLastUsedLoginMethod(),
     staleTime: Infinity,
   });

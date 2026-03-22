@@ -18,12 +18,12 @@ const {
 
 vi.mock('@/hooks/use-session-query', () => ({
   useSessionQuery: mockUseSessionQuery,
-  SESSION_QUERY_KEY: ['current_session'],
+  SESSION_QUERY_KEY: ['session', 'current'],
 }));
 
 vi.mock('@/hooks/use-sessions-query', () => ({
   useSessionsQuery: mockUseSessionsQuery,
-  SESSIONS_QUERY_KEY: ['user_active_sessions'],
+  SESSIONS_QUERY_KEY: ['session', 'active-list'],
 }));
 
 vi.mock('@workspace/auth/client', () => ({

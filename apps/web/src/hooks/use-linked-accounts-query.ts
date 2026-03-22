@@ -1,7 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { authClient } from '@workspace/auth/client';
 
-export const LINKED_ACCOUNTS_QUERY_KEY = ['linked_accounts'] as const;
+export const LINKED_ACCOUNTS_QUERY_KEY = [
+  'account',
+  'linked-accounts',
+] as const;
 
 export function useLinkedAccountsQuery() {
   return useQuery({
