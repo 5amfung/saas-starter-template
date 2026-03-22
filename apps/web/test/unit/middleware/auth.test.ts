@@ -1,5 +1,7 @@
 // src/middleware/auth.test.ts
 import { createMockSessionResponse } from '@workspace/test-utils';
+import { createMiddlewareMock } from '../../mocks/middleware';
+import type { CapturedServerFns } from '../../mocks/middleware';
 import { validateAuthSession, validateGuestSession } from '@/middleware/auth';
 
 const {
@@ -8,10 +10,7 @@ const {
   mockGetRequestHeaders,
   capturedServerFns,
 } = vi.hoisted(() => {
-  const capturedServerFns: Record<
-    string,
-    (opts: { next: () => Promise<unknown> }) => Promise<unknown>
-  > = {};
+  const capturedServerFns: CapturedServerFns = {};
   return {
     mockGetSession: vi.fn(),
     mockEnsureActiveWorkspace: vi.fn(),
@@ -32,18 +31,7 @@ vi.mock('@tanstack/react-start/server', () => ({
   getRequestHeaders: mockGetRequestHeaders,
 }));
 
-vi.mock('@tanstack/react-start', () => ({
-  createMiddleware: () => ({
-    server: (
-      fn: (opts: { next: () => Promise<unknown> }) => Promise<unknown>
-    ) => {
-      const index = Object.keys(capturedServerFns).length;
-      const key = `middleware_${index}`;
-      capturedServerFns[key] = fn;
-      return { _key: key };
-    },
-  }),
-}));
+vi.mock('@tanstack/react-start', () => createMiddlewareMock(capturedServerFns));
 
 describe('validateAuthSession', () => {
   const headers = new Headers({ cookie: 'test' });
