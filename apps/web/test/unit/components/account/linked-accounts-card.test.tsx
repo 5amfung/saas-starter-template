@@ -75,6 +75,84 @@ describe('LinkedAccountsCard', () => {
       ).toBeInTheDocument();
     });
   });
+
+  it('calls unlinkAccount when disconnect is confirmed', async () => {
+    const user = userEvent.setup();
+    unlinkAccountMock.mockResolvedValue({});
+    const { LinkedAccountsCard } =
+      await import('@/components/account/linked-accounts-card');
+
+    renderWithProviders(<LinkedAccountsCard />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/disconnect/i)).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /disconnect/i }));
+
+    const confirmButton = await screen.findByRole('button', {
+      name: /^disconnect$/i,
+    });
+    await user.click(confirmButton);
+
+    await waitFor(() => {
+      expect(unlinkAccountMock).toHaveBeenCalledWith(
+        expect.objectContaining({ providerId: expect.any(String) })
+      );
+    });
+  });
+
+  it('shows error toast when disconnect fails', async () => {
+    const user = userEvent.setup();
+    unlinkAccountMock.mockRejectedValue(new Error('Disconnect failed'));
+    const { LinkedAccountsCard } =
+      await import('@/components/account/linked-accounts-card');
+
+    renderWithProviders(<LinkedAccountsCard />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/disconnect/i)).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /disconnect/i }));
+
+    const confirmButton = await screen.findByRole('button', {
+      name: /^disconnect$/i,
+    });
+    await user.click(confirmButton);
+
+    await waitFor(() => {
+      expect(unlinkAccountMock).toHaveBeenCalled();
+    });
+  });
+
+  it('shows error toast when link_error param is present on mount', async () => {
+    const originalLocation = window.location;
+    const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
+
+    Object.defineProperty(window, 'location', {
+      value: {
+        ...originalLocation,
+        search: '?link_error=1&error=email_mismatch',
+      },
+      writable: true,
+    });
+
+    const { LinkedAccountsCard } =
+      await import('@/components/account/linked-accounts-card');
+
+    renderWithProviders(<LinkedAccountsCard />);
+
+    await waitFor(() => {
+      expect(replaceStateSpy).toHaveBeenCalled();
+    });
+
+    Object.defineProperty(window, 'location', {
+      value: originalLocation,
+      writable: true,
+    });
+    replaceStateSpy.mockRestore();
+  });
 });
 
 describe('LinkedAccountsCard — unlinked provider', () => {
@@ -111,5 +189,44 @@ describe('LinkedAccountsCard — unlinked provider', () => {
     expect(
       screen.queryByRole('button', { name: 'Disconnect' })
     ).not.toBeInTheDocument();
+  });
+
+  it('shows error toast when connect fails', async () => {
+    const user = userEvent.setup();
+    const localLinkSocialMock = vi
+      .fn()
+      .mockResolvedValue({ error: { message: 'Connection refused' } });
+
+    vi.doMock('@workspace/auth/client', () => ({
+      authClient: {
+        linkSocial: localLinkSocialMock,
+        unlinkAccount: vi.fn(),
+      },
+    }));
+
+    vi.doMock('@/hooks/use-linked-accounts-query', () => ({
+      useLinkedAccountsQuery: () => ({
+        data: [],
+        isPending: false,
+      }),
+      LINKED_ACCOUNTS_QUERY_KEY: ['linked_accounts'],
+    }));
+
+    const { LinkedAccountsCard } =
+      await import('@/components/account/linked-accounts-card');
+
+    renderWithProviders(<LinkedAccountsCard />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /connect/i })
+      ).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /connect/i }));
+
+    await waitFor(() => {
+      expect(localLinkSocialMock).toHaveBeenCalled();
+    });
   });
 });

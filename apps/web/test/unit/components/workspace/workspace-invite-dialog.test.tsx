@@ -67,6 +67,20 @@ describe('WorkspaceInviteDialog', () => {
     expect(screen.getByRole('button', { name: /cancel/i })).toBeDisabled();
   });
 
+  it('calls onRoleChange when a different role is selected', async () => {
+    const user = userEvent.setup();
+    render(<WorkspaceInviteDialog {...defaultProps} />);
+
+    // Open the role select and pick "admin"
+    const roleSelect = screen.getByRole('combobox');
+    await user.click(roleSelect);
+
+    const adminOption = await screen.findByRole('option', { name: /admin/i });
+    await user.click(adminOption);
+
+    expect(defaultProps.onRoleChange).toHaveBeenCalledWith('admin');
+  });
+
   it('closes dialog when cancel is clicked', async () => {
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
