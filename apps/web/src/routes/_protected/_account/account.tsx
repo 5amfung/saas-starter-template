@@ -13,7 +13,7 @@ import { ActiveSessionsList } from '@/components/account/active-sessions-list';
 import { ChangeEmailDialog } from '@/components/account/change-email-dialog';
 import { ChangePasswordDialog } from '@/components/account/change-password-dialog';
 import { LinkedAccountsCard } from '@/components/account/linked-accounts-card';
-import { SetPasswordButton } from '@/components/account/set-password-button';
+import { SetPasswordDialog } from '@/components/account/set-password-dialog';
 import { useLinkedAccountsQuery } from '@/hooks/use-linked-accounts-query';
 import { useSessionQuery } from '@/hooks/use-session-query';
 
@@ -86,7 +86,7 @@ function AccountPage() {
         </CardHeader>
         <CardContent className="flex justify-end">
           {hasPassword === true && <ChangePasswordDialog />}
-          {hasPassword === false && <SetPasswordButton email={user.email} />}
+          {hasPassword === false && <SetPasswordDialog email={user.email} />}
         </CardContent>
       </Card>
 
