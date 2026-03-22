@@ -9,15 +9,12 @@ const {
   mockEnsureActiveWorkspace,
   mockGetRequestHeaders,
   capturedServerFns,
-} = vi.hoisted(() => {
-  const capturedServerFns: CapturedServerFns = {};
-  return {
-    mockGetSession: vi.fn(),
-    mockEnsureActiveWorkspace: vi.fn(),
-    mockGetRequestHeaders: vi.fn(() => new Headers({ cookie: 'test' })),
-    capturedServerFns,
-  };
-});
+} = vi.hoisted(() => ({
+  mockGetSession: vi.fn(),
+  mockEnsureActiveWorkspace: vi.fn(),
+  mockGetRequestHeaders: vi.fn(() => new Headers({ cookie: 'test' })),
+  capturedServerFns: {} as CapturedServerFns,
+}));
 
 vi.mock('@/init', () => ({
   auth: { api: { getSession: mockGetSession } },

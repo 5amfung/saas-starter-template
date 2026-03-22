@@ -5,14 +5,11 @@ import type { CapturedServerFns } from '../../mocks/middleware';
 import { validateAdminSession } from '@/middleware/admin';
 
 const { mockGetSession, mockGetRequestHeaders, capturedServerFns } = vi.hoisted(
-  () => {
-    const capturedServerFns: CapturedServerFns = {};
-    return {
-      mockGetSession: vi.fn(),
-      mockGetRequestHeaders: vi.fn(() => new Headers({ cookie: 'test' })),
-      capturedServerFns,
-    };
-  }
+  () => ({
+    mockGetSession: vi.fn(),
+    mockGetRequestHeaders: vi.fn(() => new Headers({ cookie: 'test' })),
+    capturedServerFns: {} as CapturedServerFns,
+  })
 );
 
 vi.mock('@/init', () => ({
