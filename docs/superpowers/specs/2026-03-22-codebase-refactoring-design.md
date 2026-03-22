@@ -14,7 +14,8 @@
 **`apps/web/src/lib/table-constants.ts`** — shared table constants
 
 - `ACTIONS_COLUMN_CLASS = 'text-right w-14'` (currently duplicated in 4 files)
-- `DEFAULT_PAGE_SIZE_OPTIONS = ['10', '25', '50']` (currently in 3 files)
+- `DEFAULT_PAGE_SIZE_OPTIONS = ['10', '25', '50']` (used by workspace tables)
+- `ADMIN_PAGE_SIZE_OPTIONS = ['10', '50', '100']` (used by admin table — different values, must stay separate)
 - `MAX_SKELETON_ROWS = 10` (currently in 3 files)
 
 **`apps/web/src/components/sortable-header.tsx`** — reusable sort header component
@@ -165,8 +166,9 @@ Derive feature strings from limit constants:
 | ------- | ----------------------------- | ---------------------------- | ---------------------------------------------------------------------- |
 | Starter | `'10 member'`                 | `maxMembersPerWorkspace: 5`  | `` `${STARTER_LIMITS.maxMembersPerWorkspace} members per workspace` `` |
 | Pro     | `'100 members per workspace'` | `maxMembersPerWorkspace: 25` | `` `${PRO_LIMITS.maxMembersPerWorkspace} members per workspace` ``     |
+| Pro     | `'10 workspaces'`             | `maxWorkspaces: 25`          | `` `${PRO_LIMITS.maxWorkspaces} workspaces` ``                         |
 
-Apply same pattern for `maxWorkspaces` feature strings.
+Apply same derivation pattern for all feature strings that reference limit constants.
 
 ### Type Safety Fixes
 
