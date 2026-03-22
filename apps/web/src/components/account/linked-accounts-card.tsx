@@ -28,10 +28,11 @@ import {
   useLinkedAccountsQuery,
 } from '@/hooks/use-linked-accounts-query';
 
-type SocialProvider = Parameters<typeof authClient.linkSocial>[0]['provider'];
+/** Subset of social providers configured for this app. */
+type SocialProviderId = 'google';
 
 interface Provider {
-  id: SocialProvider;
+  id: SocialProviderId;
   label: string;
   Icon: React.ComponentType<{ className?: string }>;
 }
@@ -59,9 +60,8 @@ export function LinkedAccountsCard() {
   const [confirmDisconnect, setConfirmDisconnect] = React.useState<
     string | null
   >(null);
-  const [connectingId, setConnectingId] = React.useState<SocialProvider | null>(
-    null
-  );
+  const [connectingId, setConnectingId] =
+    React.useState<SocialProviderId | null>(null);
 
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -94,7 +94,7 @@ export function LinkedAccountsCard() {
 
   const totalAuthMethods = (hasPassword ? 1 : 0) + linkedProviderIds.size;
 
-  async function handleConnect(providerId: SocialProvider) {
+  async function handleConnect(providerId: SocialProviderId) {
     setConnectingId(providerId);
     const { error } = await authClient.linkSocial({
       provider: providerId,
