@@ -221,9 +221,117 @@ After all layers:
 
 ---
 
+## Layer 6: Query Key Standardization
+
+Standardize all query keys to hierarchical segments (`['domain', 'resource', ...params]`) and extract to named constants.
+
+### Convention
+
+- Format: `['domain', 'resource', ...dynamicParams]`
+- Domain segments: `'session'`, `'account'`, `'workspace'`, `'admin'`, `'billing'`
+- Resource segments use kebab-case: `'active-list'`, `'last-login-method'`, `'notification-preferences'`
+- Constants named `<DOMAIN>_<RESOURCE>_QUERY_KEY` in SCREAMING_SNAKE_CASE
+
+### New File
+
+**`apps/web/src/lib/query-keys.ts`** — centralized query key constants
+
+All query keys extracted here as named constants, organized by domain:
+
+```ts
+// Session
+export const SESSION_QUERY_KEY = ['session', 'current'] as const;
+export const SESSIONS_QUERY_KEY = ['session', 'active-list'] as const;
+
+// Account
+export const LINKED_ACCOUNTS_QUERY_KEY = [
+  'account',
+  'linked-accounts',
+] as const;
+export const LAST_LOGIN_METHOD_QUERY_KEY = [
+  'account',
+  'last-login-method',
+] as const;
+export const NOTIFICATION_PREFERENCES_QUERY_KEY = [
+  'account',
+  'notification-preferences',
+] as const;
+
+// Workspace (factory functions for dynamic params)
+export const workspaceKeys = {
+  members: (workspaceId: string, ...params: unknown[]) =>
+    ['workspace', 'members', workspaceId, ...params] as const,
+  invitations: (workspaceId: string) =>
+    ['workspace', 'invitations', workspaceId] as const,
+  activeRole: (workspaceId: string) =>
+    ['workspace', 'active-role', workspaceId] as const,
+};
+
+// Admin (factory functions for dynamic params)
+export const adminKeys = {
+  dashboardMetrics: (timezoneOffset: number) =>
+    ['admin', 'dashboard-metrics', timezoneOffset] as const,
+  signupChart: (range: string, timezoneOffset: number) =>
+    ['admin', 'signup-chart', range, timezoneOffset] as const,
+  mauChart: (range: string, timezoneOffset: number) =>
+    ['admin', 'mau-chart', range, timezoneOffset] as const,
+  users: (...params: unknown[]) => ['admin', 'users', ...params] as const,
+  user: (userId: string) => ['admin', 'user', userId] as const,
+};
+
+// Billing
+export const INVOICES_QUERY_KEY = ['billing', 'invoices'] as const;
+export const BILLING_DATA_QUERY_KEY = ['billing', 'data'] as const;
+```
+
+### Files Modified
+
+| File                                            | Change                                                                                    |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `hooks/use-session-query.ts`                    | Remove local `SESSION_QUERY_KEY`, import from `query-keys.ts`                             |
+| `hooks/use-sessions-query.ts`                   | Remove local `SESSIONS_QUERY_KEY`, import from `query-keys.ts`                            |
+| `hooks/use-linked-accounts-query.ts`            | Remove local `LINKED_ACCOUNTS_QUERY_KEY`, import from `query-keys.ts`                     |
+| `components/account/active-sessions-list.tsx`   | Replace inline `['last-login-method']` with `LAST_LOGIN_METHOD_QUERY_KEY`                 |
+| `routes/_protected/_account/notifications.tsx`  | Replace inline `['account', 'notification-preferences']` with constant                    |
+| `workspace/use-invitations-table.ts`            | Replace inline keys with `workspaceKeys.invitations(...)`                                 |
+| `workspace/use-members-table.ts`                | Replace inline keys with `workspaceKeys.members(...)` and `workspaceKeys.activeRole(...)` |
+| `routes/_protected/admin/dashboard.tsx`         | Replace inline keys with `adminKeys.*` factories                                          |
+| `routes/_protected/admin/user/index.tsx`        | Replace inline key with `adminKeys.users(...)`                                            |
+| `routes/_protected/admin/user/$userId.tsx`      | Replace inline key with `adminKeys.user(...)`                                             |
+| `components/admin/admin-delete-user-dialog.tsx` | Replace inline `['admin', 'users']` with `adminKeys.users()`                              |
+| `components/admin/admin-user-form.tsx`          | Replace inline invalidation keys with `adminKeys.users()` and `adminKeys.user(...)`       |
+| `components/billing/billing-page.tsx`           | Remove local constants, import from `query-keys.ts`                                       |
+
+### Key value changes (old → new)
+
+| Old Value                  | New Value                          | Reason                                                            |
+| -------------------------- | ---------------------------------- | ----------------------------------------------------------------- |
+| `['current_session']`      | `['session', 'current']`           | Hierarchical + enables prefix invalidation of all session queries |
+| `['user_active_sessions']` | `['session', 'active-list']`       | Consistent domain prefix                                          |
+| `['linked_accounts']`      | `['account', 'linked-accounts']`   | Consistent domain prefix                                          |
+| `['last-login-method']`    | `['account', 'last-login-method']` | Add domain prefix                                                 |
+
+Note: Changing query key values means any cached data under the old keys will be invalidated on the next deploy. This is a one-time cache miss with no functional impact.
+
+---
+
+## Verification Strategy
+
+After each layer:
+
+1. Run `pnpm run typecheck` — ensure no type errors introduced
+2. Run `pnpm test` — ensure all unit/integration tests pass
+3. Run `pnpm run lint` — ensure no lint violations
+
+After all layers:
+
+4. Run `pnpm run build` — ensure production build succeeds
+5. Visual spot-check of affected pages (tables, charts, forms, emails)
+
+---
+
 ## Out of Scope
 
 - `data-table.tsx` — shadcn scaffold, left as-is
 - `packages/ui/src/components/sidebar.tsx` / `chart.tsx` — shadcn-generated, per project conventions
-- Query key naming convention standardization — useful but touches too many files for this pass
 - `querySignupChartData` / `queryMauChartData` SQL optimization — performance improvement, not a refactoring concern
