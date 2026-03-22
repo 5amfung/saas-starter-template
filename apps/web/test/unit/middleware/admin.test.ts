@@ -2,12 +2,34 @@
 import { createMockSessionResponse } from '@workspace/test-utils';
 import { validateAdminSession } from '@/middleware/admin';
 
-const { mockGetSession } = vi.hoisted(() => ({
-  mockGetSession: vi.fn(),
-}));
+const { mockGetSession, mockGetRequestHeaders, capturedServerFns } = vi.hoisted(
+  () => {
+    const capturedServerFns: Record<string, Function> = {};
+    return {
+      mockGetSession: vi.fn(),
+      mockGetRequestHeaders: vi.fn(() => new Headers({ cookie: 'test' })),
+      capturedServerFns,
+    };
+  }
+);
 
 vi.mock('@/init', () => ({
   auth: { api: { getSession: mockGetSession } },
+}));
+
+vi.mock('@tanstack/react-start/server', () => ({
+  getRequestHeaders: mockGetRequestHeaders,
+}));
+
+vi.mock('@tanstack/react-start', () => ({
+  createMiddleware: () => ({
+    server: (fn: Function) => {
+      const index = Object.keys(capturedServerFns).length;
+      const key = `middleware_${index}`;
+      capturedServerFns[key] = fn;
+      return { _key: key };
+    },
+  }),
 }));
 
 describe('validateAdminSession', () => {
@@ -70,5 +92,33 @@ describe('validateAdminSession', () => {
 
     const result = await validateAdminSession(headers);
     expect(result).toEqual(session);
+  });
+});
+
+describe('adminMiddleware (createMiddleware wrapper)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetRequestHeaders.mockReturnValue(new Headers({ cookie: 'test' }));
+  });
+
+  it('calls next for admin users', async () => {
+    const session = createMockSessionResponse({ role: 'admin' });
+    mockGetSession.mockResolvedValue(session);
+    const mockNext = vi.fn().mockResolvedValue('next-result');
+
+    const serverFn = capturedServerFns['middleware_0'];
+    const result = await serverFn({ next: mockNext });
+
+    expect(mockNext).toHaveBeenCalled();
+    expect(result).toBe('next-result');
+  });
+
+  it('propagates redirect for non-admin users', async () => {
+    mockGetSession.mockResolvedValue(null);
+    const mockNext = vi.fn();
+
+    const serverFn = capturedServerFns['middleware_0'];
+    await expect(serverFn({ next: mockNext })).rejects.toThrow();
+    expect(mockNext).not.toHaveBeenCalled();
   });
 });
