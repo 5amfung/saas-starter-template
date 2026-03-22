@@ -206,21 +206,6 @@ Apply same derivation pattern for all feature strings that reference limit const
 
 ---
 
-## Verification Strategy
-
-After each layer:
-
-1. Run `pnpm run typecheck` — ensure no type errors introduced
-2. Run `pnpm test` — ensure all unit/integration tests pass
-3. Run `pnpm run lint` — ensure no lint violations
-
-After all layers:
-
-4. Run `pnpm run build` — ensure production build succeeds
-5. Visual spot-check of affected pages (tables, charts, forms, emails)
-
----
-
 ## Layer 6: Query Key Value Standardization
 
 Rename the 4 non-hierarchical query keys to use the hierarchical `['domain', 'resource']` format. Constants stay defined in their current files — no centralization or extraction of inline keys.
