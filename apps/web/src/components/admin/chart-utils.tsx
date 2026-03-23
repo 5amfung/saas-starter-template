@@ -9,6 +9,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from '@workspace/ui/components/toggle-group';
+import { formatDate } from '@/lib/format';
 
 interface TimeRangeToggleProps {
   value: string;
@@ -63,11 +64,6 @@ export function formatDateTick(value: string) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-export function formatDateLabel(value: React.ReactNode) {
-  const date = new Date(String(value) + 'T00:00:00');
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+export function formatDateLabel(value: unknown) {
+  return formatDate(String(value));
 }

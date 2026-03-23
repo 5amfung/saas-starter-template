@@ -180,10 +180,6 @@ export function getHighestTierPlanId(planIds: Array<string>): PlanId {
 }
 
 /**
- * Returns the next upgrade plan for a given plan (next tier up), or null
- * if the user is already on the highest tier.
- */
-/**
  * Returns all plans above the current plan's tier, sorted by tier ascending.
  */
 export function getUpgradePlans(currentPlan: Plan): Array<Plan> {
