@@ -8,6 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:unit": "vitest run --dir test/unit",
+    "test:integration": "vitest run --dir test/integration",
     "test:e2e": "playwright test",
     "test:e2e:report": "playwright show-report",
     "coverage": "vitest run --coverage",

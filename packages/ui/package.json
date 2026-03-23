@@ -9,6 +9,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:unit": "vitest run",
     "coverage": "vitest run --coverage"
   },
   "dependencies": {
