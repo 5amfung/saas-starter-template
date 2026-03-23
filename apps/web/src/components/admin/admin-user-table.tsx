@@ -1,15 +1,8 @@
 import * as React from 'react';
 import {
-  IconArrowDown,
-  IconArrowUp,
-  IconArrowsSort,
   IconBan,
   IconBolt,
   IconChevronDown,
-  IconChevronLeft,
-  IconChevronRight,
-  IconChevronsLeft,
-  IconChevronsRight,
   IconCircleCheckFilled,
   IconDotsVertical,
   IconLayoutColumns,
@@ -57,6 +50,16 @@ import type {
   VisibilityState,
 } from '@tanstack/react-table';
 
+import { SortableHeader } from '@/components/sortable-header';
+import { TablePagination } from '@/components/table-pagination';
+import { useColumnSort } from '@/hooks/use-column-sort';
+import { formatDate } from '@/lib/format';
+import {
+  ACTIONS_COLUMN_CLASS,
+  ADMIN_PAGE_SIZE_OPTIONS,
+  MAX_SKELETON_ROWS,
+} from '@/lib/table-constants';
+
 interface UserRow {
   id: string;
   name: string;
@@ -89,10 +92,6 @@ interface AdminUserTableProps {
   onPageSizeChange: (pageSize: number) => void;
   isLoading?: boolean;
 }
-
-const PAGE_SIZE_OPTIONS = ['10', '50', '100'];
-const MAX_SKELETON_ROWS = 10;
-const ACTIONS_COLUMN_CLASS = 'text-right w-14';
 
 export function AdminUserTable({
   data,
@@ -292,27 +291,10 @@ export function AdminUserTable({
     manualPagination: true,
     pageCount: totalPages,
   });
-  const totalPagesSafe = Math.max(totalPages, 1);
   const visibleColumnCount = table.getVisibleLeafColumns().length;
   const skeletonRowCount = Math.min(pageSize, MAX_SKELETON_ROWS);
 
-  // Map internal sorting state to parent handler.
-  const handleHeaderSort = React.useCallback(
-    (columnId: string) => {
-      const current = sorting.find((s) => s.id === columnId);
-      let next: SortingState;
-      if (!current) {
-        next = [{ id: columnId, desc: false }];
-      } else if (!current.desc) {
-        next = [{ id: columnId, desc: true }];
-      } else {
-        // Clear sort.
-        next = [];
-      }
-      onSortingChange(next);
-    },
-    [sorting, onSortingChange]
-  );
+  const handleHeaderSort = useColumnSort(sorting, onSortingChange);
 
   return (
     <Tabs
@@ -488,117 +470,25 @@ export function AdminUserTable({
           </Table>
         </div>
 
-        <div className="flex items-center justify-between px-4">
-          <div className="hidden flex-1 text-sm text-muted-foreground lg:flex">
-            {isLoading ? (
-              <Skeleton className="h-4 w-24" />
-            ) : (
-              `${total} user${total !== 1 ? 's' : ''} total`
-            )}
-          </div>
-          <div className="flex w-full items-center gap-8 lg:w-fit">
-            <div className="hidden items-center gap-2 lg:flex">
-              <Label htmlFor="rows-per-page" className="text-sm font-medium">
-                Rows per page
-              </Label>
-              <Select
-                value={String(pageSize)}
-                onValueChange={(value) => {
-                  if (!value) return;
-                  onPageSizeChange(Number(value));
-                }}
-                disabled={isLoading}
-              >
-                <SelectTrigger size="sm" className="w-20" id="rows-per-page">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent side="top">
-                  {PAGE_SIZE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt} value={opt}>
-                      {opt}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex w-fit items-center justify-center text-sm font-medium">
-              {isLoading ? (
-                <Skeleton className="h-4 w-24" />
-              ) : (
-                `Page ${page} of ${totalPagesSafe}`
-              )}
-            </div>
-            <div className="ml-auto flex items-center gap-2 lg:ml-0">
-              <Button
-                variant="outline"
-                className="hidden h-8 w-8 p-0 lg:flex"
-                onClick={() => onPageChange(1)}
-                disabled={isLoading || page <= 1}
-              >
-                <span className="sr-only">Go to first page</span>
-                <IconChevronsLeft className="size-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="size-8"
-                size="icon"
-                disabled={isLoading || page <= 1}
-                onClick={() => onPageChange(page - 1)}
-              >
-                <span className="sr-only">Go to previous page</span>
-                <IconChevronLeft className="size-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="size-8"
-                size="icon"
-                disabled={isLoading || page >= totalPagesSafe}
-                onClick={() => onPageChange(page + 1)}
-              >
-                <span className="sr-only">Go to next page</span>
-                <IconChevronRight className="size-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="hidden size-8 lg:flex"
-                size="icon"
-                disabled={isLoading || page >= totalPagesSafe}
-                onClick={() => onPageChange(totalPagesSafe)}
-              >
-                <span className="sr-only">Go to last page</span>
-                <IconChevronsRight className="size-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
+        <TablePagination
+          page={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          pageSizeOptions={ADMIN_PAGE_SIZE_OPTIONS}
+          isLoading={isLoading}
+          totalCount={total}
+          countLabel="user"
+          selectId="rows-per-page"
+          responsiveBreakpoint="lg"
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+        />
       </div>
     </Tabs>
   );
 }
 
 // --- Internal components ---
-
-function SortableHeader({
-  column,
-  label,
-}: {
-  column: { getIsSorted: () => false | 'asc' | 'desc' };
-  label: string;
-}) {
-  const sorted = column.getIsSorted();
-  return (
-    <div className="flex items-center gap-1">
-      {label}
-      {sorted === 'asc' ? (
-        <IconArrowUp className="size-3.5" />
-      ) : sorted === 'desc' ? (
-        <IconArrowDown className="size-3.5" />
-      ) : (
-        <IconArrowsSort className="size-3.5 text-muted-foreground/50" />
-      )}
-    </div>
-  );
-}
 
 function ColumnVisibilityDropdown({ table }: { table: ReactTable<UserRow> }) {
   const toggleableColumns = table
@@ -633,12 +523,4 @@ function ColumnVisibilityDropdown({ table }: { table: ReactTable<UserRow> }) {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
-
-function formatDate(date: Date | string) {
-  return new Date(date).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
 }

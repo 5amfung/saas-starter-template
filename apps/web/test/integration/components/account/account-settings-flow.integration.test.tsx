@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '@workspace/test-utils';
 import { AccountProfileForm } from '@/components/account/account-profile-form';
 import { ChangePasswordDialog } from '@/components/account/change-password-dialog';

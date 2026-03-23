@@ -15,7 +15,7 @@ export type PersonalWorkspaceFields = {
   personalOwnerUserId: string;
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
+export const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
 export function isPersonalWorkspace(workspace: unknown): boolean {

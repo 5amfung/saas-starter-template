@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import { IconLoader } from '@tabler/icons-react';
 import { useForm } from '@tanstack/react-form';
 import { Link } from '@tanstack/react-router';
 import { authClient } from '@workspace/auth/client';
 import { resetPasswordSchema } from '@workspace/auth/schemas';
-import { Button } from '@workspace/ui/components/button';
 import {
   Card,
   CardContent,
@@ -15,13 +13,12 @@ import {
 import {
   Field,
   FieldDescription,
-  FieldError,
   FieldGroup,
-  FieldLabel,
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
-import { FormError } from '@/components/auth/form-error';
-import { toFieldErrorItem } from '@/lib/form-utils';
+import { FormErrorDisplay } from '@/components/form/form-error-display';
+import { FormSubmitButton } from '@/components/form/form-submit-button';
+import { ValidatedField } from '@/components/form/validated-field';
 
 interface ResetPasswordFormProps {
   token?: string;
@@ -121,80 +118,45 @@ export function ResetPasswordForm({ token, error }: ResetPasswordFormProps) {
           <FieldGroup>
             <form.Field
               name="newPassword"
-              children={(field) => {
-                const isInvalid =
-                  field.state.meta.isBlurred && !field.state.meta.isValid;
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name}>New password</FieldLabel>
-                    <Input
-                      id={field.name}
-                      name={field.name}
-                      type="password"
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      aria-invalid={isInvalid}
-                      required
-                    />
-                    {isInvalid && (
-                      <FieldError
-                        errors={field.state.meta.errors.map(toFieldErrorItem)}
-                      />
-                    )}
-                  </Field>
-                );
-              }}
+              children={(field) => (
+                <ValidatedField field={field} label="New password">
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    type="password"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={
+                      field.state.meta.isBlurred && !field.state.meta.isValid
+                    }
+                    required
+                  />
+                </ValidatedField>
+              )}
             />
             <form.Field
               name="confirmPassword"
-              children={(field) => {
-                const isInvalid =
-                  field.state.meta.isBlurred && !field.state.meta.isValid;
-                return (
-                  <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name}>
-                      Confirm password
-                    </FieldLabel>
-                    <Input
-                      id={field.name}
-                      name={field.name}
-                      type="password"
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      aria-invalid={isInvalid}
-                      required
-                    />
-                    {isInvalid && (
-                      <FieldError
-                        errors={field.state.meta.errors.map(toFieldErrorItem)}
-                      />
-                    )}
-                  </Field>
-                );
-              }}
-            />
-            <form.Subscribe
-              selector={(state) => state.errors}
-              children={(errors) => (
-                <FormError
-                  errors={errors
-                    .flatMap((e) => (typeof e === 'string' ? [e] : []))
-                    .filter(Boolean)}
-                />
+              children={(field) => (
+                <ValidatedField field={field} label="Confirm password">
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    type="password"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={
+                      field.state.meta.isBlurred && !field.state.meta.isValid
+                    }
+                    required
+                  />
+                </ValidatedField>
               )}
             />
+            <FormErrorDisplay form={form} />
             <Field>
-              <form.Subscribe
-                selector={(state) => [state.isSubmitting]}
-                children={([isSubmitting]) => (
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting && <IconLoader className="animate-spin" />}
-                    Reset password
-                  </Button>
-                )}
-              />
+              <FormSubmitButton form={form} label="Reset password" />
               <FieldDescription className="text-center">
                 <Link
                   to="/signin"

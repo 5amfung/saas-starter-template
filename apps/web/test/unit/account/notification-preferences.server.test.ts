@@ -1,4 +1,3 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMockSessionResponse } from '@workspace/test-utils';
 import { mockDbChain, mockDbInsertChain } from '../../mocks/db';
 import {

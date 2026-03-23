@@ -29,6 +29,10 @@ vi.mock('sonner', () => ({
   },
 }));
 
+vi.mock('@/lib/logger', () => ({
+  logger: vi.fn(),
+}));
+
 vi.mock('@workspace/ui/components/sidebar', () => ({
   SidebarMenu: ({ children, ...props }: React.ComponentProps<'ul'>) => (
     <ul {...props}>{children}</ul>
@@ -183,9 +187,6 @@ describe('NavUser', () => {
     const user = userEvent.setup();
     signOutMock.mockRejectedValue(new Error('Network error'));
 
-    // Suppress the expected console.error from the component's catch block.
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
     render(<NavUser user={defaultUser} />);
 
     await user.click(screen.getByText('Log out'));
@@ -195,8 +196,6 @@ describe('NavUser', () => {
         'Logout failed. Please try again.'
       );
     });
-
-    consoleSpy.mockRestore();
   });
 
   it('navigates to account page when Account is clicked', async () => {

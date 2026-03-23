@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createServerFnMock } from '../../mocks/server-fn';
 import {
   getAdminDashboardMetrics,
   getMauChartData,
@@ -17,35 +17,7 @@ const {
   queryMauChartDataMock: vi.fn(),
 }));
 
-vi.mock('@tanstack/react-start', () => ({
-  createServerFn: () => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-    let handler: Function;
-    const builder = {
-      inputValidator: () => builder,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-      handler: (fn: Function) => {
-        handler = fn;
-        const callable = (...args: Array<unknown>) => handler(...args);
-        callable.inputValidator = () => builder;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-        callable.handler = (fn2: Function) => {
-          handler = fn2;
-          return callable;
-        };
-        return callable;
-      },
-    };
-    const callable = (...args: Array<unknown>) => handler(...args);
-    callable.inputValidator = () => builder;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-    callable.handler = (fn: Function) => {
-      handler = fn;
-      return callable;
-    };
-    return callable;
-  },
-}));
+vi.mock('@tanstack/react-start', () => createServerFnMock());
 
 vi.mock('@/admin/admin.server', () => ({
   requireAdmin: requireAdminMock,

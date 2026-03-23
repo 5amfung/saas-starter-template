@@ -64,6 +64,28 @@ vi.mock('sonner', () => ({
   },
 }));
 
+vi.mock('recharts', () => ({
+  Area: ({ children }: { children?: React.ReactNode }) => (
+    <g data-testid="area">{children}</g>
+  ),
+  AreaChart: ({ children }: { children?: React.ReactNode }) => (
+    <svg data-testid="area-chart">{children}</svg>
+  ),
+  CartesianGrid: () => <g />,
+  XAxis: () => <g />,
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+}));
+
+vi.mock('@workspace/ui/components/chart', () => ({
+  ChartContainer: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  ChartTooltip: () => null,
+  ChartTooltipContent: () => null,
+}));
+
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
 type Row = z.infer<typeof schema>;

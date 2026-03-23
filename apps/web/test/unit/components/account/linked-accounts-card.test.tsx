@@ -25,7 +25,7 @@ vi.mock('@/hooks/use-linked-accounts-query', () => ({
     ],
     isPending: false,
   }),
-  LINKED_ACCOUNTS_QUERY_KEY: ['linked_accounts'],
+  LINKED_ACCOUNTS_QUERY_KEY: ['account', 'linked-accounts'],
 }));
 
 describe('LinkedAccountsCard', () => {
@@ -173,7 +173,7 @@ describe('LinkedAccountsCard — unlinked provider', () => {
         data: [],
         isPending: false,
       }),
-      LINKED_ACCOUNTS_QUERY_KEY: ['linked_accounts'],
+      LINKED_ACCOUNTS_QUERY_KEY: ['account', 'linked-accounts'],
     }));
 
     const { LinkedAccountsCard } =
@@ -209,7 +209,7 @@ describe('LinkedAccountsCard — unlinked provider', () => {
         data: [],
         isPending: false,
       }),
-      LINKED_ACCOUNTS_QUERY_KEY: ['linked_accounts'],
+      LINKED_ACCOUNTS_QUERY_KEY: ['account', 'linked-accounts'],
     }));
 
     const { LinkedAccountsCard } =

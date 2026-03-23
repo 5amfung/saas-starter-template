@@ -18,6 +18,7 @@ import { Button } from '@workspace/ui/components/button';
 import { Field, FieldError, FieldLabel } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
 import { changeEmailSchema } from '@/account/schemas';
+import { toBase64Url } from '@/lib/format';
 
 const CONFIRMATION_TEXT = 'CHANGE';
 
@@ -29,15 +30,6 @@ export function ChangeEmailDialog({ currentEmail }: ChangeEmailDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [confirmation, setConfirmation] = React.useState('');
   const [newEmail, setNewEmail] = React.useState('');
-
-  function toBase64Url(input: string) {
-    const base64 =
-      typeof window === 'undefined'
-        ? Buffer.from(input, 'utf8').toString('base64')
-        : window.btoa(unescape(encodeURIComponent(input)));
-
-    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-  }
 
   const isConfirmed = confirmation === CONFIRMATION_TEXT;
   const parsedEmail = changeEmailSchema.safeParse({ newEmail });

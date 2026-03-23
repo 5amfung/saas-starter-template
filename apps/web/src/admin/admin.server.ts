@@ -139,9 +139,10 @@ export async function queryMauChartData(days: number, timezoneOffset: number) {
     const windowStart = new Date(
       bucket.start.getTime() - MAU_WINDOW_DAYS * MILLISECONDS_PER_DAY
     );
-    const mau = rows.filter(
-      (r) => r.lastSignInAt! >= windowStart && r.lastSignInAt! < bucket.end
-    ).length;
+    const mau = rows.filter((r) => {
+      const t = r.lastSignInAt;
+      return !!t && t >= windowStart && t < bucket.end;
+    }).length;
     return { date: bucket.label, mau };
   });
 }

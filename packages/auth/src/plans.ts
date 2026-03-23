@@ -71,7 +71,10 @@ export const PLANS: ReadonlyArray<Plan> = [
     tier: 0,
     pricing: null,
     limits: FREE_PLAN_LIMITS,
-    features: ['1 personal workspace', '1 member'],
+    features: [
+      `${FREE_PLAN_LIMITS.maxWorkspaces} personal workspace`,
+      `${FREE_PLAN_LIMITS.maxMembersPerWorkspace} member`,
+    ],
     annualBonusFeatures: [],
   },
   {
@@ -83,7 +86,10 @@ export const PLANS: ReadonlyArray<Plan> = [
       annual: { price: 50_00 },
     },
     limits: STARTER_LIMITS,
-    features: ['5 workspaces', '10 member'],
+    features: [
+      `${STARTER_LIMITS.maxWorkspaces} workspaces`,
+      `${STARTER_LIMITS.maxMembersPerWorkspace} members per workspace`,
+    ],
     annualBonusFeatures: ['2 months free'],
   },
   {
@@ -96,13 +102,13 @@ export const PLANS: ReadonlyArray<Plan> = [
     },
     limits: PRO_LIMITS,
     features: [
-      '10 workspaces',
-      '100 members per workspace',
+      `${PRO_LIMITS.maxWorkspaces} workspaces`,
+      `${PRO_LIMITS.maxMembersPerWorkspace} members per workspace`,
       'Email customer support',
     ],
     annualBonusFeatures: ['2 months free'],
   },
-] as const;
+];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -173,10 +179,6 @@ export function getHighestTierPlanId(planIds: Array<string>): PlanId {
   return best?.id ?? FREE_PLAN_ID;
 }
 
-/**
- * Returns the next upgrade plan for a given plan (next tier up), or null
- * if the user is already on the highest tier.
- */
 /**
  * Returns all plans above the current plan's tier, sorted by tier ascending.
  */

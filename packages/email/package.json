@@ -9,6 +9,7 @@
   },
   "scripts": {
     "test": "vitest run",
+    "test:unit": "vitest run",
     "coverage": "vitest run --coverage",
     "dev:email": "pnpx react-email dev --dir src/templates --port 3001",
     "lint": "eslint",

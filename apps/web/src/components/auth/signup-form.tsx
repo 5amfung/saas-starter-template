@@ -1,9 +1,7 @@
-import { IconLoader } from '@tabler/icons-react';
 import { useForm } from '@tanstack/react-form';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { authClient } from '@workspace/auth/client';
 import { signupSchema } from '@workspace/auth/schemas';
-import { Button } from '@workspace/ui/components/button';
 import {
   Card,
   CardContent,
@@ -14,15 +12,14 @@ import {
 import {
   Field,
   FieldDescription,
-  FieldError,
   FieldGroup,
-  FieldLabel,
   FieldSeparator,
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
-import { FormError } from '@/components/auth/form-error';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
-import { toFieldErrorItem } from '@/lib/form-utils';
+import { FormErrorDisplay } from '@/components/form/form-error-display';
+import { FormSubmitButton } from '@/components/form/form-submit-button';
+import { ValidatedField } from '@/components/form/validated-field';
 
 export function SignupForm() {
   const navigate = useNavigate();
@@ -82,62 +79,45 @@ export function SignupForm() {
               </FieldSeparator>
               <form.Field
                 name="email"
-                children={(field) => {
-                  const isInvalid =
-                    field.state.meta.isBlurred && !field.state.meta.isValid;
-                  return (
-                    <Field data-invalid={isInvalid}>
-                      <FieldLabel htmlFor={field.name}>Email</FieldLabel>
-                      <Input
-                        id={field.name}
-                        name={field.name}
-                        type="email"
-                        placeholder="m@example.com"
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        aria-invalid={isInvalid}
-                        required
-                      />
-                      {isInvalid && (
-                        <FieldError
-                          errors={field.state.meta.errors.map(toFieldErrorItem)}
-                        />
-                      )}
-                    </Field>
-                  );
-                }}
+                children={(field) => (
+                  <ValidatedField field={field} label="Email">
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      type="email"
+                      placeholder="m@example.com"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={
+                        field.state.meta.isBlurred && !field.state.meta.isValid
+                      }
+                      required
+                    />
+                  </ValidatedField>
+                )}
               />
               <Field>
                 <Field className="grid grid-cols-2 gap-4">
                   <form.Field
                     name="password"
-                    children={(field) => {
-                      const isInvalid =
-                        field.state.meta.isBlurred && !field.state.meta.isValid;
-                      return (
-                        <Field data-invalid={isInvalid}>
-                          <FieldLabel htmlFor={field.name}>Password</FieldLabel>
-                          <Input
-                            id={field.name}
-                            name={field.name}
-                            type="password"
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            aria-invalid={isInvalid}
-                            required
-                          />
-                          {isInvalid && (
-                            <FieldError
-                              errors={field.state.meta.errors.map(
-                                toFieldErrorItem
-                              )}
-                            />
-                          )}
-                        </Field>
-                      );
-                    }}
+                    children={(field) => (
+                      <ValidatedField field={field} label="Password">
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          type="password"
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          aria-invalid={
+                            field.state.meta.isBlurred &&
+                            !field.state.meta.isValid
+                          }
+                          required
+                        />
+                      </ValidatedField>
+                    )}
                   />
                   <form.Field
                     name="confirmPassword"
@@ -150,60 +130,32 @@ export function SignupForm() {
                         return undefined;
                       },
                     }}
-                    children={(field) => {
-                      const isInvalid =
-                        field.state.meta.isBlurred && !field.state.meta.isValid;
-                      return (
-                        <Field data-invalid={isInvalid}>
-                          <FieldLabel htmlFor={field.name}>
-                            Confirm Password
-                          </FieldLabel>
-                          <Input
-                            id={field.name}
-                            name={field.name}
-                            type="password"
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            aria-invalid={isInvalid}
-                            required
-                          />
-                          {isInvalid && (
-                            <FieldError
-                              errors={field.state.meta.errors.map(
-                                toFieldErrorItem
-                              )}
-                            />
-                          )}
-                        </Field>
-                      );
-                    }}
+                    children={(field) => (
+                      <ValidatedField field={field} label="Confirm Password">
+                        <Input
+                          id={field.name}
+                          name={field.name}
+                          type="password"
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          aria-invalid={
+                            field.state.meta.isBlurred &&
+                            !field.state.meta.isValid
+                          }
+                          required
+                        />
+                      </ValidatedField>
+                    )}
                   />
                 </Field>
                 <FieldDescription>
                   Must be at least 8 characters long.
                 </FieldDescription>
               </Field>
-              <form.Subscribe
-                selector={(state) => state.errors}
-                children={(errors) => (
-                  <FormError
-                    errors={errors
-                      .flatMap((e) => (typeof e === 'string' ? [e] : []))
-                      .filter(Boolean)}
-                  />
-                )}
-              />
+              <FormErrorDisplay form={form} />
               <Field>
-                <form.Subscribe
-                  selector={(state) => [state.isSubmitting]}
-                  children={([isSubmitting]) => (
-                    <Button type="submit" disabled={isSubmitting}>
-                      {isSubmitting && <IconLoader className="animate-spin" />}
-                      Create Account
-                    </Button>
-                  )}
-                />
+                <FormSubmitButton form={form} label="Create Account" />
                 <FieldDescription className="text-center">
                   Already have an account? <Link to="/signin">Sign in</Link>
                 </FieldDescription>

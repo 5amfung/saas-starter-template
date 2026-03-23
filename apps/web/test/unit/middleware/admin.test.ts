@@ -1,19 +1,15 @@
 // src/middleware/admin.test.ts
 import { createMockSessionResponse } from '@workspace/test-utils';
+import { createMiddlewareMock } from '../../mocks/middleware';
+import type { CapturedServerFns } from '../../mocks/middleware';
 import { validateAdminSession } from '@/middleware/admin';
 
 const { mockGetSession, mockGetRequestHeaders, capturedServerFns } = vi.hoisted(
-  () => {
-    const capturedServerFns: Record<
-      string,
-      (opts: { next: () => Promise<unknown> }) => Promise<unknown>
-    > = {};
-    return {
-      mockGetSession: vi.fn(),
-      mockGetRequestHeaders: vi.fn(() => new Headers({ cookie: 'test' })),
-      capturedServerFns,
-    };
-  }
+  () => ({
+    mockGetSession: vi.fn(),
+    mockGetRequestHeaders: vi.fn(() => new Headers({ cookie: 'test' })),
+    capturedServerFns: {} as CapturedServerFns,
+  })
 );
 
 vi.mock('@/init', () => ({
@@ -24,18 +20,7 @@ vi.mock('@tanstack/react-start/server', () => ({
   getRequestHeaders: mockGetRequestHeaders,
 }));
 
-vi.mock('@tanstack/react-start', () => ({
-  createMiddleware: () => ({
-    server: (
-      fn: (opts: { next: () => Promise<unknown> }) => Promise<unknown>
-    ) => {
-      const index = Object.keys(capturedServerFns).length;
-      const key = `middleware_${index}`;
-      capturedServerFns[key] = fn;
-      return { _key: key };
-    },
-  }),
-}));
+vi.mock('@tanstack/react-start', () => createMiddlewareMock(capturedServerFns));
 
 describe('validateAdminSession', () => {
   const headers = new Headers({ cookie: 'test' });

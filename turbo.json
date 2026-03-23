@@ -8,14 +8,25 @@
       "outputs": [".output/**"]
     },
     "lint": {},
-    "lint:fix": {},
-    "format": {},
+    "lint:fix": {
+      "cache": false
+    },
+    "format": {
+      "cache": false
+    },
     "typecheck": {},
     "check": {
-      "dependsOn": ["^lint", "^typecheck"]
+      "dependsOn": ["lint", "typecheck"]
     },
     "test": {
       "dependsOn": ["^build"]
+    },
+    "test:unit": {
+      "dependsOn": ["^build"]
+    },
+    "test:integration": {
+      "dependsOn": ["^build"],
+      "cache": false
     },
     "coverage": {
       "dependsOn": ["^build"]

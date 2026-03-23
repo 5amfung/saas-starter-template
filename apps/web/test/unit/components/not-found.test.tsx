@@ -1,13 +1,12 @@
 // @vitest-environment jsdom
 // apps/web/test/unit/components/not-found.test.tsx
 import { render, screen } from '@testing-library/react';
+import { createRouterLinkMock } from '../../mocks/router';
 import { NotFound } from '@/components/not-found';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal()),
-  Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
-    <a href={to}>{children}</a>
-  ),
+  Link: createRouterLinkMock(),
 }));
 
 describe('NotFound', () => {

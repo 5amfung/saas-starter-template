@@ -55,6 +55,6 @@ describe('useSessionsQuery', () => {
   });
 
   it('exports correct query key', () => {
-    expect(SESSIONS_QUERY_KEY).toEqual(['user_active_sessions']);
+    expect(SESSIONS_QUERY_KEY).toEqual(['session', 'active-list']);
   });
 });

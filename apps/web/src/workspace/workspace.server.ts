@@ -1,9 +1,7 @@
 import { APIError } from 'better-auth/api';
+import { isRecord } from '@workspace/auth';
 import { auth } from '@/init';
 import { pickDefaultWorkspace } from '@/workspace/workspace';
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null;
 
 const getActiveOrganizationId = (session: unknown): string | null => {
   if (!isRecord(session)) return null;
@@ -43,11 +41,9 @@ export async function ensureActiveWorkspaceForSession(
 
   const targetWorkspace = pickDefaultWorkspace(workspaces, session.user.id);
   if (!targetWorkspace) {
-    const error = new APIError('INTERNAL_SERVER_ERROR', {
+    throw new APIError('INTERNAL_SERVER_ERROR', {
       message: 'Personal workspace is missing for this user.',
     });
-    console.error(error);
-    throw error;
   }
 
   await auth.api.setActiveOrganization({
@@ -67,11 +63,9 @@ export async function ensureWorkspaceMembership(
     (candidate) => candidate.id === workspaceId
   );
   if (!workspace) {
-    const error = new APIError('NOT_FOUND', {
+    throw new APIError('NOT_FOUND', {
       message: 'Workspace not found.',
     });
-    console.error(error);
-    throw error;
   }
 
   return workspace;

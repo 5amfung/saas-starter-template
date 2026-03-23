@@ -62,6 +62,6 @@ describe('useSessionQuery', () => {
   });
 
   it('exports correct query key', () => {
-    expect(SESSION_QUERY_KEY).toEqual(['current_session']);
+    expect(SESSION_QUERY_KEY).toEqual(['session', 'current']);
   });
 });

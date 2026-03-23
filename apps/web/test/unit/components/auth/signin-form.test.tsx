@@ -2,6 +2,8 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
+import { createRouterLinkMock } from '../../../mocks/router';
+import { createGoogleSignInButtonMock } from '../../../mocks/google-sign-in-button';
 import { SigninForm } from '@/components/auth/signin-form';
 
 const { signInEmail, signUpEmail, navigate } = vi.hoisted(() => ({
@@ -20,15 +22,13 @@ vi.mock('@workspace/auth/client', () => ({
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal()),
   useNavigate: () => navigate,
-  Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
-    <a href={to}>{children}</a>
-  ),
+  Link: createRouterLinkMock(),
 }));
 
 // Mock Google sign-in button to avoid OAuth setup.
-vi.mock('@/components/auth/google-sign-in-button', () => ({
-  GoogleSignInButton: () => <button>Sign in with Google</button>,
-}));
+vi.mock('@/components/auth/google-sign-in-button', () =>
+  createGoogleSignInButtonMock()
+);
 
 describe('SigninForm', () => {
   beforeEach(() => {

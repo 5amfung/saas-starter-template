@@ -13,7 +13,7 @@ import Stripe from 'stripe';
 import { user as userTable } from '@workspace/db/schema';
 import { createAuthEmails } from './auth-emails.server';
 import { isDuplicateOrganizationError, isSignInPath } from './auth-utils';
-import { isRecord, validateWorkspaceFields } from './auth-workspace.server';
+import { validateWorkspaceFields } from './auth-workspace.server';
 import { createBillingHelpers } from './billing.server';
 import { PLANS, getPlanLimitsForPlanId } from './plans';
 import {
@@ -21,6 +21,7 @@ import {
   PERSONAL_WORKSPACE_TYPE,
   buildPersonalWorkspaceSlug,
   isPersonalWorkspace,
+  isRecord,
 } from './workspace-types';
 import type { EmailClient } from '@workspace/email';
 import type { Database } from '@workspace/db';
@@ -40,14 +41,45 @@ export interface AuthConfig {
   };
   adminUserIds?: Array<string>;
   trustedOrigins?: Array<string>;
-  /** Logger callback. Falls back to console.log when not provided. */
+  /** Logger callback. Falls back to console.log when not provided. May return a promise for async loggers. */
   logger?: (
     level: 'debug' | 'info' | 'warn' | 'error',
     message: string,
     meta?: Record<string, unknown>
-  ) => void;
+  ) => void | Promise<void>;
   /** Returns request headers in the current server context. Used by auth-emails to build email request context. */
   getRequestHeaders?: () => Headers;
+}
+
+/** Extract common subscription fields for structured logging. */
+function buildSubscriptionLogPayload(subscription: {
+  id: string;
+  plan: string;
+  referenceId: string;
+  status: string;
+  stripeSubscriptionId?: string | null;
+  periodStart?: Date | null;
+  periodEnd?: Date | null;
+  billingInterval?: string | null;
+  cancelAt?: Date | null;
+  canceledAt?: Date | null;
+  cancelAtPeriodEnd?: boolean | null;
+  endedAt?: Date | null;
+}) {
+  return {
+    subscriptionId: subscription.id,
+    plan: subscription.plan,
+    referenceId: subscription.referenceId,
+    status: subscription.status,
+    stripeSubscriptionId: subscription.stripeSubscriptionId,
+    periodStart: subscription.periodStart,
+    periodEnd: subscription.periodEnd,
+    billingInterval: subscription.billingInterval,
+    cancelAt: subscription.cancelAt,
+    canceledAt: subscription.canceledAt,
+    cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+    endedAt: subscription.endedAt,
+  };
 }
 
 export function createAuth(config: AuthConfig) {
@@ -165,11 +197,10 @@ export function createAuth(config: AuthConfig) {
         stripeWebhookSecret: config.stripe.webhookSecret,
         createCustomerOnSignUp: true,
         onCustomerCreate: async ({ stripeCustomer, user }) => {
-          log(
+          await log(
             'info',
-            `Strip customer ${stripeCustomer.id} created for user ${user.id} on signup`
+            `Stripe customer ${stripeCustomer.id} created for user ${user.id} on signup`
           );
-          return Promise.resolve();
         },
         getCheckoutSessionParams: () => ({
           params: {
@@ -180,95 +211,40 @@ export function createAuth(config: AuthConfig) {
           enabled: true,
           plans: stripePlans,
           onSubscriptionComplete: async ({ subscription, plan }) => {
-            log('info', 'subscription complete', {
-              subscriptionId: subscription.id,
-              plan: subscription.plan,
+            await log('info', 'subscription complete', {
+              ...buildSubscriptionLogPayload(subscription),
               planName: plan.name,
-              referenceId: subscription.referenceId,
-              status: subscription.status,
-              stripeSubscriptionId: subscription.stripeSubscriptionId,
-              periodStart: subscription.periodStart,
-              periodEnd: subscription.periodEnd,
-              billingInterval: subscription.billingInterval,
-              cancelAt: subscription.cancelAt,
-              canceledAt: subscription.canceledAt,
-              cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-              endedAt: subscription.endedAt,
             });
-            await Promise.resolve();
           },
           onSubscriptionCreated: async ({ subscription, plan }) => {
-            log('info', 'subscription created', {
-              subscriptionId: subscription.id,
-              plan: subscription.plan,
+            await log('info', 'subscription created', {
+              ...buildSubscriptionLogPayload(subscription),
               planName: plan.name,
-              referenceId: subscription.referenceId,
-              status: subscription.status,
-              stripeSubscriptionId: subscription.stripeSubscriptionId,
-              periodStart: subscription.periodStart,
-              periodEnd: subscription.periodEnd,
-              billingInterval: subscription.billingInterval,
-              cancelAt: subscription.cancelAt,
-              canceledAt: subscription.canceledAt,
-              cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-              endedAt: subscription.endedAt,
             });
-            await Promise.resolve();
           },
           onSubscriptionUpdate: async ({ subscription }) => {
-            log('info', 'subscription updated', {
-              subscriptionId: subscription.id,
-              plan: subscription.plan,
-              referenceId: subscription.referenceId,
-              status: subscription.status,
-              stripeSubscriptionId: subscription.stripeSubscriptionId,
-              periodStart: subscription.periodStart,
-              periodEnd: subscription.periodEnd,
-              billingInterval: subscription.billingInterval,
-              cancelAt: subscription.cancelAt,
-              canceledAt: subscription.canceledAt,
-              cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-              endedAt: subscription.endedAt,
-            });
-            await Promise.resolve();
+            await log(
+              'info',
+              'subscription updated',
+              buildSubscriptionLogPayload(subscription)
+            );
           },
           onSubscriptionCancel: async ({
             subscription,
             cancellationDetails,
           }) => {
-            log('info', 'subscription canceled', {
-              subscriptionId: subscription.id,
-              plan: subscription.plan,
-              referenceId: subscription.referenceId,
-              status: subscription.status,
-              periodStart: subscription.periodStart,
-              periodEnd: subscription.periodEnd,
-              billingInterval: subscription.billingInterval,
-              cancelAt: subscription.cancelAt,
-              canceledAt: subscription.canceledAt,
-              cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-              endedAt: subscription.endedAt,
+            await log('info', 'subscription canceled', {
+              ...buildSubscriptionLogPayload(subscription),
               reason: cancellationDetails?.reason,
               feedback: cancellationDetails?.feedback,
             });
-            await Promise.resolve();
           },
           onSubscriptionDeleted: async ({ subscription }) => {
-            log('info', 'subscription deleted', {
-              subscriptionId: subscription.id,
-              plan: subscription.plan,
-              referenceId: subscription.referenceId,
-              status: subscription.status,
-              stripeSubscriptionId: subscription.stripeSubscriptionId,
-              periodStart: subscription.periodStart,
-              periodEnd: subscription.periodEnd,
-              billingInterval: subscription.billingInterval,
-              cancelAt: subscription.cancelAt,
-              canceledAt: subscription.canceledAt,
-              cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-              endedAt: subscription.endedAt,
-            });
-            await Promise.resolve();
+            await log(
+              'info',
+              'subscription deleted',
+              buildSubscriptionLogPayload(subscription)
+            );
           },
         },
       }),
@@ -321,18 +297,18 @@ export function createAuth(config: AuthConfig) {
               }
             }
           },
+          // eslint-disable-next-line @typescript-eslint/require-await -- Better Auth requires Promise<void> return type.
           beforeUpdateOrganization: async ({ organization }) => {
             if (!isRecord(organization)) return;
             validateWorkspaceFields(organization, 'update');
-            await Promise.resolve();
           },
+          // eslint-disable-next-line @typescript-eslint/require-await -- Better Auth requires Promise<void> return type.
           beforeDeleteOrganization: async ({ organization }) => {
             if (isPersonalWorkspace(organization)) {
               throw new APIError('BAD_REQUEST', {
                 message: 'Personal workspace can not be deleted',
               });
             }
-            await Promise.resolve();
           },
           beforeCreateInvitation: async ({ organization }) => {
             const owner = await billing.getWorkspaceOwnerUserId(

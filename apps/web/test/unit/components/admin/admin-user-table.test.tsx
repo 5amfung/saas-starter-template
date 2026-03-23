@@ -152,7 +152,7 @@ describe('AdminUserTable', () => {
 
   it('displays total user count', () => {
     render(<AdminUserTable {...defaultProps} />);
-    expect(screen.getByText('2 users total')).toBeInTheDocument();
+    expect(screen.getByText('2 users')).toBeInTheDocument();
   });
 
   it('displays singular user count', () => {
@@ -163,7 +163,7 @@ describe('AdminUserTable', () => {
         total={1}
       />
     );
-    expect(screen.getByText('1 user total')).toBeInTheDocument();
+    expect(screen.getByText('1 user')).toBeInTheDocument();
   });
 
   it('displays page information', () => {
