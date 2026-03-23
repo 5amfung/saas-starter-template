@@ -18,6 +18,7 @@ import { Skeleton } from '@workspace/ui/components/skeleton';
 // Static class maps keyed by breakpoint to avoid dynamic Tailwind class interpolation,
 // which would cause classes to be pruned in production builds.
 const BREAKPOINT_CLASSES = {
+  // md: no extra layout constraints — only the "rows per page" label is hidden below md.
   md: {
     hiddenUntilBp: 'hidden md:flex',
     countContainer: '',

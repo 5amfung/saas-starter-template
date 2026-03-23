@@ -1,4 +1,4 @@
-import React from 'react';
+import { useCallback } from 'react';
 import type { SortingState } from '@tanstack/react-table';
 
 /**
@@ -10,7 +10,7 @@ export function useColumnSort(
   sorting: SortingState,
   onSortingChange: (sorting: SortingState) => void
 ) {
-  return React.useCallback(
+  return useCallback(
     (columnId: string) => {
       const current = sorting.find((item) => item.id === columnId);
       if (!current) {

@@ -13,7 +13,7 @@ import Stripe from 'stripe';
 import { user as userTable } from '@workspace/db/schema';
 import { createAuthEmails } from './auth-emails.server';
 import { isDuplicateOrganizationError, isSignInPath } from './auth-utils';
-import { isRecord, validateWorkspaceFields } from './auth-workspace.server';
+import { validateWorkspaceFields } from './auth-workspace.server';
 import { createBillingHelpers } from './billing.server';
 import { PLANS, getPlanLimitsForPlanId } from './plans';
 import {
@@ -21,6 +21,7 @@ import {
   PERSONAL_WORKSPACE_TYPE,
   buildPersonalWorkspaceSlug,
   isPersonalWorkspace,
+  isRecord,
 } from './workspace-types';
 import type { EmailClient } from '@workspace/email';
 import type { Database } from '@workspace/db';
@@ -57,13 +58,13 @@ function buildSubscriptionLogPayload(subscription: {
   referenceId: string;
   status: string;
   stripeSubscriptionId?: string | null;
-  periodStart?: unknown;
-  periodEnd?: unknown;
+  periodStart?: Date | null;
+  periodEnd?: Date | null;
   billingInterval?: string | null;
-  cancelAt?: unknown;
-  canceledAt?: unknown;
+  cancelAt?: Date | null;
+  canceledAt?: Date | null;
   cancelAtPeriodEnd?: boolean | null;
-  endedAt?: unknown;
+  endedAt?: Date | null;
 }) {
   return {
     subscriptionId: subscription.id,

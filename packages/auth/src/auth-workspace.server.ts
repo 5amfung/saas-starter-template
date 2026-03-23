@@ -3,7 +3,6 @@ import {
   PERSONAL_WORKSPACE_TYPE,
   STANDARD_WORKSPACE_TYPE,
   WORKSPACE_TYPES,
-  isRecord,
 } from './workspace-types';
 
 type WorkspaceType = (typeof WORKSPACE_TYPES)[number];
@@ -14,8 +13,6 @@ export const isWorkspaceType = (value: unknown): value is WorkspaceType =>
 
 export const asOptionalString = (value: unknown): string | undefined =>
   typeof value === 'string' && value.length > 0 ? value : undefined;
-
-export { isRecord };
 
 export const validateWorkspaceFields = (
   organization: Record<string, unknown>,

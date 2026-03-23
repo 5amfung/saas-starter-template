@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   asOptionalString,
   buildAcceptInviteUrl,
-  isRecord,
   isWorkspaceType,
   validateWorkspaceFields,
 } from '../../src/auth-workspace.server';
+import { isRecord } from '../../src/workspace-types';
 
 describe('isRecord', () => {
   it('returns true for plain objects', () => {
