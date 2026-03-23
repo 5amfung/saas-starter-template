@@ -1,6 +1,11 @@
 {
   "version": 1,
   "skills": {
+    "agents": {
+      "source": "elevenlabs/skills",
+      "sourceType": "github",
+      "computedHash": "18ddb1893c48233e73674aa00a28c62f75b55901ac7d24190575e72397a2b27a"
+    },
     "email-best-practices": {
       "source": "resend/email-best-practices",
       "sourceType": "github",
@@ -15,6 +20,11 @@
       "source": "resend/resend-skills",
       "sourceType": "github",
       "computedHash": "dca928180e73ee3dd3bfe1c921b96198c2b7d6733c06bf35c40fa343b4037a55"
+    },
+    "setup-api-key": {
+      "source": "elevenlabs/skills",
+      "sourceType": "github",
+      "computedHash": "45e680b4a199bb031472fc28e752abc29bc2a38334cf5c80e1428c3f9fa33083"
     },
     "shadcn": {
       "source": "shadcn/ui",
