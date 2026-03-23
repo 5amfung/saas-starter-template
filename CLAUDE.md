@@ -264,3 +264,29 @@ When unsure: research the recommended approach for the library, fix the architec
 - **Pre-approve CLIs**: Before executing a multi-step task, identify **all** CLI tools needed (`pnpm`, `git`, `node`, `find`, `python3`, etc.) and run a benign command for each (e.g., `--version`) to trigger permission approval upfront. Avoids and minimizes interruptions mid-task.
 - **Subagents follow the same rules.** Include these rules in subagent prompts.
 - **Use rg (ripgrep) over grep command** for performance gain.
+
+<!-- intent-skills:start -->
+
+# Skill mappings - when working in these areas, load the linked skill file into context.
+
+skills:
+
+- task: "Adding or modifying routes (file-based routing, createFileRoute, route tree)"
+  load:
+  - "node_modules/.pnpm/@tanstack+router-core@\*/node_modules/@tanstack/router-core/skills/router-core/SKILL.md"
+  - "apps/web/node_modules/@tanstack/router-plugin/skills/router-plugin/SKILL.md"
+- task: "Writing or updating server functions (createServerFn, loaders, mutations)"
+  load: "node_modules/.pnpm/@tanstack+start-client-core@\*/node_modules/@tanstack/start-client-core/skills/start-core/server-functions/SKILL.md"
+- task: "Route protection, auth guards, middleware (authMiddleware, beforeLoad, redirect)"
+  load:
+  - "node_modules/.pnpm/@tanstack+router-core@\*/node_modules/@tanstack/router-core/skills/router-core/auth-and-guards/SKILL.md"
+  - "node_modules/.pnpm/@tanstack+start-client-core@\*/node_modules/@tanstack/start-client-core/skills/start-core/middleware/SKILL.md"
+- task: "Search params and data loading (route loaders, loaderDeps, staleTime, validateSearch)"
+  load:
+  - "node_modules/.pnpm/@tanstack+router-core@\*/node_modules/@tanstack/router-core/skills/router-core/data-loading/SKILL.md"
+  - "node_modules/.pnpm/@tanstack+router-core@\*/node_modules/@tanstack/router-core/skills/router-core/search-params/SKILL.md"
+- task: "SSR, head management, deployment (HeadContent, Scripts, document shell)"
+  load:
+  - "node_modules/.pnpm/@tanstack+start-client-core@\*/node_modules/@tanstack/start-client-core/skills/start-core/SKILL.md"
+  - "node_modules/.pnpm/@tanstack+router-core@\*/node_modules/@tanstack/router-core/skills/router-core/ssr/SKILL.md"
+  <!-- intent-skills:end -->
