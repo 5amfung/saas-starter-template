@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { getUpgradePlans } from '@workspace/auth/plans';
+import { getFreePlan, getUpgradePlans } from '@workspace/auth/plans';
 import { Card, CardContent } from '@workspace/ui/components/card';
 import { BillingDowngradeBanner } from './billing-downgrade-banner';
 import { BillingInvoiceTable } from './billing-invoice-table';
@@ -105,6 +105,7 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
     <div className={PAGE_LAYOUT_CLASS}>
       {isPendingCancel && effectiveCancelDate && (
         <BillingDowngradeBanner
+          targetPlanName={getFreePlan().name}
           periodEnd={effectiveCancelDate}
           onReactivate={() => reactivateMutation.mutate()}
           isReactivating={reactivateMutation.isPending}

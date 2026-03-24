@@ -7,6 +7,7 @@ import { BillingDowngradeBanner } from '@/components/billing/billing-downgrade-b
 
 describe('BillingDowngradeBanner', () => {
   const defaultProps = {
+    targetPlanName: 'Free',
     periodEnd: new Date('2026-04-15T00:00:00Z'),
     onReactivate: vi.fn(),
     isReactivating: false,
