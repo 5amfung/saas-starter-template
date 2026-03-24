@@ -20,10 +20,8 @@
 export type PlanId = 'free' | 'starter' | 'pro';
 
 export interface PlanLimits {
-  /** Maximum workspaces the user can own. -1 = unlimited. */
-  maxWorkspaces: number;
   /** Maximum members per workspace. -1 = unlimited. */
-  maxMembersPerWorkspace: number;
+  maxMembers: number;
 }
 
 export interface PlanPricing {
@@ -50,18 +48,15 @@ export interface Plan {
 export const FREE_PLAN_ID: PlanId = 'free';
 
 const FREE_PLAN_LIMITS: PlanLimits = {
-  maxWorkspaces: 1,
-  maxMembersPerWorkspace: 1,
+  maxMembers: 1,
 };
 
 const STARTER_LIMITS: PlanLimits = {
-  maxWorkspaces: 5,
-  maxMembersPerWorkspace: 5,
+  maxMembers: 5,
 };
 
 const PRO_LIMITS: PlanLimits = {
-  maxWorkspaces: 25,
-  maxMembersPerWorkspace: 25,
+  maxMembers: 25,
 };
 
 export const PLANS: ReadonlyArray<Plan> = [
@@ -71,10 +66,7 @@ export const PLANS: ReadonlyArray<Plan> = [
     tier: 0,
     pricing: null,
     limits: FREE_PLAN_LIMITS,
-    features: [
-      `${FREE_PLAN_LIMITS.maxWorkspaces} personal workspace`,
-      `${FREE_PLAN_LIMITS.maxMembersPerWorkspace} member`,
-    ],
+    features: [`${FREE_PLAN_LIMITS.maxMembers} member`],
     annualBonusFeatures: [],
   },
   {
@@ -86,10 +78,7 @@ export const PLANS: ReadonlyArray<Plan> = [
       annual: { price: 50_00 },
     },
     limits: STARTER_LIMITS,
-    features: [
-      `${STARTER_LIMITS.maxWorkspaces} workspaces`,
-      `${STARTER_LIMITS.maxMembersPerWorkspace} members per workspace`,
-    ],
+    features: [`Up to ${STARTER_LIMITS.maxMembers} members per workspace`],
     annualBonusFeatures: ['2 months free'],
   },
   {
@@ -102,8 +91,7 @@ export const PLANS: ReadonlyArray<Plan> = [
     },
     limits: PRO_LIMITS,
     features: [
-      `${PRO_LIMITS.maxWorkspaces} workspaces`,
-      `${PRO_LIMITS.maxMembersPerWorkspace} members per workspace`,
+      `Up to ${PRO_LIMITS.maxMembers} members per workspace`,
       'Email customer support',
     ],
     annualBonusFeatures: ['2 months free'],
@@ -193,14 +181,14 @@ export function getUpgradePlan(currentPlan: Plan): Plan | null {
 }
 
 /**
- * Resolves a user's effective plan from a list of subscriptions.
+ * Resolves a workspace's effective plan from a list of subscriptions.
  * Filters to active/trialing subscriptions, then picks the highest tier.
  * Falls back to FREE_PLAN_ID if no active subscriptions exist.
  *
  * Pure function — no auth or DB dependency. Safe to import from auth.server.ts
  * org hooks without circular dependency issues.
  */
-export function resolveUserPlanId(
+export function resolveWorkspacePlanId(
   subscriptions: ReadonlyArray<{ plan: string; status: string }>
 ): PlanId {
   const activePlans = subscriptions

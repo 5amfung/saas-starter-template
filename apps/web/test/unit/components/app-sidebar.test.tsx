@@ -143,8 +143,8 @@ describe('AppSidebar', () => {
     render(<AppSidebar />);
 
     const navMain = screen.getByTestId('nav-main');
-    // Overview, Projects, Members, Settings = 4 items.
-    expect(navMain).toHaveAttribute('data-item-count', '4');
+    // Overview, Projects, Members, Billing, Settings = 5 items.
+    expect(navMain).toHaveAttribute('data-item-count', '5');
   });
 
   it('renders NavMain with empty items when no workspace is active', () => {

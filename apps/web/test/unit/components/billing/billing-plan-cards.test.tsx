@@ -11,8 +11,8 @@ const FREE_PLAN: Plan = {
   name: 'Free',
   tier: 0,
   pricing: null,
-  limits: { maxWorkspaces: 1, maxMembersPerWorkspace: 1 },
-  features: ['1 personal workspace', '1 member'],
+  limits: { maxMembers: 1 },
+  features: ['1 member'],
   annualBonusFeatures: [],
 };
 
@@ -24,8 +24,8 @@ const STARTER_PLAN: Plan = {
     monthly: { price: 500 },
     annual: { price: 5000 },
   },
-  limits: { maxWorkspaces: 5, maxMembersPerWorkspace: 5 },
-  features: ['5 personal workspace', '5 member'],
+  limits: { maxMembers: 5 },
+  features: ['Up to 5 members per workspace'],
   annualBonusFeatures: ['2 months free'],
 };
 
@@ -37,8 +37,8 @@ const PRO_PLAN: Plan = {
     monthly: { price: 2000 },
     annual: { price: 20000 },
   },
-  limits: { maxWorkspaces: 25, maxMembersPerWorkspace: 25 },
-  features: ['25 workspaces', '25 members per workspace'],
+  limits: { maxMembers: 25 },
+  features: ['Up to 25 members per workspace'],
   annualBonusFeatures: ['2 months free'],
 };
 
@@ -85,7 +85,6 @@ describe('BillingPlanCards', () => {
 
     it('shows current plan features', () => {
       renderWithProviders(<BillingPlanCards {...defaultProps} />);
-      expect(screen.getByText('1 personal workspace')).toBeInTheDocument();
       expect(screen.getByText('1 member')).toBeInTheDocument();
     });
 
@@ -178,7 +177,7 @@ describe('BillingPlanCards', () => {
       renderWithProviders(
         <BillingPlanCards {...defaultProps} annualByPlan={{ starter: true }} />
       );
-      // formatPlanPrice(STARTER_PLAN, true) = annual price / 12 / 100 = 5000/12/100 ≈ $4.17/mo
+      // formatPlanPrice(STARTER_PLAN, true) = annual price / 12 / 100 ≈ $4.17/mo
       expect(screen.getByText(/\$4/)).toBeInTheDocument();
     });
 

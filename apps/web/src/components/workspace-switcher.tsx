@@ -31,13 +31,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@workspace/ui/components/sidebar';
-import { checkPlanLimit } from '@/billing/billing.functions';
-import { UpgradePromptDialog } from '@/components/billing/upgrade-prompt-dialog';
-import { useUpgradePrompt } from '@/hooks/use-upgrade-prompt';
-import {
-  STANDARD_WORKSPACE_TYPE,
-  buildWorkspaceSlug,
-} from '@/workspace/workspace';
+import { buildWorkspaceSlug } from '@/workspace/workspace';
 
 const workspaceNameSchema = z
   .string()
@@ -65,8 +59,6 @@ export function WorkspaceSwitcher({
   const [validationError, setValidationError] = React.useState<string | null>(
     null
   );
-  const upgradePrompt = useUpgradePrompt();
-
   const handleCreateDialogOpenChange = (isOpen: boolean) => {
     setIsCreateDialogOpen(isOpen);
     if (!isOpen) {
@@ -108,7 +100,6 @@ export function WorkspaceSwitcher({
       const { data, error } = await authClient.organization.create({
         name,
         slug: buildWorkspaceSlug(name),
-        workspaceType: STANDARD_WORKSPACE_TYPE,
       });
       if (error) throw new Error(error.message);
       if (!data.id) throw new Error('Failed to create workspace.');
@@ -140,21 +131,8 @@ export function WorkspaceSwitcher({
 
   const canCreateWorkspace = workspaceName.trim().length > 0;
 
-  const handleAddWorkspace = async () => {
-    try {
-      const result = await checkPlanLimit({ data: { feature: 'workspace' } });
-      if (result.allowed) {
-        setIsCreateDialogOpen(true);
-      } else {
-        upgradePrompt.show(
-          'Workspace limit reached',
-          `You're using ${result.current}/${result.limit} workspaces on the ${result.planName} plan. Upgrade to create more.`,
-          result.upgradePlan
-        );
-      }
-    } catch {
-      toast.error('Something went wrong. Please try again.');
-    }
+  const handleAddWorkspace = () => {
+    setIsCreateDialogOpen(true);
   };
 
   return (
@@ -206,7 +184,7 @@ export function WorkspaceSwitcher({
             <DropdownMenuGroup>
               <DropdownMenuItem
                 className="gap-2 p-2"
-                onClick={() => void handleAddWorkspace()}
+                onClick={handleAddWorkspace}
               >
                 <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                   <IconPlus className="size-4" />
@@ -281,7 +259,6 @@ export function WorkspaceSwitcher({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <UpgradePromptDialog {...upgradePrompt.dialogProps} />
     </SidebarMenu>
   );
 }

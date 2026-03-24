@@ -10,3 +10,6 @@ export const isDuplicateOrganizationError = (error: unknown): boolean =>
 export type SessionLike = {
   activeOrganizationId?: unknown;
 };
+
+export const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;

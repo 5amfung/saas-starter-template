@@ -4,18 +4,22 @@ import { createHookWrapper } from '@workspace/test-utils';
 import type { Plan } from '@workspace/auth/plans';
 import { useUpgradePrompt } from '@/hooks/use-upgrade-prompt';
 
-const { mockCreateCheckoutSession, mockToastError } = vi.hoisted(() => ({
-  mockCreateCheckoutSession: vi.fn(),
-  mockToastError: vi.fn(),
-}));
+const { mockCreateWorkspaceCheckoutSession, mockToastError } = vi.hoisted(
+  () => ({
+    mockCreateWorkspaceCheckoutSession: vi.fn(),
+    mockToastError: vi.fn(),
+  })
+);
 
 vi.mock('@/billing/billing.functions', () => ({
-  createCheckoutSession: mockCreateCheckoutSession,
+  createWorkspaceCheckoutSession: mockCreateWorkspaceCheckoutSession,
 }));
 
 vi.mock('sonner', () => ({
   toast: { error: mockToastError },
 }));
+
+const TEST_WORKSPACE_ID = 'ws_123';
 
 const mockPlan: Plan = {
   id: 'pro',
@@ -25,8 +29,8 @@ const mockPlan: Plan = {
     monthly: { price: 49_00 },
     annual: { price: 490_00 },
   },
-  limits: { maxWorkspaces: 5, maxMembersPerWorkspace: 5 },
-  features: ['Up to 5 workspaces'],
+  limits: { maxMembers: 25 },
+  features: ['Up to 25 members per workspace'],
   annualBonusFeatures: ['2 months free'],
 };
 
@@ -36,14 +40,14 @@ describe('useUpgradePrompt', () => {
   });
 
   it('starts with dialog closed', () => {
-    const { result } = renderHook(() => useUpgradePrompt(), {
+    const { result } = renderHook(() => useUpgradePrompt(TEST_WORKSPACE_ID), {
       wrapper: createHookWrapper(),
     });
     expect(result.current.dialogProps.open).toBe(false);
   });
 
   it('show() populates dialog props', () => {
-    const { result } = renderHook(() => useUpgradePrompt(), {
+    const { result } = renderHook(() => useUpgradePrompt(TEST_WORKSPACE_ID), {
       wrapper: createHookWrapper(),
     });
 
@@ -58,7 +62,7 @@ describe('useUpgradePrompt', () => {
   });
 
   it('onOpenChange(false) closes dialog', () => {
-    const { result } = renderHook(() => useUpgradePrompt(), {
+    const { result } = renderHook(() => useUpgradePrompt(TEST_WORKSPACE_ID), {
       wrapper: createHookWrapper(),
     });
 
@@ -73,9 +77,7 @@ describe('useUpgradePrompt', () => {
     expect(result.current.dialogProps.open).toBe(false);
   });
 
-  it('onUpgrade() fires mutation with correct planId and annual', async () => {
-    // Mock window.location to prevent jsdom "Not implemented: navigation
-    // to another Document" warning when onSuccess sets location.href.
+  it('onUpgrade() fires mutation with correct workspaceId, planId and annual', async () => {
     const locationHrefSpy = vi
       .spyOn(window, 'location', 'get')
       .mockReturnValue({
@@ -83,11 +85,11 @@ describe('useUpgradePrompt', () => {
         href: '',
       } as Location);
 
-    mockCreateCheckoutSession.mockResolvedValue({
+    mockCreateWorkspaceCheckoutSession.mockResolvedValue({
       url: 'https://checkout.stripe.com/test',
     });
 
-    const { result } = renderHook(() => useUpgradePrompt(), {
+    const { result } = renderHook(() => useUpgradePrompt(TEST_WORKSPACE_ID), {
       wrapper: createHookWrapper(),
     });
 
@@ -100,8 +102,8 @@ describe('useUpgradePrompt', () => {
     });
 
     await waitFor(() => {
-      expect(mockCreateCheckoutSession).toHaveBeenCalledWith({
-        data: { planId: 'pro', annual: false },
+      expect(mockCreateWorkspaceCheckoutSession).toHaveBeenCalledWith({
+        data: { workspaceId: TEST_WORKSPACE_ID, planId: 'pro', annual: false },
       });
     });
 
@@ -109,7 +111,7 @@ describe('useUpgradePrompt', () => {
   });
 
   it('onUpgrade() is no-op when upgradePlan is null', () => {
-    const { result } = renderHook(() => useUpgradePrompt(), {
+    const { result } = renderHook(() => useUpgradePrompt(TEST_WORKSPACE_ID), {
       wrapper: createHookWrapper(),
     });
 
@@ -121,13 +123,15 @@ describe('useUpgradePrompt', () => {
       result.current.dialogProps.onUpgrade();
     });
 
-    expect(mockCreateCheckoutSession).not.toHaveBeenCalled();
+    expect(mockCreateWorkspaceCheckoutSession).not.toHaveBeenCalled();
   });
 
   it('shows toast on checkout error', async () => {
-    mockCreateCheckoutSession.mockRejectedValue(new Error('Checkout failed'));
+    mockCreateWorkspaceCheckoutSession.mockRejectedValue(
+      new Error('Checkout failed')
+    );
 
-    const { result } = renderHook(() => useUpgradePrompt(), {
+    const { result } = renderHook(() => useUpgradePrompt(TEST_WORKSPACE_ID), {
       wrapper: createHookWrapper(),
     });
 

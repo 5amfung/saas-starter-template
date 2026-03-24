@@ -1,36 +1,11 @@
-// Import workspace helpers for local use.
-import { isPersonalWorkspaceOwnedByUser as _isPersonalWorkspaceOwnedByUser } from '@workspace/auth';
-
-// Re-export workspace type constants from @workspace/auth.
-export {
-  PERSONAL_WORKSPACE_TYPE,
-  STANDARD_WORKSPACE_TYPE,
-  PERSONAL_WORKSPACE_NAME,
-  WORKSPACE_TYPES,
-  type WorkspaceType,
-  type PersonalWorkspaceFields,
-  isPersonalWorkspace,
-  isPersonalWorkspaceOwnedByUser,
-  buildPersonalWorkspaceSlug,
-} from '@workspace/auth';
-
 const WORKSPACE_NAME_FALLBACK = 'workspace';
 const MAX_SLUG_BASE_LENGTH = 40;
 const RANDOM_SUFFIX_LENGTH = 6;
 
-// Pick personal workspace first then any one of the other workspaces.
+// Pick the first workspace from the list.
 export function pickDefaultWorkspace<T extends { id: string }>(
-  workspaces: Array<T>,
-  userId: string
+  workspaces: Array<T>
 ): T | null {
-  if (workspaces.length === 0) return null;
-
-  const ownedPersonalWorkspace =
-    workspaces.find((workspace) =>
-      _isPersonalWorkspaceOwnedByUser(workspace, userId)
-    ) ?? null;
-  if (ownedPersonalWorkspace) return ownedPersonalWorkspace;
-
   return workspaces[0] ?? null;
 }
 

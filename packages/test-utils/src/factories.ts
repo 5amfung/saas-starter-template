@@ -34,8 +34,6 @@ interface MockWorkspace {
   logo: string | null;
   metadata: string | null;
   createdAt: Date;
-  workspaceType: 'personal' | 'workspace';
-  personalOwnerUserId: string | null;
 }
 
 export function createMockUser(overrides: Partial<MockUser> = {}): MockUser {
@@ -129,8 +127,6 @@ export function createMockWorkspace(
     logo: null,
     metadata: null,
     createdAt: new Date('2025-01-01'),
-    workspaceType: 'workspace',
-    personalOwnerUserId: null,
     ...overrides,
   };
 }

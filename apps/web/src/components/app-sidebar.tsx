@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import {
+  IconCreditCard,
   IconDashboard,
   IconFolder,
   IconHelp,
@@ -74,6 +75,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: 'Members',
           url: `/ws/${activeWorkspaceId}/members`,
           icon: <IconUsers />,
+        },
+        {
+          title: 'Billing',
+          url: `/ws/${activeWorkspaceId}/billing`,
+          icon: <IconCreditCard />,
         },
         {
           title: 'Settings',

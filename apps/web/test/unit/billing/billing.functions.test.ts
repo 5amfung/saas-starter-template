@@ -1,32 +1,34 @@
 import { createMockSessionResponse } from '@workspace/test-utils';
 import { createServerFnMock } from '../../mocks/server-fn';
 import {
-  checkPlanLimit,
-  createCheckoutSession,
-  createPortalSession,
-  getInvoices,
-  getUserBillingData,
-  reactivateSubscription,
+  checkWorkspacePlanLimit,
+  createWorkspaceCheckoutSession,
+  createWorkspacePortalSession,
+  getWorkspaceBillingData,
+  getWorkspaceInvoices,
+  reactivateWorkspaceSubscription,
 } from '@/billing/billing.functions';
 
 const {
   requireVerifiedSessionMock,
   getRequestHeadersMock,
-  createCheckoutForPlanMock,
-  createUserBillingPortalMock,
-  getBillingDataMock,
-  reactivateUserSubscriptionMock,
-  checkUserPlanLimitMock,
-  getInvoicesForUserMock,
+  createCheckoutForWorkspaceMock,
+  createWorkspaceBillingPortalMock,
+  getWorkspaceBillingDataMock,
+  reactivateWorkspaceSubscriptionMock,
+  checkWorkspacePlanLimitMock,
+  getInvoicesForWorkspaceMock,
+  getWorkspaceOwnerUserIdMock,
 } = vi.hoisted(() => ({
   requireVerifiedSessionMock: vi.fn(),
   getRequestHeadersMock: vi.fn().mockReturnValue(new Headers()),
-  createCheckoutForPlanMock: vi.fn(),
-  createUserBillingPortalMock: vi.fn(),
-  getBillingDataMock: vi.fn(),
-  reactivateUserSubscriptionMock: vi.fn(),
-  checkUserPlanLimitMock: vi.fn(),
-  getInvoicesForUserMock: vi.fn(),
+  createCheckoutForWorkspaceMock: vi.fn(),
+  createWorkspaceBillingPortalMock: vi.fn(),
+  getWorkspaceBillingDataMock: vi.fn(),
+  reactivateWorkspaceSubscriptionMock: vi.fn(),
+  checkWorkspacePlanLimitMock: vi.fn(),
+  getInvoicesForWorkspaceMock: vi.fn(),
+  getWorkspaceOwnerUserIdMock: vi.fn(),
 }));
 
 vi.mock('@tanstack/react-start', () => createServerFnMock());
@@ -37,52 +39,37 @@ vi.mock('@tanstack/react-start/server', () => ({
 
 vi.mock('@/billing/billing.server', () => ({
   requireVerifiedSession: requireVerifiedSessionMock,
-  createCheckoutForPlan: createCheckoutForPlanMock,
-  createUserBillingPortal: createUserBillingPortalMock,
-  getBillingData: getBillingDataMock,
-  reactivateUserSubscription: reactivateUserSubscriptionMock,
-  checkUserPlanLimit: checkUserPlanLimitMock,
+  createCheckoutForWorkspace: createCheckoutForWorkspaceMock,
+  createWorkspaceBillingPortal: createWorkspaceBillingPortalMock,
+  getWorkspaceBillingData: getWorkspaceBillingDataMock,
+  reactivateWorkspaceSubscription: reactivateWorkspaceSubscriptionMock,
+  checkWorkspacePlanLimit: checkWorkspacePlanLimitMock,
 }));
 
 vi.mock('@/init', () => ({
-  auth: { billing: { getInvoicesForUser: getInvoicesForUserMock } },
+  auth: {
+    billing: {
+      getInvoicesForWorkspace: getInvoicesForWorkspaceMock,
+      getWorkspaceOwnerUserId: getWorkspaceOwnerUserIdMock,
+    },
+  },
 }));
 
 vi.mock('@workspace/auth/plans', () => ({
   PLANS: [{ id: 'starter' }, { id: 'pro' }],
 }));
 
-describe('getInvoices', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    getRequestHeadersMock.mockReturnValue(new Headers());
-  });
+const TEST_WORKSPACE_ID = 'ws-1';
 
-  it('rejects when session not verified', async () => {
-    requireVerifiedSessionMock.mockRejectedValueOnce(new Error('Unauthorized'));
-    await expect(getInvoices()).rejects.toThrow('Unauthorized');
-  });
+/** Sets up mocks so the current user is the workspace owner. */
+function mockOwnerSession() {
+  const session = createMockSessionResponse();
+  requireVerifiedSessionMock.mockResolvedValueOnce(session);
+  getWorkspaceOwnerUserIdMock.mockResolvedValueOnce(session.user.id);
+  return session;
+}
 
-  it('calls getInvoicesForUser with user ID', async () => {
-    const session = createMockSessionResponse();
-    requireVerifiedSessionMock.mockResolvedValueOnce(session);
-    getInvoicesForUserMock.mockResolvedValueOnce([]);
-    await getInvoices();
-    expect(getInvoicesForUserMock).toHaveBeenCalledWith(session.user.id);
-  });
-
-  it('returns the invoice list', async () => {
-    const invoices = [{ id: 'inv-1', amount: 4900 }];
-    requireVerifiedSessionMock.mockResolvedValueOnce(
-      createMockSessionResponse()
-    );
-    getInvoicesForUserMock.mockResolvedValueOnce(invoices);
-    const result = await getInvoices();
-    expect(result).toEqual(invoices);
-  });
-});
-
-describe('createCheckoutSession', () => {
+describe('getWorkspaceInvoices', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getRequestHeadersMock.mockReturnValue(new Headers());
@@ -91,22 +78,88 @@ describe('createCheckoutSession', () => {
   it('rejects when session not verified', async () => {
     requireVerifiedSessionMock.mockRejectedValueOnce(new Error('Unauthorized'));
     await expect(
-      createCheckoutSession({ data: { planId: 'pro', annual: false } })
+      getWorkspaceInvoices({ data: { workspaceId: TEST_WORKSPACE_ID } })
     ).rejects.toThrow('Unauthorized');
   });
 
-  it('passes planId, annual, and headers to createCheckoutForPlan', async () => {
+  it('rejects when user is not the workspace owner', async () => {
+    const session = createMockSessionResponse();
+    requireVerifiedSessionMock.mockResolvedValueOnce(session);
+    getWorkspaceOwnerUserIdMock.mockResolvedValueOnce('other-user-id');
+    await expect(
+      getWorkspaceInvoices({ data: { workspaceId: TEST_WORKSPACE_ID } })
+    ).rejects.toThrow('Only the workspace owner can manage billing.');
+  });
+
+  it('calls getInvoicesForWorkspace with workspace ID', async () => {
+    mockOwnerSession();
+    getInvoicesForWorkspaceMock.mockResolvedValueOnce([]);
+    await getWorkspaceInvoices({ data: { workspaceId: TEST_WORKSPACE_ID } });
+    expect(getInvoicesForWorkspaceMock).toHaveBeenCalledWith(TEST_WORKSPACE_ID);
+  });
+
+  it('returns the invoice list', async () => {
+    const invoices = [{ id: 'inv-1', amount: 4900 }];
+    mockOwnerSession();
+    getInvoicesForWorkspaceMock.mockResolvedValueOnce(invoices);
+    const result = await getWorkspaceInvoices({
+      data: { workspaceId: TEST_WORKSPACE_ID },
+    });
+    expect(result).toEqual(invoices);
+  });
+});
+
+describe('createWorkspaceCheckoutSession', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getRequestHeadersMock.mockReturnValue(new Headers());
+  });
+
+  it('rejects when session not verified', async () => {
+    requireVerifiedSessionMock.mockRejectedValueOnce(new Error('Unauthorized'));
+    await expect(
+      createWorkspaceCheckoutSession({
+        data: {
+          workspaceId: TEST_WORKSPACE_ID,
+          planId: 'pro',
+          annual: false,
+        },
+      })
+    ).rejects.toThrow('Unauthorized');
+  });
+
+  it('rejects when user is not the workspace owner', async () => {
+    const session = createMockSessionResponse();
+    requireVerifiedSessionMock.mockResolvedValueOnce(session);
+    getWorkspaceOwnerUserIdMock.mockResolvedValueOnce('other-user-id');
+    await expect(
+      createWorkspaceCheckoutSession({
+        data: {
+          workspaceId: TEST_WORKSPACE_ID,
+          planId: 'pro',
+          annual: false,
+        },
+      })
+    ).rejects.toThrow('Only the workspace owner can manage billing.');
+  });
+
+  it('passes workspaceId, planId, annual, and headers to createCheckoutForWorkspace', async () => {
     const headers = new Headers({ 'x-test': '1' });
-    requireVerifiedSessionMock.mockResolvedValueOnce(
-      createMockSessionResponse()
-    );
+    mockOwnerSession();
     getRequestHeadersMock.mockReturnValue(headers);
-    createCheckoutForPlanMock.mockResolvedValueOnce({
+    createCheckoutForWorkspaceMock.mockResolvedValueOnce({
       url: 'https://stripe.com',
     });
-    await createCheckoutSession({ data: { planId: 'pro', annual: true } });
-    expect(createCheckoutForPlanMock).toHaveBeenCalledWith(
+    await createWorkspaceCheckoutSession({
+      data: {
+        workspaceId: TEST_WORKSPACE_ID,
+        planId: 'pro',
+        annual: true,
+      },
+    });
+    expect(createCheckoutForWorkspaceMock).toHaveBeenCalledWith(
       headers,
+      TEST_WORKSPACE_ID,
       'pro',
       true
     );
@@ -114,123 +167,20 @@ describe('createCheckoutSession', () => {
 
   it('returns the checkout result', async () => {
     const checkout = { url: 'https://stripe.com/checkout' };
-    requireVerifiedSessionMock.mockResolvedValueOnce(
-      createMockSessionResponse()
-    );
-    createCheckoutForPlanMock.mockResolvedValueOnce(checkout);
-    const result = await createCheckoutSession({
-      data: { planId: 'starter', annual: false },
+    mockOwnerSession();
+    createCheckoutForWorkspaceMock.mockResolvedValueOnce(checkout);
+    const result = await createWorkspaceCheckoutSession({
+      data: {
+        workspaceId: TEST_WORKSPACE_ID,
+        planId: 'starter',
+        annual: false,
+      },
     });
     expect(result).toEqual(checkout);
   });
 });
 
-describe('createPortalSession', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    getRequestHeadersMock.mockReturnValue(new Headers());
-  });
-
-  it('rejects when session not verified', async () => {
-    requireVerifiedSessionMock.mockRejectedValueOnce(new Error('Unauthorized'));
-    await expect(createPortalSession()).rejects.toThrow('Unauthorized');
-  });
-
-  it('calls createUserBillingPortal with headers', async () => {
-    const headers = new Headers();
-    requireVerifiedSessionMock.mockResolvedValueOnce(
-      createMockSessionResponse()
-    );
-    getRequestHeadersMock.mockReturnValue(headers);
-    createUserBillingPortalMock.mockResolvedValueOnce({
-      url: 'https://portal.stripe.com',
-    });
-    await createPortalSession();
-    expect(createUserBillingPortalMock).toHaveBeenCalledWith(headers);
-  });
-
-  it('returns the portal URL', async () => {
-    const portal = { url: 'https://portal.stripe.com' };
-    requireVerifiedSessionMock.mockResolvedValueOnce(
-      createMockSessionResponse()
-    );
-    createUserBillingPortalMock.mockResolvedValueOnce(portal);
-    const result = await createPortalSession();
-    expect(result).toEqual(portal);
-  });
-});
-
-describe('getUserBillingData', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    getRequestHeadersMock.mockReturnValue(new Headers());
-  });
-
-  it('rejects when session not verified', async () => {
-    requireVerifiedSessionMock.mockRejectedValueOnce(new Error('Unauthorized'));
-    await expect(getUserBillingData()).rejects.toThrow('Unauthorized');
-  });
-
-  it('passes headers and user ID to getBillingData', async () => {
-    const session = createMockSessionResponse();
-    const headers = new Headers();
-    requireVerifiedSessionMock.mockResolvedValueOnce(session);
-    getRequestHeadersMock.mockReturnValue(headers);
-    getBillingDataMock.mockResolvedValueOnce({});
-    await getUserBillingData();
-    expect(getBillingDataMock).toHaveBeenCalledWith(headers, session.user.id);
-  });
-
-  it('returns billing data', async () => {
-    const billingData = {
-      plan: { id: 'free', name: 'Free' },
-      subscription: null,
-    };
-    requireVerifiedSessionMock.mockResolvedValueOnce(
-      createMockSessionResponse()
-    );
-    getBillingDataMock.mockResolvedValueOnce(billingData);
-    const result = await getUserBillingData();
-    expect(result).toEqual(billingData);
-  });
-});
-
-describe('reactivateSubscription', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    getRequestHeadersMock.mockReturnValue(new Headers());
-  });
-
-  it('rejects when session not verified', async () => {
-    requireVerifiedSessionMock.mockRejectedValueOnce(new Error('Unauthorized'));
-    await expect(reactivateSubscription()).rejects.toThrow('Unauthorized');
-  });
-
-  it('calls reactivateUserSubscription with headers and user ID', async () => {
-    const session = createMockSessionResponse();
-    const headers = new Headers();
-    requireVerifiedSessionMock.mockResolvedValueOnce(session);
-    getRequestHeadersMock.mockReturnValue(headers);
-    reactivateUserSubscriptionMock.mockResolvedValueOnce({});
-    await reactivateSubscription();
-    expect(reactivateUserSubscriptionMock).toHaveBeenCalledWith(
-      headers,
-      session.user.id
-    );
-  });
-
-  it('returns the reactivation result', async () => {
-    const result = { status: 'active' };
-    requireVerifiedSessionMock.mockResolvedValueOnce(
-      createMockSessionResponse()
-    );
-    reactivateUserSubscriptionMock.mockResolvedValueOnce(result);
-    const actual = await reactivateSubscription();
-    expect(actual).toEqual(result);
-  });
-});
-
-describe('checkPlanLimit', () => {
+describe('createWorkspacePortalSession', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getRequestHeadersMock.mockReturnValue(new Headers());
@@ -239,22 +189,179 @@ describe('checkPlanLimit', () => {
   it('rejects when session not verified', async () => {
     requireVerifiedSessionMock.mockRejectedValueOnce(new Error('Unauthorized'));
     await expect(
-      checkPlanLimit({ data: { feature: 'workspace' } })
+      createWorkspacePortalSession({
+        data: { workspaceId: TEST_WORKSPACE_ID },
+      })
     ).rejects.toThrow('Unauthorized');
   });
 
-  it('passes headers, user ID, feature, and workspaceId to checkUserPlanLimit', async () => {
+  it('rejects when user is not the workspace owner', async () => {
+    const session = createMockSessionResponse();
+    requireVerifiedSessionMock.mockResolvedValueOnce(session);
+    getWorkspaceOwnerUserIdMock.mockResolvedValueOnce('other-user-id');
+    await expect(
+      createWorkspacePortalSession({
+        data: { workspaceId: TEST_WORKSPACE_ID },
+      })
+    ).rejects.toThrow('Only the workspace owner can manage billing.');
+  });
+
+  it('calls createWorkspaceBillingPortal with headers and workspaceId', async () => {
+    const headers = new Headers();
+    mockOwnerSession();
+    getRequestHeadersMock.mockReturnValue(headers);
+    createWorkspaceBillingPortalMock.mockResolvedValueOnce({
+      url: 'https://portal.stripe.com',
+    });
+    await createWorkspacePortalSession({
+      data: { workspaceId: TEST_WORKSPACE_ID },
+    });
+    expect(createWorkspaceBillingPortalMock).toHaveBeenCalledWith(
+      headers,
+      TEST_WORKSPACE_ID
+    );
+  });
+
+  it('returns the portal URL', async () => {
+    const portal = { url: 'https://portal.stripe.com' };
+    mockOwnerSession();
+    createWorkspaceBillingPortalMock.mockResolvedValueOnce(portal);
+    const result = await createWorkspacePortalSession({
+      data: { workspaceId: TEST_WORKSPACE_ID },
+    });
+    expect(result).toEqual(portal);
+  });
+});
+
+describe('getWorkspaceBillingData', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getRequestHeadersMock.mockReturnValue(new Headers());
+  });
+
+  it('rejects when session not verified', async () => {
+    requireVerifiedSessionMock.mockRejectedValueOnce(new Error('Unauthorized'));
+    await expect(
+      getWorkspaceBillingData({ data: { workspaceId: TEST_WORKSPACE_ID } })
+    ).rejects.toThrow('Unauthorized');
+  });
+
+  it('rejects when user is not the workspace owner', async () => {
+    const session = createMockSessionResponse();
+    requireVerifiedSessionMock.mockResolvedValueOnce(session);
+    getWorkspaceOwnerUserIdMock.mockResolvedValueOnce('other-user-id');
+    await expect(
+      getWorkspaceBillingData({ data: { workspaceId: TEST_WORKSPACE_ID } })
+    ).rejects.toThrow('Only the workspace owner can manage billing.');
+  });
+
+  it('passes headers and workspaceId to getWorkspaceBillingData', async () => {
+    const headers = new Headers();
+    mockOwnerSession();
+    getRequestHeadersMock.mockReturnValue(headers);
+    getWorkspaceBillingDataMock.mockResolvedValueOnce({});
+    await getWorkspaceBillingData({
+      data: { workspaceId: TEST_WORKSPACE_ID },
+    });
+    expect(getWorkspaceBillingDataMock).toHaveBeenCalledWith(
+      headers,
+      TEST_WORKSPACE_ID
+    );
+  });
+
+  it('returns billing data', async () => {
+    const billingData = {
+      plan: { id: 'free', name: 'Free' },
+      subscription: null,
+    };
+    mockOwnerSession();
+    getWorkspaceBillingDataMock.mockResolvedValueOnce(billingData);
+    const result = await getWorkspaceBillingData({
+      data: { workspaceId: TEST_WORKSPACE_ID },
+    });
+    expect(result).toEqual(billingData);
+  });
+});
+
+describe('reactivateWorkspaceSubscription', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getRequestHeadersMock.mockReturnValue(new Headers());
+  });
+
+  it('rejects when session not verified', async () => {
+    requireVerifiedSessionMock.mockRejectedValueOnce(new Error('Unauthorized'));
+    await expect(
+      reactivateWorkspaceSubscription({
+        data: { workspaceId: TEST_WORKSPACE_ID },
+      })
+    ).rejects.toThrow('Unauthorized');
+  });
+
+  it('rejects when user is not the workspace owner', async () => {
+    const session = createMockSessionResponse();
+    requireVerifiedSessionMock.mockResolvedValueOnce(session);
+    getWorkspaceOwnerUserIdMock.mockResolvedValueOnce('other-user-id');
+    await expect(
+      reactivateWorkspaceSubscription({
+        data: { workspaceId: TEST_WORKSPACE_ID },
+      })
+    ).rejects.toThrow('Only the workspace owner can manage billing.');
+  });
+
+  it('calls reactivateWorkspaceSubscription with headers and workspaceId', async () => {
+    const headers = new Headers();
+    mockOwnerSession();
+    getRequestHeadersMock.mockReturnValue(headers);
+    reactivateWorkspaceSubscriptionMock.mockResolvedValueOnce({});
+    await reactivateWorkspaceSubscription({
+      data: { workspaceId: TEST_WORKSPACE_ID },
+    });
+    expect(reactivateWorkspaceSubscriptionMock).toHaveBeenCalledWith(
+      headers,
+      TEST_WORKSPACE_ID
+    );
+  });
+
+  it('returns the reactivation result', async () => {
+    const result = { status: 'active' };
+    mockOwnerSession();
+    reactivateWorkspaceSubscriptionMock.mockResolvedValueOnce(result);
+    const actual = await reactivateWorkspaceSubscription({
+      data: { workspaceId: TEST_WORKSPACE_ID },
+    });
+    expect(actual).toEqual(result);
+  });
+});
+
+describe('checkWorkspacePlanLimit', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getRequestHeadersMock.mockReturnValue(new Headers());
+  });
+
+  it('rejects when session not verified', async () => {
+    requireVerifiedSessionMock.mockRejectedValueOnce(new Error('Unauthorized'));
+    await expect(
+      checkWorkspacePlanLimit({
+        data: { workspaceId: TEST_WORKSPACE_ID, feature: 'member' },
+      })
+    ).rejects.toThrow('Unauthorized');
+  });
+
+  it('passes headers, workspaceId, and feature to checkWorkspacePlanLimit', async () => {
     const session = createMockSessionResponse();
     const headers = new Headers();
     requireVerifiedSessionMock.mockResolvedValueOnce(session);
     getRequestHeadersMock.mockReturnValue(headers);
-    checkUserPlanLimitMock.mockResolvedValueOnce({ allowed: true });
-    await checkPlanLimit({ data: { feature: 'member', workspaceId: 'ws-1' } });
-    expect(checkUserPlanLimitMock).toHaveBeenCalledWith(
+    checkWorkspacePlanLimitMock.mockResolvedValueOnce({ allowed: true });
+    await checkWorkspacePlanLimit({
+      data: { workspaceId: TEST_WORKSPACE_ID, feature: 'member' },
+    });
+    expect(checkWorkspacePlanLimitMock).toHaveBeenCalledWith(
       headers,
-      session.user.id,
-      'member',
-      'ws-1'
+      TEST_WORKSPACE_ID,
+      'member'
     );
   });
 
@@ -263,8 +370,10 @@ describe('checkPlanLimit', () => {
     requireVerifiedSessionMock.mockResolvedValueOnce(
       createMockSessionResponse()
     );
-    checkUserPlanLimitMock.mockResolvedValueOnce(limitResult);
-    const result = await checkPlanLimit({ data: { feature: 'workspace' } });
+    checkWorkspacePlanLimitMock.mockResolvedValueOnce(limitResult);
+    const result = await checkWorkspacePlanLimit({
+      data: { workspaceId: TEST_WORKSPACE_ID, feature: 'member' },
+    });
     expect(result).toEqual(limitResult);
   });
 });

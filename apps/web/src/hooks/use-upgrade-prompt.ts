@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { Plan, PlanId } from '@workspace/auth/plans';
-import { createCheckoutSession } from '@/billing/billing.functions';
+import { createWorkspaceCheckoutSession } from '@/billing/billing.functions';
 
 interface UpgradePromptState {
   open: boolean;
@@ -27,13 +27,13 @@ const INITIAL_STATE: UpgradePromptState = {
  * When upgradePlan is null (highest tier), the dialog shows a
  * "limit reached" message instead of a checkout offer.
  */
-export function useUpgradePrompt() {
+export function useUpgradePrompt(workspaceId: string) {
   const [prompt, setPrompt] = useState<UpgradePromptState>(INITIAL_STATE);
   const [isAnnual, setIsAnnual] = useState(false);
 
   const upgradeMutation = useMutation({
     mutationFn: ({ planId, annual }: { planId: PlanId; annual: boolean }) =>
-      createCheckoutSession({ data: { planId, annual } }),
+      createWorkspaceCheckoutSession({ data: { workspaceId, planId, annual } }),
     onSuccess: (result) => {
       if (result.url) {
         window.location.href = result.url;

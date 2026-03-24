@@ -24,14 +24,9 @@ describe('workspace.server', () => {
     vi.clearAllMocks();
   });
 
-  it('falls back to personal workspace when active workspace is missing', async () => {
+  it('falls back to first workspace when active workspace is missing', async () => {
     listOrganizationsMock.mockResolvedValueOnce([
-      {
-        id: 'org_personal',
-        name: 'Personal',
-        workspaceType: 'personal',
-        personalOwnerUserId: 'user_1',
-      },
+      { id: 'org_1', name: 'First Workspace' },
     ]);
     setActiveOrganizationMock.mockResolvedValueOnce({});
 
@@ -40,16 +35,17 @@ describe('workspace.server', () => {
       session: { activeOrganizationId: null },
     });
 
-    expect(workspace.id).toBe('org_personal');
+    expect(workspace.id).toBe('org_1');
     expect(setActiveOrganizationMock).toHaveBeenCalledWith({
-      body: { organizationId: 'org_personal' },
+      body: { organizationId: 'org_1' },
       headers: expect.any(Headers),
     });
   });
 
-  it('falls back to first workspace when no personal workspace is found', async () => {
+  it('picks the first workspace when multiple exist and none is active', async () => {
     listOrganizationsMock.mockResolvedValueOnce([
-      { id: 'org_team', name: 'Team Space', workspaceType: 'workspace' },
+      { id: 'org_team', name: 'Team Space' },
+      { id: 'org_other', name: 'Other Space' },
     ]);
     setActiveOrganizationMock.mockResolvedValueOnce({});
 
@@ -58,63 +54,6 @@ describe('workspace.server', () => {
       session: { activeOrganizationId: null },
     });
 
-    expect(workspace.id).toBe('org_team');
-    expect(setActiveOrganizationMock).toHaveBeenCalledWith({
-      body: { organizationId: 'org_team' },
-      headers: expect.any(Headers),
-    });
-  });
-
-  it('prefers the owned personal workspace when multiple memberships exist', async () => {
-    listOrganizationsMock.mockResolvedValueOnce([
-      {
-        id: 'org_team',
-        name: 'Team Space',
-        workspaceType: 'workspace',
-      },
-      {
-        id: 'org_personal',
-        name: 'My Private Space',
-        workspaceType: 'personal',
-        personalOwnerUserId: 'user_1',
-      },
-    ]);
-    setActiveOrganizationMock.mockResolvedValueOnce({});
-
-    const workspace = await ensureActiveWorkspaceForSession(new Headers(), {
-      user: { id: 'user_1' },
-      session: { activeOrganizationId: null },
-    });
-
-    expect(workspace.id).toBe('org_personal');
-    expect(setActiveOrganizationMock).toHaveBeenCalledWith({
-      body: { organizationId: 'org_personal' },
-      headers: expect.any(Headers),
-    });
-  });
-
-  it('does not pick personal workspace owned by a different user', async () => {
-    listOrganizationsMock.mockResolvedValueOnce([
-      {
-        id: 'org_team',
-        name: 'Team Space',
-        workspaceType: 'workspace',
-      },
-      {
-        id: 'org_personal_other',
-        name: 'Other Personal',
-        workspaceType: 'personal',
-        personalOwnerUserId: 'user_other',
-      },
-    ]);
-    setActiveOrganizationMock.mockResolvedValueOnce({});
-
-    const workspace = await ensureActiveWorkspaceForSession(new Headers(), {
-      user: { id: 'user_1' },
-      session: { activeOrganizationId: null },
-    });
-
-    // Falls back to first workspace since the personal one belongs to another user.
     expect(workspace.id).toBe('org_team');
     expect(setActiveOrganizationMock).toHaveBeenCalledWith({
       body: { organizationId: 'org_team' },
@@ -124,20 +63,15 @@ describe('workspace.server', () => {
 
   it('returns the current active workspace without resetting it', async () => {
     listOrganizationsMock.mockResolvedValueOnce([
-      {
-        id: 'org_personal',
-        name: 'Personal',
-        workspaceType: 'personal',
-        personalOwnerUserId: 'user_1',
-      },
+      { id: 'org_1', name: 'Workspace' },
     ]);
 
     const workspace = await ensureActiveWorkspaceForSession(new Headers(), {
       user: { id: 'user_1' },
-      session: { activeOrganizationId: 'org_personal' },
+      session: { activeOrganizationId: 'org_1' },
     });
 
-    expect(workspace.id).toBe('org_personal');
+    expect(workspace.id).toBe('org_1');
     expect(setActiveOrganizationMock).not.toHaveBeenCalled();
   });
 
@@ -154,12 +88,7 @@ describe('workspace.server', () => {
 
   it('rejects non-member workspace access', async () => {
     listOrganizationsMock.mockResolvedValueOnce([
-      {
-        id: 'org_personal',
-        name: 'Personal',
-        workspaceType: 'personal',
-        personalOwnerUserId: 'user_1',
-      },
+      { id: 'org_1', name: 'Workspace' },
     ]);
 
     await expect(

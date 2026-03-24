@@ -25,7 +25,6 @@ import { Input } from '@workspace/ui/components/input';
 import { Separator } from '@workspace/ui/components/separator';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
 import { toFieldErrorItem } from '@/lib/form-utils';
-import { isPersonalWorkspace } from '@/workspace/workspace';
 
 const workspaceSettingsSchema = z.object({
   name: z.string().trim().min(1, 'Workspace name is required.'),
@@ -79,14 +78,16 @@ function WorkspaceSettingsPage() {
     };
   }, [workspaceId]);
 
-  const isPersonal = isPersonalWorkspace(workspace);
   const isOwner = hasOwnerRole(activeRole);
-  const canDelete = isOwner && !isPersonal;
-  const deleteDisabledMessage = isPersonal
-    ? 'Personal workspace can not be deleted'
-    : isOwner
-      ? null
-      : 'Only owner can delete this workspace';
+
+  const { data: organizationList } = authClient.useListOrganizations();
+  const isLastWorkspace = (organizationList?.length ?? 0) <= 1;
+  const canDelete = isOwner && !isLastWorkspace;
+  const deleteDisabledMessage = !isOwner
+    ? 'Only the owner can delete this workspace.'
+    : isLastWorkspace
+      ? 'Cannot delete your last workspace.'
+      : null;
 
   // This keeps the input stable during save and avoids the brief revert.
   const [initialWorkspaceName, setInitialWorkspaceName] = React.useState(
@@ -144,11 +145,7 @@ function WorkspaceSettingsPage() {
     const remaining = data
       .filter((candidate) => candidate.id !== workspaceId)
       .sort(sortByCreatedAtAscending);
-    const personal = remaining.find((candidate) =>
-      isPersonalWorkspace(candidate)
-    );
-    // Switch to personal workspace after deleting current workspace.
-    return personal?.id ?? remaining.at(0)?.id ?? null;
+    return remaining.at(0)?.id ?? null;
   }, [workspaceId]);
 
   return (

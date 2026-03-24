@@ -9,38 +9,40 @@ import { BillingPlanCards } from './billing-plan-cards';
 import type { PlanId } from '@workspace/auth/plans';
 import { SESSION_QUERY_KEY } from '@/hooks/use-session-query';
 import {
-  createCheckoutSession,
-  createPortalSession,
-  getInvoices,
-  getUserBillingData,
-  reactivateSubscription,
+  createWorkspaceCheckoutSession,
+  createWorkspacePortalSession,
+  getWorkspaceBillingData,
+  getWorkspaceInvoices,
+  reactivateWorkspaceSubscription,
 } from '@/billing/billing.functions';
 
 const PAGE_LAYOUT_CLASS =
   'mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6';
 
-const INVOICES_QUERY_KEY = ['billing', 'invoices'] as const;
-const BILLING_DATA_QUERY_KEY = ['billing', 'data'] as const;
+type BillingPageProps = { workspaceId: string };
 
-export function BillingPage() {
+export function BillingPage({ workspaceId }: BillingPageProps) {
   const queryClient = useQueryClient();
   const [annualByPlan, setAnnualByPlan] = useState<
     Partial<Record<PlanId, boolean>>
   >({});
   const [upgradingPlanId, setUpgradingPlanId] = useState<PlanId | null>(null);
 
+  const INVOICES_QUERY_KEY = ['billing', 'invoices', workspaceId] as const;
+  const BILLING_DATA_QUERY_KEY = ['billing', 'data', workspaceId] as const;
+
   const billingQuery = useQuery({
     queryKey: BILLING_DATA_QUERY_KEY,
-    queryFn: () => getUserBillingData(),
+    queryFn: () => getWorkspaceBillingData({ data: { workspaceId } }),
   });
 
   const invoicesQuery = useQuery({
     queryKey: INVOICES_QUERY_KEY,
-    queryFn: () => getInvoices(),
+    queryFn: () => getWorkspaceInvoices({ data: { workspaceId } }),
   });
 
   const manageMutation = useMutation({
-    mutationFn: () => createPortalSession(),
+    mutationFn: () => createWorkspacePortalSession({ data: { workspaceId } }),
     onSuccess: (result) => {
       if (result.url) {
         window.location.href = result.url;
@@ -53,7 +55,7 @@ export function BillingPage() {
 
   const upgradeMutation = useMutation({
     mutationFn: ({ planId, annual }: { planId: PlanId; annual: boolean }) =>
-      createCheckoutSession({ data: { planId, annual } }),
+      createWorkspaceCheckoutSession({ data: { workspaceId, planId, annual } }),
     onMutate: ({ planId }) => {
       setUpgradingPlanId(planId);
     },
@@ -71,7 +73,8 @@ export function BillingPage() {
   });
 
   const reactivateMutation = useMutation({
-    mutationFn: () => reactivateSubscription(),
+    mutationFn: () =>
+      reactivateWorkspaceSubscription({ data: { workspaceId } }),
     onSuccess: () => {
       toast.success('Subscription reactivated.');
       void queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
