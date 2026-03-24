@@ -187,7 +187,8 @@ export async function createCheckoutForWorkspace(
   headers: Headers,
   workspaceId: string,
   planId: PlanId,
-  annual: boolean
+  annual: boolean,
+  subscriptionId?: string
 ) {
   const result = await auth.api.upgradeSubscription({
     headers,
@@ -196,6 +197,7 @@ export async function createCheckoutForWorkspace(
       annual,
       referenceId: workspaceId,
       customerType: 'organization',
+      ...(subscriptionId ? { subscriptionId } : {}),
       successUrl: `${process.env.BETTER_AUTH_URL}/ws/${workspaceId}/billing?success=true`,
       cancelUrl: `${process.env.BETTER_AUTH_URL}/ws/${workspaceId}/billing`,
     },

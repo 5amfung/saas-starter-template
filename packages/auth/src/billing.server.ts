@@ -119,6 +119,7 @@ export function resolveSubscriptionDetails(
   subscriptions: ReadonlyArray<{
     plan: string;
     status: string;
+    stripeSubscriptionId?: string | null;
     periodEnd?: Date | null;
     cancelAtPeriodEnd?: boolean | null;
     cancelAt?: Date | null;
@@ -126,6 +127,7 @@ export function resolveSubscriptionDetails(
   planId: PlanId
 ): {
   status: string;
+  stripeSubscriptionId: string | null;
   periodEnd: Date | null;
   cancelAtPeriodEnd: boolean;
   cancelAt: Date | null;
@@ -138,6 +140,7 @@ export function resolveSubscriptionDetails(
 
   return {
     status: active.status,
+    stripeSubscriptionId: active.stripeSubscriptionId ?? null,
     periodEnd: active.periodEnd ?? null,
     cancelAtPeriodEnd: active.cancelAtPeriodEnd ?? false,
     cancelAt: active.cancelAt ?? null,

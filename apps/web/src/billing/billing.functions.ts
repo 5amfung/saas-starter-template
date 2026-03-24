@@ -54,10 +54,12 @@ const upgradeInput = z.object({
   workspaceId: z.string(),
   planId: z.enum(VALID_PLAN_IDS),
   annual: z.boolean(),
+  subscriptionId: z.string().optional(),
 });
 
 /**
  * Creates a Stripe Checkout session to subscribe a workspace to a plan.
+ * Pass subscriptionId when upgrading an existing subscription to switch plans.
  */
 export const createWorkspaceCheckoutSession = createServerFn()
   .inputValidator(upgradeInput)
@@ -69,7 +71,8 @@ export const createWorkspaceCheckoutSession = createServerFn()
       headers,
       data.workspaceId,
       data.planId,
-      data.annual
+      data.annual,
+      data.subscriptionId
     );
   });
 

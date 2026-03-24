@@ -54,8 +54,18 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
   });
 
   const upgradeMutation = useMutation({
-    mutationFn: ({ planId, annual }: { planId: PlanId; annual: boolean }) =>
-      createWorkspaceCheckoutSession({ data: { workspaceId, planId, annual } }),
+    mutationFn: ({
+      planId,
+      annual,
+      subscriptionId,
+    }: {
+      planId: PlanId;
+      annual: boolean;
+      subscriptionId?: string;
+    }) =>
+      createWorkspaceCheckoutSession({
+        data: { workspaceId, planId, annual, subscriptionId },
+      }),
     onMutate: ({ planId }) => {
       setUpgradingPlanId(planId);
     },
@@ -122,7 +132,11 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
         }
         onManage={() => manageMutation.mutate()}
         onUpgrade={(planId, annual) =>
-          upgradeMutation.mutate({ planId, annual })
+          upgradeMutation.mutate({
+            planId,
+            annual,
+            subscriptionId: subscription?.stripeSubscriptionId ?? undefined,
+          })
         }
         isManaging={manageMutation.isPending}
         upgradingPlanId={upgradingPlanId}
