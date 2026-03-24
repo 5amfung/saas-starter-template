@@ -99,7 +99,7 @@ function WorkspaceSettingsPage() {
   const deleteDisabledMessage = !isOwner
     ? 'Only the owner can delete this workspace.'
     : hasActiveSubscription
-      ? 'Cancel your subscription before deleting this workspace.'
+      ? 'This workspace can only be deleted after the subscription has ended.'
       : isLastWorkspace
         ? 'Cannot delete your last workspace.'
         : null;
