@@ -161,7 +161,8 @@ describe('createWorkspaceCheckoutSession', () => {
       headers,
       TEST_WORKSPACE_ID,
       'pro',
-      true
+      true,
+      undefined
     );
   });
 

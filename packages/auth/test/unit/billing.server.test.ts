@@ -89,6 +89,7 @@ describe('resolveSubscriptionDetails', () => {
     );
     expect(result).toEqual({
       status: 'active',
+      stripeSubscriptionId: null,
       periodEnd,
       cancelAtPeriodEnd: false,
       cancelAt: null,
@@ -102,6 +103,7 @@ describe('resolveSubscriptionDetails', () => {
     );
     expect(result).toEqual({
       status: 'trialing',
+      stripeSubscriptionId: null,
       periodEnd: null,
       cancelAtPeriodEnd: false,
       cancelAt: null,

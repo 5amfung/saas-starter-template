@@ -1,15 +1,22 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { AppSidebar } from '@/components/app-sidebar';
 
 // ── Hoisted mocks ────────────────────────────────────────────────────────────
 
-const { useSessionMock, useListOrganizationsMock, useActiveOrganizationMock } =
-  vi.hoisted(() => ({
-    useSessionMock: vi.fn(),
-    useListOrganizationsMock: vi.fn(),
-    useActiveOrganizationMock: vi.fn(),
-  }));
+const {
+  useSessionMock,
+  useListOrganizationsMock,
+  useActiveOrganizationMock,
+  getActiveMemberRoleMock,
+} = vi.hoisted(() => ({
+  useSessionMock: vi.fn(),
+  useListOrganizationsMock: vi.fn(),
+  useActiveOrganizationMock: vi.fn(),
+  getActiveMemberRoleMock: vi
+    .fn()
+    .mockResolvedValue({ data: { role: 'owner' } }),
+}));
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
 
@@ -18,6 +25,9 @@ vi.mock('@workspace/auth/client', () => ({
     useSession: useSessionMock,
     useListOrganizations: useListOrganizationsMock,
     useActiveOrganization: useActiveOrganizationMock,
+    organization: {
+      getActiveMemberRole: getActiveMemberRoleMock,
+    },
   },
 }));
 
@@ -133,7 +143,7 @@ describe('AppSidebar', () => {
     expect(switcher).toHaveAttribute('data-active-id', 'ws-1');
   });
 
-  it('renders NavMain with workspace nav items when workspace is active', () => {
+  it('renders NavMain with workspace nav items when workspace is active', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
     useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
     useActiveOrganizationMock.mockReturnValue({
@@ -142,9 +152,14 @@ describe('AppSidebar', () => {
 
     render(<AppSidebar />);
 
-    const navMain = screen.getByTestId('nav-main');
+    // Billing link is shown only for owners; wait for the async role check.
     // Overview, Projects, Members, Billing, Settings = 5 items.
-    expect(navMain).toHaveAttribute('data-item-count', '5');
+    await waitFor(() => {
+      expect(screen.getByTestId('nav-main')).toHaveAttribute(
+        'data-item-count',
+        '5'
+      );
+    });
   });
 
   it('renders NavMain with empty items when no workspace is active', () => {

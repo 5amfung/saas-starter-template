@@ -136,7 +136,7 @@ describe('billing.server', () => {
 
       expect(listActiveSubscriptionsMock).toHaveBeenCalledWith({
         headers: customHeaders,
-        query: { referenceId: TEST_WORKSPACE_ID },
+        query: { referenceId: TEST_WORKSPACE_ID, customerType: 'organization' },
       });
     });
   });
@@ -163,6 +163,7 @@ describe('billing.server', () => {
         {
           plan: 'pro',
           status: 'active',
+          stripeSubscriptionId: 'sub_pro_123',
           periodEnd,
           cancelAtPeriodEnd: false,
           cancelAt: null,
@@ -178,6 +179,7 @@ describe('billing.server', () => {
       expect(data.plan.id).toBe('pro');
       expect(data.subscription).toEqual({
         status: 'active',
+        stripeSubscriptionId: 'sub_pro_123',
         periodEnd,
         cancelAtPeriodEnd: false,
         cancelAt: null,
@@ -270,7 +272,11 @@ describe('billing.server', () => {
       expect(result).toEqual({ success: true });
       expect(restoreSubscriptionMock).toHaveBeenCalledWith({
         headers: TEST_HEADERS,
-        body: { subscriptionId: 'sub_pro' },
+        body: {
+          subscriptionId: 'sub_pro',
+          referenceId: TEST_WORKSPACE_ID,
+          customerType: 'organization',
+        },
       });
     });
 
@@ -308,6 +314,8 @@ describe('billing.server', () => {
         body: {
           plan: 'pro',
           annual: true,
+          referenceId: TEST_WORKSPACE_ID,
+          customerType: 'organization',
           successUrl: expect.stringContaining(
             `/ws/${TEST_WORKSPACE_ID}/billing?success=true`
           ),
@@ -338,6 +346,8 @@ describe('billing.server', () => {
       expect(createBillingPortalMock).toHaveBeenCalledWith({
         headers: TEST_HEADERS,
         body: {
+          referenceId: TEST_WORKSPACE_ID,
+          customerType: 'organization',
           returnUrl: expect.stringContaining(
             `/ws/${TEST_WORKSPACE_ID}/billing`
           ),
@@ -398,7 +408,7 @@ describe('billing.server', () => {
       expect(planId).toBe('pro');
       expect(listActiveSubscriptionsMock).toHaveBeenCalledWith({
         headers: TEST_HEADERS,
-        query: { referenceId: TEST_WORKSPACE_ID },
+        query: { referenceId: TEST_WORKSPACE_ID, customerType: 'organization' },
       });
     });
   });
