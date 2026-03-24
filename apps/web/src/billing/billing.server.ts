@@ -30,7 +30,7 @@ export async function getWorkspaceActivePlanId(
 ): Promise<PlanId> {
   const subscriptions = await auth.api.listActiveSubscriptions({
     headers,
-    query: { referenceId: workspaceId },
+    query: { referenceId: workspaceId, customerType: 'organization' },
   });
   return resolveWorkspacePlanId(Array.from(subscriptions));
 }
@@ -77,7 +77,7 @@ export async function getWorkspaceBillingData(
 ) {
   const subscriptions = await auth.api.listActiveSubscriptions({
     headers,
-    query: { referenceId: workspaceId },
+    query: { referenceId: workspaceId, customerType: 'organization' },
   });
   const subArray = Array.from(subscriptions);
 
@@ -86,6 +86,56 @@ export async function getWorkspaceBillingData(
   const subscription = resolveSubscriptionDetails(subArray, planId);
 
   return { planId, plan, subscription };
+}
+
+export interface WorkspaceBillingSummary {
+  workspaceId: string;
+  workspaceName: string;
+  planName: string;
+  status: string | null;
+  periodEnd: string | null;
+}
+
+/**
+ * Returns billing summaries for all workspaces the user owns.
+ * Used by the account-level billing overview page.
+ */
+export async function getOwnedWorkspacesBillingSummary(
+  headers: Headers
+): Promise<Array<WorkspaceBillingSummary>> {
+  const workspaces = await auth.api.listOrganizations({ headers });
+
+  const summaries: Array<WorkspaceBillingSummary> = [];
+  for (const ws of workspaces) {
+    const memberships = await auth.api.getFullOrganization({
+      headers,
+      query: { organizationId: ws.id },
+    });
+    const userId = (await auth.api.getSession({ headers }))?.user.id;
+    const isOwner = memberships?.members.some(
+      (m) => m.userId === userId && m.role === 'owner'
+    );
+    if (!isOwner) continue;
+
+    const subscriptions = await auth.api.listActiveSubscriptions({
+      headers,
+      query: { referenceId: ws.id, customerType: 'organization' },
+    });
+    const subArray = Array.from(subscriptions);
+    const planId = resolveWorkspacePlanId(subArray);
+    const plan = getPlanById(planId) ?? getFreePlan();
+    const subscription = resolveSubscriptionDetails(subArray, planId);
+
+    summaries.push({
+      workspaceId: ws.id,
+      workspaceName: ws.name,
+      planName: plan.name,
+      status: subscription?.status ?? null,
+      periodEnd: subscription?.periodEnd?.toISOString() ?? null,
+    });
+  }
+
+  return summaries;
 }
 
 export interface CheckPlanLimitResult {
@@ -103,6 +153,9 @@ export interface CheckPlanLimitResult {
 export async function checkWorkspacePlanLimit(
   headers: Headers,
   workspaceId: string,
+  // Currently only 'member' is supported. The parameter exists so callers
+  // document which limit they're checking and the signature is ready for
+  // additional feature types (e.g. 'storage', 'project') without a breaking change.
   _feature: 'member'
 ): Promise<CheckPlanLimitResult> {
   const ctx = await getWorkspacePlanContext(headers, workspaceId);
@@ -141,6 +194,8 @@ export async function createCheckoutForWorkspace(
     body: {
       plan: planId,
       annual,
+      referenceId: workspaceId,
+      customerType: 'organization',
       successUrl: `${process.env.BETTER_AUTH_URL}/ws/${workspaceId}/billing?success=true`,
       cancelUrl: `${process.env.BETTER_AUTH_URL}/ws/${workspaceId}/billing`,
     },
@@ -159,6 +214,8 @@ export async function createWorkspaceBillingPortal(
   const result = await auth.api.createBillingPortal({
     headers,
     body: {
+      referenceId: workspaceId,
+      customerType: 'organization',
       returnUrl: `${process.env.BETTER_AUTH_URL}/ws/${workspaceId}/billing`,
     },
   });
@@ -175,7 +232,7 @@ export async function reactivateWorkspaceSubscription(
 ) {
   const subscriptions = await auth.api.listActiveSubscriptions({
     headers,
-    query: { referenceId: workspaceId },
+    query: { referenceId: workspaceId, customerType: 'organization' },
   });
 
   const active = subscriptions.filter(
@@ -194,7 +251,11 @@ export async function reactivateWorkspaceSubscription(
 
   await auth.api.restoreSubscription({
     headers,
-    body: { subscriptionId: target.stripeSubscriptionId },
+    body: {
+      subscriptionId: target.stripeSubscriptionId,
+      referenceId: workspaceId,
+      customerType: 'organization',
+    },
   });
 
   return { success: true };

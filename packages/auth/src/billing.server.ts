@@ -78,7 +78,7 @@ export function createBillingHelpers(db: Database, stripeSecretKey: string) {
       .from(organizationTable)
       .where(eq(organizationTable.id, workspaceId));
 
-    if (!org?.stripeCustomerId) return [];
+    if (!org.stripeCustomerId) return [];
 
     const TWELVE_MONTHS_IN_SECONDS = 365 * 24 * 60 * 60;
     const twelveMonthsAgo =

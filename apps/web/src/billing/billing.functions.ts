@@ -7,6 +7,7 @@ import {
   checkWorkspacePlanLimit as checkWorkspacePlanLimitServer,
   createCheckoutForWorkspace,
   createWorkspaceBillingPortal,
+  getOwnedWorkspacesBillingSummary,
   getWorkspaceBillingData as getWorkspaceBillingDataServer,
   reactivateWorkspaceSubscription as reactivateWorkspaceSubscriptionServer,
   requireVerifiedSession,
@@ -26,6 +27,15 @@ async function requireWorkspaceOwner(
     throw new Error('Only the workspace owner can manage billing.');
   }
 }
+
+/**
+ * Returns billing summaries for all workspaces the current user owns.
+ */
+export const getBillingSummary = createServerFn().handler(async () => {
+  await requireVerifiedSession();
+  const headers = getRequestHeaders();
+  return getOwnedWorkspacesBillingSummary(headers);
+});
 
 /**
  * Fetches the workspace's invoices from Stripe (past 12 months).

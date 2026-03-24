@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { IconLoader2 } from '@tabler/icons-react';
 import { useForm } from '@tanstack/react-form';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, getRouteApi } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -23,7 +23,9 @@ import {
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
 import { Separator } from '@workspace/ui/components/separator';
+import { FREE_PLAN_ID } from '@workspace/auth/plans';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
+import { getWorkspaceBillingData } from '@/billing/billing.functions';
 import { toFieldErrorItem } from '@/lib/form-utils';
 
 const workspaceSettingsSchema = z.object({
@@ -80,14 +82,27 @@ function WorkspaceSettingsPage() {
 
   const isOwner = hasOwnerRole(activeRole);
 
+  const billingQuery = useQuery({
+    queryKey: ['billing', 'data', workspaceId],
+    queryFn: () => getWorkspaceBillingData({ data: { workspaceId } }),
+    enabled: isOwner,
+  });
+
+  const hasActiveSubscription =
+    billingQuery.data?.planId !== undefined &&
+    billingQuery.data.planId !== FREE_PLAN_ID &&
+    billingQuery.data.subscription?.status === 'active';
+
   const { data: organizationList } = authClient.useListOrganizations();
   const isLastWorkspace = (organizationList?.length ?? 0) <= 1;
-  const canDelete = isOwner && !isLastWorkspace;
+  const canDelete = isOwner && !isLastWorkspace && !hasActiveSubscription;
   const deleteDisabledMessage = !isOwner
     ? 'Only the owner can delete this workspace.'
-    : isLastWorkspace
-      ? 'Cannot delete your last workspace.'
-      : null;
+    : hasActiveSubscription
+      ? 'Cancel your subscription before deleting this workspace.'
+      : isLastWorkspace
+        ? 'Cannot delete your last workspace.'
+        : null;
 
   // This keeps the input stable during save and avoids the brief revert.
   const [initialWorkspaceName, setInitialWorkspaceName] = React.useState(

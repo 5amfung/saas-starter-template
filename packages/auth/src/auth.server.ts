@@ -253,8 +253,7 @@ export function createAuth(config: AuthConfig) {
         sendInvitationEmail: authEmails.sendInvitationEmail,
         organizationHooks: {
           // Workspace creation is always free — no plan-based gating.
-          // eslint-disable-next-line @typescript-eslint/require-await -- Better Auth requires Promise<void> return type.
-          beforeCreateOrganization: async () => {},
+          beforeCreateOrganization: () => Promise.resolve(),
           beforeDeleteOrganization: async ({ organization }) => {
             // Block deletion of workspaces with active subscriptions.
             // User must cancel the subscription via Stripe Portal first.
