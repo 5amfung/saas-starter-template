@@ -200,6 +200,11 @@ export function createAuth(config: AuthConfig) {
         subscription: {
           enabled: true,
           plans: stripePlans,
+          authorizeReference: async ({ user, referenceId }) => {
+            // Only the workspace owner can manage subscriptions.
+            const ownerId = await billing.getWorkspaceOwnerUserId(referenceId);
+            return ownerId === user.id;
+          },
           onSubscriptionComplete: async ({ subscription, plan }) => {
             await log('info', 'subscription complete', {
               ...buildSubscriptionLogPayload(subscription),
