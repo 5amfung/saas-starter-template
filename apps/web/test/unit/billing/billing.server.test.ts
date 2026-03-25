@@ -23,6 +23,7 @@ const {
   cancelSubscriptionAtPeriodEndMock,
   getSubscriptionScheduleMock,
   getPlanIdByPriceIdMock,
+  releaseSubscriptionScheduleMock,
   getRequestHeadersMock,
 } = vi.hoisted(() => ({
   listActiveSubscriptionsMock: vi.fn(),
@@ -34,6 +35,7 @@ const {
   cancelSubscriptionAtPeriodEndMock: vi.fn(),
   getSubscriptionScheduleMock: vi.fn(),
   getPlanIdByPriceIdMock: vi.fn(),
+  releaseSubscriptionScheduleMock: vi.fn(),
   getRequestHeadersMock: vi.fn().mockReturnValue(new Headers()),
 }));
 
@@ -53,6 +55,7 @@ vi.mock('@/init', () => ({
       cancelSubscriptionAtPeriodEnd: cancelSubscriptionAtPeriodEndMock,
       getSubscriptionSchedule: getSubscriptionScheduleMock,
       getPlanIdByPriceId: getPlanIdByPriceIdMock,
+      releaseSubscriptionSchedule: releaseSubscriptionScheduleMock,
     },
   },
 }));
@@ -340,6 +343,61 @@ describe('billing.server', () => {
       await expect(
         reactivateWorkspaceSubscription(TEST_HEADERS, TEST_WORKSPACE_ID)
       ).rejects.toThrow('No active subscription found.');
+    });
+
+    it('calls restoreSubscription for pending cancellation (no schedule)', async () => {
+      listActiveSubscriptionsMock.mockResolvedValue([
+        {
+          id: 'rec_pro',
+          stripeSubscriptionId: 'sub_pro_123',
+          plan: 'pro',
+          status: 'active',
+          cancelAtPeriodEnd: true,
+          stripeScheduleId: null,
+        },
+      ]);
+      restoreSubscriptionMock.mockResolvedValue({});
+
+      const result = await reactivateWorkspaceSubscription(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID
+      );
+
+      expect(result).toEqual({ success: true });
+      expect(restoreSubscriptionMock).toHaveBeenCalledWith({
+        headers: TEST_HEADERS,
+        body: {
+          subscriptionId: 'sub_pro_123',
+          referenceId: TEST_WORKSPACE_ID,
+          customerType: 'organization',
+        },
+      });
+      expect(releaseSubscriptionScheduleMock).not.toHaveBeenCalled();
+    });
+
+    it('calls releaseSubscriptionSchedule for scheduled downgrade', async () => {
+      listActiveSubscriptionsMock.mockResolvedValue([
+        {
+          id: 'rec_pro',
+          stripeSubscriptionId: 'sub_pro_123',
+          plan: 'pro',
+          status: 'active',
+          cancelAtPeriodEnd: false,
+          stripeScheduleId: 'sub_sched_123',
+        },
+      ]);
+      releaseSubscriptionScheduleMock.mockResolvedValue({});
+
+      const result = await reactivateWorkspaceSubscription(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID
+      );
+
+      expect(result).toEqual({ success: true });
+      expect(releaseSubscriptionScheduleMock).toHaveBeenCalledWith(
+        'sub_sched_123'
+      );
+      expect(restoreSubscriptionMock).not.toHaveBeenCalled();
     });
   });
 

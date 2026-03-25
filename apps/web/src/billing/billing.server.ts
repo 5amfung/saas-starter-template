@@ -260,14 +260,18 @@ export async function reactivateWorkspaceSubscription(
     throw new Error('Could not find subscription to restore.');
   }
 
-  await auth.api.restoreSubscription({
-    headers,
-    body: {
-      subscriptionId: target.stripeSubscriptionId,
-      referenceId: workspaceId,
-      customerType: 'organization',
-    },
-  });
+  if (target.stripeScheduleId) {
+    await auth.billing.releaseSubscriptionSchedule(target.stripeScheduleId);
+  } else {
+    await auth.api.restoreSubscription({
+      headers,
+      body: {
+        subscriptionId: target.stripeSubscriptionId,
+        referenceId: workspaceId,
+        customerType: 'organization',
+      },
+    });
+  }
 
   return { success: true };
 }
