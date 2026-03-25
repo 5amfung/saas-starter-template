@@ -90,6 +90,7 @@ describe('resolveSubscriptionDetails', () => {
     expect(result).toEqual({
       status: 'active',
       stripeSubscriptionId: null,
+      stripeScheduleId: null,
       periodEnd,
       cancelAtPeriodEnd: false,
       cancelAt: null,
@@ -104,10 +105,34 @@ describe('resolveSubscriptionDetails', () => {
     expect(result).toEqual({
       status: 'trialing',
       stripeSubscriptionId: null,
+      stripeScheduleId: null,
       periodEnd: null,
       cancelAtPeriodEnd: false,
       cancelAt: null,
     });
+  });
+
+  it('returns stripeScheduleId when present', () => {
+    const result = resolveSubscriptionDetails(
+      [
+        {
+          plan: 'pro',
+          status: 'active',
+          stripeSubscriptionId: 'sub_123',
+          stripeScheduleId: 'sub_sched_123',
+        },
+      ],
+      'pro'
+    );
+    expect(result?.stripeScheduleId).toBe('sub_sched_123');
+  });
+
+  it('returns null stripeScheduleId when absent', () => {
+    const result = resolveSubscriptionDetails(
+      [{ plan: 'pro', status: 'active', stripeSubscriptionId: 'sub_123' }],
+      'pro'
+    );
+    expect(result?.stripeScheduleId).toBeNull();
   });
 });
 
