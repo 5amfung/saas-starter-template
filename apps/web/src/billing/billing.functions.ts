@@ -123,7 +123,8 @@ const checkPlanLimitInput = z.object({
 export const checkWorkspacePlanLimit = createServerFn()
   .inputValidator(checkPlanLimitInput)
   .handler(async ({ data }) => {
-    await requireVerifiedSession();
+    const session = await requireVerifiedSession();
+    await requireWorkspaceOwner(session, data.workspaceId);
     const headers = getRequestHeaders();
     return checkWorkspacePlanLimitServer(
       headers,

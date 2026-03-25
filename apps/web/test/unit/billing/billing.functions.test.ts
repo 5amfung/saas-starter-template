@@ -350,10 +350,20 @@ describe('checkWorkspacePlanLimit', () => {
     ).rejects.toThrow('Unauthorized');
   });
 
-  it('passes headers, workspaceId, and feature to checkWorkspacePlanLimit', async () => {
+  it('rejects when user is not the workspace owner', async () => {
     const session = createMockSessionResponse();
-    const headers = new Headers();
     requireVerifiedSessionMock.mockResolvedValueOnce(session);
+    getWorkspaceOwnerUserIdMock.mockResolvedValueOnce('other-user-id');
+    await expect(
+      checkWorkspacePlanLimit({
+        data: { workspaceId: TEST_WORKSPACE_ID, feature: 'member' },
+      })
+    ).rejects.toThrow('Only the workspace owner can manage billing.');
+  });
+
+  it('passes headers, workspaceId, and feature to checkWorkspacePlanLimit', async () => {
+    const headers = new Headers();
+    mockOwnerSession();
     getRequestHeadersMock.mockReturnValue(headers);
     checkWorkspacePlanLimitMock.mockResolvedValueOnce({ allowed: true });
     await checkWorkspacePlanLimit({
@@ -368,9 +378,7 @@ describe('checkWorkspacePlanLimit', () => {
 
   it('returns the plan limit check result', async () => {
     const limitResult = { allowed: false, limit: 1, current: 1 };
-    requireVerifiedSessionMock.mockResolvedValueOnce(
-      createMockSessionResponse()
-    );
+    mockOwnerSession();
     checkWorkspacePlanLimitMock.mockResolvedValueOnce(limitResult);
     const result = await checkWorkspacePlanLimit({
       data: { workspaceId: TEST_WORKSPACE_ID, feature: 'member' },
