@@ -181,6 +181,15 @@ describe('createBillingHelpers', () => {
   });
 
   describe('getInvoicesForWorkspace', () => {
+    it('returns empty array when workspace not found', async () => {
+      mockDbChain(dbSelectMock, []);
+
+      const result = await helpers.getInvoicesForWorkspace(TEST_WORKSPACE_ID);
+
+      expect(result).toEqual([]);
+      expect(stripeInvoicesListMock).not.toHaveBeenCalled();
+    });
+
     it('returns empty array when no stripeCustomerId', async () => {
       mockDbChain(dbSelectMock, [{ stripeCustomerId: null }]);
 

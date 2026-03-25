@@ -73,12 +73,13 @@ export function createBillingHelpers(db: Database, stripeSecretKey: string) {
 
   /** Fetches a workspace's invoices from Stripe (past 12 months). */
   async function getInvoicesForWorkspace(workspaceId: string) {
-    const [org] = await db
+    const rows = await db
       .select({ stripeCustomerId: organizationTable.stripeCustomerId })
       .from(organizationTable)
       .where(eq(organizationTable.id, workspaceId));
 
-    if (!org.stripeCustomerId) return [];
+    const org = rows.at(0);
+    if (!org?.stripeCustomerId) return [];
 
     const TWELVE_MONTHS_IN_SECONDS = 365 * 24 * 60 * 60;
     const twelveMonthsAgo =
