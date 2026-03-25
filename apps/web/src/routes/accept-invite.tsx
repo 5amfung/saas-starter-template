@@ -47,15 +47,17 @@ function AcceptInvitePage() {
         return;
       }
 
+      const returnTo = `/accept-invite?id=${encodeURIComponent(id)}`;
+
       if (!session) {
-        await navigate({ to: '/signin' });
+        await navigate({ to: '/signup', search: { redirect: returnTo } });
         return;
       }
 
-      // Logged in but email not verified should never happen but gate it anyway.
+      // Logged in but email not verified — sign out and redirect to signup.
       if (!session.user.emailVerified) {
         await authClient.signOut();
-        await navigate({ to: '/signin' });
+        await navigate({ to: '/signup', search: { redirect: returnTo } });
         return;
       }
 

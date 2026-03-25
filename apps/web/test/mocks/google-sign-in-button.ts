@@ -6,7 +6,11 @@ import * as React from 'react';
  */
 export function createGoogleSignInButtonMock() {
   return {
-    GoogleSignInButton: () =>
-      React.createElement('button', null, 'Sign in with Google'),
+    GoogleSignInButton: ({ callbackURL }: { callbackURL?: string }) =>
+      React.createElement(
+        'button',
+        { 'data-callback-url': callbackURL },
+        'Sign in with Google'
+      ),
   };
 }

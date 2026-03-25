@@ -21,8 +21,11 @@ import { FormErrorDisplay } from '@/components/form/form-error-display';
 import { FormSubmitButton } from '@/components/form/form-submit-button';
 import { ValidatedField } from '@/components/form/validated-field';
 
-export function SignupForm() {
+const DEFAULT_CALLBACK_URL = '/ws';
+
+export function SignupForm({ redirect }: { redirect?: string }) {
   const navigate = useNavigate();
+  const callbackURL = redirect ?? DEFAULT_CALLBACK_URL;
 
   const form = useForm({
     defaultValues: {
@@ -39,7 +42,7 @@ export function SignupForm() {
         email: value.email,
         password: value.password,
         name: value.email.split('@')[0] ?? '',
-        callbackURL: '/ws',
+        callbackURL,
       });
       if (error) {
         const message =
@@ -52,7 +55,7 @@ export function SignupForm() {
         });
         return;
       }
-      navigate({ to: '/verify', search: { email: value.email } });
+      navigate({ to: '/verify', search: { email: value.email, redirect } });
     },
   });
 
@@ -73,7 +76,7 @@ export function SignupForm() {
             }}
           >
             <FieldGroup>
-              <GoogleSignInButton />
+              <GoogleSignInButton callbackURL={callbackURL} />
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 Or continue with
               </FieldSeparator>
@@ -157,7 +160,10 @@ export function SignupForm() {
               <Field>
                 <FormSubmitButton form={form} label="Create Account" />
                 <FieldDescription className="text-center">
-                  Already have an account? <Link to="/signin">Sign in</Link>
+                  Already have an account?{' '}
+                  <Link to="/signin" search={{ redirect }}>
+                    Sign in
+                  </Link>
                 </FieldDescription>
               </Field>
             </FieldGroup>

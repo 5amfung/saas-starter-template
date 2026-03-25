@@ -4,7 +4,13 @@ import { authClient } from '@workspace/auth/client';
 import { Button } from '@workspace/ui/components/button';
 import { GoogleIcon } from '@/components/icons/google-icon';
 
-export function GoogleSignInButton() {
+const DEFAULT_CALLBACK_URL = '/ws';
+
+export function GoogleSignInButton({
+  callbackURL = DEFAULT_CALLBACK_URL,
+}: {
+  callbackURL?: string;
+}) {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -13,7 +19,7 @@ export function GoogleSignInButton() {
     setError(null);
     const { error: signInError } = await authClient.signIn.social({
       provider: 'google',
-      callbackURL: '/ws',
+      callbackURL,
       errorCallbackURL: '/signin',
     });
     if (signInError) {

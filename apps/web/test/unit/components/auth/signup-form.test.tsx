@@ -122,8 +122,65 @@ describe('SignupForm', () => {
       expect(navigate).toHaveBeenCalledWith(
         expect.objectContaining({
           to: '/verify',
-          search: { email: 'new@example.com' },
+          search: expect.objectContaining({ email: 'new@example.com' }),
         })
+      );
+    });
+  });
+
+  it('uses redirect as callbackURL when provided', async () => {
+    const user = userEvent.setup();
+    signUpEmail.mockResolvedValue({ data: {}, error: null });
+    renderWithProviders(<SignupForm redirect="/accept-invite?id=abc" />);
+
+    await user.type(screen.getByLabelText(/^email$/i), 'new@example.com');
+    await user.type(screen.getByLabelText(/^password$/i), 'password123');
+    await user.type(screen.getByLabelText(/confirm password/i), 'password123');
+    await user.click(screen.getByRole('button', { name: /create account/i }));
+
+    await waitFor(() => {
+      expect(signUpEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ callbackURL: '/accept-invite?id=abc' })
+      );
+    });
+  });
+
+  it('navigates to /verify with redirect on successful signup', async () => {
+    const user = userEvent.setup();
+    signUpEmail.mockResolvedValue({ data: {}, error: null });
+    renderWithProviders(<SignupForm redirect="/accept-invite?id=abc" />);
+
+    await user.type(screen.getByLabelText(/^email$/i), 'new@example.com');
+    await user.type(screen.getByLabelText(/^password$/i), 'password123');
+    await user.type(screen.getByLabelText(/confirm password/i), 'password123');
+    await user.click(screen.getByRole('button', { name: /create account/i }));
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: '/verify',
+          search: {
+            email: 'new@example.com',
+            redirect: '/accept-invite?id=abc',
+          },
+        })
+      );
+    });
+  });
+
+  it('falls back to /ws when redirect is not provided', async () => {
+    const user = userEvent.setup();
+    signUpEmail.mockResolvedValue({ data: {}, error: null });
+    renderWithProviders(<SignupForm />);
+
+    await user.type(screen.getByLabelText(/^email$/i), 'new@example.com');
+    await user.type(screen.getByLabelText(/^password$/i), 'password123');
+    await user.type(screen.getByLabelText(/confirm password/i), 'password123');
+    await user.click(screen.getByRole('button', { name: /create account/i }));
+
+    await waitFor(() => {
+      expect(signUpEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ callbackURL: '/ws' })
       );
     });
   });
