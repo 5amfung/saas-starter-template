@@ -4,8 +4,21 @@ import { ChangeEmailApprovalEmail } from '@workspace/email/templates/change-emai
 import { EmailVerificationEmail } from '@workspace/email/templates/email-verification-email';
 import { ResetPasswordEmail } from '@workspace/email/templates/reset-password-email';
 import { WorkspaceInvitationEmail } from '@workspace/email/templates/workspace-invitation-email';
-import { buildAcceptInviteUrl } from './auth-workspace.server';
 import type { EmailClient } from '@workspace/email';
+
+const ensureTrailingSlashRemoved = (value: string): string =>
+  value.endsWith('/') ? value.slice(0, -1) : value;
+
+/** Builds the accept-invite URL using the provided base URL. */
+const buildAcceptInviteUrl = (
+  baseUrl: string,
+  invitationId: string
+): string => {
+  const origin = ensureTrailingSlashRemoved(
+    baseUrl && baseUrl.trim() !== '' ? baseUrl.trim() : 'http://localhost:3000'
+  );
+  return `${origin}/accept-invite?id=${encodeURIComponent(invitationId)}`;
+};
 
 interface AuthEmailDeps {
   emailClient: EmailClient;

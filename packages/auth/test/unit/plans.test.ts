@@ -10,7 +10,7 @@ import {
   getPlanLimitsForPlanId,
   getUpgradePlan,
   getUpgradePlans,
-  resolveUserPlanId,
+  resolveWorkspacePlanId,
 } from '../../src/plans';
 
 describe('plans', () => {
@@ -43,19 +43,17 @@ describe('plans', () => {
 
   it('getPlanLimitsForPlanId returns correct limits for starter', () => {
     const limits = getPlanLimitsForPlanId('starter');
-    expect(limits.maxWorkspaces).toBe(5);
-    expect(limits.maxMembersPerWorkspace).toBe(5);
+    expect(limits.maxMembers).toBe(5);
   });
 
   it('getPlanLimitsForPlanId returns higher limits for pro', () => {
     const limits = getPlanLimitsForPlanId('pro');
-    expect(limits.maxWorkspaces).toBeGreaterThan(1);
-    expect(limits.maxMembersPerWorkspace).toBeGreaterThan(1);
+    expect(limits.maxMembers).toBeGreaterThan(1);
   });
 
   it('getPlanLimitsForPlanId falls back to free plan for unknown plan', () => {
     const limits = getPlanLimitsForPlanId('nonexistent' as never);
-    expect(limits.maxWorkspaces).toBe(1);
+    expect(limits.maxMembers).toBe(1);
   });
 
   it('pro plan has a higher tier than starter', () => {
@@ -115,14 +113,14 @@ describe('getUpgradePlans', () => {
   });
 });
 
-describe('resolveUserPlanId', () => {
+describe('resolveWorkspacePlanId', () => {
   it('returns free plan for empty subscriptions', () => {
-    expect(resolveUserPlanId([])).toBe(FREE_PLAN_ID);
+    expect(resolveWorkspacePlanId([])).toBe(FREE_PLAN_ID);
   });
 
   it('returns free plan when no subscriptions are active or trialing', () => {
     expect(
-      resolveUserPlanId([
+      resolveWorkspacePlanId([
         { plan: 'pro', status: 'canceled' },
         { plan: 'pro', status: 'past_due' },
       ])
@@ -130,18 +128,20 @@ describe('resolveUserPlanId', () => {
   });
 
   it('resolves active pro subscription', () => {
-    expect(resolveUserPlanId([{ plan: 'pro', status: 'active' }])).toBe('pro');
+    expect(resolveWorkspacePlanId([{ plan: 'pro', status: 'active' }])).toBe(
+      'pro'
+    );
   });
 
   it('returns the plan ID for a trialing subscription', () => {
-    expect(resolveUserPlanId([{ plan: 'pro', status: 'trialing' }])).toBe(
+    expect(resolveWorkspacePlanId([{ plan: 'pro', status: 'trialing' }])).toBe(
       'pro'
     );
   });
 
   it('picks the highest tier when multiple active subscriptions exist', () => {
     expect(
-      resolveUserPlanId([
+      resolveWorkspacePlanId([
         { plan: 'starter', status: 'active' },
         { plan: 'pro', status: 'active' },
       ])
@@ -150,7 +150,7 @@ describe('resolveUserPlanId', () => {
 
   it('ignores non-active subscriptions when picking highest tier', () => {
     expect(
-      resolveUserPlanId([
+      resolveWorkspacePlanId([
         { plan: 'pro', status: 'canceled' },
         { plan: 'starter', status: 'active' },
       ])
@@ -159,7 +159,7 @@ describe('resolveUserPlanId', () => {
 
   it('falls back to free plan for unknown plan IDs', () => {
     expect(
-      resolveUserPlanId([{ plan: 'unknown-plan', status: 'active' }])
+      resolveWorkspacePlanId([{ plan: 'unknown-plan', status: 'active' }])
     ).toBe(FREE_PLAN_ID);
   });
 });
@@ -188,14 +188,14 @@ describe('getPlanFeatures', () => {
   it('returns base features for monthly', () => {
     const pro = getPlanById('pro')!;
     const features = getPlanFeatures(pro, false);
-    expect(features).toContain('25 workspaces');
+    expect(features).toContain('Up to 25 members per workspace');
     expect(features).not.toContain('2 months free');
   });
 
   it('returns base + bonus features for annual', () => {
     const pro = getPlanById('pro')!;
     const features = getPlanFeatures(pro, true);
-    expect(features).toContain('25 workspaces');
+    expect(features).toContain('Up to 25 members per workspace');
     expect(features).toContain('2 months free');
   });
 });

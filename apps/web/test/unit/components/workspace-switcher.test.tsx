@@ -2,27 +2,21 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import type { Plan } from '@workspace/auth/plans';
 import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 
 // ── Hoisted mocks ────────────────────────────────────────────────────────────
 
-const {
-  setActiveMock,
-  createOrgMock,
-  checkPlanLimitMock,
-  navigateMock,
-  toast,
-} = vi.hoisted(() => ({
-  setActiveMock: vi.fn(),
-  createOrgMock: vi.fn(),
-  checkPlanLimitMock: vi.fn(),
-  navigateMock: vi.fn(),
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
+const { setActiveMock, createOrgMock, navigateMock, toast } = vi.hoisted(
+  () => ({
+    setActiveMock: vi.fn(),
+    createOrgMock: vi.fn(),
+    navigateMock: vi.fn(),
+    toast: {
+      success: vi.fn(),
+      error: vi.fn(),
+    },
+  })
+);
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
 
@@ -33,11 +27,6 @@ vi.mock('@workspace/auth/client', () => ({
       create: createOrgMock,
     },
   },
-}));
-
-vi.mock('@/billing/billing.functions', () => ({
-  checkPlanLimit: checkPlanLimitMock,
-  createCheckoutSession: vi.fn(),
 }));
 
 vi.mock('@tanstack/react-router', async () => {
@@ -169,44 +158,7 @@ vi.mock('@workspace/ui/components/alert-dialog', () => ({
   ),
 }));
 
-vi.mock('@/components/billing/upgrade-prompt-dialog', () => ({
-  UpgradePromptDialog: ({
-    open,
-    title,
-    description,
-  }: {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    title: string;
-    description: string;
-    upgradePlan: Plan | null;
-    isUpgrading: boolean;
-    onUpgrade: () => void;
-    isAnnual: boolean;
-    onToggleInterval: (annual: boolean) => void;
-  }) =>
-    open ? (
-      <div data-testid="upgrade-prompt-dialog">
-        <h3>{title}</h3>
-        <p>{description}</p>
-      </div>
-    ) : null,
-}));
-
 // ── Fixtures ─────────────────────────────────────────────────────────────────
-
-const STARTER_PLAN: Plan = {
-  id: 'starter',
-  name: 'Starter',
-  tier: 1,
-  pricing: {
-    monthly: { price: 500 },
-    annual: { price: 5000 },
-  },
-  limits: { maxWorkspaces: 5, maxMembersPerWorkspace: 5 },
-  features: ['5 workspaces', '5 members per workspace'],
-  annualBonusFeatures: ['2 months free'],
-};
 
 const defaultWorkspaces = [
   { id: 'ws-1', name: 'Workspace One', logo: <span>W1</span> },
@@ -306,15 +258,8 @@ describe('WorkspaceSwitcher', () => {
     });
   });
 
-  it('opens create dialog when plan allows workspace creation', async () => {
+  it('opens create dialog when Add workspace is clicked', async () => {
     const user = userEvent.setup();
-    checkPlanLimitMock.mockResolvedValue({
-      allowed: true,
-      current: 1,
-      limit: 5,
-      planName: 'Starter',
-      upgradePlan: null,
-    });
 
     renderWithProviders(
       <WorkspaceSwitcher
@@ -332,61 +277,8 @@ describe('WorkspaceSwitcher', () => {
     expect(screen.getByText('Create Workspace')).toBeInTheDocument();
   });
 
-  it('shows upgrade prompt when plan limit is reached', async () => {
-    const user = userEvent.setup();
-    checkPlanLimitMock.mockResolvedValue({
-      allowed: false,
-      current: 1,
-      limit: 1,
-      planName: 'Free',
-      upgradePlan: STARTER_PLAN,
-    });
-
-    renderWithProviders(
-      <WorkspaceSwitcher
-        workspaces={defaultWorkspaces}
-        activeWorkspaceId="ws-1"
-      />
-    );
-
-    await user.click(screen.getByText('Add workspace'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('upgrade-prompt-dialog')).toBeInTheDocument();
-    });
-
-    expect(screen.getByText('Workspace limit reached')).toBeInTheDocument();
-  });
-
-  it('shows error toast when checkPlanLimit throws', async () => {
-    const user = userEvent.setup();
-    checkPlanLimitMock.mockRejectedValue(new Error('Network error'));
-
-    renderWithProviders(
-      <WorkspaceSwitcher
-        workspaces={defaultWorkspaces}
-        activeWorkspaceId="ws-1"
-      />
-    );
-
-    await user.click(screen.getByText('Add workspace'));
-
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(
-        'Something went wrong. Please try again.'
-      );
-    });
-  });
-
   it('shows validation error for invalid workspace name', async () => {
     const user = userEvent.setup();
-    checkPlanLimitMock.mockResolvedValue({
-      allowed: true,
-      current: 1,
-      limit: 5,
-      planName: 'Starter',
-      upgradePlan: null,
-    });
 
     renderWithProviders(
       <WorkspaceSwitcher
@@ -417,13 +309,6 @@ describe('WorkspaceSwitcher', () => {
 
   it('creates workspace and navigates on success', async () => {
     const user = userEvent.setup();
-    checkPlanLimitMock.mockResolvedValue({
-      allowed: true,
-      current: 1,
-      limit: 5,
-      planName: 'Starter',
-      upgradePlan: null,
-    });
     createOrgMock.mockResolvedValue({
       data: { id: 'ws-new' },
       error: null,
@@ -463,13 +348,6 @@ describe('WorkspaceSwitcher', () => {
 
   it('shows error toast when workspace creation fails', async () => {
     const user = userEvent.setup();
-    checkPlanLimitMock.mockResolvedValue({
-      allowed: true,
-      current: 1,
-      limit: 5,
-      planName: 'Starter',
-      upgradePlan: null,
-    });
     createOrgMock.mockResolvedValue({
       data: null,
       error: { message: 'Creation failed' },

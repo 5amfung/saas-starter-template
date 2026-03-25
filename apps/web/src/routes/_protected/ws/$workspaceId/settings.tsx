@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { IconLoader2 } from '@tabler/icons-react';
 import { useForm } from '@tanstack/react-form';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, getRouteApi } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -23,9 +23,10 @@ import {
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
 import { Separator } from '@workspace/ui/components/separator';
+import { FREE_PLAN_ID } from '@workspace/auth/plans';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
+import { getWorkspaceBillingData } from '@/billing/billing.functions';
 import { toFieldErrorItem } from '@/lib/form-utils';
-import { isPersonalWorkspace } from '@/workspace/workspace';
 
 const workspaceSettingsSchema = z.object({
   name: z.string().trim().min(1, 'Workspace name is required.'),
@@ -79,14 +80,29 @@ function WorkspaceSettingsPage() {
     };
   }, [workspaceId]);
 
-  const isPersonal = isPersonalWorkspace(workspace);
   const isOwner = hasOwnerRole(activeRole);
-  const canDelete = isOwner && !isPersonal;
-  const deleteDisabledMessage = isPersonal
-    ? 'Personal workspace can not be deleted'
-    : isOwner
-      ? null
-      : 'Only owner can delete this workspace';
+
+  const billingQuery = useQuery({
+    queryKey: ['billing', 'data', workspaceId],
+    queryFn: () => getWorkspaceBillingData({ data: { workspaceId } }),
+    enabled: isOwner,
+  });
+
+  const hasActiveSubscription =
+    billingQuery.data?.planId !== undefined &&
+    billingQuery.data.planId !== FREE_PLAN_ID &&
+    billingQuery.data.subscription?.status === 'active';
+
+  const { data: organizationList } = authClient.useListOrganizations();
+  const isLastWorkspace = (organizationList?.length ?? 0) <= 1;
+  const canDelete = isOwner && !isLastWorkspace && !hasActiveSubscription;
+  const deleteDisabledMessage = !isOwner
+    ? 'Only the owner can delete this workspace.'
+    : hasActiveSubscription
+      ? 'This workspace can only be deleted after the subscription has ended.'
+      : isLastWorkspace
+        ? 'Cannot delete your last workspace.'
+        : null;
 
   // This keeps the input stable during save and avoids the brief revert.
   const [initialWorkspaceName, setInitialWorkspaceName] = React.useState(
@@ -144,11 +160,7 @@ function WorkspaceSettingsPage() {
     const remaining = data
       .filter((candidate) => candidate.id !== workspaceId)
       .sort(sortByCreatedAtAscending);
-    const personal = remaining.find((candidate) =>
-      isPersonalWorkspace(candidate)
-    );
-    // Switch to personal workspace after deleting current workspace.
-    return personal?.id ?? remaining.at(0)?.id ?? null;
+    return remaining.at(0)?.id ?? null;
   }, [workspaceId]);
 
   return (

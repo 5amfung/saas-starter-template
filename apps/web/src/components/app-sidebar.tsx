@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import {
+  IconCreditCard,
   IconDashboard,
   IconFolder,
   IconHelp,
@@ -54,9 +55,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session, isPending } = authClient.useSession();
   const { data: organizations } = authClient.useListOrganizations();
   const { data: activeOrganization } = authClient.useActiveOrganization();
-
   const activeWorkspaceId =
     activeOrganization?.id ?? organizations?.at(0)?.id ?? null;
+
+  const [isWorkspaceOwner, setIsWorkspaceOwner] = React.useState(false);
+  React.useEffect(() => {
+    let mounted = true;
+    const loadRole = async () => {
+      const result = await authClient.organization.getActiveMemberRole();
+      if (mounted) setIsWorkspaceOwner(result.data?.role === 'owner');
+    };
+    void loadRole();
+    return () => {
+      mounted = false;
+    };
+  }, [activeWorkspaceId]);
 
   const navMain = activeWorkspaceId
     ? [
@@ -75,6 +88,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: `/ws/${activeWorkspaceId}/members`,
           icon: <IconUsers />,
         },
+        ...(isWorkspaceOwner
+          ? [
+              {
+                title: 'Billing',
+                url: `/ws/${activeWorkspaceId}/billing`,
+                icon: <IconCreditCard />,
+              },
+            ]
+          : []),
         {
           title: 'Settings',
           url: `/ws/${activeWorkspaceId}/settings`,

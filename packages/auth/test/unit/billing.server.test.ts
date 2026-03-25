@@ -15,8 +15,8 @@ const { dbSelectMock, stripeInvoicesListMock } = vi.hoisted(() => ({
 
 vi.mock('@workspace/db/schema', () => ({
   member: 'member',
+  organization: 'organization',
   subscription: 'subscription',
-  user: 'user',
 }));
 
 vi.mock('drizzle-orm', async (importOriginal) => {
@@ -54,6 +54,7 @@ function mockDbChain(
   return { fromMock, whereMock, limitMock };
 }
 
+const TEST_WORKSPACE_ID = 'ws_123';
 const TEST_USER_ID = 'user_123';
 
 // ── Tests ──────────────────────────────────────────────────────────────────
@@ -88,6 +89,7 @@ describe('resolveSubscriptionDetails', () => {
     );
     expect(result).toEqual({
       status: 'active',
+      stripeSubscriptionId: null,
       periodEnd,
       cancelAtPeriodEnd: false,
       cancelAt: null,
@@ -101,6 +103,7 @@ describe('resolveSubscriptionDetails', () => {
     );
     expect(result).toEqual({
       status: 'trialing',
+      stripeSubscriptionId: null,
       periodEnd: null,
       cancelAtPeriodEnd: false,
       cancelAt: null,
@@ -117,25 +120,28 @@ describe('createBillingHelpers', () => {
     helpers = createBillingHelpers(mockDb, 'sk_test_fake');
   });
 
-  describe('resolveUserPlanIdFromDb', () => {
+  describe('resolveWorkspacePlanIdFromDb', () => {
     it('returns free when no subscriptions exist', async () => {
       mockDbChain(dbSelectMock, []);
 
-      const planId = await helpers.resolveUserPlanIdFromDb(TEST_USER_ID);
+      const planId =
+        await helpers.resolveWorkspacePlanIdFromDb(TEST_WORKSPACE_ID);
       expect(planId).toBe('free');
     });
 
     it('returns pro for active pro subscription', async () => {
       mockDbChain(dbSelectMock, [{ plan: 'pro', status: 'active' }]);
 
-      const planId = await helpers.resolveUserPlanIdFromDb(TEST_USER_ID);
+      const planId =
+        await helpers.resolveWorkspacePlanIdFromDb(TEST_WORKSPACE_ID);
       expect(planId).toBe('pro');
     });
 
     it('filters out rows with null status', async () => {
       mockDbChain(dbSelectMock, [{ plan: 'pro', status: null }]);
 
-      const planId = await helpers.resolveUserPlanIdFromDb(TEST_USER_ID);
+      const planId =
+        await helpers.resolveWorkspacePlanIdFromDb(TEST_WORKSPACE_ID);
       expect(planId).toBe('free');
     });
   });
@@ -174,17 +180,26 @@ describe('createBillingHelpers', () => {
     });
   });
 
-  describe('getInvoicesForUser', () => {
-    it('returns empty array when no stripeCustomerId', async () => {
-      mockDbChain(dbSelectMock, [{ stripeCustomerId: null }]);
+  describe('getInvoicesForWorkspace', () => {
+    it('returns empty array when workspace not found', async () => {
+      mockDbChain(dbSelectMock, []);
 
-      const result = await helpers.getInvoicesForUser(TEST_USER_ID);
+      const result = await helpers.getInvoicesForWorkspace(TEST_WORKSPACE_ID);
 
       expect(result).toEqual([]);
       expect(stripeInvoicesListMock).not.toHaveBeenCalled();
     });
 
-    it('returns mapped invoices when user has stripeCustomerId', async () => {
+    it('returns empty array when no stripeCustomerId', async () => {
+      mockDbChain(dbSelectMock, [{ stripeCustomerId: null }]);
+
+      const result = await helpers.getInvoicesForWorkspace(TEST_WORKSPACE_ID);
+
+      expect(result).toEqual([]);
+      expect(stripeInvoicesListMock).not.toHaveBeenCalled();
+    });
+
+    it('returns mapped invoices when workspace has stripeCustomerId', async () => {
       mockDbChain(dbSelectMock, [{ stripeCustomerId: 'cus_123' }]);
       stripeInvoicesListMock.mockResolvedValue({
         data: [
@@ -200,7 +215,7 @@ describe('createBillingHelpers', () => {
         ],
       });
 
-      const result = await helpers.getInvoicesForUser('user-1');
+      const result = await helpers.getInvoicesForWorkspace(TEST_WORKSPACE_ID);
 
       expect(stripeInvoicesListMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -222,8 +237,8 @@ describe('createBillingHelpers', () => {
     });
   });
 
-  describe('composability — resolveUserPlanIdFromDb + countOwnedWorkspaces', () => {
-    it('resolveUserPlanIdFromDb + countOwnedWorkspaces compose correctly', async () => {
+  describe('composability — resolveWorkspacePlanIdFromDb + countOwnedWorkspaces', () => {
+    it('resolveWorkspacePlanIdFromDb + countOwnedWorkspaces compose correctly', async () => {
       // First call: resolve plan (free).
       const where1 = vi.fn().mockResolvedValue([]);
       const from1 = vi.fn().mockReturnValue({ where: where1 });
@@ -239,7 +254,8 @@ describe('createBillingHelpers', () => {
         .mockReturnValueOnce({ from: from1 })
         .mockReturnValueOnce({ from: from2 });
 
-      const planId = await helpers.resolveUserPlanIdFromDb(TEST_USER_ID);
+      const planId =
+        await helpers.resolveWorkspacePlanIdFromDb(TEST_WORKSPACE_ID);
       expect(planId).toBe('free');
 
       const count = await helpers.countOwnedWorkspaces(TEST_USER_ID);

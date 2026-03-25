@@ -5,29 +5,29 @@ import { renderWithProviders } from '@workspace/test-utils';
 import { BillingPage } from '@/components/billing/billing-page';
 
 const {
-  getUserBillingDataMock,
-  getInvoicesMock,
-  createCheckoutSessionMock,
-  createPortalSessionMock,
-  reactivateSubscriptionMock,
+  getWorkspaceBillingDataMock,
+  getWorkspaceInvoicesMock,
+  createWorkspaceCheckoutSessionMock,
+  createWorkspacePortalSessionMock,
+  reactivateWorkspaceSubscriptionMock,
   mockToastSuccess,
   mockToastError,
 } = vi.hoisted(() => ({
-  getUserBillingDataMock: vi.fn(),
-  getInvoicesMock: vi.fn(),
-  createCheckoutSessionMock: vi.fn(),
-  createPortalSessionMock: vi.fn(),
-  reactivateSubscriptionMock: vi.fn(),
+  getWorkspaceBillingDataMock: vi.fn(),
+  getWorkspaceInvoicesMock: vi.fn(),
+  createWorkspaceCheckoutSessionMock: vi.fn(),
+  createWorkspacePortalSessionMock: vi.fn(),
+  reactivateWorkspaceSubscriptionMock: vi.fn(),
   mockToastSuccess: vi.fn(),
   mockToastError: vi.fn(),
 }));
 
 vi.mock('@/billing/billing.functions', () => ({
-  getUserBillingData: getUserBillingDataMock,
-  getInvoices: getInvoicesMock,
-  createCheckoutSession: createCheckoutSessionMock,
-  createPortalSession: createPortalSessionMock,
-  reactivateSubscription: reactivateSubscriptionMock,
+  getWorkspaceBillingData: getWorkspaceBillingDataMock,
+  getWorkspaceInvoices: getWorkspaceInvoicesMock,
+  createWorkspaceCheckoutSession: createWorkspaceCheckoutSessionMock,
+  createWorkspacePortalSession: createWorkspacePortalSessionMock,
+  reactivateWorkspaceSubscription: reactivateWorkspaceSubscriptionMock,
 }));
 
 vi.mock('sonner', () => ({
@@ -38,13 +38,15 @@ vi.mock('@/hooks/use-session-query', () => ({
   SESSION_QUERY_KEY: ['session'],
 }));
 
+const TEST_WORKSPACE_ID = 'ws_integration_test';
+
 const freePlan = {
   id: 'free',
   name: 'Free',
   tier: 0,
   pricing: null,
-  limits: { maxWorkspaces: 1, maxMembersPerWorkspace: 1 },
-  features: ['1 workspace'],
+  limits: { maxMembers: 1 },
+  features: ['1 member'],
   annualBonusFeatures: [],
 };
 
@@ -53,8 +55,8 @@ const proPlan = {
   name: 'Pro',
   tier: 1,
   pricing: { monthly: { price: 4900 }, annual: { price: 49000 } },
-  limits: { maxWorkspaces: 5, maxMembersPerWorkspace: 5 },
-  features: ['Up to 5 workspaces'],
+  limits: { maxMembers: 25 },
+  features: ['Up to 25 members per workspace'],
   annualBonusFeatures: ['2 months free'],
 };
 
@@ -62,15 +64,14 @@ vi.mock('@workspace/auth/plans', async (importOriginal) => {
   const original = await importOriginal<Record<string, unknown>>();
   return {
     ...original,
-    // getUpgradePlans is re-configured per-test as needed; default returns proPlan.
     getUpgradePlans: vi.fn().mockReturnValue([
       {
         id: 'pro',
         name: 'Pro',
         tier: 1,
         pricing: { monthly: { price: 4900 }, annual: { price: 49000 } },
-        limits: { maxWorkspaces: 5, maxMembersPerWorkspace: 5 },
-        features: ['Up to 5 workspaces'],
+        limits: { maxMembers: 25 },
+        features: ['Up to 25 members per workspace'],
         annualBonusFeatures: ['2 months free'],
       },
     ]),
@@ -78,18 +79,17 @@ vi.mock('@workspace/auth/plans', async (importOriginal) => {
 });
 
 function setupBillingData(overrides = {}) {
-  getUserBillingDataMock.mockResolvedValue({
+  getWorkspaceBillingDataMock.mockResolvedValue({
     plan: freePlan,
     subscription: null,
     ...overrides,
   });
-  getInvoicesMock.mockResolvedValue([]);
+  getWorkspaceInvoicesMock.mockResolvedValue([]);
 }
 
 describe('BillingPage integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Spy on window.location to prevent navigation errors in jsdom.
     vi.spyOn(window, 'location', 'get').mockReturnValue({
       ...window.location,
       href: '',
@@ -98,7 +98,7 @@ describe('BillingPage integration', () => {
 
   it('renders current plan details after data loads', async () => {
     setupBillingData();
-    renderWithProviders(<BillingPage />);
+    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
 
     await waitFor(() => {
       expect(screen.getByText('Free')).toBeInTheDocument();
@@ -107,13 +107,13 @@ describe('BillingPage integration', () => {
     expect(screen.getByText(/current plan/i)).toBeInTheDocument();
   });
 
-  it('calls createCheckoutSession when upgrade is clicked', async () => {
+  it('calls createWorkspaceCheckoutSession when upgrade is clicked', async () => {
     const user = userEvent.setup();
     setupBillingData();
-    createCheckoutSessionMock.mockResolvedValueOnce({
+    createWorkspaceCheckoutSessionMock.mockResolvedValueOnce({
       url: 'https://stripe.com/checkout',
     });
-    renderWithProviders(<BillingPage />);
+    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
 
     await waitFor(() => {
       expect(screen.getByText('Free')).toBeInTheDocument();
@@ -122,8 +122,8 @@ describe('BillingPage integration', () => {
     await user.click(screen.getByRole('button', { name: /upgrade to pro/i }));
 
     await waitFor(() => {
-      expect(createCheckoutSessionMock).toHaveBeenCalledWith({
-        data: { planId: 'pro', annual: false },
+      expect(createWorkspaceCheckoutSessionMock).toHaveBeenCalledWith({
+        data: { workspaceId: TEST_WORKSPACE_ID, planId: 'pro', annual: false },
       });
     });
   });
@@ -131,10 +131,10 @@ describe('BillingPage integration', () => {
   it('shows error toast when checkout fails', async () => {
     const user = userEvent.setup();
     setupBillingData();
-    createCheckoutSessionMock.mockRejectedValueOnce(
+    createWorkspaceCheckoutSessionMock.mockRejectedValueOnce(
       new Error('Checkout failed')
     );
-    renderWithProviders(<BillingPage />);
+    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
 
     await waitFor(() => {
       expect(screen.getByText('Free')).toBeInTheDocument();
@@ -147,21 +147,20 @@ describe('BillingPage integration', () => {
     });
   });
 
-  it('calls createPortalSession when manage is clicked on paid plan', async () => {
+  it('calls createWorkspacePortalSession when manage is clicked on paid plan', async () => {
     const user = userEvent.setup();
-    getUserBillingDataMock.mockResolvedValue({
+    getWorkspaceBillingDataMock.mockResolvedValue({
       plan: proPlan,
       subscription: { periodEnd: new Date('2026-04-20').toISOString() },
     });
-    getInvoicesMock.mockResolvedValue([]);
-    // No upgrade plans for the highest tier.
+    getWorkspaceInvoicesMock.mockResolvedValue([]);
     const { getUpgradePlans } = await import('@workspace/auth/plans');
     (getUpgradePlans as ReturnType<typeof vi.fn>).mockReturnValue([]);
-    createPortalSessionMock.mockResolvedValueOnce({
+    createWorkspacePortalSessionMock.mockResolvedValueOnce({
       url: 'https://portal.stripe.com',
     });
 
-    renderWithProviders(<BillingPage />);
+    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
 
     await waitFor(() => {
       expect(screen.getByText('Pro')).toBeInTheDocument();
@@ -172,23 +171,23 @@ describe('BillingPage integration', () => {
     );
 
     await waitFor(() => {
-      expect(createPortalSessionMock).toHaveBeenCalledTimes(1);
+      expect(createWorkspacePortalSessionMock).toHaveBeenCalledTimes(1);
     });
   });
 
   it('reactivates canceled subscription on Keep subscription click', async () => {
     const user = userEvent.setup();
-    getUserBillingDataMock.mockResolvedValue({
+    getWorkspaceBillingDataMock.mockResolvedValue({
       plan: proPlan,
       subscription: {
         periodEnd: new Date('2026-04-20').toISOString(),
         cancelAtPeriodEnd: true,
       },
     });
-    getInvoicesMock.mockResolvedValue([]);
-    reactivateSubscriptionMock.mockResolvedValueOnce({});
+    getWorkspaceInvoicesMock.mockResolvedValue([]);
+    reactivateWorkspaceSubscriptionMock.mockResolvedValueOnce({});
 
-    renderWithProviders(<BillingPage />);
+    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
 
     await waitFor(() => {
       expect(screen.getByText(/will downgrade/i)).toBeInTheDocument();
@@ -199,7 +198,7 @@ describe('BillingPage integration', () => {
     );
 
     await waitFor(() => {
-      expect(reactivateSubscriptionMock).toHaveBeenCalledTimes(1);
+      expect(reactivateWorkspaceSubscriptionMock).toHaveBeenCalledTimes(1);
     });
 
     await waitFor(() => {
@@ -211,19 +210,19 @@ describe('BillingPage integration', () => {
 
   it('shows error toast when reactivation fails', async () => {
     const user = userEvent.setup();
-    getUserBillingDataMock.mockResolvedValue({
+    getWorkspaceBillingDataMock.mockResolvedValue({
       plan: proPlan,
       subscription: {
         periodEnd: new Date('2026-04-20').toISOString(),
         cancelAtPeriodEnd: true,
       },
     });
-    getInvoicesMock.mockResolvedValue([]);
-    reactivateSubscriptionMock.mockRejectedValueOnce(
+    getWorkspaceInvoicesMock.mockResolvedValue([]);
+    reactivateWorkspaceSubscriptionMock.mockRejectedValueOnce(
       new Error('Reactivation failed')
     );
 
-    renderWithProviders(<BillingPage />);
+    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
 
     await waitFor(() => {
       expect(screen.getByText(/will downgrade/i)).toBeInTheDocument();

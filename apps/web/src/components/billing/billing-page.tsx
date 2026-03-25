@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { getUpgradePlans } from '@workspace/auth/plans';
+import { getFreePlan, getUpgradePlans } from '@workspace/auth/plans';
 import { Card, CardContent } from '@workspace/ui/components/card';
 import { BillingDowngradeBanner } from './billing-downgrade-banner';
 import { BillingInvoiceTable } from './billing-invoice-table';
@@ -9,38 +9,40 @@ import { BillingPlanCards } from './billing-plan-cards';
 import type { PlanId } from '@workspace/auth/plans';
 import { SESSION_QUERY_KEY } from '@/hooks/use-session-query';
 import {
-  createCheckoutSession,
-  createPortalSession,
-  getInvoices,
-  getUserBillingData,
-  reactivateSubscription,
+  createWorkspaceCheckoutSession,
+  createWorkspacePortalSession,
+  getWorkspaceBillingData,
+  getWorkspaceInvoices,
+  reactivateWorkspaceSubscription,
 } from '@/billing/billing.functions';
 
 const PAGE_LAYOUT_CLASS =
   'mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6';
 
-const INVOICES_QUERY_KEY = ['billing', 'invoices'] as const;
-const BILLING_DATA_QUERY_KEY = ['billing', 'data'] as const;
+type BillingPageProps = { workspaceId: string };
 
-export function BillingPage() {
+export function BillingPage({ workspaceId }: BillingPageProps) {
   const queryClient = useQueryClient();
   const [annualByPlan, setAnnualByPlan] = useState<
     Partial<Record<PlanId, boolean>>
   >({});
   const [upgradingPlanId, setUpgradingPlanId] = useState<PlanId | null>(null);
 
+  const INVOICES_QUERY_KEY = ['billing', 'invoices', workspaceId] as const;
+  const BILLING_DATA_QUERY_KEY = ['billing', 'data', workspaceId] as const;
+
   const billingQuery = useQuery({
     queryKey: BILLING_DATA_QUERY_KEY,
-    queryFn: () => getUserBillingData(),
+    queryFn: () => getWorkspaceBillingData({ data: { workspaceId } }),
   });
 
   const invoicesQuery = useQuery({
     queryKey: INVOICES_QUERY_KEY,
-    queryFn: () => getInvoices(),
+    queryFn: () => getWorkspaceInvoices({ data: { workspaceId } }),
   });
 
   const manageMutation = useMutation({
-    mutationFn: () => createPortalSession(),
+    mutationFn: () => createWorkspacePortalSession({ data: { workspaceId } }),
     onSuccess: (result) => {
       if (result.url) {
         window.location.href = result.url;
@@ -52,8 +54,18 @@ export function BillingPage() {
   });
 
   const upgradeMutation = useMutation({
-    mutationFn: ({ planId, annual }: { planId: PlanId; annual: boolean }) =>
-      createCheckoutSession({ data: { planId, annual } }),
+    mutationFn: ({
+      planId,
+      annual,
+      subscriptionId,
+    }: {
+      planId: PlanId;
+      annual: boolean;
+      subscriptionId?: string;
+    }) =>
+      createWorkspaceCheckoutSession({
+        data: { workspaceId, planId, annual, subscriptionId },
+      }),
     onMutate: ({ planId }) => {
       setUpgradingPlanId(planId);
     },
@@ -71,7 +83,8 @@ export function BillingPage() {
   });
 
   const reactivateMutation = useMutation({
-    mutationFn: () => reactivateSubscription(),
+    mutationFn: () =>
+      reactivateWorkspaceSubscription({ data: { workspaceId } }),
     onSuccess: () => {
       toast.success('Subscription reactivated.');
       void queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
@@ -102,6 +115,7 @@ export function BillingPage() {
     <div className={PAGE_LAYOUT_CLASS}>
       {isPendingCancel && effectiveCancelDate && (
         <BillingDowngradeBanner
+          targetPlanName={getFreePlan().name}
           periodEnd={effectiveCancelDate}
           onReactivate={() => reactivateMutation.mutate()}
           isReactivating={reactivateMutation.isPending}
@@ -118,7 +132,11 @@ export function BillingPage() {
         }
         onManage={() => manageMutation.mutate()}
         onUpgrade={(planId, annual) =>
-          upgradeMutation.mutate({ planId, annual })
+          upgradeMutation.mutate({
+            planId,
+            annual,
+            subscriptionId: subscription?.stripeSubscriptionId ?? undefined,
+          })
         }
         isManaging={manageMutation.isPending}
         upgradingPlanId={upgradingPlanId}

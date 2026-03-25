@@ -1,11 +1,11 @@
 import {
-  checkUserPlanLimit,
-  createCheckoutForPlan,
-  createUserBillingPortal,
-  getBillingData,
-  getUserActivePlanId,
-  getUserPlanContext,
-  reactivateUserSubscription,
+  checkWorkspacePlanLimit,
+  createCheckoutForWorkspace,
+  createWorkspaceBillingPortal,
+  getWorkspaceActivePlanId,
+  getWorkspaceBillingData,
+  getWorkspacePlanContext,
+  reactivateWorkspaceSubscription,
   requireVerifiedSession,
 } from '@/billing/billing.server';
 
@@ -17,9 +17,7 @@ const {
   upgradeSubscriptionMock,
   restoreSubscriptionMock,
   getSessionMock,
-  countOwnedWorkspacesMock,
   countWorkspaceMembersMock,
-  getWorkspaceOwnerUserIdMock,
   getRequestHeadersMock,
 } = vi.hoisted(() => ({
   listActiveSubscriptionsMock: vi.fn(),
@@ -27,9 +25,7 @@ const {
   upgradeSubscriptionMock: vi.fn(),
   restoreSubscriptionMock: vi.fn(),
   getSessionMock: vi.fn(),
-  countOwnedWorkspacesMock: vi.fn(),
   countWorkspaceMembersMock: vi.fn(),
-  getWorkspaceOwnerUserIdMock: vi.fn(),
   getRequestHeadersMock: vi.fn().mockReturnValue(new Headers()),
 }));
 
@@ -45,9 +41,7 @@ vi.mock('@/init', () => ({
       getSession: getSessionMock,
     },
     billing: {
-      countOwnedWorkspaces: countOwnedWorkspacesMock,
       countWorkspaceMembers: countWorkspaceMembersMock,
-      getWorkspaceOwnerUserId: getWorkspaceOwnerUserIdMock,
     },
   },
 }));
@@ -63,7 +57,7 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 const TEST_HEADERS = new Headers();
-const TEST_USER_ID = 'user_123';
+const TEST_WORKSPACE_ID = 'ws_123';
 
 // ── Tests ──────────────────────────────────────────────────────────────────
 
@@ -72,18 +66,20 @@ describe('billing.server', () => {
     vi.clearAllMocks();
   });
 
-  // ── getUserPlanContext ──────────────────────────────────────────────────
+  // ── getWorkspacePlanContext ──────────────────────────────────────────────
 
-  describe('getUserPlanContext', () => {
+  describe('getWorkspacePlanContext', () => {
     it('returns free context when no subscriptions exist', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([]);
 
-      const ctx = await getUserPlanContext(TEST_HEADERS, TEST_USER_ID);
+      const ctx = await getWorkspacePlanContext(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID
+      );
 
       expect(ctx.planId).toBe('free');
       expect(ctx.planName).toBe('Free');
-      expect(ctx.limits.maxWorkspaces).toBe(1);
-      expect(ctx.limits.maxMembersPerWorkspace).toBe(1);
+      expect(ctx.limits.maxMembers).toBe(1);
       expect(ctx.upgradePlan).not.toBeNull();
       expect(ctx.upgradePlan?.id).toBe('starter');
     });
@@ -93,12 +89,14 @@ describe('billing.server', () => {
         { plan: 'pro', status: 'active' },
       ]);
 
-      const ctx = await getUserPlanContext(TEST_HEADERS, TEST_USER_ID);
+      const ctx = await getWorkspacePlanContext(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID
+      );
 
       expect(ctx.planId).toBe('pro');
       expect(ctx.planName).toBe('Pro');
-      expect(ctx.limits.maxWorkspaces).toBe(25);
-      expect(ctx.limits.maxMembersPerWorkspace).toBe(25);
+      expect(ctx.limits.maxMembers).toBe(25);
       expect(ctx.upgradePlan).toBeNull();
     });
 
@@ -107,7 +105,10 @@ describe('billing.server', () => {
         { plan: 'pro', status: 'trialing' },
       ]);
 
-      const ctx = await getUserPlanContext(TEST_HEADERS, TEST_USER_ID);
+      const ctx = await getWorkspacePlanContext(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID
+      );
 
       expect(ctx.planId).toBe('pro');
       expect(ctx.planName).toBe('Pro');
@@ -118,7 +119,10 @@ describe('billing.server', () => {
         { plan: 'unknown_plan', status: 'active' },
       ]);
 
-      const ctx = await getUserPlanContext(TEST_HEADERS, TEST_USER_ID);
+      const ctx = await getWorkspacePlanContext(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID
+      );
 
       expect(ctx.planId).toBe('free');
       expect(ctx.planName).toBe('Free');
@@ -128,46 +132,54 @@ describe('billing.server', () => {
       const customHeaders = new Headers({ 'x-custom': 'test' });
       listActiveSubscriptionsMock.mockResolvedValue([]);
 
-      await getUserPlanContext(customHeaders, TEST_USER_ID);
+      await getWorkspacePlanContext(customHeaders, TEST_WORKSPACE_ID);
 
       expect(listActiveSubscriptionsMock).toHaveBeenCalledWith({
         headers: customHeaders,
-        query: { referenceId: TEST_USER_ID },
+        query: { referenceId: TEST_WORKSPACE_ID, customerType: 'organization' },
       });
     });
   });
 
-  // ── getBillingData ─────────────────────────────────────────────────────
+  // ── getWorkspaceBillingData ─────────────────────────────────────────────
 
-  describe('getBillingData', () => {
-    it('returns plan and null subscription for free user', async () => {
+  describe('getWorkspaceBillingData', () => {
+    it('returns plan and null subscription for free workspace', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([]);
 
-      const data = await getBillingData(TEST_HEADERS, TEST_USER_ID);
+      const data = await getWorkspaceBillingData(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID
+      );
 
       expect(data.planId).toBe('free');
       expect(data.plan.id).toBe('free');
       expect(data.subscription).toBeNull();
     });
 
-    it('returns plan and subscription for pro user', async () => {
+    it('returns plan and subscription for pro workspace', async () => {
       const periodEnd = new Date('2026-04-12');
       listActiveSubscriptionsMock.mockResolvedValue([
         {
           plan: 'pro',
           status: 'active',
+          stripeSubscriptionId: 'sub_pro_123',
           periodEnd,
           cancelAtPeriodEnd: false,
           cancelAt: null,
         },
       ]);
 
-      const data = await getBillingData(TEST_HEADERS, TEST_USER_ID);
+      const data = await getWorkspaceBillingData(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID
+      );
 
       expect(data.planId).toBe('pro');
       expect(data.plan.id).toBe('pro');
       expect(data.subscription).toEqual({
         status: 'active',
+        stripeSubscriptionId: 'sub_pro_123',
         periodEnd,
         cancelAtPeriodEnd: false,
         cancelAt: null,
@@ -175,134 +187,36 @@ describe('billing.server', () => {
     });
   });
 
-  // ── checkUserPlanLimit - workspace ─────────────────────────────────────
+  // ── checkWorkspacePlanLimit - member ────────────────────────────────────
 
-  describe('checkUserPlanLimit - workspace', () => {
-    it('allows when under limit (free, 0 workspaces)', async () => {
-      listActiveSubscriptionsMock.mockResolvedValue([]);
-      countOwnedWorkspacesMock.mockResolvedValue(0);
-
-      const result = await checkUserPlanLimit(
-        TEST_HEADERS,
-        TEST_USER_ID,
-        'workspace'
-      );
-
-      expect(result.allowed).toBe(true);
-      expect(result.current).toBe(0);
-      expect(result.limit).toBe(1);
-    });
-
-    it('blocks when at limit (free, 1 workspace)', async () => {
-      listActiveSubscriptionsMock.mockResolvedValue([]);
-      countOwnedWorkspacesMock.mockResolvedValue(1);
-
-      const result = await checkUserPlanLimit(
-        TEST_HEADERS,
-        TEST_USER_ID,
-        'workspace'
-      );
-
-      expect(result.allowed).toBe(false);
-      expect(result.current).toBe(1);
-      expect(result.limit).toBe(1);
-      expect(result.planName).toBe('Free');
-    });
-
-    it('pro has limit of 25', async () => {
+  describe('checkWorkspacePlanLimit - member', () => {
+    it('allows when under member limit on pro plan', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([
         { plan: 'pro', status: 'active' },
       ]);
-      countOwnedWorkspacesMock.mockResolvedValue(3);
+      countWorkspaceMembersMock.mockResolvedValue(10);
 
-      const result = await checkUserPlanLimit(
+      const result = await checkWorkspacePlanLimit(
         TEST_HEADERS,
-        TEST_USER_ID,
-        'workspace'
+        TEST_WORKSPACE_ID,
+        'member'
       );
 
       expect(result.allowed).toBe(true);
       expect(result.limit).toBe(25);
-    });
-  });
-
-  // ── checkUserPlanLimit - edge cases ──────────────────────────────────
-
-  describe('checkUserPlanLimit - edge cases', () => {
-    it('blocks at exactly max workspace limit for pro (boundary)', async () => {
-      listActiveSubscriptionsMock.mockResolvedValue([
-        { plan: 'pro', status: 'active' },
-      ]);
-      countOwnedWorkspacesMock.mockResolvedValue(25);
-
-      const result = await checkUserPlanLimit(
-        TEST_HEADERS,
-        TEST_USER_ID,
-        'workspace'
-      );
-
-      expect(result.allowed).toBe(false);
-      expect(result.current).toBe(25);
-      expect(result.limit).toBe(25);
-      expect(result.planName).toBe('Pro');
+      expect(result.current).toBe(10);
     });
 
-    it('falls back to free limits for past_due subscription', async () => {
-      listActiveSubscriptionsMock.mockResolvedValue([
-        { plan: 'pro', status: 'past_due' },
-      ]);
-      countOwnedWorkspacesMock.mockResolvedValue(0);
-
-      const result = await checkUserPlanLimit(
-        TEST_HEADERS,
-        TEST_USER_ID,
-        'workspace'
-      );
-
-      expect(result.allowed).toBe(true);
-      expect(result.current).toBe(0);
-      expect(result.limit).toBe(1);
-      expect(result.planName).toBe('Free');
-    });
-  });
-
-  // ── checkUserPlanLimit - member ────────────────────────────────────────
-
-  describe('checkUserPlanLimit - member', () => {
-    it('throws when workspaceId is missing', async () => {
-      await expect(
-        checkUserPlanLimit(TEST_HEADERS, TEST_USER_ID, 'member')
-      ).rejects.toThrow('workspaceId is required for member limit check.');
-    });
-
-    it('allows when no owner found (personal workspace fallback)', async () => {
-      listActiveSubscriptionsMock.mockResolvedValue([]);
-      getWorkspaceOwnerUserIdMock.mockResolvedValue(null);
-
-      const result = await checkUserPlanLimit(
-        TEST_HEADERS,
-        TEST_USER_ID,
-        'member',
-        'ws_123'
-      );
-
-      expect(result.allowed).toBe(true);
-      expect(result.limit).toBe(-1);
-    });
-
-    it("checks member limit against workspace owner's plan", async () => {
-      const ownerId = 'owner_456';
-      getWorkspaceOwnerUserIdMock.mockResolvedValue(ownerId);
+    it('resolves workspace plan directly for member check', async () => {
       countWorkspaceMembersMock.mockResolvedValue(3);
 
-      // Owner has no subscription (free plan).
+      // Workspace has no subscription (free plan).
       listActiveSubscriptionsMock.mockResolvedValue([]);
 
-      const result = await checkUserPlanLimit(
+      const result = await checkWorkspacePlanLimit(
         TEST_HEADERS,
-        TEST_USER_ID,
-        'member',
-        'ws_123'
+        TEST_WORKSPACE_ID,
+        'member'
       );
 
       // Free plan limit is 1, current is 3, so should be blocked.
@@ -310,11 +224,29 @@ describe('billing.server', () => {
       expect(result.current).toBe(3);
       expect(result.limit).toBe(1);
     });
+
+    it('falls back to free limits for past_due subscription', async () => {
+      listActiveSubscriptionsMock.mockResolvedValue([
+        { plan: 'pro', status: 'past_due' },
+      ]);
+      countWorkspaceMembersMock.mockResolvedValue(0);
+
+      const result = await checkWorkspacePlanLimit(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID,
+        'member'
+      );
+
+      expect(result.allowed).toBe(true);
+      expect(result.current).toBe(0);
+      expect(result.limit).toBe(1);
+      expect(result.planName).toBe('Free');
+    });
   });
 
-  // ── reactivateUserSubscription ─────────────────────────────────────────
+  // ── reactivateWorkspaceSubscription ─────────────────────────────────────
 
-  describe('reactivateUserSubscription', () => {
+  describe('reactivateWorkspaceSubscription', () => {
     it('restores highest-tier active subscription', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([
         {
@@ -332,15 +264,19 @@ describe('billing.server', () => {
       ]);
       restoreSubscriptionMock.mockResolvedValue({});
 
-      const result = await reactivateUserSubscription(
+      const result = await reactivateWorkspaceSubscription(
         TEST_HEADERS,
-        TEST_USER_ID
+        TEST_WORKSPACE_ID
       );
 
       expect(result).toEqual({ success: true });
       expect(restoreSubscriptionMock).toHaveBeenCalledWith({
         headers: TEST_HEADERS,
-        body: { subscriptionId: 'sub_pro' },
+        body: {
+          subscriptionId: 'sub_pro',
+          referenceId: TEST_WORKSPACE_ID,
+          customerType: 'organization',
+        },
       });
     });
 
@@ -350,21 +286,26 @@ describe('billing.server', () => {
       ]);
 
       await expect(
-        reactivateUserSubscription(TEST_HEADERS, TEST_USER_ID)
+        reactivateWorkspaceSubscription(TEST_HEADERS, TEST_WORKSPACE_ID)
       ).rejects.toThrow('No active subscription found.');
     });
   });
 
-  // ── createCheckoutForPlan ──────────────────────────────────────────────
+  // ── createCheckoutForWorkspace ──────────────────────────────────────────
 
-  describe('createCheckoutForPlan', () => {
+  describe('createCheckoutForWorkspace', () => {
     it('calls upgradeSubscription with correct params', async () => {
       upgradeSubscriptionMock.mockResolvedValue({
         url: 'https://checkout.stripe.com/session_123',
         redirect: true,
       });
 
-      const result = await createCheckoutForPlan(TEST_HEADERS, 'pro', true);
+      const result = await createCheckoutForWorkspace(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID,
+        'pro',
+        true
+      );
 
       expect(result.url).toBe('https://checkout.stripe.com/session_123');
       expect(result.redirect).toBe(true);
@@ -373,30 +314,43 @@ describe('billing.server', () => {
         body: {
           plan: 'pro',
           annual: true,
-          successUrl: expect.stringContaining('/billing?success=true'),
-          cancelUrl: expect.stringContaining('/billing'),
+          referenceId: TEST_WORKSPACE_ID,
+          customerType: 'organization',
+          successUrl: expect.stringContaining(
+            `/ws/${TEST_WORKSPACE_ID}/billing?success=true`
+          ),
+          cancelUrl: expect.stringContaining(
+            `/ws/${TEST_WORKSPACE_ID}/billing`
+          ),
         },
       });
     });
   });
 
-  // ── createUserBillingPortal ────────────────────────────────────────────
+  // ── createWorkspaceBillingPortal ────────────────────────────────────────
 
-  describe('createUserBillingPortal', () => {
+  describe('createWorkspaceBillingPortal', () => {
     it('calls createBillingPortal with correct params', async () => {
       createBillingPortalMock.mockResolvedValue({
         url: 'https://billing.stripe.com/portal_123',
         redirect: true,
       });
 
-      const result = await createUserBillingPortal(TEST_HEADERS);
+      const result = await createWorkspaceBillingPortal(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID
+      );
 
       expect(result.url).toBe('https://billing.stripe.com/portal_123');
       expect(result.redirect).toBe(true);
       expect(createBillingPortalMock).toHaveBeenCalledWith({
         headers: TEST_HEADERS,
         body: {
-          returnUrl: expect.stringContaining('/billing'),
+          referenceId: TEST_WORKSPACE_ID,
+          customerType: 'organization',
+          returnUrl: expect.stringContaining(
+            `/ws/${TEST_WORKSPACE_ID}/billing`
+          ),
         },
       });
     });
@@ -427,28 +381,34 @@ describe('billing.server', () => {
     });
   });
 
-  // ── getUserActivePlanId ─────────────────────────────────────────────
+  // ── getWorkspaceActivePlanId ─────────────────────────────────────────
 
-  describe('getUserActivePlanId', () => {
+  describe('getWorkspaceActivePlanId', () => {
     it('returns free plan when no subscriptions', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([]);
 
-      const planId = await getUserActivePlanId(TEST_HEADERS, TEST_USER_ID);
+      const planId = await getWorkspaceActivePlanId(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID
+      );
 
       expect(planId).toBe('free');
     });
 
-    it('delegates to resolveUserPlanId with subscription array', async () => {
+    it('delegates to resolveWorkspacePlanId with subscription array', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([
         { plan: 'pro', status: 'active' },
       ]);
 
-      const planId = await getUserActivePlanId(TEST_HEADERS, TEST_USER_ID);
+      const planId = await getWorkspaceActivePlanId(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID
+      );
 
       expect(planId).toBe('pro');
       expect(listActiveSubscriptionsMock).toHaveBeenCalledWith({
         headers: TEST_HEADERS,
-        query: { referenceId: TEST_USER_ID },
+        query: { referenceId: TEST_WORKSPACE_ID, customerType: 'organization' },
       });
     });
   });

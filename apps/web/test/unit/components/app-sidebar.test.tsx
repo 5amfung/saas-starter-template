@@ -1,15 +1,22 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { AppSidebar } from '@/components/app-sidebar';
 
 // ── Hoisted mocks ────────────────────────────────────────────────────────────
 
-const { useSessionMock, useListOrganizationsMock, useActiveOrganizationMock } =
-  vi.hoisted(() => ({
-    useSessionMock: vi.fn(),
-    useListOrganizationsMock: vi.fn(),
-    useActiveOrganizationMock: vi.fn(),
-  }));
+const {
+  useSessionMock,
+  useListOrganizationsMock,
+  useActiveOrganizationMock,
+  getActiveMemberRoleMock,
+} = vi.hoisted(() => ({
+  useSessionMock: vi.fn(),
+  useListOrganizationsMock: vi.fn(),
+  useActiveOrganizationMock: vi.fn(),
+  getActiveMemberRoleMock: vi
+    .fn()
+    .mockResolvedValue({ data: { role: 'owner' } }),
+}));
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
 
@@ -18,6 +25,9 @@ vi.mock('@workspace/auth/client', () => ({
     useSession: useSessionMock,
     useListOrganizations: useListOrganizationsMock,
     useActiveOrganization: useActiveOrganizationMock,
+    organization: {
+      getActiveMemberRole: getActiveMemberRoleMock,
+    },
   },
 }));
 
@@ -105,108 +115,122 @@ beforeEach(() => {
 });
 
 describe('AppSidebar', () => {
-  it('renders all sidebar sections', () => {
+  /**
+   * Renders AppSidebar and waits for the async useEffect (getActiveMemberRole)
+   * to settle so React doesn't warn about unhandled state updates.
+   */
+  async function renderSidebar() {
+    render(<AppSidebar />);
+    // Wait for the async role-check effect to complete.
+    await waitFor(() => {
+      expect(getActiveMemberRoleMock).toHaveBeenCalled();
+    });
+  }
+
+  it('renders all sidebar sections', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
     useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
     useActiveOrganizationMock.mockReturnValue({
       data: { id: 'ws-1', name: 'Workspace One' },
     });
 
-    render(<AppSidebar />);
+    await renderSidebar();
 
     expect(screen.getByTestId('sidebar-header')).toBeInTheDocument();
     expect(screen.getByTestId('sidebar-content')).toBeInTheDocument();
     expect(screen.getByTestId('sidebar-footer')).toBeInTheDocument();
   });
 
-  it('renders WorkspaceSwitcher with active workspace', () => {
+  it('renders WorkspaceSwitcher with active workspace', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
     useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
     useActiveOrganizationMock.mockReturnValue({
       data: { id: 'ws-1', name: 'Workspace One' },
     });
 
-    render(<AppSidebar />);
+    await renderSidebar();
 
     const switcher = screen.getByTestId('workspace-switcher');
     expect(switcher).toBeInTheDocument();
     expect(switcher).toHaveAttribute('data-active-id', 'ws-1');
   });
 
-  it('renders NavMain with workspace nav items when workspace is active', () => {
+  it('renders NavMain with workspace nav items when workspace is active', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
     useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
     useActiveOrganizationMock.mockReturnValue({
       data: { id: 'ws-1', name: 'Workspace One' },
     });
 
-    render(<AppSidebar />);
+    await renderSidebar();
 
-    const navMain = screen.getByTestId('nav-main');
-    // Overview, Projects, Members, Settings = 4 items.
-    expect(navMain).toHaveAttribute('data-item-count', '4');
+    // Overview, Projects, Members, Billing, Settings = 5 items.
+    expect(screen.getByTestId('nav-main')).toHaveAttribute(
+      'data-item-count',
+      '5'
+    );
   });
 
-  it('renders NavMain with empty items when no workspace is active', () => {
+  it('renders NavMain with empty items when no workspace is active', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
     useListOrganizationsMock.mockReturnValue({ data: [] });
     useActiveOrganizationMock.mockReturnValue({ data: null });
 
-    render(<AppSidebar />);
+    await renderSidebar();
 
     const navMain = screen.getByTestId('nav-main');
     expect(navMain).toHaveAttribute('data-item-count', '0');
   });
 
-  it('renders NavSecondary', () => {
+  it('renders NavSecondary', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
     useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
     useActiveOrganizationMock.mockReturnValue({ data: null });
 
-    render(<AppSidebar />);
+    await renderSidebar();
 
     expect(screen.getByTestId('nav-secondary')).toBeInTheDocument();
   });
 
-  it('renders NavUser when session is loaded', () => {
+  it('renders NavUser when session is loaded', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
     useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
     useActiveOrganizationMock.mockReturnValue({ data: null });
 
-    render(<AppSidebar />);
+    await renderSidebar();
 
     expect(screen.getByTestId('nav-user')).toBeInTheDocument();
     expect(screen.queryByTestId('nav-user-skeleton')).not.toBeInTheDocument();
   });
 
-  it('renders NavUserSkeleton while session is pending', () => {
+  it('renders NavUserSkeleton while session is pending', async () => {
     useSessionMock.mockReturnValue({ data: null, isPending: true });
     useListOrganizationsMock.mockReturnValue({ data: null });
     useActiveOrganizationMock.mockReturnValue({ data: null });
 
-    render(<AppSidebar />);
+    await renderSidebar();
 
     expect(screen.getByTestId('nav-user-skeleton')).toBeInTheDocument();
     expect(screen.queryByTestId('nav-user')).not.toBeInTheDocument();
   });
 
-  it('renders NavAdmin only for admin users', () => {
+  it('renders NavAdmin only for admin users', async () => {
     const adminSession = { user: { ...mockUser, role: 'admin' as const } };
     useSessionMock.mockReturnValue({ data: adminSession, isPending: false });
     useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
     useActiveOrganizationMock.mockReturnValue({ data: null });
 
-    render(<AppSidebar />);
+    await renderSidebar();
 
     expect(screen.getByTestId('nav-admin')).toBeInTheDocument();
   });
 
-  it('does not render NavAdmin for regular users', () => {
+  it('does not render NavAdmin for regular users', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
     useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
     useActiveOrganizationMock.mockReturnValue({ data: null });
 
-    render(<AppSidebar />);
+    await renderSidebar();
 
     expect(screen.queryByTestId('nav-admin')).not.toBeInTheDocument();
   });

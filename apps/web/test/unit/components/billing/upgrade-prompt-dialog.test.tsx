@@ -14,8 +14,8 @@ const STARTER_PLAN: Plan = {
     monthly: { price: 500 },
     annual: { price: 5000 },
   },
-  limits: { maxWorkspaces: 5, maxMembersPerWorkspace: 5 },
-  features: ['5 workspaces', '5 members per workspace'],
+  limits: { maxMembers: 5 },
+  features: ['Up to 5 members per workspace'],
   annualBonusFeatures: ['2 months free'],
 };
 

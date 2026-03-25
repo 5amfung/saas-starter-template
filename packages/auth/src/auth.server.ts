@@ -10,19 +10,14 @@ import {
 import { tanstackStartCookies } from 'better-auth/tanstack-start';
 import { eq } from 'drizzle-orm';
 import Stripe from 'stripe';
-import { user as userTable } from '@workspace/db/schema';
+import {
+  subscription as subscriptionTable,
+  user as userTable,
+} from '@workspace/db/schema';
 import { createAuthEmails } from './auth-emails.server';
 import { isDuplicateOrganizationError, isSignInPath } from './auth-utils';
-import { validateWorkspaceFields } from './auth-workspace.server';
 import { createBillingHelpers } from './billing.server';
 import { PLANS, getPlanLimitsForPlanId } from './plans';
-import {
-  PERSONAL_WORKSPACE_NAME,
-  PERSONAL_WORKSPACE_TYPE,
-  buildPersonalWorkspaceSlug,
-  isPersonalWorkspace,
-  isRecord,
-} from './workspace-types';
 import type { EmailClient } from '@workspace/email';
 import type { Database } from '@workspace/db';
 
@@ -171,13 +166,13 @@ export function createAuth(config: AuthConfig) {
       user: {
         create: {
           after: async (user) => {
+            const DEFAULT_WORKSPACE_NAME = 'My Workspace';
+            const slug = `ws-${crypto.randomUUID().slice(0, 8)}`;
             try {
               await auth.api.createOrganization({
                 body: {
-                  name: PERSONAL_WORKSPACE_NAME,
-                  slug: buildPersonalWorkspaceSlug(user.id),
-                  workspaceType: PERSONAL_WORKSPACE_TYPE,
-                  personalOwnerUserId: user.id,
+                  name: DEFAULT_WORKSPACE_NAME,
+                  slug,
                   userId: user.id,
                 },
               });
@@ -195,13 +190,8 @@ export function createAuth(config: AuthConfig) {
       stripe({
         stripeClient,
         stripeWebhookSecret: config.stripe.webhookSecret,
-        createCustomerOnSignUp: true,
-        onCustomerCreate: async ({ stripeCustomer, user }) => {
-          await log(
-            'info',
-            `Stripe customer ${stripeCustomer.id} created for user ${user.id} on signup`
-          );
-        },
+        createCustomerOnSignUp: false,
+        organization: { enabled: true },
         getCheckoutSessionParams: () => ({
           params: {
             automatic_tax: { enabled: true },
@@ -210,6 +200,11 @@ export function createAuth(config: AuthConfig) {
         subscription: {
           enabled: true,
           plans: stripePlans,
+          authorizeReference: async ({ user, referenceId }) => {
+            // Only the workspace owner can manage subscriptions.
+            const ownerId = await billing.getWorkspaceOwnerUserId(referenceId);
+            return ownerId === user.id;
+          },
           onSubscriptionComplete: async ({ subscription, plan }) => {
             await log('info', 'subscription complete', {
               ...buildSubscriptionLogPayload(subscription),
@@ -256,74 +251,51 @@ export function createAuth(config: AuthConfig) {
         creatorRole: 'owner',
         requireEmailVerificationOnInvitation: true,
         sendInvitationEmail: authEmails.sendInvitationEmail,
-        schema: {
-          organization: {
-            additionalFields: {
-              workspaceType: {
-                type: 'string',
-                input: true,
-                required: false,
-              },
-              personalOwnerUserId: {
-                type: 'string',
-                input: true,
-                required: false,
-              },
-            },
-          },
-        },
         organizationHooks: {
-          beforeCreateOrganization: async ({ organization, user }) => {
-            if (!isRecord(organization)) return;
-            validateWorkspaceFields(organization, 'create');
-
-            // Personal workspaces are created during sign-up (before a session
-            // exists), so auth.api calls would fail with 401. Skip the limit
-            // check here -- the personal workspace still counts toward the
-            // user's maxWorkspaces quota.
-            if (isPersonalWorkspace(organization)) return;
-
-            if (user.id) {
-              const planId = await billing.resolveUserPlanIdFromDb(user.id);
-              const limits = getPlanLimitsForPlanId(planId);
-              if (limits.maxWorkspaces === -1) return;
-              const workspaceCount = await billing.countOwnedWorkspaces(
-                user.id
-              );
-              if (workspaceCount >= limits.maxWorkspaces) {
-                throw new APIError('FORBIDDEN', {
-                  message: `Your plan allows a maximum of ${limits.maxWorkspaces} workspace(s). Please upgrade to create more.`,
-                });
-              }
-            }
-          },
-          // eslint-disable-next-line @typescript-eslint/require-await -- Better Auth requires Promise<void> return type.
-          beforeUpdateOrganization: async ({ organization }) => {
-            if (!isRecord(organization)) return;
-            validateWorkspaceFields(organization, 'update');
-          },
-          // eslint-disable-next-line @typescript-eslint/require-await -- Better Auth requires Promise<void> return type.
+          // Workspace creation is always free — no plan-based gating.
+          beforeCreateOrganization: () => Promise.resolve(),
           beforeDeleteOrganization: async ({ organization }) => {
-            if (isPersonalWorkspace(organization)) {
+            // Block deletion of workspaces with active subscriptions.
+            // User must cancel the subscription via Stripe Portal first.
+            const subscriptions = await config.db
+              .select({ status: subscriptionTable.status })
+              .from(subscriptionTable)
+              .where(eq(subscriptionTable.referenceId, organization.id));
+            const hasActive = subscriptions.some(
+              (s) => s.status === 'active' || s.status === 'trialing'
+            );
+            if (hasActive) {
               throw new APIError('BAD_REQUEST', {
-                message: 'Personal workspace can not be deleted',
+                message:
+                  'Cannot delete a workspace with an active subscription. Cancel the subscription first.',
+              });
+            }
+
+            // Block deletion of the user's last workspace.
+            const ownerId = await billing.getWorkspaceOwnerUserId(
+              organization.id
+            );
+            if (!ownerId) return;
+            const workspaceCount = await billing.countOwnedWorkspaces(ownerId);
+            if (workspaceCount <= 1) {
+              throw new APIError('BAD_REQUEST', {
+                message: 'Cannot delete your last workspace.',
               });
             }
           },
           beforeCreateInvitation: async ({ organization }) => {
-            const owner = await billing.getWorkspaceOwnerUserId(
+            // Resolve the workspace's own plan directly.
+            const planId = await billing.resolveWorkspacePlanIdFromDb(
               organization.id
             );
-            if (!owner) return;
-            const planId = await billing.resolveUserPlanIdFromDb(owner);
             const limits = getPlanLimitsForPlanId(planId);
-            if (limits.maxMembersPerWorkspace === -1) return;
+            if (limits.maxMembers === -1) return;
             const memberCount = await billing.countWorkspaceMembers(
               organization.id
             );
-            if (memberCount >= limits.maxMembersPerWorkspace) {
+            if (memberCount >= limits.maxMembers) {
               throw new APIError('FORBIDDEN', {
-                message: `This workspace has reached its member limit (${limits.maxMembersPerWorkspace}). The workspace owner needs to upgrade their plan.`,
+                message: `This workspace has reached its member limit (${limits.maxMembers}). Upgrade the workspace plan to invite more members.`,
               });
             }
           },

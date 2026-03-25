@@ -6,7 +6,7 @@ import {
   getPlanById,
   getPlanLimitsForPlanId,
   getUpgradePlan,
-  resolveUserPlanId,
+  resolveWorkspacePlanId,
 } from '@workspace/auth/plans';
 import type { Plan, PlanId, PlanLimits } from '@workspace/auth/plans';
 import { auth } from '@/init';
@@ -21,21 +21,21 @@ export async function requireVerifiedSession() {
 }
 
 /**
- * Returns the active plan ID for a user using Better Auth's subscription API.
- * Delegates to resolveUserPlanId() (pure function in plans.ts) for plan resolution.
+ * Returns the active plan ID for a workspace using Better Auth's subscription API.
+ * Delegates to resolveWorkspacePlanId() (pure function in plans.ts) for plan resolution.
  */
-export async function getUserActivePlanId(
+export async function getWorkspaceActivePlanId(
   headers: Headers,
-  userId: string
+  workspaceId: string
 ): Promise<PlanId> {
   const subscriptions = await auth.api.listActiveSubscriptions({
     headers,
-    query: { referenceId: userId },
+    query: { referenceId: workspaceId, customerType: 'organization' },
   });
-  return resolveUserPlanId(Array.from(subscriptions));
+  return resolveWorkspacePlanId(Array.from(subscriptions));
 }
 
-export interface UserPlanContext {
+export interface WorkspacePlanContext {
   planId: PlanId;
   plan: Plan;
   planName: string;
@@ -44,15 +44,15 @@ export interface UserPlanContext {
 }
 
 /**
- * Resolves a user's full plan context — plan, limits, and upgrade path.
+ * Resolves a workspace's full plan context — plan, limits, and upgrade path.
  * Consolidates the repeated plan resolution pattern used by billing data
  * and plan limit checks.
  */
-export async function getUserPlanContext(
+export async function getWorkspacePlanContext(
   headers: Headers,
-  userId: string
-): Promise<UserPlanContext> {
-  const planId = await getUserActivePlanId(headers, userId);
+  workspaceId: string
+): Promise<WorkspacePlanContext> {
+  const planId = await getWorkspaceActivePlanId(headers, workspaceId);
   const plan = getPlanById(planId) ?? getFreePlan();
   const limits = getPlanLimitsForPlanId(planId);
   const upgradePlan = getUpgradePlan(plan);
@@ -67,22 +67,75 @@ export async function getUserPlanContext(
 }
 
 /**
- * Returns the current user's billing state for the billing page.
+ * Returns the workspace's billing state for the billing page.
  * Fetches subscriptions once and derives both plan context and
  * subscription details from the same data.
  */
-export async function getBillingData(headers: Headers, userId: string) {
+export async function getWorkspaceBillingData(
+  headers: Headers,
+  workspaceId: string
+) {
   const subscriptions = await auth.api.listActiveSubscriptions({
     headers,
-    query: { referenceId: userId },
+    query: { referenceId: workspaceId, customerType: 'organization' },
   });
   const subArray = Array.from(subscriptions);
 
-  const planId = resolveUserPlanId(subArray);
+  const planId = resolveWorkspacePlanId(subArray);
   const plan = getPlanById(planId) ?? getFreePlan();
   const subscription = resolveSubscriptionDetails(subArray, planId);
 
   return { planId, plan, subscription };
+}
+
+export interface WorkspaceBillingSummary {
+  workspaceId: string;
+  workspaceName: string;
+  planName: string;
+  status: string | null;
+  periodEnd: string | null;
+}
+
+/**
+ * Returns billing summaries for all workspaces the user owns.
+ * Used by the account-level billing overview page.
+ */
+export async function getOwnedWorkspacesBillingSummary(
+  headers: Headers
+): Promise<Array<WorkspaceBillingSummary>> {
+  const workspaces = await auth.api.listOrganizations({ headers });
+
+  const summaries: Array<WorkspaceBillingSummary> = [];
+  for (const ws of workspaces) {
+    const memberships = await auth.api.getFullOrganization({
+      headers,
+      query: { organizationId: ws.id },
+    });
+    const userId = (await auth.api.getSession({ headers }))?.user.id;
+    const isOwner = memberships?.members.some(
+      (m) => m.userId === userId && m.role === 'owner'
+    );
+    if (!isOwner) continue;
+
+    const subscriptions = await auth.api.listActiveSubscriptions({
+      headers,
+      query: { referenceId: ws.id, customerType: 'organization' },
+    });
+    const subArray = Array.from(subscriptions);
+    const planId = resolveWorkspacePlanId(subArray);
+    const plan = getPlanById(planId) ?? getFreePlan();
+    const subscription = resolveSubscriptionDetails(subArray, planId);
+
+    summaries.push({
+      workspaceId: ws.id,
+      workspaceName: ws.name,
+      planName: plan.name,
+      status: subscription?.status ?? null,
+      periodEnd: subscription?.periodEnd?.toISOString() ?? null,
+    });
+  }
+
+  return summaries;
 }
 
 export interface CheckPlanLimitResult {
@@ -94,58 +147,19 @@ export interface CheckPlanLimitResult {
 }
 
 /**
- * Checks whether a user can perform a plan-limited action.
- * For workspace limits, checks the current user's plan.
- * For member limits, checks the workspace owner's plan.
+ * Checks whether a workspace can perform a plan-limited action.
+ * Resolves the workspace's own plan directly.
  */
-export async function checkUserPlanLimit(
+export async function checkWorkspacePlanLimit(
   headers: Headers,
-  userId: string,
-  feature: 'workspace' | 'member',
-  workspaceId?: string
+  workspaceId: string,
+  // Currently only 'member' is supported. The parameter exists so callers
+  // document which limit they're checking and the signature is ready for
+  // additional feature types (e.g. 'storage', 'project') without a breaking change.
+  _feature: 'member'
 ): Promise<CheckPlanLimitResult> {
-  if (feature === 'workspace') {
-    const ctx = await getUserPlanContext(headers, userId);
-    const limit = ctx.limits.maxWorkspaces;
-    if (limit === -1) {
-      return {
-        allowed: true,
-        current: 0,
-        limit: -1,
-        planName: ctx.planName,
-        upgradePlan: ctx.upgradePlan,
-      };
-    }
-    const current = await auth.billing.countOwnedWorkspaces(userId);
-    return {
-      allowed: current < limit,
-      current,
-      limit,
-      planName: ctx.planName,
-      upgradePlan: ctx.upgradePlan,
-    };
-  }
-
-  if (!workspaceId) {
-    throw new Error('workspaceId is required for member limit check.');
-  }
-
-  // Member limits are based on the workspace owner's plan, not the
-  // current user's plan. This mirrors the beforeCreateInvitation hook.
-  const ownerId = await auth.billing.getWorkspaceOwnerUserId(workspaceId);
-  if (!ownerId) {
-    const ctx = await getUserPlanContext(headers, userId);
-    return {
-      allowed: true,
-      current: 0,
-      limit: -1,
-      planName: ctx.planName,
-      upgradePlan: ctx.upgradePlan,
-    };
-  }
-
-  const ctx = await getUserPlanContext(headers, ownerId);
-  const limit = ctx.limits.maxMembersPerWorkspace;
+  const ctx = await getWorkspacePlanContext(headers, workspaceId);
+  const limit = ctx.limits.maxMembers;
   if (limit === -1) {
     return {
       allowed: true,
@@ -166,21 +180,26 @@ export async function checkUserPlanLimit(
 }
 
 /**
- * Creates a Stripe Checkout session to subscribe to a plan.
+ * Creates a Stripe Checkout session to subscribe a workspace to a plan.
  * PlanId maps 1:1 to Better Auth's plan name — no translation needed.
  */
-export async function createCheckoutForPlan(
+export async function createCheckoutForWorkspace(
   headers: Headers,
+  workspaceId: string,
   planId: PlanId,
-  annual: boolean
+  annual: boolean,
+  subscriptionId?: string
 ) {
   const result = await auth.api.upgradeSubscription({
     headers,
     body: {
       plan: planId,
       annual,
-      successUrl: `${process.env.BETTER_AUTH_URL}/billing?success=true`,
-      cancelUrl: `${process.env.BETTER_AUTH_URL}/billing`,
+      referenceId: workspaceId,
+      customerType: 'organization',
+      ...(subscriptionId ? { subscriptionId } : {}),
+      successUrl: `${process.env.BETTER_AUTH_URL}/ws/${workspaceId}/billing?success=true`,
+      cancelUrl: `${process.env.BETTER_AUTH_URL}/ws/${workspaceId}/billing`,
     },
   });
 
@@ -188,13 +207,18 @@ export async function createCheckoutForPlan(
 }
 
 /**
- * Creates a Stripe Customer Portal session for managing the subscription.
+ * Creates a Stripe Customer Portal session for managing the workspace subscription.
  */
-export async function createUserBillingPortal(headers: Headers) {
+export async function createWorkspaceBillingPortal(
+  headers: Headers,
+  workspaceId: string
+) {
   const result = await auth.api.createBillingPortal({
     headers,
     body: {
-      returnUrl: `${process.env.BETTER_AUTH_URL}/billing`,
+      referenceId: workspaceId,
+      customerType: 'organization',
+      returnUrl: `${process.env.BETTER_AUTH_URL}/ws/${workspaceId}/billing`,
     },
   });
   return { url: result.url, redirect: result.redirect };
@@ -204,13 +228,13 @@ export async function createUserBillingPortal(headers: Headers) {
  * Reactivates a subscription that was set to cancel at period end.
  * Picks the highest-tier active subscription and restores it.
  */
-export async function reactivateUserSubscription(
+export async function reactivateWorkspaceSubscription(
   headers: Headers,
-  userId: string
+  workspaceId: string
 ) {
   const subscriptions = await auth.api.listActiveSubscriptions({
     headers,
-    query: { referenceId: userId },
+    query: { referenceId: workspaceId, customerType: 'organization' },
   });
 
   const active = subscriptions.filter(
@@ -221,7 +245,7 @@ export async function reactivateUserSubscription(
     throw new Error('No active subscription found.');
   }
 
-  const bestPlanId = resolveUserPlanId(active);
+  const bestPlanId = resolveWorkspacePlanId(active);
   const target = active.find((s) => s.plan === bestPlanId);
   if (!target?.stripeSubscriptionId) {
     throw new Error('Could not find subscription to restore.');
@@ -229,7 +253,11 @@ export async function reactivateUserSubscription(
 
   await auth.api.restoreSubscription({
     headers,
-    body: { subscriptionId: target.stripeSubscriptionId },
+    body: {
+      subscriptionId: target.stripeSubscriptionId,
+      referenceId: workspaceId,
+      customerType: 'organization',
+    },
   });
 
   return { success: true };

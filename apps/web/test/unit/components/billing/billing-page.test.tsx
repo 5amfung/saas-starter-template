@@ -7,18 +7,18 @@ import { BillingPage } from '@/components/billing/billing-page';
 // ── Hoisted mocks ────────────────────────────────────────────────────────────
 
 const {
-  getUserBillingData,
-  getInvoices,
-  createCheckoutSession,
-  createPortalSession,
-  reactivateSubscription,
+  getWorkspaceBillingData,
+  getWorkspaceInvoices,
+  createWorkspaceCheckoutSession,
+  createWorkspacePortalSession,
+  reactivateWorkspaceSubscription,
   toast,
 } = vi.hoisted(() => ({
-  getUserBillingData: vi.fn(),
-  getInvoices: vi.fn(),
-  createCheckoutSession: vi.fn(),
-  createPortalSession: vi.fn(),
-  reactivateSubscription: vi.fn(),
+  getWorkspaceBillingData: vi.fn(),
+  getWorkspaceInvoices: vi.fn(),
+  createWorkspaceCheckoutSession: vi.fn(),
+  createWorkspacePortalSession: vi.fn(),
+  reactivateWorkspaceSubscription: vi.fn(),
   toast: {
     success: vi.fn(),
     error: vi.fn(),
@@ -28,24 +28,26 @@ const {
 // ── Module mocks ─────────────────────────────────────────────────────────────
 
 vi.mock('@/billing/billing.functions', () => ({
-  getUserBillingData,
-  getInvoices,
-  createCheckoutSession,
-  createPortalSession,
-  reactivateSubscription,
+  getWorkspaceBillingData,
+  getWorkspaceInvoices,
+  createWorkspaceCheckoutSession,
+  createWorkspacePortalSession,
+  reactivateWorkspaceSubscription,
 }));
 
 vi.mock('sonner', () => ({ toast }));
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
+const TEST_WORKSPACE_ID = 'ws-test-123';
+
 const FREE_PLAN = {
   id: 'free' as const,
   name: 'Free',
   tier: 0,
   pricing: null,
-  limits: { maxWorkspaces: 1, maxMembersPerWorkspace: 1 },
-  features: ['1 personal workspace', '1 member'],
+  limits: { maxMembers: 1 },
+  features: ['1 member'],
   annualBonusFeatures: [],
 };
 
@@ -57,8 +59,8 @@ const STARTER_PLAN = {
     monthly: { price: 500 },
     annual: { price: 5000 },
   },
-  limits: { maxWorkspaces: 5, maxMembersPerWorkspace: 5 },
-  features: ['5 personal workspace', '5 member'],
+  limits: { maxMembers: 5 },
+  features: ['Up to 5 members per workspace'],
   annualBonusFeatures: ['2 months free'],
 };
 
@@ -70,8 +72,8 @@ const PRO_PLAN = {
     monthly: { price: 2000 },
     annual: { price: 20000 },
   },
-  limits: { maxWorkspaces: 25, maxMembersPerWorkspace: 25 },
-  features: ['25 workspaces', '25 members per workspace'],
+  limits: { maxMembers: 25 },
+  features: ['Up to 25 members per workspace'],
   annualBonusFeatures: ['2 months free'],
 };
 
@@ -82,7 +84,7 @@ describe('BillingPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    getInvoices.mockResolvedValue([]);
+    getWorkspaceInvoices.mockResolvedValue([]);
 
     // Capture the original location for cleanup.
     originalLocation = window.location;
@@ -101,21 +103,23 @@ describe('BillingPage', () => {
 
   it('returns null while billing data is loading', () => {
     // Never resolves — keeps query in pending state.
-    getUserBillingData.mockImplementation(() => new Promise(() => {}));
+    getWorkspaceBillingData.mockImplementation(() => new Promise(() => {}));
 
-    const { container } = renderWithProviders(<BillingPage />);
+    const { container } = renderWithProviders(
+      <BillingPage workspaceId={TEST_WORKSPACE_ID} />
+    );
 
     expect(container.firstChild).toBeNull();
   });
 
   it('renders plan cards once billing data loads', async () => {
-    getUserBillingData.mockResolvedValue({
+    getWorkspaceBillingData.mockResolvedValue({
       planId: 'free',
       plan: FREE_PLAN,
       subscription: null,
     });
 
-    renderWithProviders(<BillingPage />);
+    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
 
     await waitFor(() => {
       expect(screen.getByText('Free')).toBeInTheDocument();
@@ -126,14 +130,14 @@ describe('BillingPage', () => {
   });
 
   it('renders invoice table section', async () => {
-    getUserBillingData.mockResolvedValue({
+    getWorkspaceBillingData.mockResolvedValue({
       planId: 'free',
       plan: FREE_PLAN,
       subscription: null,
     });
-    getInvoices.mockResolvedValue([]);
+    getWorkspaceInvoices.mockResolvedValue([]);
 
-    renderWithProviders(<BillingPage />);
+    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
 
     await waitFor(() => {
       // The invoice section renders an h3 with text "Invoices".
@@ -144,7 +148,7 @@ describe('BillingPage', () => {
   });
 
   it('does not show downgrade banner when subscription is not pending cancel', async () => {
-    getUserBillingData.mockResolvedValue({
+    getWorkspaceBillingData.mockResolvedValue({
       planId: 'starter',
       plan: STARTER_PLAN,
       subscription: {
@@ -155,7 +159,7 @@ describe('BillingPage', () => {
       },
     });
 
-    renderWithProviders(<BillingPage />);
+    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
 
     await waitFor(() => {
       expect(screen.getByText('Starter')).toBeInTheDocument();
@@ -167,7 +171,7 @@ describe('BillingPage', () => {
   });
 
   it('shows downgrade banner when subscription is pending cancel', async () => {
-    getUserBillingData.mockResolvedValue({
+    getWorkspaceBillingData.mockResolvedValue({
       planId: 'starter',
       plan: STARTER_PLAN,
       subscription: {
@@ -178,7 +182,7 @@ describe('BillingPage', () => {
       },
     });
 
-    renderWithProviders(<BillingPage />);
+    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
 
     await waitFor(() => {
       expect(screen.getByText(/your plan will downgrade/i)).toBeInTheDocument();
@@ -186,17 +190,17 @@ describe('BillingPage', () => {
   });
 
   it('redirects via window.location.href on upgrade success', async () => {
-    getUserBillingData.mockResolvedValue({
+    getWorkspaceBillingData.mockResolvedValue({
       planId: 'free',
       plan: FREE_PLAN,
       subscription: null,
     });
-    createCheckoutSession.mockResolvedValue({
+    createWorkspaceCheckoutSession.mockResolvedValue({
       url: 'https://checkout.stripe.com/test123',
     });
 
     const user = userEvent.setup();
-    renderWithProviders(<BillingPage />);
+    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
 
     await waitFor(() => {
       expect(screen.getByText(/upgrade to starter/i)).toBeInTheDocument();
@@ -212,7 +216,7 @@ describe('BillingPage', () => {
   });
 
   it('redirects via window.location.href on manage subscription success', async () => {
-    getUserBillingData.mockResolvedValue({
+    getWorkspaceBillingData.mockResolvedValue({
       planId: 'starter',
       plan: STARTER_PLAN,
       subscription: {
@@ -222,12 +226,12 @@ describe('BillingPage', () => {
         cancelAt: null,
       },
     });
-    createPortalSession.mockResolvedValue({
+    createWorkspacePortalSession.mockResolvedValue({
       url: 'https://billing.stripe.com/portal123',
     });
 
     const user = userEvent.setup();
-    renderWithProviders(<BillingPage />);
+    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
 
     await waitFor(() => {
       expect(
@@ -245,7 +249,7 @@ describe('BillingPage', () => {
   });
 
   it('shows success toast and does not redirect on reactivate success', async () => {
-    getUserBillingData.mockResolvedValue({
+    getWorkspaceBillingData.mockResolvedValue({
       planId: 'starter',
       plan: STARTER_PLAN,
       subscription: {
@@ -255,10 +259,10 @@ describe('BillingPage', () => {
         cancelAt: null,
       },
     });
-    reactivateSubscription.mockResolvedValue({ success: true });
+    reactivateWorkspaceSubscription.mockResolvedValue({ success: true });
 
     const user = userEvent.setup();
-    renderWithProviders(<BillingPage />);
+    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
 
     await waitFor(() => {
       expect(
@@ -279,17 +283,17 @@ describe('BillingPage', () => {
   });
 
   it('shows error toast when upgrade fails', async () => {
-    getUserBillingData.mockResolvedValue({
+    getWorkspaceBillingData.mockResolvedValue({
       planId: 'free',
       plan: FREE_PLAN,
       subscription: null,
     });
-    createCheckoutSession.mockRejectedValue(
+    createWorkspaceCheckoutSession.mockRejectedValue(
       new Error('Failed to start checkout.')
     );
 
     const user = userEvent.setup();
-    renderWithProviders(<BillingPage />);
+    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
 
     await waitFor(() => {
       expect(screen.getByText(/upgrade to starter/i)).toBeInTheDocument();
@@ -305,7 +309,7 @@ describe('BillingPage', () => {
   });
 
   it('shows custom plan card when user is on highest tier plan', async () => {
-    getUserBillingData.mockResolvedValue({
+    getWorkspaceBillingData.mockResolvedValue({
       planId: 'pro',
       plan: PRO_PLAN,
       subscription: {
@@ -316,7 +320,7 @@ describe('BillingPage', () => {
       },
     });
 
-    renderWithProviders(<BillingPage />);
+    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
 
     await waitFor(() => {
       expect(screen.getByText('Pro')).toBeInTheDocument();

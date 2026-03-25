@@ -2,6 +2,7 @@ import { IconAlertCircle, IconLoader2 } from '@tabler/icons-react';
 import { Button } from '@workspace/ui/components/button';
 
 interface BillingDowngradeBannerProps {
+  targetPlanName: string;
   periodEnd: Date;
   onReactivate: () => void;
   isReactivating: boolean;
@@ -14,6 +15,7 @@ const DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
 });
 
 export function BillingDowngradeBanner({
+  targetPlanName,
   periodEnd,
   onReactivate,
   isReactivating,
@@ -23,7 +25,7 @@ export function BillingDowngradeBanner({
       <div className="flex items-center gap-3">
         <IconAlertCircle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
         <p className="text-sm text-amber-800 dark:text-amber-200">
-          Your plan will downgrade to Starter on{' '}
+          Your plan will downgrade to {targetPlanName} on{' '}
           <span className="font-medium">{DATE_FORMAT.format(periodEnd)}</span>.
         </p>
       </div>

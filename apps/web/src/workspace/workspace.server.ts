@@ -39,10 +39,10 @@ export async function ensureActiveWorkspaceForSession(
         ) ?? null);
   if (activeWorkspace) return activeWorkspace;
 
-  const targetWorkspace = pickDefaultWorkspace(workspaces, session.user.id);
+  const targetWorkspace = pickDefaultWorkspace(workspaces);
   if (!targetWorkspace) {
     throw new APIError('INTERNAL_SERVER_ERROR', {
-      message: 'Personal workspace is missing for this user.',
+      message: 'No workspace found for this user.',
     });
   }
 

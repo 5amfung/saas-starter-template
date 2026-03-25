@@ -2,10 +2,10 @@ import { and, count, eq } from 'drizzle-orm';
 import Stripe from 'stripe';
 import {
   member as memberTable,
+  organization as organizationTable,
   subscription as subscriptionTable,
-  user as userTable,
 } from '@workspace/db/schema';
-import { resolveUserPlanId } from './plans';
+import { resolveWorkspacePlanId } from './plans';
 import type { Database } from '@workspace/db';
 import type { PlanId } from './plans';
 
@@ -16,16 +16,18 @@ import type { PlanId } from './plans';
 export function createBillingHelpers(db: Database, stripeSecretKey: string) {
   const stripeClient = new Stripe(stripeSecretKey);
 
-  /** Resolves a user's plan ID by querying the subscription table directly. */
-  async function resolveUserPlanIdFromDb(userId: string): Promise<PlanId> {
+  /** Resolves a workspace's plan ID by querying the subscription table directly. */
+  async function resolveWorkspacePlanIdFromDb(
+    workspaceId: string
+  ): Promise<PlanId> {
     const rows = await db
       .select({
         plan: subscriptionTable.plan,
         status: subscriptionTable.status,
       })
       .from(subscriptionTable)
-      .where(eq(subscriptionTable.referenceId, userId));
-    return resolveUserPlanId(
+      .where(eq(subscriptionTable.referenceId, workspaceId));
+    return resolveWorkspacePlanId(
       rows.filter(
         (r): r is { plan: string; status: string } => r.status !== null
       )
@@ -69,20 +71,21 @@ export function createBillingHelpers(db: Database, stripeSecretKey: string) {
     return result.count;
   }
 
-  /** Fetches a user's invoices from Stripe (past 12 months). */
-  async function getInvoicesForUser(userId: string) {
-    const [dbUser] = await db
-      .select({ stripeCustomerId: userTable.stripeCustomerId })
-      .from(userTable)
-      .where(eq(userTable.id, userId));
+  /** Fetches a workspace's invoices from Stripe (past 12 months). */
+  async function getInvoicesForWorkspace(workspaceId: string) {
+    const rows = await db
+      .select({ stripeCustomerId: organizationTable.stripeCustomerId })
+      .from(organizationTable)
+      .where(eq(organizationTable.id, workspaceId));
 
-    if (!dbUser.stripeCustomerId) return [];
+    const org = rows.at(0);
+    if (!org?.stripeCustomerId) return [];
 
     const TWELVE_MONTHS_IN_SECONDS = 365 * 24 * 60 * 60;
     const twelveMonthsAgo =
       Math.floor(Date.now() / 1000) - TWELVE_MONTHS_IN_SECONDS;
     const invoices = await stripeClient.invoices.list({
-      customer: dbUser.stripeCustomerId,
+      customer: org.stripeCustomerId,
       limit: 100,
       created: { gte: twelveMonthsAgo },
     });
@@ -99,11 +102,11 @@ export function createBillingHelpers(db: Database, stripeSecretKey: string) {
   }
 
   return {
-    resolveUserPlanIdFromDb,
+    resolveWorkspacePlanIdFromDb,
     countOwnedWorkspaces,
     getWorkspaceOwnerUserId,
     countWorkspaceMembers,
-    getInvoicesForUser,
+    getInvoicesForWorkspace,
   };
 }
 
@@ -117,6 +120,7 @@ export function resolveSubscriptionDetails(
   subscriptions: ReadonlyArray<{
     plan: string;
     status: string;
+    stripeSubscriptionId?: string | null;
     periodEnd?: Date | null;
     cancelAtPeriodEnd?: boolean | null;
     cancelAt?: Date | null;
@@ -124,6 +128,7 @@ export function resolveSubscriptionDetails(
   planId: PlanId
 ): {
   status: string;
+  stripeSubscriptionId: string | null;
   periodEnd: Date | null;
   cancelAtPeriodEnd: boolean;
   cancelAt: Date | null;
@@ -136,6 +141,7 @@ export function resolveSubscriptionDetails(
 
   return {
     status: active.status,
+    stripeSubscriptionId: active.stripeSubscriptionId ?? null,
     periodEnd: active.periodEnd ?? null,
     cancelAtPeriodEnd: active.cancelAtPeriodEnd ?? false,
     cancelAt: active.cancelAt ?? null,

@@ -4,85 +4,131 @@ import * as z from 'zod';
 import { PLANS } from '@workspace/auth/plans';
 import type { PlanId } from '@workspace/auth/plans';
 import {
-  checkUserPlanLimit,
-  createCheckoutForPlan,
-  createUserBillingPortal,
-  getBillingData,
-  reactivateUserSubscription,
+  checkWorkspacePlanLimit as checkWorkspacePlanLimitServer,
+  createCheckoutForWorkspace,
+  createWorkspaceBillingPortal,
+  getOwnedWorkspacesBillingSummary,
+  getWorkspaceBillingData as getWorkspaceBillingDataServer,
+  reactivateWorkspaceSubscription as reactivateWorkspaceSubscriptionServer,
   requireVerifiedSession,
 } from '@/billing/billing.server';
 import { auth } from '@/init';
 
 /**
- * Fetches the current user's invoices from Stripe (past 12 months).
+ * Verifies the current user is the owner of the given workspace.
+ * Throws if the user is not the owner.
  */
-export const getInvoices = createServerFn().handler(async () => {
-  const session = await requireVerifiedSession();
-  return auth.billing.getInvoicesForUser(session.user.id);
+async function requireWorkspaceOwner(
+  session: { user: { id: string } },
+  workspaceId: string
+) {
+  const ownerId = await auth.billing.getWorkspaceOwnerUserId(workspaceId);
+  if (!ownerId || ownerId !== session.user.id) {
+    throw new Error('Only the workspace owner can manage billing.');
+  }
+}
+
+/**
+ * Returns billing summaries for all workspaces the current user owns.
+ */
+export const getBillingSummary = createServerFn().handler(async () => {
+  await requireVerifiedSession();
+  const headers = getRequestHeaders();
+  return getOwnedWorkspacesBillingSummary(headers);
 });
+
+/**
+ * Fetches the workspace's invoices from Stripe (past 12 months).
+ */
+export const getWorkspaceInvoices = createServerFn()
+  .inputValidator(z.object({ workspaceId: z.string() }))
+  .handler(async ({ data }) => {
+    const session = await requireVerifiedSession();
+    await requireWorkspaceOwner(session, data.workspaceId);
+    return auth.billing.getInvoicesForWorkspace(data.workspaceId);
+  });
 
 const VALID_PLAN_IDS = PLANS.map((p) => p.id) as [PlanId, ...Array<PlanId>];
 
 const upgradeInput = z.object({
+  workspaceId: z.string(),
   planId: z.enum(VALID_PLAN_IDS),
   annual: z.boolean(),
+  subscriptionId: z.string().optional(),
 });
 
 /**
- * Creates a Stripe Checkout session to subscribe to a plan.
+ * Creates a Stripe Checkout session to subscribe a workspace to a plan.
+ * Pass subscriptionId when upgrading an existing subscription to switch plans.
  */
-export const createCheckoutSession = createServerFn()
+export const createWorkspaceCheckoutSession = createServerFn()
   .inputValidator(upgradeInput)
   .handler(async ({ data }) => {
-    await requireVerifiedSession();
+    const session = await requireVerifiedSession();
+    await requireWorkspaceOwner(session, data.workspaceId);
     const headers = getRequestHeaders();
-    return createCheckoutForPlan(headers, data.planId, data.annual);
+    return createCheckoutForWorkspace(
+      headers,
+      data.workspaceId,
+      data.planId,
+      data.annual,
+      data.subscriptionId
+    );
   });
 
 /**
- * Creates a Stripe Customer Portal session for managing the subscription.
+ * Creates a Stripe Customer Portal session for managing the workspace subscription.
  */
-export const createPortalSession = createServerFn().handler(async () => {
-  await requireVerifiedSession();
-  const headers = getRequestHeaders();
-  return createUserBillingPortal(headers);
-});
+export const createWorkspacePortalSession = createServerFn()
+  .inputValidator(z.object({ workspaceId: z.string() }))
+  .handler(async ({ data }) => {
+    const session = await requireVerifiedSession();
+    await requireWorkspaceOwner(session, data.workspaceId);
+    const headers = getRequestHeaders();
+    return createWorkspaceBillingPortal(headers, data.workspaceId);
+  });
 
 /**
- * Returns the current user's billing state for the billing page.
+ * Returns the workspace's billing state for the billing page.
  */
-export const getUserBillingData = createServerFn().handler(async () => {
-  const session = await requireVerifiedSession();
-  const headers = getRequestHeaders();
-  return getBillingData(headers, session.user.id);
-});
+export const getWorkspaceBillingData = createServerFn()
+  .inputValidator(z.object({ workspaceId: z.string() }))
+  .handler(async ({ data }) => {
+    const session = await requireVerifiedSession();
+    await requireWorkspaceOwner(session, data.workspaceId);
+    const headers = getRequestHeaders();
+    return getWorkspaceBillingDataServer(headers, data.workspaceId);
+  });
 
 /**
- * Reactivates a subscription that was set to cancel at period end.
+ * Reactivates a workspace subscription that was set to cancel at period end.
  */
-export const reactivateSubscription = createServerFn().handler(async () => {
-  const session = await requireVerifiedSession();
-  const headers = getRequestHeaders();
-  return reactivateUserSubscription(headers, session.user.id);
-});
+export const reactivateWorkspaceSubscription = createServerFn()
+  .inputValidator(z.object({ workspaceId: z.string() }))
+  .handler(async ({ data }) => {
+    const session = await requireVerifiedSession();
+    await requireWorkspaceOwner(session, data.workspaceId);
+    const headers = getRequestHeaders();
+    return reactivateWorkspaceSubscriptionServer(headers, data.workspaceId);
+  });
 
 const checkPlanLimitInput = z.object({
-  feature: z.enum(['workspace', 'member']),
-  workspaceId: z.string().optional(),
+  workspaceId: z.string(),
+  feature: z.enum(['member']),
 });
 
 /**
- * Checks whether the current user can perform a plan-limited action.
+ * Checks whether the workspace can perform a plan-limited action.
  */
-export const checkPlanLimit = createServerFn()
+export const checkWorkspacePlanLimit = createServerFn()
   .inputValidator(checkPlanLimitInput)
   .handler(async ({ data }) => {
     const session = await requireVerifiedSession();
+    await requireWorkspaceOwner(session, data.workspaceId);
     const headers = getRequestHeaders();
-    return checkUserPlanLimit(
+    return checkWorkspacePlanLimitServer(
       headers,
-      session.user.id,
-      data.feature,
-      data.workspaceId
+      data.workspaceId,
+      data.feature
     );
   });
