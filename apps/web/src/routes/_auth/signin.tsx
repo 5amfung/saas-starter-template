@@ -8,6 +8,6 @@ export const Route = createFileRoute('/_auth/signin')({
 });
 
 function SigninPage() {
-  const { error } = Route.useSearch();
-  return <SigninForm oauthError={error} />;
+  const { error, redirect } = Route.useSearch();
+  return <SigninForm oauthError={error} redirect={redirect} />;
 }

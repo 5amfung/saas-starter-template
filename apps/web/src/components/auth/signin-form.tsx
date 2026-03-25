@@ -23,8 +23,17 @@ import { FormErrorDisplay } from '@/components/form/form-error-display';
 import { FormSubmitButton } from '@/components/form/form-submit-button';
 import { ValidatedField } from '@/components/form/validated-field';
 
-export function SigninForm({ oauthError }: { oauthError?: string }) {
+const DEFAULT_CALLBACK_URL = '/ws';
+
+export function SigninForm({
+  oauthError,
+  redirect,
+}: {
+  oauthError?: string;
+  redirect?: string;
+}) {
   const navigate = useNavigate();
+  const callbackURL = redirect ?? DEFAULT_CALLBACK_URL;
 
   const form = useForm({
     defaultValues: {
@@ -39,11 +48,11 @@ export function SigninForm({ oauthError }: { oauthError?: string }) {
       const { error } = await authClient.signIn.email({
         email: value.email,
         password: value.password,
-        callbackURL: '/ws',
+        callbackURL,
       });
       if (error) {
         if (error.status === 403) {
-          navigate({ to: '/verify', search: { email: value.email } });
+          navigate({ to: '/verify', search: { email: value.email, redirect } });
           return;
         }
         const message =
@@ -74,7 +83,7 @@ export function SigninForm({ oauthError }: { oauthError?: string }) {
             }}
           >
             <FieldGroup>
-              <GoogleSignInButton />
+              <GoogleSignInButton callbackURL={callbackURL} />
               {oauthError && (
                 <FormError
                   errors={[
@@ -137,7 +146,10 @@ export function SigninForm({ oauthError }: { oauthError?: string }) {
               <Field>
                 <FormSubmitButton form={form} label="Sign in" />
                 <FieldDescription className="text-center">
-                  Don&apos;t have an account? <Link to="/signup">Sign up</Link>
+                  Don&apos;t have an account?{' '}
+                  <Link to="/signup" search={{ redirect }}>
+                    Sign up
+                  </Link>
                 </FieldDescription>
               </Field>
             </FieldGroup>
