@@ -1,7 +1,9 @@
 import {
+  cancelWorkspaceSubscription,
   checkWorkspacePlanLimit,
   createCheckoutForWorkspace,
   createWorkspaceBillingPortal,
+  downgradeWorkspaceSubscription,
   getWorkspaceActivePlanId,
   getWorkspaceBillingData,
   getWorkspacePlanContext,
@@ -18,6 +20,9 @@ const {
   restoreSubscriptionMock,
   getSessionMock,
   countWorkspaceMembersMock,
+  cancelSubscriptionAtPeriodEndMock,
+  getSubscriptionScheduleMock,
+  getPlanIdByPriceIdMock,
   getRequestHeadersMock,
 } = vi.hoisted(() => ({
   listActiveSubscriptionsMock: vi.fn(),
@@ -26,6 +31,9 @@ const {
   restoreSubscriptionMock: vi.fn(),
   getSessionMock: vi.fn(),
   countWorkspaceMembersMock: vi.fn(),
+  cancelSubscriptionAtPeriodEndMock: vi.fn(),
+  getSubscriptionScheduleMock: vi.fn(),
+  getPlanIdByPriceIdMock: vi.fn(),
   getRequestHeadersMock: vi.fn().mockReturnValue(new Headers()),
 }));
 
@@ -42,6 +50,9 @@ vi.mock('@/init', () => ({
     },
     billing: {
       countWorkspaceMembers: countWorkspaceMembersMock,
+      cancelSubscriptionAtPeriodEnd: cancelSubscriptionAtPeriodEndMock,
+      getSubscriptionSchedule: getSubscriptionScheduleMock,
+      getPlanIdByPriceId: getPlanIdByPriceIdMock,
     },
   },
 }));
@@ -146,6 +157,7 @@ describe('billing.server', () => {
   describe('getWorkspaceBillingData', () => {
     it('returns plan and null subscription for free workspace', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([]);
+      countWorkspaceMembersMock.mockResolvedValue(1);
 
       const data = await getWorkspaceBillingData(
         TEST_HEADERS,
@@ -155,6 +167,8 @@ describe('billing.server', () => {
       expect(data.planId).toBe('free');
       expect(data.plan.id).toBe('free');
       expect(data.subscription).toBeNull();
+      expect(data.scheduledTargetPlanId).toBeNull();
+      expect(data.memberCount).toBe(1);
     });
 
     it('returns plan and subscription for pro workspace', async () => {
@@ -169,6 +183,7 @@ describe('billing.server', () => {
           cancelAt: null,
         },
       ]);
+      countWorkspaceMembersMock.mockResolvedValue(3);
 
       const data = await getWorkspaceBillingData(
         TEST_HEADERS,
@@ -180,10 +195,47 @@ describe('billing.server', () => {
       expect(data.subscription).toEqual({
         status: 'active',
         stripeSubscriptionId: 'sub_pro_123',
+        stripeScheduleId: null,
         periodEnd,
         cancelAtPeriodEnd: false,
         cancelAt: null,
       });
+      expect(data.scheduledTargetPlanId).toBeNull();
+      expect(data.memberCount).toBe(3);
+    });
+
+    it('resolves scheduledTargetPlanId from subscription schedule', async () => {
+      const periodEnd = new Date('2026-04-12');
+      listActiveSubscriptionsMock.mockResolvedValue([
+        {
+          plan: 'pro',
+          status: 'active',
+          stripeSubscriptionId: 'sub_pro_123',
+          stripeScheduleId: 'sub_sched_abc',
+          periodEnd,
+          cancelAtPeriodEnd: false,
+          cancelAt: null,
+        },
+      ]);
+      getSubscriptionScheduleMock.mockResolvedValue({
+        phases: [
+          { items: [{ price: 'price_pro_monthly' }] },
+          { items: [{ price: 'price_starter_monthly' }] },
+        ],
+      });
+      getPlanIdByPriceIdMock.mockReturnValue('starter');
+      countWorkspaceMembersMock.mockResolvedValue(2);
+
+      const data = await getWorkspaceBillingData(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID
+      );
+
+      expect(data.scheduledTargetPlanId).toBe('starter');
+      expect(getSubscriptionScheduleMock).toHaveBeenCalledWith('sub_sched_abc');
+      expect(getPlanIdByPriceIdMock).toHaveBeenCalledWith(
+        'price_starter_monthly'
+      );
     });
   });
 
@@ -378,6 +430,110 @@ describe('billing.server', () => {
       await expect(requireVerifiedSession()).rejects.toEqual(
         expect.objectContaining({ to: '/signin' })
       );
+    });
+  });
+
+  // ── downgradeWorkspaceSubscription ──────────────────────────────────
+
+  describe('downgradeWorkspaceSubscription', () => {
+    it('calls upgradeSubscription with scheduleAtPeriodEnd: true', async () => {
+      // Current plan is pro.
+      listActiveSubscriptionsMock.mockResolvedValue([
+        { plan: 'pro', status: 'active' },
+      ]);
+      upgradeSubscriptionMock.mockResolvedValue({});
+
+      const result = await downgradeWorkspaceSubscription(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID,
+        'starter',
+        false,
+        'sub_pro_123'
+      );
+
+      expect(result).toEqual({ success: true });
+      expect(upgradeSubscriptionMock).toHaveBeenCalledWith({
+        headers: TEST_HEADERS,
+        body: {
+          plan: 'starter',
+          annual: false,
+          referenceId: TEST_WORKSPACE_ID,
+          customerType: 'organization',
+          subscriptionId: 'sub_pro_123',
+          scheduleAtPeriodEnd: true,
+        },
+      });
+    });
+
+    it('throws if target tier >= current tier', async () => {
+      // Current plan is starter (tier 1), target is pro (tier 2).
+      listActiveSubscriptionsMock.mockResolvedValue([
+        { plan: 'starter', status: 'active' },
+      ]);
+
+      await expect(
+        downgradeWorkspaceSubscription(
+          TEST_HEADERS,
+          TEST_WORKSPACE_ID,
+          'pro',
+          false,
+          'sub_starter_123'
+        )
+      ).rejects.toThrow(
+        'Target plan must be a lower tier than the current plan.'
+      );
+    });
+
+    it('throws if target plan has no pricing', async () => {
+      // Current plan is starter (tier 1), target is free (no pricing).
+      listActiveSubscriptionsMock.mockResolvedValue([
+        { plan: 'starter', status: 'active' },
+      ]);
+
+      await expect(
+        downgradeWorkspaceSubscription(
+          TEST_HEADERS,
+          TEST_WORKSPACE_ID,
+          'free',
+          false,
+          'sub_starter_123'
+        )
+      ).rejects.toThrow('Cannot downgrade to a plan without pricing.');
+    });
+  });
+
+  // ── cancelWorkspaceSubscription ───────────────────────────────────────
+
+  describe('cancelWorkspaceSubscription', () => {
+    it('calls cancelSubscriptionAtPeriodEnd for the active subscription', async () => {
+      listActiveSubscriptionsMock.mockResolvedValue([
+        {
+          plan: 'pro',
+          status: 'active',
+          stripeSubscriptionId: 'sub_pro_456',
+        },
+      ]);
+      cancelSubscriptionAtPeriodEndMock.mockResolvedValue({});
+
+      const result = await cancelWorkspaceSubscription(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID
+      );
+
+      expect(result).toEqual({ success: true });
+      expect(cancelSubscriptionAtPeriodEndMock).toHaveBeenCalledWith(
+        'sub_pro_456'
+      );
+    });
+
+    it('throws when no active subscription exists', async () => {
+      listActiveSubscriptionsMock.mockResolvedValue([
+        { plan: 'pro', status: 'canceled' },
+      ]);
+
+      await expect(
+        cancelWorkspaceSubscription(TEST_HEADERS, TEST_WORKSPACE_ID)
+      ).rejects.toThrow('No active subscription found.');
     });
   });
 

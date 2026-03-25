@@ -18,6 +18,7 @@ import { createAuthEmails } from './auth-emails.server';
 import { isDuplicateOrganizationError, isSignInPath } from './auth-utils';
 import { createBillingHelpers } from './billing.server';
 import { PLANS, getPlanLimitsForPlanId } from './plans';
+import type { PlanId } from './plans';
 import type { EmailClient } from '@workspace/email';
 import type { Database } from '@workspace/db';
 
@@ -91,8 +92,20 @@ export function createAuth(config: AuthConfig) {
     };
   });
 
+  // Build reverse map from Stripe price IDs to plan IDs.
+  const priceToPlanMap: Record<string, PlanId> = {};
+  for (const sp of stripePlans) {
+    if (sp.priceId) priceToPlanMap[sp.priceId] = sp.name as PlanId;
+    if (sp.annualDiscountPriceId)
+      priceToPlanMap[sp.annualDiscountPriceId] = sp.name as PlanId;
+  }
+
   // Create billing helpers for limit enforcement and app-level queries.
-  const billing = createBillingHelpers(config.db, config.stripe.secretKey);
+  const billing = createBillingHelpers(
+    config.db,
+    config.stripe.secretKey,
+    priceToPlanMap
+  );
 
   const authEmails = createAuthEmails({
     emailClient: config.emailClient,

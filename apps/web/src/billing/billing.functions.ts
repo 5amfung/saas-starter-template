@@ -4,9 +4,11 @@ import * as z from 'zod';
 import { PLANS } from '@workspace/auth/plans';
 import type { PlanId } from '@workspace/auth/plans';
 import {
+  cancelWorkspaceSubscription as cancelWorkspaceSubscriptionServer,
   checkWorkspacePlanLimit as checkWorkspacePlanLimitServer,
   createCheckoutForWorkspace,
   createWorkspaceBillingPortal,
+  downgradeWorkspaceSubscription as downgradeWorkspaceSubscriptionServer,
   getOwnedWorkspacesBillingSummary,
   getWorkspaceBillingData as getWorkspaceBillingDataServer,
   reactivateWorkspaceSubscription as reactivateWorkspaceSubscriptionServer,
@@ -110,6 +112,43 @@ export const reactivateWorkspaceSubscription = createServerFn()
     await requireWorkspaceOwner(session, data.workspaceId);
     const headers = getRequestHeaders();
     return reactivateWorkspaceSubscriptionServer(headers, data.workspaceId);
+  });
+
+const downgradeInput = z.object({
+  workspaceId: z.string(),
+  planId: z.enum(VALID_PLAN_IDS),
+  annual: z.boolean(),
+  subscriptionId: z.string(),
+});
+
+/**
+ * Schedules a workspace subscription downgrade at the end of the current billing period.
+ */
+export const downgradeWorkspaceSubscription = createServerFn()
+  .inputValidator(downgradeInput)
+  .handler(async ({ data }) => {
+    const session = await requireVerifiedSession();
+    await requireWorkspaceOwner(session, data.workspaceId);
+    const headers = getRequestHeaders();
+    return downgradeWorkspaceSubscriptionServer(
+      headers,
+      data.workspaceId,
+      data.planId,
+      data.annual,
+      data.subscriptionId
+    );
+  });
+
+/**
+ * Cancels a workspace subscription at the end of the current billing period.
+ */
+export const cancelWorkspaceSubscription = createServerFn()
+  .inputValidator(z.object({ workspaceId: z.string() }))
+  .handler(async ({ data }) => {
+    const session = await requireVerifiedSession();
+    await requireWorkspaceOwner(session, data.workspaceId);
+    const headers = getRequestHeaders();
+    return cancelWorkspaceSubscriptionServer(headers, data.workspaceId);
   });
 
 const checkPlanLimitInput = z.object({

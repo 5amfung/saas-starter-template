@@ -13,7 +13,11 @@ import type { PlanId } from './plans';
  * Creates billing query helpers with closed-over database and Stripe client.
  * Returned by createAuth as auth.billing.
  */
-export function createBillingHelpers(db: Database, stripeSecretKey: string) {
+export function createBillingHelpers(
+  db: Database,
+  stripeSecretKey: string,
+  priceToPlanMap: Record<string, PlanId> = {}
+) {
   const stripeClient = new Stripe(stripeSecretKey);
 
   /** Resolves a workspace's plan ID by querying the subscription table directly. */
@@ -101,12 +105,44 @@ export function createBillingHelpers(db: Database, stripeSecretKey: string) {
     }));
   }
 
+  /** Sets a subscription to cancel at the end of the current billing period. */
+  async function cancelSubscriptionAtPeriodEnd(
+    stripeSubscriptionId: string
+  ): Promise<Stripe.Subscription> {
+    return stripeClient.subscriptions.update(stripeSubscriptionId, {
+      cancel_at_period_end: true,
+    });
+  }
+
+  /** Retrieves a Stripe Subscription Schedule by ID. */
+  async function getSubscriptionSchedule(
+    scheduleId: string
+  ): Promise<Stripe.SubscriptionSchedule> {
+    return stripeClient.subscriptionSchedules.retrieve(scheduleId);
+  }
+
+  /** Releases a Stripe Subscription Schedule, keeping the current subscription active. */
+  async function releaseSubscriptionSchedule(
+    scheduleId: string
+  ): Promise<Stripe.SubscriptionSchedule> {
+    return stripeClient.subscriptionSchedules.release(scheduleId);
+  }
+
+  /** Reverse-maps a Stripe price ID to a PlanId. Returns null if not found. */
+  function getPlanIdByPriceId(priceId: string): PlanId | null {
+    return priceToPlanMap[priceId] ?? null;
+  }
+
   return {
     resolveWorkspacePlanIdFromDb,
     countOwnedWorkspaces,
     getWorkspaceOwnerUserId,
     countWorkspaceMembers,
     getInvoicesForWorkspace,
+    cancelSubscriptionAtPeriodEnd,
+    getSubscriptionSchedule,
+    releaseSubscriptionSchedule,
+    getPlanIdByPriceId,
   };
 }
 
