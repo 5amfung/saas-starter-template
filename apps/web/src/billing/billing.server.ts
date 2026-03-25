@@ -286,17 +286,15 @@ async function resolveScheduledTargetPlanId(
 ): Promise<PlanId | null> {
   try {
     const schedule = await auth.billing.getSubscriptionSchedule(scheduleId);
-    const SECOND_PHASE_INDEX = 1;
-    const secondPhase = schedule.phases?.[SECOND_PHASE_INDEX];
-    if (!secondPhase) return null;
+    if (schedule.phases.length < 2) return null;
 
-    const firstItem = secondPhase.items?.[0];
-    if (!firstItem) return null;
+    const secondPhase = schedule.phases[1];
+    const firstItem = secondPhase.items[0];
 
     const priceId =
       typeof firstItem.price === 'string'
         ? firstItem.price
-        : firstItem.price?.id;
+        : firstItem.price.id;
     if (!priceId) return null;
 
     return auth.billing.getPlanIdByPriceId(priceId);

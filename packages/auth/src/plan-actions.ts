@@ -43,8 +43,8 @@ export interface LimitChange {
 }
 
 export interface PlanDiff {
-  lostFeatures: string[];
-  limitChanges: LimitChange[];
+  lostFeatures: Array<string>;
+  limitChanges: Array<LimitChange>;
 }
 
 const LIMIT_LABELS: Record<keyof PlanLimits, string> = {
@@ -60,7 +60,7 @@ export function computePlanDiff(currentPlan: Plan, targetPlan: Plan): PlanDiff {
     (f) => !targetPlan.features.includes(f)
   );
 
-  const limitChanges: LimitChange[] = [];
+  const limitChanges: Array<LimitChange> = [];
   for (const key of Object.keys(currentPlan.limits) as Array<
     keyof PlanLimits
   >) {
@@ -68,7 +68,7 @@ export function computePlanDiff(currentPlan: Plan, targetPlan: Plan): PlanDiff {
     const to = targetPlan.limits[key];
     if (from !== to && (from === -1 || to === -1 || to < from)) {
       limitChanges.push({
-        label: LIMIT_LABELS[key] ?? key,
+        label: LIMIT_LABELS[key],
         from: from === -1 ? 'Unlimited' : from,
         to: to === -1 ? 'Unlimited' : to,
       });

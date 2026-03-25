@@ -95,9 +95,9 @@ export function createAuth(config: AuthConfig) {
   // Build reverse map from Stripe price IDs to plan IDs.
   const priceToPlanMap: Record<string, PlanId> = {};
   for (const sp of stripePlans) {
-    if (sp.priceId) priceToPlanMap[sp.priceId] = sp.name as PlanId;
+    if (sp.priceId) priceToPlanMap[sp.priceId] = sp.name;
     if (sp.annualDiscountPriceId)
-      priceToPlanMap[sp.annualDiscountPriceId] = sp.name as PlanId;
+      priceToPlanMap[sp.annualDiscountPriceId] = sp.name;
   }
 
   // Create billing helpers for limit enforcement and app-level queries.
