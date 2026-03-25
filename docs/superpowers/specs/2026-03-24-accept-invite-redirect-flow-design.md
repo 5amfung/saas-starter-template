@@ -141,15 +141,20 @@ The `redirect` param is validated with `safeRedirectSchema`:
 
 - Must start with `/` (relative path only)
 - Must NOT start with `//` (prevents protocol-relative open redirects)
+- Must NOT contain `\` (prevents backslash-based open redirects like `/\evil.com`)
 - Optional — absent means default `/ws` behavior
 
 This prevents open redirect attacks where an attacker crafts a URL like `/signin?redirect=https://evil.com`.
 
+## Implementation Note: Better Auth `callbackURL` in Verification Emails
+
+Before implementing step 8 (verify.tsx), confirm that Better Auth's `sendVerificationEmail` actually passes `callbackURL` through to the post-verification redirect. If it doesn't, the verify→accept-invite chain will silently fall back to `/ws`. Check early and adjust the approach if needed (e.g., store redirect in a cookie as fallback).
+
 ## Testing
 
-- Unit test: `safeRedirectSchema` validates correctly (rejects `https://evil.com`, `//evil.com`, accepts `/accept-invite?id=abc`)
-- Unit test: `SigninForm` and `SignupForm` use `redirect` as `callbackURL` when provided
-- Unit test: `SigninForm` and `SignupForm` fall back to `/ws` when `redirect` is absent
-- Unit test: `GoogleSignInButton` uses custom `callbackURL` prop
-- Unit test: Cross-links (sign-in ↔ sign-up) preserve `redirect` param
-- Integration test: Full flow — unauthenticated user clicking invite link → sign-up → verify → accept
+- Unit test (Vitest): `safeRedirectSchema` validates correctly (rejects `https://evil.com`, `//evil.com`, `/\evil.com`, accepts `/accept-invite?id=abc`)
+- Unit test (Vitest): `SigninForm` and `SignupForm` use `redirect` as `callbackURL` when provided
+- Unit test (Vitest): `SigninForm` and `SignupForm` fall back to `/ws` when `redirect` is absent
+- Unit test (Vitest): `GoogleSignInButton` uses custom `callbackURL` prop
+- Unit test (Vitest): Cross-links (sign-in ↔ sign-up) preserve `redirect` param
+- E2E test (Playwright): Full flow — unauthenticated user clicking invite link → sign-up → verify → accept (requires real auth, not mocked)
