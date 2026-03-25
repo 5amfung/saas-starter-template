@@ -14,7 +14,7 @@ export const Route = createFileRoute('/_auth/verify')({
 });
 
 function VerifyPage() {
-  const { email } = Route.useSearch();
+  const { email, redirect } = Route.useSearch();
   const [isResending, setIsResending] = useState(false);
 
   if (!email) {
@@ -39,7 +39,7 @@ function VerifyPage() {
     try {
       const { error } = await authClient.sendVerificationEmail({
         email,
-        callbackURL: '/ws',
+        callbackURL: redirect ?? '/ws',
       });
       if (error) {
         toast.error(error.message ?? 'Failed to resend verification email.');
