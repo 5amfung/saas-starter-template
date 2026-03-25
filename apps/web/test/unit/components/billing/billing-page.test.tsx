@@ -215,7 +215,7 @@ describe('BillingPage', () => {
     });
   });
 
-  it('redirects via window.location.href on manage subscription success', async () => {
+  it('redirects via window.location.href on billing portal click', async () => {
     getWorkspaceBillingData.mockResolvedValue({
       planId: 'starter',
       plan: STARTER_PLAN,
@@ -235,13 +235,11 @@ describe('BillingPage', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole('button', { name: /manage subscription/i })
+        screen.getByRole('button', { name: /billing portal/i })
       ).toBeInTheDocument();
     });
 
-    await user.click(
-      screen.getByRole('button', { name: /manage subscription/i })
-    );
+    await user.click(screen.getByRole('button', { name: /billing portal/i }));
 
     await waitFor(() => {
       expect(window.location.href).toBe('https://billing.stripe.com/portal123');

@@ -49,9 +49,11 @@ describe('BillingPlanCards', () => {
     nextBillingDate: null,
     annualByPlan: {},
     onToggleInterval: vi.fn(),
-    onManage: vi.fn(),
+    onManagePlan: vi.fn(),
     onUpgrade: vi.fn(),
+    onBillingPortal: vi.fn(),
     isManaging: false,
+    isBillingPortalLoading: false,
     upgradingPlanId: null,
   };
 
@@ -109,11 +111,11 @@ describe('BillingPlanCards', () => {
     it('does not show manage button for free plan', () => {
       renderWithProviders(<BillingPlanCards {...defaultProps} />);
       expect(
-        screen.queryByRole('button', { name: /manage subscription/i })
+        screen.queryByRole('button', { name: /manage plan/i })
       ).not.toBeInTheDocument();
     });
 
-    it('shows manage subscription button for paid plan', () => {
+    it('shows manage plan button for paid plan', () => {
       renderWithProviders(
         <BillingPlanCards
           {...defaultProps}
@@ -122,25 +124,23 @@ describe('BillingPlanCards', () => {
         />
       );
       expect(
-        screen.getByRole('button', { name: /manage subscription/i })
+        screen.getByRole('button', { name: /manage plan/i })
       ).toBeInTheDocument();
     });
 
-    it('calls onManage when manage button is clicked', async () => {
+    it('calls onManagePlan when manage button is clicked', async () => {
       const user = userEvent.setup();
-      const onManage = vi.fn();
+      const onManagePlan = vi.fn();
       renderWithProviders(
         <BillingPlanCards
           {...defaultProps}
           currentPlan={STARTER_PLAN}
           upgradePlans={[PRO_PLAN]}
-          onManage={onManage}
+          onManagePlan={onManagePlan}
         />
       );
-      await user.click(
-        screen.getByRole('button', { name: /manage subscription/i })
-      );
-      expect(onManage).toHaveBeenCalledTimes(1);
+      await user.click(screen.getByRole('button', { name: /manage plan/i }));
+      expect(onManagePlan).toHaveBeenCalledTimes(1);
     });
 
     it('disables manage button and shows loading text when isManaging', () => {
@@ -152,9 +152,35 @@ describe('BillingPlanCards', () => {
           isManaging={true}
         />
       );
+      expect(screen.getByRole('button', { name: /opening/i })).toBeDisabled();
+    });
+
+    it('shows billing portal link for paid plan', () => {
+      renderWithProviders(
+        <BillingPlanCards
+          {...defaultProps}
+          currentPlan={STARTER_PLAN}
+          upgradePlans={[PRO_PLAN]}
+        />
+      );
       expect(
-        screen.getByRole('button', { name: /opening portal/i })
-      ).toBeDisabled();
+        screen.getByRole('button', { name: /billing portal/i })
+      ).toBeInTheDocument();
+    });
+
+    it('calls onBillingPortal when billing portal link is clicked', async () => {
+      const user = userEvent.setup();
+      const onBillingPortal = vi.fn();
+      renderWithProviders(
+        <BillingPlanCards
+          {...defaultProps}
+          currentPlan={STARTER_PLAN}
+          upgradePlans={[PRO_PLAN]}
+          onBillingPortal={onBillingPortal}
+        />
+      );
+      await user.click(screen.getByRole('button', { name: /billing portal/i }));
+      expect(onBillingPortal).toHaveBeenCalledTimes(1);
     });
   });
 
