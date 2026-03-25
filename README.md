@@ -2,8 +2,6 @@
 
 A production-ready SaaS foundation with authentication, multi-tenant workspaces, Stripe billing, and an admin dashboard — built on TanStack Start, React 19, and shadcn/ui.
 
-<!-- Add screenshot here -->
-
 ## Tech Stack
 
 | Layer       | Technology                                        |
@@ -105,39 +103,37 @@ A production-ready SaaS foundation with authentication, multi-tenant workspaces,
 
 1. **Clone the repository**
 
-   ```bash
-   git clone <repo-url>
-   cd saas-starter-template
-   ```
+```bash
+ git clone <repo-url>
+ cd saas-starter-template
+```
 
 2. **Install dependencies**
 
-   ```bash
-   pnpm install
-   ```
+```bash
+ pnpm install
+```
 
 3. **Set up environment variables**
 
-   ```bash
-   cp apps/web/.env.example apps/web/.env
-   cp packages/db/.env.example packages/db/.env
-   ```
+```bash
+ cp apps/web/.env.example apps/web/.env
+ cp packages/db/.env.example packages/db/.env
+```
 
-   Fill in the values for Neon, Resend, Stripe, Google OAuth, and Better Auth secret.
+Fill in the values for Neon, Resend, Stripe, Google OAuth, and Better Auth secret. 4. **Push database schema**
 
-4. **Push database schema**
-
-   ```bash
-   pnpm run db:push
-   ```
+```bash
+ pnpm run db:push
+```
 
 5. **Start the dev server**
 
-   ```bash
-   pnpm dev
-   ```
+```bash
+ pnpm dev
+```
 
-   Open [http://localhost:3000](http://localhost:3000) to see the app.
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
 ## Monorepo Structure
 
@@ -226,20 +222,26 @@ This project includes AI-assisted Playwright agents that can plan, generate, and
 
 ### Prerequisites
 
-The Playwright MCP (Model Context Protocol) server must be running for the agents to interact with the browser. The server is configured in `apps/web/.mcp.json`:
+The Playwright MCP (Model Context Protocol) server must be running for the agents to interact with the browser. The server is configured in `.mcp.json`:
 
 ```json
 {
   "mcpServers": {
     "playwright-test": {
-      "command": "npx",
-      "args": ["playwright", "run-test-mcp-server"]
+      "command": "pnpm",
+      "args": [
+        "--filter",
+        "@workspace/web",
+        "exec",
+        "playwright",
+        "run-test-mcp-server"
+      ]
     }
   }
 }
 ```
 
-Make sure Playwright browsers are installed:
+Make sure Playwright browsers are installed if you haven't done this already:
 
 ```bash
 pnpm --filter @workspace/web exec playwright install
@@ -247,7 +249,7 @@ pnpm --filter @workspace/web exec playwright install
 
 ### Playwright Agents
 
-Three specialized agents handle different phases of the E2E testing workflow:
+Three specialized AI agents (saved in `~/.claude/agents`) handle different phases of the E2E testing workflow:
 
 | Agent              | Purpose                                                                                                                         |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
