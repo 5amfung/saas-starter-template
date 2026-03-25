@@ -1,5 +1,14 @@
 import * as z from 'zod';
 
+// Validates a redirect URL is a safe relative path to prevent open redirect attacks.
+export const safeRedirectSchema = z
+  .string()
+  .min(1)
+  .refine(
+    (val) => val.startsWith('/') && !val.startsWith('//') && !val.includes('\\')
+  )
+  .optional();
+
 export const loginSchema = z.object({
   email: z.email({ error: 'Please enter a valid email address.' }),
   password: z.string().min(1, { error: 'Password is required.' }),
@@ -22,6 +31,7 @@ export const signupSchema = z
 
 export const verifySearchSchema = z.object({
   email: z.email({ error: 'Invalid email.' }).optional(),
+  redirect: safeRedirectSchema,
 });
 
 export const forgotPasswordSchema = z.object({
@@ -44,6 +54,11 @@ export const resetPasswordSchema = z
 
 export const signinSearchSchema = z.object({
   error: z.string().optional(),
+  redirect: safeRedirectSchema,
+});
+
+export const signupSearchSchema = z.object({
+  redirect: safeRedirectSchema,
 });
 
 export const resetPasswordSearchSchema = z.object({
