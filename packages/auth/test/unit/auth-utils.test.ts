@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   isDuplicateOrganizationError,
+  isRecord,
   isSignInPath,
 } from '../../src/auth-utils';
 
@@ -39,4 +40,24 @@ describe('isDuplicateOrganizationError', () => {
       expect(isDuplicateOrganizationError(value)).toBe(false);
     }
   );
+});
+
+describe('isRecord', () => {
+  it.each([{}, { a: 1 }, { nested: { key: 'value' } }])(
+    'returns true for plain objects: %j',
+    (value) => {
+      expect(isRecord(value)).toBe(true);
+    }
+  );
+
+  it.each([null, undefined, 42, 'string', true])(
+    'returns false for non-record values: %j',
+    (value) => {
+      expect(isRecord(value)).toBe(false);
+    }
+  );
+
+  it('returns true for arrays (typeof object)', () => {
+    expect(isRecord([1, 2])).toBe(true);
+  });
 });

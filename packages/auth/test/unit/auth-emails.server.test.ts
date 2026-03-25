@@ -163,5 +163,69 @@ describe('auth-emails', () => {
 
       expect(buildEmailRequestContextMock).not.toHaveBeenCalled();
     });
+
+    it('strips trailing slash from base URL', async () => {
+      const emailsWithSlash = createAuthEmails({
+        emailClient: {
+          sendEmail: sendEmailMock,
+          config: {
+            appName: 'TestApp',
+            apiKey: 'test',
+            fromEmail: 'test@test.com',
+          },
+        },
+        getRequestHeaders: getRequestHeadersMock,
+        baseUrl: 'http://localhost:3000/',
+      });
+
+      await emailsWithSlash.sendInvitationEmail({
+        email: 'invitee@example.com',
+        id: 'inv_slash',
+        organization: { name: 'Team' },
+        inviter: { user: { email: 'admin@example.com' } },
+      });
+
+      expect(sendEmailMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          react: expect.objectContaining({
+            props: expect.objectContaining({
+              invitationUrl: 'http://localhost:3000/accept-invite?id=inv_slash',
+            }),
+          }),
+        })
+      );
+    });
+
+    it('falls back to localhost when base URL is empty', async () => {
+      const emailsEmpty = createAuthEmails({
+        emailClient: {
+          sendEmail: sendEmailMock,
+          config: {
+            appName: 'TestApp',
+            apiKey: 'test',
+            fromEmail: 'test@test.com',
+          },
+        },
+        getRequestHeaders: getRequestHeadersMock,
+        baseUrl: '',
+      });
+
+      await emailsEmpty.sendInvitationEmail({
+        email: 'invitee@example.com',
+        id: 'inv_empty',
+        organization: { name: 'Team' },
+        inviter: { user: { email: 'admin@example.com' } },
+      });
+
+      expect(sendEmailMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          react: expect.objectContaining({
+            props: expect.objectContaining({
+              invitationUrl: 'http://localhost:3000/accept-invite?id=inv_empty',
+            }),
+          }),
+        })
+      );
+    });
   });
 });

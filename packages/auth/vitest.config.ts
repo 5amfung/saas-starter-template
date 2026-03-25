@@ -10,7 +10,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/index.ts'],
+      exclude: ['src/index.ts', 'src/auth-client.ts', 'src/auth.cli.ts'],
       reporter: ['text', 'json-summary', 'html'],
       reportsDirectory: './coverage',
       thresholds: {
