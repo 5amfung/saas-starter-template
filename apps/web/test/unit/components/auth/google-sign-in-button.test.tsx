@@ -50,4 +50,34 @@ describe('GoogleSignInButton', () => {
       );
     });
   });
+
+  it('uses default callbackURL /ws when no prop provided', async () => {
+    const user = userEvent.setup();
+    signInSocial.mockResolvedValue({ data: null, error: null });
+    renderWithProviders(<GoogleSignInButton />);
+    await user.click(
+      screen.getByRole('button', { name: /sign in with google/i })
+    );
+    await waitFor(() => {
+      expect(signInSocial).toHaveBeenCalledWith(
+        expect.objectContaining({ callbackURL: '/ws' })
+      );
+    });
+  });
+
+  it('uses custom callbackURL when provided', async () => {
+    const user = userEvent.setup();
+    signInSocial.mockResolvedValue({ data: null, error: null });
+    renderWithProviders(
+      <GoogleSignInButton callbackURL="/accept-invite?id=abc" />
+    );
+    await user.click(
+      screen.getByRole('button', { name: /sign in with google/i })
+    );
+    await waitFor(() => {
+      expect(signInSocial).toHaveBeenCalledWith(
+        expect.objectContaining({ callbackURL: '/accept-invite?id=abc' })
+      );
+    });
+  });
 });
