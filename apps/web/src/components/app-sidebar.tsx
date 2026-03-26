@@ -20,6 +20,7 @@ import {
   SidebarHeader,
 } from '@workspace/ui/components/sidebar';
 import { NavAdmin } from '@/components/nav-admin';
+import { useActiveMemberRoleQuery } from '@/hooks/use-active-member-role-query';
 import { NavMain } from '@/components/nav-main';
 import { NavSecondary } from '@/components/nav-secondary';
 import { NavUser, NavUserSkeleton } from '@/components/nav-user';
@@ -58,18 +59,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const activeWorkspaceId =
     activeOrganization?.id ?? organizations?.at(0)?.id ?? null;
 
-  const [isWorkspaceOwner, setIsWorkspaceOwner] = React.useState(false);
-  React.useEffect(() => {
-    let mounted = true;
-    const loadRole = async () => {
-      const result = await authClient.organization.getActiveMemberRole();
-      if (mounted) setIsWorkspaceOwner(result.data?.role === 'owner');
-    };
-    void loadRole();
-    return () => {
-      mounted = false;
-    };
-  }, [activeWorkspaceId]);
+  const { data: activeRole } = useActiveMemberRoleQuery(activeWorkspaceId);
+  const isWorkspaceOwner = activeRole === 'owner';
 
   const navMain = activeWorkspaceId
     ? [

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { IconLoader2 } from '@tabler/icons-react';
 import { useForm } from '@tanstack/react-form';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { createFileRoute, getRouteApi } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -25,7 +25,7 @@ import { Input } from '@workspace/ui/components/input';
 import { Separator } from '@workspace/ui/components/separator';
 import { FREE_PLAN_ID } from '@workspace/auth/plans';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
-import { getWorkspaceBillingData } from '@/billing/billing.functions';
+import { useBillingDataQuery } from '@/billing/use-billing-data-query';
 import { toFieldErrorItem } from '@/lib/form-utils';
 
 const workspaceSettingsSchema = z.object({
@@ -34,13 +34,6 @@ const workspaceSettingsSchema = z.object({
 
 const PAGE_LAYOUT_CLASS =
   'mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6';
-
-const hasOwnerRole = (role: string | null): boolean =>
-  !!role &&
-  role
-    .split(',')
-    .map((item) => item.trim())
-    .includes('owner');
 
 const sortByCreatedAtAscending = (
   left: { createdAt?: string | Date },
@@ -60,33 +53,12 @@ const workspaceRouteApi = getRouteApi('/_protected/ws/$workspaceId');
 
 function WorkspaceSettingsPage() {
   const { workspaceId } = Route.useParams();
-  const workspace = workspaceRouteApi.useLoaderData();
+  const { workspace, role } = workspaceRouteApi.useLoaderData();
   const { data: activeOrganization } = authClient.useActiveOrganization();
 
-  const [activeRole, setActiveRole] = React.useState<string | null>(null);
+  const isOwner = role === 'owner';
 
-  React.useEffect(() => {
-    let isMounted = true;
-    const loadActiveRole = async () => {
-      const { data, error } =
-        await authClient.organization.getActiveMemberRole();
-      if (!isMounted) return;
-      if (error) return;
-      setActiveRole(typeof data.role === 'string' ? data.role : null);
-    };
-    void loadActiveRole();
-    return () => {
-      isMounted = false;
-    };
-  }, [workspaceId]);
-
-  const isOwner = hasOwnerRole(activeRole);
-
-  const billingQuery = useQuery({
-    queryKey: ['billing', 'data', workspaceId],
-    queryFn: () => getWorkspaceBillingData({ data: { workspaceId } }),
-    enabled: isOwner,
-  });
+  const billingQuery = useBillingDataQuery(workspaceId, isOwner);
 
   const hasActiveSubscription =
     billingQuery.data?.planId !== undefined &&

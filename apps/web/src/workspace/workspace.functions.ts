@@ -6,6 +6,7 @@ import { auth } from '@/init';
 import {
   ensureActiveWorkspaceForSession,
   ensureWorkspaceMembership,
+  getActiveMemberRole,
 } from '@/workspace/workspace.server';
 
 const workspaceRouteInput = z.object({
@@ -45,6 +46,23 @@ const resolveWorkspaceRouteAccess = async (workspaceId: string) => {
 export const getWorkspaceById = createServerFn()
   .inputValidator(workspaceRouteInput)
   .handler(async ({ data }) => resolveWorkspaceRouteAccess(data.workspaceId));
+
+export const getWorkspaceWithRole = createServerFn()
+  .inputValidator(workspaceRouteInput)
+  .handler(async ({ data }) => {
+    const headers = getRequestHeaders();
+    const session = await auth.api.getSession({ headers });
+    if (!session || !session.user.emailVerified) {
+      throw redirect({ to: '/signin' });
+    }
+
+    const [workspace, role] = await Promise.all([
+      resolveWorkspaceRouteAccess(data.workspaceId),
+      getActiveMemberRole(headers, data.workspaceId, session.user.id),
+    ]);
+
+    return { workspace, role };
+  });
 
 export const ensureWorkspaceRouteAccess = createServerFn()
   .inputValidator(workspaceRouteInput)

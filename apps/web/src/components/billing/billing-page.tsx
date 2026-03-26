@@ -19,10 +19,13 @@ import {
   createWorkspaceCheckoutSession,
   createWorkspacePortalSession,
   downgradeWorkspaceSubscription,
-  getWorkspaceBillingData,
   getWorkspaceInvoices,
   reactivateWorkspaceSubscription,
 } from '@/billing/billing.functions';
+import {
+  BILLING_DATA_QUERY_KEY,
+  useBillingDataQuery,
+} from '@/billing/use-billing-data-query';
 
 const PAGE_LAYOUT_CLASS =
   'mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6';
@@ -40,12 +43,8 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
   const [downgradeAnnual, setDowngradeAnnual] = useState(false);
 
   const INVOICES_QUERY_KEY = ['billing', 'invoices', workspaceId] as const;
-  const BILLING_DATA_QUERY_KEY = ['billing', 'data', workspaceId] as const;
 
-  const billingQuery = useQuery({
-    queryKey: BILLING_DATA_QUERY_KEY,
-    queryFn: () => getWorkspaceBillingData({ data: { workspaceId } }),
-  });
+  const billingQuery = useBillingDataQuery(workspaceId);
 
   const invoicesQuery = useQuery({
     queryKey: INVOICES_QUERY_KEY,
@@ -99,7 +98,9 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
     onSuccess: () => {
       toast.success('Subscription reactivated.');
       void queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
-      void queryClient.invalidateQueries({ queryKey: BILLING_DATA_QUERY_KEY });
+      void queryClient.invalidateQueries({
+        queryKey: BILLING_DATA_QUERY_KEY(workspaceId),
+      });
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to reactivate subscription.');
@@ -114,18 +115,21 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
     scheduledTargetPlanId?: PlanId | null;
     subscription?: Partial<NonNullable<BillingData['subscription']>>;
   }) => {
-    queryClient.setQueryData<BillingData>(BILLING_DATA_QUERY_KEY, (prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        ...(patch.scheduledTargetPlanId !== undefined && {
-          scheduledTargetPlanId: patch.scheduledTargetPlanId,
-        }),
-        subscription: prev.subscription
-          ? { ...prev.subscription, ...patch.subscription }
-          : prev.subscription,
-      };
-    });
+    queryClient.setQueryData<BillingData>(
+      BILLING_DATA_QUERY_KEY(workspaceId),
+      (prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          ...(patch.scheduledTargetPlanId !== undefined && {
+            scheduledTargetPlanId: patch.scheduledTargetPlanId,
+          }),
+          subscription: prev.subscription
+            ? { ...prev.subscription, ...patch.subscription }
+            : prev.subscription,
+        };
+      }
+    );
   };
 
   const downgradeMutation = useMutation({
@@ -150,7 +154,9 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
         subscription: { stripeScheduleId: 'pending' },
       });
       void queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
-      void queryClient.invalidateQueries({ queryKey: BILLING_DATA_QUERY_KEY });
+      void queryClient.invalidateQueries({
+        queryKey: BILLING_DATA_QUERY_KEY(workspaceId),
+      });
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to schedule downgrade.');
@@ -168,7 +174,9 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
         subscription: { cancelAtPeriodEnd: true },
       });
       void queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
-      void queryClient.invalidateQueries({ queryKey: BILLING_DATA_QUERY_KEY });
+      void queryClient.invalidateQueries({
+        queryKey: BILLING_DATA_QUERY_KEY(workspaceId),
+      });
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to cancel subscription.');

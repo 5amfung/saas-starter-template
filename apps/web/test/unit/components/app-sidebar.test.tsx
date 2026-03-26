@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { AppSidebar } from '@/components/app-sidebar';
 
 // ── Hoisted mocks ────────────────────────────────────────────────────────────
@@ -8,14 +8,12 @@ const {
   useSessionMock,
   useListOrganizationsMock,
   useActiveOrganizationMock,
-  getActiveMemberRoleMock,
+  useActiveMemberRoleQueryMock,
 } = vi.hoisted(() => ({
   useSessionMock: vi.fn(),
   useListOrganizationsMock: vi.fn(),
   useActiveOrganizationMock: vi.fn(),
-  getActiveMemberRoleMock: vi
-    .fn()
-    .mockResolvedValue({ data: { role: 'owner' } }),
+  useActiveMemberRoleQueryMock: vi.fn(),
 }));
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
@@ -25,10 +23,11 @@ vi.mock('@workspace/auth/client', () => ({
     useSession: useSessionMock,
     useListOrganizations: useListOrganizationsMock,
     useActiveOrganization: useActiveOrganizationMock,
-    organization: {
-      getActiveMemberRole: getActiveMemberRoleMock,
-    },
   },
+}));
+
+vi.mock('@/hooks/use-active-member-role-query', () => ({
+  useActiveMemberRoleQuery: useActiveMemberRoleQueryMock,
 }));
 
 vi.mock('@workspace/ui/components/sidebar', () => ({
@@ -112,19 +111,12 @@ const mockOrgs = [
 
 beforeEach(() => {
   vi.clearAllMocks();
+  useActiveMemberRoleQueryMock.mockReturnValue({ data: 'owner' });
 });
 
 describe('AppSidebar', () => {
-  /**
-   * Renders AppSidebar and waits for the async useEffect (getActiveMemberRole)
-   * to settle so React doesn't warn about unhandled state updates.
-   */
-  async function renderSidebar() {
+  function renderSidebar() {
     render(<AppSidebar />);
-    // Wait for the async role-check effect to complete.
-    await waitFor(() => {
-      expect(getActiveMemberRoleMock).toHaveBeenCalled();
-    });
   }
 
   it('renders all sidebar sections', async () => {
@@ -233,5 +225,22 @@ describe('AppSidebar', () => {
     await renderSidebar();
 
     expect(screen.queryByTestId('nav-admin')).not.toBeInTheDocument();
+  });
+
+  it('hides Billing nav item for non-owner workspace members', async () => {
+    useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
+    useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
+    useActiveOrganizationMock.mockReturnValue({
+      data: { id: 'ws-1', name: 'Workspace One' },
+    });
+    useActiveMemberRoleQueryMock.mockReturnValue({ data: 'member' });
+
+    await renderSidebar();
+
+    // Overview, Projects, Members, Settings = 4 items (no Billing).
+    expect(screen.getByTestId('nav-main')).toHaveAttribute(
+      'data-item-count',
+      '4'
+    );
   });
 });
