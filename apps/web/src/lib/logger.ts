@@ -28,9 +28,8 @@ export const logger = createIsomorphicFn()
     }
   })
   .client((level: LogLevel, message: string, data?: any) => {
-    if (process.env.NODE_ENV === 'development') {
-      console[level](`[CLIENT] [${level.toUpperCase()}]`, message, data ?? '');
-    } else {
+    console[level](`[${level.toUpperCase()}]`, message, data ?? '');
+    if (process.env.NODE_ENV === 'production') {
       // Production: Send to analytics service
       // analytics.track('client_log', { level, message, data })
     }
