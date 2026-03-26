@@ -115,7 +115,7 @@ beforeEach(() => {
 });
 
 describe('AppSidebar', () => {
-  async function renderSidebar() {
+  function renderSidebar() {
     render(<AppSidebar />);
   }
 
