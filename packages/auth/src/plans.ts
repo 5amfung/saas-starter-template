@@ -180,6 +180,15 @@ export function getUpgradePlan(currentPlan: Plan): Plan | null {
   return getUpgradePlans(currentPlan)[0] ?? null;
 }
 
+// ── Plan action utilities ────────────────────────────────────────────
+export {
+  getPlanAction,
+  getDowngradePlans,
+  computePlanDiff,
+  PLAN_ACTION_CONFIG,
+} from './plan-actions';
+export type { PlanAction, PlanDiff, LimitChange } from './plan-actions';
+
 /**
  * Resolves a workspace's effective plan from a list of subscriptions.
  * Filters to active/trialing subscriptions, then picks the highest tier.

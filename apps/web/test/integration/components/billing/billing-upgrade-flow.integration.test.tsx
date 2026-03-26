@@ -147,7 +147,7 @@ describe('BillingPage integration', () => {
     });
   });
 
-  it('calls createWorkspacePortalSession when manage is clicked on paid plan', async () => {
+  it('calls createWorkspacePortalSession when billing portal link is clicked on paid plan', async () => {
     const user = userEvent.setup();
     getWorkspaceBillingDataMock.mockResolvedValue({
       plan: proPlan,
@@ -166,9 +166,7 @@ describe('BillingPage integration', () => {
       expect(screen.getByText('Pro')).toBeInTheDocument();
     });
 
-    await user.click(
-      screen.getByRole('button', { name: /manage subscription/i })
-    );
+    await user.click(screen.getByRole('button', { name: /billing portal/i }));
 
     await waitFor(() => {
       expect(createWorkspacePortalSessionMock).toHaveBeenCalledTimes(1);

@@ -2,6 +2,7 @@ import { redirect } from '@tanstack/react-router';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { resolveSubscriptionDetails } from '@workspace/auth/billing';
 import {
+  PLANS,
   getFreePlan,
   getPlanById,
   getPlanLimitsForPlanId,
@@ -85,7 +86,31 @@ export async function getWorkspaceBillingData(
   const plan = getPlanById(planId) ?? getFreePlan();
   const subscription = resolveSubscriptionDetails(subArray, planId);
 
-  return { planId, plan, subscription };
+  // Resolve scheduled target plan from Stripe Subscription Schedule.
+  const scheduledTargetPlanId = subscription?.stripeScheduleId
+    ? await resolveScheduledTargetPlanId(subscription.stripeScheduleId)
+    : null;
+
+  // Strip the stale stripeScheduleId when the schedule is no longer meaningful:
+  // either it resolved to null (completed/canceled) or the target plan matches
+  // the current plan (the downgrade already took effect).
+  const isScheduleStale =
+    !!subscription?.stripeScheduleId &&
+    (!scheduledTargetPlanId || scheduledTargetPlanId === planId);
+  const cleanedSubscription = isScheduleStale
+    ? { ...subscription, stripeScheduleId: null }
+    : subscription;
+
+  // Count workspace members for UI display.
+  const memberCount = await auth.billing.countWorkspaceMembers(workspaceId);
+
+  return {
+    planId,
+    plan,
+    subscription: cleanedSubscription,
+    scheduledTargetPlanId: isScheduleStale ? null : scheduledTargetPlanId,
+    memberCount,
+  };
 }
 
 export interface WorkspaceBillingSummary {
@@ -251,14 +276,123 @@ export async function reactivateWorkspaceSubscription(
     throw new Error('Could not find subscription to restore.');
   }
 
-  await auth.api.restoreSubscription({
+  if (target.stripeScheduleId) {
+    await auth.billing.releaseSubscriptionSchedule(target.stripeScheduleId);
+  } else {
+    await auth.api.restoreSubscription({
+      headers,
+      body: {
+        subscriptionId: target.stripeSubscriptionId,
+        referenceId: workspaceId,
+        customerType: 'organization',
+      },
+    });
+  }
+
+  return { success: true };
+}
+
+/**
+ * Resolves the target plan ID from a Stripe Subscription Schedule.
+ * Reads the second phase's first item price and maps it back to a PlanId.
+ * Returns null if the schedule cannot be resolved.
+ */
+async function resolveScheduledTargetPlanId(
+  scheduleId: string
+): Promise<PlanId | null> {
+  try {
+    const schedule = await auth.billing.getSubscriptionSchedule(scheduleId);
+    // A completed or canceled schedule is no longer pending — ignore it.
+    if (schedule.status !== 'active' && schedule.status !== 'not_started') {
+      return null;
+    }
+    if (schedule.phases.length < 2) return null;
+
+    const secondPhase = schedule.phases[1];
+    const firstItem = secondPhase.items[0];
+
+    const priceId =
+      typeof firstItem.price === 'string'
+        ? firstItem.price
+        : firstItem.price.id;
+    if (!priceId) return null;
+
+    return auth.billing.getPlanIdByPriceId(priceId);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Schedules a workspace subscription downgrade at the end of the current billing period.
+ * The target plan must be a lower tier than the current plan and must have pricing.
+ */
+export async function downgradeWorkspaceSubscription(
+  headers: Headers,
+  workspaceId: string,
+  planId: PlanId,
+  annual: boolean,
+  subscriptionId: string
+) {
+  // Validate the target plan exists and has pricing.
+  const targetPlan = PLANS.find((p) => p.id === planId);
+  if (!targetPlan) {
+    throw new Error(`Unknown plan: ${planId}`);
+  }
+  if (!targetPlan.pricing) {
+    throw new Error('Cannot downgrade to a plan without pricing.');
+  }
+
+  // Validate the target plan is a lower tier than the current plan.
+  const currentPlanId = await getWorkspaceActivePlanId(headers, workspaceId);
+  const currentPlan = PLANS.find((p) => p.id === currentPlanId);
+  if (!currentPlan || targetPlan.tier >= currentPlan.tier) {
+    throw new Error('Target plan must be a lower tier than the current plan.');
+  }
+
+  await auth.api.upgradeSubscription({
     headers,
     body: {
-      subscriptionId: target.stripeSubscriptionId,
+      plan: planId,
+      annual,
       referenceId: workspaceId,
       customerType: 'organization',
+      subscriptionId,
+      scheduleAtPeriodEnd: true,
     },
   });
+
+  return { success: true };
+}
+
+/**
+ * Cancels a workspace subscription at the end of the current billing period.
+ * Finds the active subscription and sets cancel_at_period_end on it.
+ */
+export async function cancelWorkspaceSubscription(
+  headers: Headers,
+  workspaceId: string
+) {
+  const subscriptions = await auth.api.listActiveSubscriptions({
+    headers,
+    query: { referenceId: workspaceId, customerType: 'organization' },
+  });
+
+  const active = subscriptions.filter(
+    (s) => s.status === 'active' || s.status === 'trialing'
+  );
+
+  if (active.length === 0) {
+    throw new Error('No active subscription found.');
+  }
+
+  const bestPlanId = resolveWorkspacePlanId(active);
+  const target = active.find((s) => s.plan === bestPlanId);
+  if (!target?.stripeSubscriptionId) {
+    throw new Error('Could not find subscription to cancel.');
+  }
+
+  await auth.billing.cancelSubscriptionAtPeriodEnd(target.stripeSubscriptionId);
 
   return { success: true };
 }
