@@ -38,6 +38,10 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "dev:stripe-webhook": {
+      "cache": false,
+      "persistent": true
     }
   }
 }

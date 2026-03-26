@@ -3,8 +3,10 @@ import {
   loginSchema,
   resetPasswordSchema,
   resetPasswordSearchSchema,
+  safeRedirectSchema,
   signinSearchSchema,
   signupSchema,
+  signupSearchSchema,
   verifySearchSchema,
 } from '../../src/schemas';
 
@@ -60,12 +62,57 @@ describe('signupSchema', () => {
   });
 });
 
+describe('safeRedirectSchema', () => {
+  it('accepts valid relative paths', () => {
+    expect(safeRedirectSchema.safeParse('/accept-invite?id=abc').success).toBe(
+      true
+    );
+    expect(safeRedirectSchema.safeParse('/ws').success).toBe(true);
+    expect(safeRedirectSchema.safeParse('/some/deep/path').success).toBe(true);
+  });
+
+  it('accepts undefined (optional)', () => {
+    expect(safeRedirectSchema.safeParse(undefined).success).toBe(true);
+  });
+
+  it('rejects absolute URLs', () => {
+    expect(safeRedirectSchema.safeParse('https://evil.com').success).toBe(
+      false
+    );
+    expect(safeRedirectSchema.safeParse('http://evil.com').success).toBe(false);
+  });
+
+  it('rejects protocol-relative URLs', () => {
+    expect(safeRedirectSchema.safeParse('//evil.com').success).toBe(false);
+  });
+
+  it('rejects backslash-based redirects', () => {
+    expect(safeRedirectSchema.safeParse('/\\evil.com').success).toBe(false);
+  });
+
+  it('rejects empty string', () => {
+    expect(safeRedirectSchema.safeParse('').success).toBe(false);
+  });
+});
+
 describe('verifySearchSchema', () => {
   it('accepts optional email', () => {
     expect(verifySearchSchema.safeParse({}).success).toBe(true);
     expect(verifySearchSchema.safeParse({ email: 'a@b.com' }).success).toBe(
       true
     );
+  });
+
+  it('accepts optional redirect', () => {
+    expect(verifySearchSchema.safeParse({ redirect: '/ws' }).success).toBe(
+      true
+    );
+  });
+
+  it('rejects invalid redirect', () => {
+    expect(
+      verifySearchSchema.safeParse({ redirect: 'https://evil.com' }).success
+    ).toBe(false);
   });
 });
 
@@ -104,6 +151,36 @@ describe('signinSearchSchema', () => {
   it('accepts optional error', () => {
     expect(signinSearchSchema.safeParse({}).success).toBe(true);
     expect(signinSearchSchema.safeParse({ error: 'oops' }).success).toBe(true);
+  });
+
+  it('accepts optional redirect', () => {
+    expect(signinSearchSchema.safeParse({ redirect: '/ws' }).success).toBe(
+      true
+    );
+  });
+
+  it('rejects invalid redirect', () => {
+    expect(
+      signinSearchSchema.safeParse({ redirect: 'https://evil.com' }).success
+    ).toBe(false);
+  });
+});
+
+describe('signupSearchSchema', () => {
+  it('accepts empty object', () => {
+    expect(signupSearchSchema.safeParse({}).success).toBe(true);
+  });
+
+  it('accepts valid redirect', () => {
+    expect(signupSearchSchema.safeParse({ redirect: '/ws' }).success).toBe(
+      true
+    );
+  });
+
+  it('rejects invalid redirect', () => {
+    expect(
+      signupSearchSchema.safeParse({ redirect: 'https://evil.com' }).success
+    ).toBe(false);
   });
 });
 

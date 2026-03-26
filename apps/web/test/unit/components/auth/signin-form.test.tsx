@@ -153,4 +153,36 @@ describe('SigninForm', () => {
       );
     });
   });
+
+  it('uses redirect as callbackURL when provided', async () => {
+    const user = userEvent.setup();
+    signInEmail.mockResolvedValue({ data: {}, error: null });
+    renderWithProviders(<SigninForm redirect="/accept-invite?id=abc" />);
+
+    await user.type(screen.getByLabelText(/email/i), 'test@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'password123');
+    await user.click(screen.getByRole('button', { name: /sign in$/i }));
+
+    await waitFor(() => {
+      expect(signInEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ callbackURL: '/accept-invite?id=abc' })
+      );
+    });
+  });
+
+  it('falls back to /ws when redirect is not provided', async () => {
+    const user = userEvent.setup();
+    signInEmail.mockResolvedValue({ data: {}, error: null });
+    renderWithProviders(<SigninForm />);
+
+    await user.type(screen.getByLabelText(/email/i), 'test@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'password123');
+    await user.click(screen.getByRole('button', { name: /sign in$/i }));
+
+    await waitFor(() => {
+      expect(signInEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ callbackURL: '/ws' })
+      );
+    });
+  });
 });
