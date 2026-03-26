@@ -221,6 +221,7 @@ describe('billing.server', () => {
         },
       ]);
       getSubscriptionScheduleMock.mockResolvedValue({
+        status: 'active',
         phases: [
           { items: [{ price: 'price_pro_monthly' }] },
           { items: [{ price: 'price_starter_monthly' }] },
