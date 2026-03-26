@@ -8,29 +8,28 @@ import { useMembersTable } from '@/workspace/use-members-table';
 
 const {
   listMembersMock,
-  getActiveMemberRoleMock,
   leaveMock,
   removeMemberMock,
   navigateMock,
   mockToastSuccess,
   mockToastError,
   useSessionQueryMock,
+  useActiveMemberRoleQueryMock,
 } = vi.hoisted(() => ({
   listMembersMock: vi.fn(),
-  getActiveMemberRoleMock: vi.fn(),
   leaveMock: vi.fn(),
   removeMemberMock: vi.fn(),
   navigateMock: vi.fn(),
   mockToastSuccess: vi.fn(),
   mockToastError: vi.fn(),
   useSessionQueryMock: vi.fn(),
+  useActiveMemberRoleQueryMock: vi.fn(),
 }));
 
 vi.mock('@workspace/auth/client', () => ({
   authClient: {
     organization: {
       listMembers: listMembersMock,
-      getActiveMemberRole: getActiveMemberRoleMock,
       leave: leaveMock,
       removeMember: removeMemberMock,
     },
@@ -44,6 +43,10 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
 
 vi.mock('@/hooks/use-session-query', () => ({
   useSessionQuery: useSessionQueryMock,
+}));
+
+vi.mock('@/hooks/use-active-member-role-query', () => ({
+  useActiveMemberRoleQuery: useActiveMemberRoleQueryMock,
 }));
 
 vi.mock('sonner', () => ({
@@ -77,10 +80,7 @@ const mockMembersResponse = {
 function setupDefaults() {
   useSessionQueryMock.mockReturnValue({ data: mockSession });
   listMembersMock.mockResolvedValue(mockMembersResponse);
-  getActiveMemberRoleMock.mockResolvedValue({
-    data: { role: 'owner' },
-    error: null,
-  });
+  useActiveMemberRoleQueryMock.mockReturnValue({ data: 'owner' });
 }
 
 describe('useMembersTable', () => {

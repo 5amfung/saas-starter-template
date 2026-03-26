@@ -10,22 +10,15 @@ import {
 import type { SortingState } from '@tanstack/react-table';
 import type { WorkspaceMemberRow } from '@/components/workspace/workspace-members-table';
 import { useSessionQuery } from '@/hooks/use-session-query';
+import { useActiveMemberRoleQuery } from '@/hooks/use-active-member-role-query';
 
 export function useMembersTable(workspaceId: string) {
   const navigate = useNavigate();
   const { data: session } = useSessionQuery();
   const currentUserId = session?.user.id ?? null;
 
-  const roleQuery = useQuery({
-    queryKey: ['workspace', 'activeRole', workspaceId],
-    queryFn: async () => {
-      const { data, error } =
-        await authClient.organization.getActiveMemberRole();
-      if (error) return null;
-      return typeof data.role === 'string' ? data.role : null;
-    },
-  });
-  const currentUserRole = roleQuery.data ?? null;
+  const { data: currentUserRole = null } =
+    useActiveMemberRoleQuery(workspaceId);
 
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(MEMBER_PAGE_SIZE_DEFAULT);
