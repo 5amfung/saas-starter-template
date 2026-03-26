@@ -6,15 +6,9 @@ export const logger = createIsomorphicFn()
   .server((level: LogLevel, message: string, data?: any) => {
     const timestamp = new Date().toISOString();
 
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'production') {
+      // Structured JSON logging for production observability.
       console[level](
-        `[${timestamp}] [${level.toUpperCase()}]`,
-        message,
-        data ?? ''
-      );
-    } else {
-      logger(
-        'info',
         JSON.stringify({
           timestamp,
           level,
@@ -23,6 +17,13 @@ export const logger = createIsomorphicFn()
           service: 'sass',
           environment: process.env.NODE_ENV,
         })
+      );
+    } else {
+      // Human-readable logging for development and test.
+      console[level](
+        `[${timestamp}] [${level.toUpperCase()}]`,
+        message,
+        data ?? ''
       );
     }
   })
