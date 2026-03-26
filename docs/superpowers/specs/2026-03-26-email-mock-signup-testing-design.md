@@ -39,6 +39,7 @@ interface CapturedEmail {
 
 interface MockEmailClient extends EmailClient {
   getEmailsFor(recipientEmail: string): CapturedEmail[];
+  clearEmailsFor(recipientEmail: string): void;
   getAllEmails(): CapturedEmail[];
   clearEmails(): void;
 }
@@ -48,8 +49,11 @@ Key behaviors:
 
 - `sendEmail()` stores the email in the map instead of calling Resend.
 - `getEmailsFor(email)` returns only that recipient's emails, ordered by `sentAt`.
-- `clearEmails()` empties the entire store (used between test runs).
+- `clearEmailsFor(email)` removes only that recipient's emails — safe for parallel E2E tests.
+- `clearEmails()` empties the entire store — only safe in Vitest (each worker has its own process/instance). Never exposed via the E2E API route.
 - `config` returns a static test config (no real API key needed).
+
+**Parallel safety note:** In Playwright E2E tests, all workers share a single server process and therefore a single `MockEmailClient` instance. Global `clearEmails()` would wipe other workers' captured emails. The design avoids this by: (1) each test using a unique recipient email for natural isolation, and (2) only exposing per-recipient `clearEmailsFor()` via the HTTP API. In Vitest, each worker is a separate process with its own instance, so `clearEmails()` is safe.
 
 **Location rationale:** Lives in `packages/email/` (not `packages/test-utils/`) because production code (`init.ts`) conditionally imports it. Keeping it co-located with the `EmailClient` interface avoids a production → test-utils dependency.
 
@@ -82,7 +86,7 @@ A file-based route that exposes captured emails over HTTP for Playwright tests.
 **Endpoints:**
 
 - `GET /api/test/emails?to=user@example.com` — Returns captured emails for that recipient as JSON.
-- `DELETE /api/test/emails` — Clears the entire email store.
+- `DELETE /api/test/emails?to=user@example.com` — Clears only that recipient's emails. The `to` param is required — no global clear is exposed via HTTP to prevent parallel test interference.
 
 **Guards:**
 
@@ -146,7 +150,8 @@ Each test uses a unique email: `test-signup-${Date.now()}@example.com`.
 | Mock email client captures verification email | Call `sendVerificationEmail` → assert `getEmailsFor()` returns correct URL and subject              |
 | Verification URL structure                    | Assert captured URL contains expected token param and callback URL                                  |
 | Email store isolation                         | Send emails to two recipients → assert `getEmailsFor()` returns only the correct recipient's emails |
-| Store cleanup                                 | Send email → `clearEmails()` → assert `getEmailsFor()` returns empty                                |
+| Per-recipient cleanup                         | Send email → `clearEmailsFor(email)` → assert only that recipient's emails cleared, others intact   |
+| Global cleanup (Vitest only)                  | Send emails to two recipients → `clearEmails()` → assert entire store is empty                      |
 
 ### Existing Tests (unchanged)
 
