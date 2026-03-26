@@ -72,7 +72,9 @@ packages/
 | `pnpm run build`           | Production build                                                    |
 | `pnpm run preview`         | Preview production build                                            |
 | `pnpm test`                | Run unit + integration tests with Vitest                            |
-| `pnpm test:e2e`            | Run E2E tests with Playwright                                       |
+| `pnpm test:e2e`            | Run E2E tests with Playwright (all browsers)                        |
+| `pnpm test:e2e:chromium`   | Run E2E tests with Chromium only (fastest)                          |
+| `pnpm test:e2e:ui`         | Run E2E tests with Playwright UI mode (interactive)                 |
 | `pnpm run lint`            | Lint with ESLint                                                    |
 | `pnpm run lint:fix`        | Fix lint issues                                                     |
 | `pnpm run typecheck`       | TypeScript type-check without emitting                              |
