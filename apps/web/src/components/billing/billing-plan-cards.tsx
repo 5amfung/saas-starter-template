@@ -77,7 +77,7 @@ export function BillingPlanCards({
           </ul>
         </CardContent>
         {currentPlan.pricing && (
-          <CardFooter>
+          <CardFooter className="flex-col items-stretch">
             <Button
               variant="outline"
               className="w-full"
@@ -90,7 +90,7 @@ export function BillingPlanCards({
               type="button"
               onClick={onBillingPortal}
               disabled={isBillingPortalLoading}
-              className="mt-1 text-xs text-muted-foreground underline hover:text-foreground disabled:opacity-50"
+              className="mt-1 text-center text-xs text-muted-foreground underline hover:text-foreground disabled:opacity-50"
             >
               Billing portal
             </button>

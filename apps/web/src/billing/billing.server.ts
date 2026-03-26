@@ -91,10 +91,26 @@ export async function getWorkspaceBillingData(
     ? await resolveScheduledTargetPlanId(subscription.stripeScheduleId)
     : null;
 
+  // Strip the stale stripeScheduleId when the schedule is no longer meaningful:
+  // either it resolved to null (completed/canceled) or the target plan matches
+  // the current plan (the downgrade already took effect).
+  const isScheduleStale =
+    !!subscription?.stripeScheduleId &&
+    (!scheduledTargetPlanId || scheduledTargetPlanId === planId);
+  const cleanedSubscription = isScheduleStale
+    ? { ...subscription, stripeScheduleId: null }
+    : subscription;
+
   // Count workspace members for UI display.
   const memberCount = await auth.billing.countWorkspaceMembers(workspaceId);
 
-  return { planId, plan, subscription, scheduledTargetPlanId, memberCount };
+  return {
+    planId,
+    plan,
+    subscription: cleanedSubscription,
+    scheduledTargetPlanId: isScheduleStale ? null : scheduledTargetPlanId,
+    memberCount,
+  };
 }
 
 export interface WorkspaceBillingSummary {
@@ -286,6 +302,10 @@ async function resolveScheduledTargetPlanId(
 ): Promise<PlanId | null> {
   try {
     const schedule = await auth.billing.getSubscriptionSchedule(scheduleId);
+    // A completed or canceled schedule is no longer pending — ignore it.
+    if (schedule.status !== 'active' && schedule.status !== 'not_started') {
+      return null;
+    }
     if (schedule.phases.length < 2) return null;
 
     const secondPhase = schedule.phases[1];
