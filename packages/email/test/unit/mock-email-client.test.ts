@@ -1,5 +1,5 @@
 import { createElement } from 'react';
-import { describe, expect, it, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { createMockEmailClient } from '../../src/mock-email-client';
 import type { MockEmailClient } from '../../src/mock-email-client';
 
@@ -19,9 +19,9 @@ describe('createMockEmailClient', () => {
 
     const emails = client.getEmailsFor('alice@test.com');
     expect(emails).toHaveLength(1);
-    expect(emails[0]!.to).toBe('alice@test.com');
-    expect(emails[0]!.subject).toBe('Hello');
-    expect(emails[0]!.sentAt).toBeInstanceOf(Date);
+    expect(emails[0]?.to).toBe('alice@test.com');
+    expect(emails[0]?.subject).toBe('Hello');
+    expect(emails[0]?.sentAt).toBeInstanceOf(Date);
   });
 
   it('returns empty array for unknown recipient', () => {
@@ -43,7 +43,7 @@ describe('createMockEmailClient', () => {
 
     expect(client.getEmailsFor('alice@test.com')).toHaveLength(1);
     expect(client.getEmailsFor('bob@test.com')).toHaveLength(1);
-    expect(client.getEmailsFor('alice@test.com')[0]!.subject).toBe('For Alice');
+    expect(client.getEmailsFor('alice@test.com')[0]?.subject).toBe('For Alice');
   });
 
   it('clearEmailsFor removes only that recipient', async () => {
@@ -110,10 +110,10 @@ describe('createMockEmailClient', () => {
 
     const emails = client.getEmailsFor('alice@test.com');
     expect(emails).toHaveLength(2);
-    expect(emails[0]!.subject).toBe('First');
-    expect(emails[1]!.subject).toBe('Second');
-    expect(emails[0]!.sentAt.getTime()).toBeLessThanOrEqual(
-      emails[1]!.sentAt.getTime()
+    expect(emails[0]?.subject).toBe('First');
+    expect(emails[1]?.subject).toBe('Second');
+    expect(emails[0]?.sentAt.getTime()).toBeLessThanOrEqual(
+      emails[1]?.sentAt.getTime()
     );
   });
 
@@ -140,6 +140,6 @@ describe('createMockEmailClient', () => {
     });
 
     expect(result).toHaveProperty('id');
-    expect(typeof result!.id).toBe('string');
+    expect(typeof result?.id).toBe('string');
   });
 });

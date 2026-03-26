@@ -23,7 +23,9 @@ describe('Mock email client integration', () => {
     const emails = client.getEmailsFor('user@test.com');
     expect(emails).toHaveLength(1);
     expect(emails[0].subject).toBe('Verify your email address');
-    expect(emails[0].react.props.verificationUrl).toBe(verificationUrl);
+    expect(
+      (emails[0].react.props as Record<string, unknown>).verificationUrl
+    ).toBe(verificationUrl);
   });
 
   it('verification URL contains token and callbackURL params', async () => {
@@ -37,7 +39,10 @@ describe('Mock email client integration', () => {
     });
 
     const emails = client.getEmailsFor('user@test.com');
-    const url = new URL(emails[0].react.props.verificationUrl as string);
+    const url = new URL(
+      (emails[0].react.props as Record<string, unknown>)
+        .verificationUrl as string
+    );
     expect(url.searchParams.get('token')).toBe('test-token-xyz');
     expect(url.searchParams.get('callbackURL')).toBe('/ws');
   });

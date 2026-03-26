@@ -13,10 +13,10 @@ export interface CapturedEmail {
 }
 
 export interface MockEmailClient extends EmailClient {
-  getEmailsFor(recipientEmail: string): CapturedEmail[];
-  clearEmailsFor(recipientEmail: string): void;
-  getAllEmails(): CapturedEmail[];
-  clearEmails(): void;
+  getEmailsFor: (recipientEmail: string) => Array<CapturedEmail>;
+  clearEmailsFor: (recipientEmail: string) => void;
+  getAllEmails: () => Array<CapturedEmail>;
+  clearEmails: () => void;
 }
 
 interface MockEmailClientConfig {
@@ -26,7 +26,7 @@ interface MockEmailClientConfig {
 export function createMockEmailClient(
   mockConfig: MockEmailClientConfig
 ): MockEmailClient {
-  const store = new Map<string, CapturedEmail[]>();
+  const store = new Map<string, Array<CapturedEmail>>();
 
   const config: Readonly<EmailConfig> = {
     apiKey: 'mock-api-key',
@@ -47,6 +47,7 @@ export function createMockEmailClient(
   return {
     config,
 
+    // eslint-disable-next-line @typescript-eslint/require-await
     async sendEmail({ to, subject, react }: SendEmailOptions) {
       const recipients = Array.isArray(to) ? to : [to];
       for (const recipient of recipients) {
@@ -57,7 +58,7 @@ export function createMockEmailClient(
       };
     },
 
-    getEmailsFor(recipientEmail: string): CapturedEmail[] {
+    getEmailsFor(recipientEmail: string): Array<CapturedEmail> {
       return [...(store.get(recipientEmail) ?? [])];
     },
 
@@ -65,7 +66,7 @@ export function createMockEmailClient(
       store.delete(recipientEmail);
     },
 
-    getAllEmails(): CapturedEmail[] {
+    getAllEmails(): Array<CapturedEmail> {
       return Array.from(store.values()).flat();
     },
 

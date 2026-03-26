@@ -35,9 +35,8 @@ function handleGet(request: Request): Response {
   const emails = client.getEmailsFor(to).map((email) => ({
     to: email.to,
     subject: email.subject,
-    verificationUrl:
-      ((email.react.props as Record<string, unknown>)
-        ?.verificationUrl as string) ?? null,
+    verificationUrl: (email.react.props as Record<string, unknown>)
+      .verificationUrl as string | null,
     sentAt: email.sentAt.toISOString(),
   }));
 
@@ -65,7 +64,9 @@ function handleDelete(request: Request): Response {
 export const Route = createFileRoute('/api/test/emails')({
   server: {
     handlers: {
+      // eslint-disable-next-line @typescript-eslint/require-await
       GET: async ({ request }: { request: Request }) => handleGet(request),
+      // eslint-disable-next-line @typescript-eslint/require-await
       DELETE: async ({ request }: { request: Request }) =>
         handleDelete(request),
     },
