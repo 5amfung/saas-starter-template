@@ -31,6 +31,8 @@ jobs:
         run: pnpm install --frozen-lockfile
         env:
           HUSKY: 0
+          TURBO_TELEMETRY_DISABLED: 1
+          DO_NOT_TRACK: 1
 
       - name: Typecheck
         run: pnpm run typecheck
@@ -58,6 +60,8 @@ jobs:
         run: pnpm install --frozen-lockfile
         env:
           HUSKY: 0
+          TURBO_TELEMETRY_DISABLED: 1
+          DO_NOT_TRACK: 1
 
       - name: Run tests
         run: pnpm test
