@@ -70,3 +70,18 @@ export async function ensureWorkspaceMembership(
 
   return workspace;
 }
+
+export async function getActiveMemberRole(
+  headers: Headers,
+  workspaceId: string,
+  userId: string
+): Promise<string | null> {
+  const organization = await auth.api.getFullOrganization({
+    headers,
+    query: { organizationId: workspaceId },
+  });
+  if (!organization) return null;
+
+  const member = organization.members.find((m) => m.userId === userId);
+  return member?.role ?? null;
+}
