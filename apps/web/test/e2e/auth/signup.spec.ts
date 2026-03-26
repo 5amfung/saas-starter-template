@@ -51,7 +51,9 @@ test.describe('Sign-up flow', () => {
 
     // Navigate to sign-up page.
     await page.goto('/signup');
-    await expect(page.getByText('Create your account')).toBeVisible();
+    await expect(
+      page.getByText('Create your account', { exact: true })
+    ).toBeVisible();
 
     // Fill out the form.
     await page.getByLabel('Email').fill(email);
