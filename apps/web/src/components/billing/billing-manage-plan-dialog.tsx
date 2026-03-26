@@ -24,6 +24,7 @@ interface BillingManagePlanDialogProps {
   onOpenChange: (open: boolean) => void;
   currentPlan: Plan;
   isPendingCancel: boolean;
+  isPendingDowngrade: boolean;
   onUpgrade: (planId: PlanId, annual: boolean) => void;
   onDowngrade: (targetPlan: Plan, annual: boolean) => void;
   isProcessing: boolean;
@@ -34,6 +35,7 @@ export function BillingManagePlanDialog({
   onOpenChange,
   currentPlan,
   isPendingCancel,
+  isPendingDowngrade,
   onUpgrade,
   onDowngrade,
   isProcessing,
@@ -42,7 +44,7 @@ export function BillingManagePlanDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="gap-0 p-0 sm:max-w-3xl">
+      <AlertDialogContent className="h-full! max-w-none! gap-0 overflow-y-auto rounded-none! p-0 sm:h-auto! sm:max-w-[56rem]! sm:rounded-xl!">
         <AlertDialogTitle className="sr-only">
           Manage your plan
         </AlertDialogTitle>
@@ -89,14 +91,27 @@ export function BillingManagePlanDialog({
           </p>
         )}
 
+        {/* Pending downgrade notice — upgrades are still allowed. */}
+        {isPendingDowngrade && !isPendingCancel && (
+          <p className="px-7 pt-4 text-sm text-amber-600 dark:text-amber-400">
+            A downgrade is scheduled for the end of the current billing period.
+            You can still upgrade your plan.
+          </p>
+        )}
+
         {/* Plan cards */}
         <div className="flex flex-col gap-4 p-7 md:flex-row">
           {PLANS.map((plan) => {
             const action = getPlanAction(currentPlan, plan);
             const config = PLAN_ACTION_CONFIG[action];
             const isCurrent = action === 'current';
+            const isDowngradeOrCancel =
+              action === 'downgrade' || action === 'cancel';
             const isDisabled =
-              isProcessing || isCurrent || (isPendingCancel && !isCurrent);
+              isProcessing ||
+              isCurrent ||
+              isPendingCancel ||
+              (isPendingDowngrade && isDowngradeOrCancel);
 
             return (
               <div

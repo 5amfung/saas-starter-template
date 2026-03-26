@@ -106,6 +106,28 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
     },
   });
 
+  /** Optimistically patch the cached billing data so the UI reflects the
+   * pending cancel/downgrade immediately, without waiting for Stripe's
+   * webhook to propagate to the local database. */
+  type BillingData = NonNullable<typeof billingQuery.data>;
+  const patchBillingCache = (patch: {
+    scheduledTargetPlanId?: PlanId | null;
+    subscription?: Partial<NonNullable<BillingData['subscription']>>;
+  }) => {
+    queryClient.setQueryData<BillingData>(BILLING_DATA_QUERY_KEY, (prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        ...(patch.scheduledTargetPlanId !== undefined && {
+          scheduledTargetPlanId: patch.scheduledTargetPlanId,
+        }),
+        subscription: prev.subscription
+          ? { ...prev.subscription, ...patch.subscription }
+          : prev.subscription,
+      };
+    });
+  };
+
   const downgradeMutation = useMutation({
     mutationFn: ({
       planId,
@@ -119,10 +141,14 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
       downgradeWorkspaceSubscription({
         data: { workspaceId, planId, annual, subscriptionId },
       }),
-    onSuccess: () => {
+    onSuccess: (_result, { planId }) => {
       toast.success('Downgrade scheduled.');
       setDowngradeTarget(null);
       setManagePlanOpen(false);
+      patchBillingCache({
+        scheduledTargetPlanId: planId,
+        subscription: { stripeScheduleId: 'pending' },
+      });
       void queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: BILLING_DATA_QUERY_KEY });
     },
@@ -137,6 +163,10 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
       toast.success('Subscription will cancel at period end.');
       setDowngradeTarget(null);
       setManagePlanOpen(false);
+      patchBillingCache({
+        scheduledTargetPlanId: null,
+        subscription: { cancelAtPeriodEnd: true },
+      });
       void queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
       void queryClient.invalidateQueries({ queryKey: BILLING_DATA_QUERY_KEY });
     },
@@ -153,9 +183,10 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
   // Stripe Flexible Billing uses cancelAt instead of cancelAtPeriodEnd.
   // Check both to match Better Auth's isPendingCancel logic.
   const isPendingCancel =
-    (subscription?.cancelAtPeriodEnd ?? false) ||
-    !!subscription?.cancelAt ||
-    !!subscription?.stripeScheduleId;
+    (subscription?.cancelAtPeriodEnd ?? false) || !!subscription?.cancelAt;
+  // A scheduled downgrade (via Subscription Schedule) is a separate state —
+  // it should not block upgrades or show cancellation messaging.
+  const isPendingDowngrade = !!subscription?.stripeScheduleId;
   const periodEnd = subscription?.periodEnd
     ? new Date(subscription.periodEnd)
     : null;
@@ -165,7 +196,7 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
 
   return (
     <div className={PAGE_LAYOUT_CLASS}>
-      {isPendingCancel && effectiveCancelDate && (
+      {(isPendingCancel || isPendingDowngrade) && effectiveCancelDate && (
         <BillingDowngradeBanner
           targetPlanName={
             billingQuery.data.scheduledTargetPlanId
@@ -206,6 +237,7 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
         onOpenChange={setManagePlanOpen}
         currentPlan={currentPlan}
         isPendingCancel={isPendingCancel}
+        isPendingDowngrade={isPendingDowngrade}
         onUpgrade={(planId, annual) => {
           setManagePlanOpen(false);
           upgradeMutation.mutate({

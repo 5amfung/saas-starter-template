@@ -17,6 +17,7 @@ describe('BillingManagePlanDialog', () => {
     onOpenChange: vi.fn(),
     currentPlan: PRO_PLAN,
     isPendingCancel: false,
+    isPendingDowngrade: false,
     onUpgrade: vi.fn(),
     onDowngrade: vi.fn(),
     isProcessing: false,
@@ -101,6 +102,25 @@ describe('BillingManagePlanDialog', () => {
     expect(
       screen.getByRole('button', { name: /annual billing/i })
     ).toBeInTheDocument();
+  });
+
+  it('disables downgrade buttons but allows upgrade when isPendingDowngrade is true', () => {
+    renderWithProviders(
+      <BillingManagePlanDialog
+        {...defaultProps}
+        currentPlan={STARTER_PLAN}
+        isPendingDowngrade={true}
+      />
+    );
+    // Upgrade to Pro should still be allowed.
+    expect(
+      screen.getByRole('button', { name: /^upgrade$/i })
+    ).not.toBeDisabled();
+    // Downgrade to Free should be blocked.
+    const downgradeBtns = screen.getAllByRole('button', {
+      name: /^downgrade$/i,
+    });
+    downgradeBtns.forEach((btn) => expect(btn).toBeDisabled());
   });
 
   it('disables all action buttons when isPendingCancel is true', () => {
