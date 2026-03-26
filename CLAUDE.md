@@ -66,23 +66,26 @@ packages/
 
 ## Commands
 
-| Command                    | Description                                                         |
-| -------------------------- | ------------------------------------------------------------------- |
-| `pnpm dev`                 | Start dev server on port 3000                                       |
-| `pnpm run build`           | Production build                                                    |
-| `pnpm run preview`         | Preview production build                                            |
-| `pnpm test`                | Run unit + integration tests with Vitest                            |
-| `pnpm test:e2e`            | Run E2E tests with Playwright                                       |
-| `pnpm run lint`            | Lint with ESLint                                                    |
-| `pnpm run lint:fix`        | Fix lint issues                                                     |
-| `pnpm run typecheck`       | TypeScript type-check without emitting                              |
-| `pnpm run check`           | Type-check + lint                                                   |
-| `pnpm run format`          | Format code with Prettier                                           |
-| `pnpm run db:generate`     | Generate Drizzle migration files                                    |
-| `pnpm run db:migrate`      | Apply migrations                                                    |
-| `pnpm run db:push`         | Push schema directly (dev only)                                     |
-| `pnpm run db:studio`       | Open Drizzle Studio                                                 |
-| `pnpm run gen-auth-schema` | Regenerate `packages/db/src/auth.schema.ts` from Better Auth config |
+| Command                      | Description                                                         |
+| ---------------------------- | ------------------------------------------------------------------- |
+| `pnpm dev`                   | Start dev server on port 3000                                       |
+| `pnpm run build`             | Production build                                                    |
+| `pnpm run preview`           | Preview production build                                            |
+| `pnpm test`                  | Run unit + integration tests with Vitest                            |
+| `pnpm test:e2e`              | Run E2E tests with Playwright (all browsers)                        |
+| `pnpm web:test:e2e:chromium` | Run E2E tests with Chromium only (fastest)                          |
+| `pnpm web:test:e2e:ui`       | Run E2E tests with Playwright UI mode (interactive)                 |
+| `pnpm web:test:e2e:report`   | Show Playwright HTML test report                                    |
+| `pnpm run lint`              | Lint with ESLint                                                    |
+| `pnpm run lint:fix`          | Fix lint issues                                                     |
+| `pnpm run typecheck`         | TypeScript type-check without emitting                              |
+| `pnpm run check`             | Type-check + lint                                                   |
+| `pnpm run format`            | Format code with Prettier                                           |
+| `pnpm run db:generate`       | Generate Drizzle migration files                                    |
+| `pnpm run db:migrate`        | Apply migrations                                                    |
+| `pnpm run db:push`           | Push schema directly (dev only)                                     |
+| `pnpm run db:studio`         | Open Drizzle Studio                                                 |
+| `pnpm run gen-auth-schema`   | Regenerate `packages/db/src/auth.schema.ts` from Better Auth config |
 
 To run a single unit/integration test: `pnpm --filter @workspace/web test test/unit/workspace/workspace.test.ts`
 To run a single E2E test: `pnpm --filter @workspace/web test:e2e test/e2e/example.spec.ts`

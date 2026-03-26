@@ -6,15 +6,9 @@ export const logger = createIsomorphicFn()
   .server((level: LogLevel, message: string, data?: any) => {
     const timestamp = new Date().toISOString();
 
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'production') {
+      // Structured JSON logging for production observability.
       console[level](
-        `[${timestamp}] [${level.toUpperCase()}]`,
-        message,
-        data ?? ''
-      );
-    } else {
-      logger(
-        'info',
         JSON.stringify({
           timestamp,
           level,
@@ -24,12 +18,18 @@ export const logger = createIsomorphicFn()
           environment: process.env.NODE_ENV,
         })
       );
+    } else {
+      // Human-readable logging for development and test.
+      console[level](
+        `[${timestamp}] [${level.toUpperCase()}]`,
+        message,
+        data ?? ''
+      );
     }
   })
   .client((level: LogLevel, message: string, data?: any) => {
-    if (process.env.NODE_ENV === 'development') {
-      console[level](`[CLIENT] [${level.toUpperCase()}]`, message, data ?? '');
-    } else {
+    console[level](`[${level.toUpperCase()}]`, message, data ?? '');
+    if (process.env.NODE_ENV === 'production') {
       // Production: Send to analytics service
       // analytics.track('client_log', { level, message, data })
     }

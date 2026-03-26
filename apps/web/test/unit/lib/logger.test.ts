@@ -83,33 +83,25 @@ describe('logger', () => {
     process.env.NODE_ENV = originalNodeEnv;
   });
 
-  it('client handler calls console in development mode', () => {
-    const originalNodeEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'development';
-
+  it('client handler calls console with level prefix', () => {
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     mockClientFn('warn', 'client warning');
 
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[CLIENT]'),
-      'client warning',
-      ''
-    );
+    expect(consoleSpy).toHaveBeenCalledWith('[WARN]', 'client warning', '');
 
     consoleSpy.mockRestore();
-    process.env.NODE_ENV = originalNodeEnv;
   });
 
-  it('client handler is silent in production mode', () => {
+  it('client handler logs in all environments', () => {
     const originalNodeEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = 'production';
 
     const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
-    mockClientFn('info', 'should not log');
+    mockClientFn('info', 'production log');
 
-    expect(consoleSpy).not.toHaveBeenCalled();
+    expect(consoleSpy).toHaveBeenCalledWith('[INFO]', 'production log', '');
 
     consoleSpy.mockRestore();
     process.env.NODE_ENV = originalNodeEnv;
