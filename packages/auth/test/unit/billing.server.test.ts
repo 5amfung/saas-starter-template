@@ -6,9 +6,18 @@ import {
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────
 
-const { dbSelectMock, stripeInvoicesListMock } = vi.hoisted(() => ({
+const {
+  dbSelectMock,
+  stripeInvoicesListMock,
+  stripeSubscriptionsUpdateMock,
+  stripeSchedulesRetrieveMock,
+  stripeSchedulesReleaseMock,
+} = vi.hoisted(() => ({
   dbSelectMock: vi.fn(),
   stripeInvoicesListMock: vi.fn(),
+  stripeSubscriptionsUpdateMock: vi.fn(),
+  stripeSchedulesRetrieveMock: vi.fn(),
+  stripeSchedulesReleaseMock: vi.fn(),
 }));
 
 // ── Module mocks ───────────────────────────────────────────────────────────
@@ -31,8 +40,15 @@ vi.mock('drizzle-orm', async (importOriginal) => {
 
 vi.mock('stripe', () => {
   function StripeMock() {
-    // @ts-expect-error -- mock constructor assigns invoices property.
+    // @ts-expect-error -- mock constructor assigns Stripe resource properties.
     this.invoices = { list: stripeInvoicesListMock };
+    // @ts-expect-error -- mock constructor assigns Stripe resource properties.
+    this.subscriptions = { update: stripeSubscriptionsUpdateMock };
+    // @ts-expect-error -- mock constructor assigns Stripe resource properties.
+    this.subscriptionSchedules = {
+      retrieve: stripeSchedulesRetrieveMock,
+      release: stripeSchedulesReleaseMock,
+    };
   }
   return { default: StripeMock };
 });
@@ -259,6 +275,66 @@ describe('createBillingHelpers', () => {
           invoicePdf: 'https://stripe.com/inv/1.pdf',
         },
       ]);
+    });
+  });
+
+  describe('cancelSubscriptionAtPeriodEnd', () => {
+    it('calls Stripe subscriptions.update with cancel_at_period_end', async () => {
+      const mockResult = { id: 'sub_123', cancel_at_period_end: true };
+      stripeSubscriptionsUpdateMock.mockResolvedValue(mockResult);
+
+      const result = await helpers.cancelSubscriptionAtPeriodEnd('sub_123');
+
+      expect(stripeSubscriptionsUpdateMock).toHaveBeenCalledWith('sub_123', {
+        cancel_at_period_end: true,
+      });
+      expect(result).toEqual(mockResult);
+    });
+  });
+
+  describe('getSubscriptionSchedule', () => {
+    it('retrieves a subscription schedule by ID', async () => {
+      const mockSchedule = { id: 'sub_sched_456', status: 'active' };
+      stripeSchedulesRetrieveMock.mockResolvedValue(mockSchedule);
+
+      const result = await helpers.getSubscriptionSchedule('sub_sched_456');
+
+      expect(stripeSchedulesRetrieveMock).toHaveBeenCalledWith('sub_sched_456');
+      expect(result).toEqual(mockSchedule);
+    });
+  });
+
+  describe('releaseSubscriptionSchedule', () => {
+    it('releases a subscription schedule by ID', async () => {
+      const mockSchedule = { id: 'sub_sched_789', status: 'released' };
+      stripeSchedulesReleaseMock.mockResolvedValue(mockSchedule);
+
+      const result = await helpers.releaseSubscriptionSchedule('sub_sched_789');
+
+      expect(stripeSchedulesReleaseMock).toHaveBeenCalledWith('sub_sched_789');
+      expect(result).toEqual(mockSchedule);
+    });
+  });
+
+  describe('getPlanIdByPriceId', () => {
+    it('returns the plan ID for a known price', () => {
+      const helpersWithMap = createBillingHelpers(
+        { select: dbSelectMock } as never,
+        'sk_test_fake',
+        { price_pro: 'pro' as const, price_starter: 'starter' as const }
+      );
+
+      expect(helpersWithMap.getPlanIdByPriceId('price_pro')).toBe('pro');
+    });
+
+    it('returns null for an unknown price', () => {
+      const helpersWithMap = createBillingHelpers(
+        { select: dbSelectMock } as never,
+        'sk_test_fake',
+        { price_pro: 'pro' as const }
+      );
+
+      expect(helpersWithMap.getPlanIdByPriceId('price_unknown')).toBeNull();
     });
   });
 
