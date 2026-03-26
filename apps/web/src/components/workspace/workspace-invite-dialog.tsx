@@ -59,6 +59,9 @@ export function WorkspaceInviteDialog({
             <Input
               id="invite-member-email"
               placeholder="jane@example.com"
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
               value={email}
               onChange={(event) => onEmailChange(event.target.value)}
             />
