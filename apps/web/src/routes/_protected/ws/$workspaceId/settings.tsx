@@ -187,11 +187,13 @@ function WorkspaceSettingsPage() {
                     field.state.meta.isBlurred && !field.state.meta.isValid;
                   return (
                     <Field data-invalid={isInvalid || undefined}>
-                      <FieldLabel htmlFor={field.name}>
+                      <FieldLabel htmlFor="workspace-name">
                         Workspace Name
                       </FieldLabel>
                       <Input
-                        id={field.name}
+                        id="workspace-name"
+                        autoComplete="off"
+                        data-1p-ignore
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(event) =>
