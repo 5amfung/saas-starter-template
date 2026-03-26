@@ -24,6 +24,7 @@ import { Route as AuthSigninRouteImport } from './routes/_auth/signin';
 import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-password';
 import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-password';
 import { Route as ProtectedWsIndexRouteImport } from './routes/_protected/ws/index';
+import { Route as ApiTestEmailsRouteImport } from './routes/api/test/emails';
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$';
 import { Route as ProtectedWsWorkspaceIdRouteImport } from './routes/_protected/ws/$workspaceId';
 import { Route as ProtectedAdminUserRouteImport } from './routes/_protected/admin/user';
@@ -112,6 +113,11 @@ const ProtectedWsIndexRoute = ProtectedWsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ProtectedWsRoute,
+} as any);
+const ApiTestEmailsRoute = ApiTestEmailsRouteImport.update({
+  id: '/api/test/emails',
+  path: '/api/test/emails',
+  getParentRoute: () => rootRouteImport,
 } as any);
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
@@ -211,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/admin/user': typeof ProtectedAdminUserRouteWithChildren;
   '/ws/$workspaceId': typeof ProtectedWsWorkspaceIdRouteWithChildren;
   '/api/auth/$': typeof ApiAuthSplatRoute;
+  '/api/test/emails': typeof ApiTestEmailsRoute;
   '/ws/': typeof ProtectedWsIndexRoute;
   '/admin/user/$userId': typeof ProtectedAdminUserUserIdRoute;
   '/ws/$workspaceId/billing': typeof ProtectedWsWorkspaceIdBillingRoute;
@@ -238,6 +245,7 @@ export interface FileRoutesByTo {
   '/admin/dashboard': typeof ProtectedAdminDashboardRoute;
   '/ws/$workspaceId': typeof ProtectedWsWorkspaceIdRouteWithChildren;
   '/api/auth/$': typeof ApiAuthSplatRoute;
+  '/api/test/emails': typeof ApiTestEmailsRoute;
   '/ws': typeof ProtectedWsIndexRoute;
   '/admin/user/$userId': typeof ProtectedAdminUserUserIdRoute;
   '/ws/$workspaceId/billing': typeof ProtectedWsWorkspaceIdBillingRoute;
@@ -270,6 +278,7 @@ export interface FileRoutesById {
   '/_protected/admin/user': typeof ProtectedAdminUserRouteWithChildren;
   '/_protected/ws/$workspaceId': typeof ProtectedWsWorkspaceIdRouteWithChildren;
   '/api/auth/$': typeof ApiAuthSplatRoute;
+  '/api/test/emails': typeof ApiTestEmailsRoute;
   '/_protected/ws/': typeof ProtectedWsIndexRoute;
   '/_protected/admin/user/$userId': typeof ProtectedAdminUserUserIdRoute;
   '/_protected/ws/$workspaceId/billing': typeof ProtectedWsWorkspaceIdBillingRoute;
@@ -301,6 +310,7 @@ export interface FileRouteTypes {
     | '/admin/user'
     | '/ws/$workspaceId'
     | '/api/auth/$'
+    | '/api/test/emails'
     | '/ws/'
     | '/admin/user/$userId'
     | '/ws/$workspaceId/billing'
@@ -328,6 +338,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/ws/$workspaceId'
     | '/api/auth/$'
+    | '/api/test/emails'
     | '/ws'
     | '/admin/user/$userId'
     | '/ws/$workspaceId/billing'
@@ -359,6 +370,7 @@ export interface FileRouteTypes {
     | '/_protected/admin/user'
     | '/_protected/ws/$workspaceId'
     | '/api/auth/$'
+    | '/api/test/emails'
     | '/_protected/ws/'
     | '/_protected/admin/user/$userId'
     | '/_protected/ws/$workspaceId/billing'
@@ -378,6 +390,7 @@ export interface RootRouteChildren {
   PingRoute: typeof PingRoute;
   VerifyEmailChangeEmailTokenRoute: typeof VerifyEmailChangeEmailTokenRoute;
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
+  ApiTestEmailsRoute: typeof ApiTestEmailsRoute;
 }
 
 declare module '@tanstack/react-router' {
@@ -486,6 +499,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/ws/';
       preLoaderRoute: typeof ProtectedWsIndexRouteImport;
       parentRoute: typeof ProtectedWsRoute;
+    };
+    '/api/test/emails': {
+      id: '/api/test/emails';
+      path: '/api/test/emails';
+      fullPath: '/api/test/emails';
+      preLoaderRoute: typeof ApiTestEmailsRouteImport;
+      parentRoute: typeof rootRouteImport;
     };
     '/api/auth/$': {
       id: '/api/auth/$';
@@ -698,6 +718,7 @@ const rootRouteChildren: RootRouteChildren = {
   PingRoute: PingRoute,
   VerifyEmailChangeEmailTokenRoute: VerifyEmailChangeEmailTokenRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiTestEmailsRoute: ApiTestEmailsRoute,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
