@@ -20,9 +20,11 @@ interface BillingPlanCardsProps {
   /** Per-plan annual toggle state. Missing keys default to monthly. */
   annualByPlan: Partial<Record<PlanId, boolean>>;
   onToggleInterval: (planId: PlanId, annual: boolean) => void;
-  onManage: () => void;
+  onManagePlan: () => void;
   onUpgrade: (planId: PlanId, annual: boolean) => void;
+  onBillingPortal: () => void;
   isManaging: boolean;
+  isBillingPortalLoading: boolean;
   /** The plan ID currently being upgraded, or null if no checkout in progress. */
   upgradingPlanId: PlanId | null;
 }
@@ -39,9 +41,11 @@ export function BillingPlanCards({
   nextBillingDate,
   annualByPlan,
   onToggleInterval,
-  onManage,
+  onManagePlan,
   onUpgrade,
+  onBillingPortal,
   isManaging,
+  isBillingPortalLoading,
   upgradingPlanId,
 }: BillingPlanCardsProps) {
   return (
@@ -73,15 +77,23 @@ export function BillingPlanCards({
           </ul>
         </CardContent>
         {currentPlan.pricing && (
-          <CardFooter>
+          <CardFooter className="flex-col items-stretch">
             <Button
               variant="outline"
               className="w-full"
-              onClick={onManage}
+              onClick={onManagePlan}
               disabled={isManaging}
             >
-              {isManaging ? 'Opening portal...' : 'Manage subscription'}
+              {isManaging ? 'Opening...' : 'Manage plan'}
             </Button>
+            <button
+              type="button"
+              onClick={onBillingPortal}
+              disabled={isBillingPortalLoading}
+              className="mt-1 text-center text-xs text-muted-foreground underline hover:text-foreground disabled:opacity-50"
+            >
+              Billing portal
+            </button>
           </CardFooter>
         )}
       </Card>
