@@ -7,10 +7,15 @@ import { routeTree } from './routeTree.gen';
 export const getRouter = () => {
   const queryClient = new QueryClient();
 
-  broadcastQueryClient({
-    queryClient,
-    broadcastChannel: 'query-sync',
-  });
+  // Only enable cross-tab query sync in the browser. The BroadcastChannel
+  // polyfill used during SSR (Node.js) is file-system-based and causes
+  // EMFILE errors under load.
+  if (typeof window !== 'undefined') {
+    broadcastQueryClient({
+      queryClient,
+      broadcastChannel: 'query-sync',
+    });
+  }
 
   const router = createRouter({
     routeTree,

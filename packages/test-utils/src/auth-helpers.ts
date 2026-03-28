@@ -1,3 +1,5 @@
+import { getTestEmails } from './email-helpers';
+
 interface CreateVerifiedUserOptions {
   email: string;
   password: string;
@@ -10,28 +12,63 @@ interface CreateVerifiedUserResult {
 }
 
 /**
- * Signs up a new user and immediately verifies their email via the admin API.
- * Returns the session cookie for use in Playwright tests.
+ * Drains a response body to release the underlying TCP socket.
+ * Must be called on every Response whose body won't be read.
+ */
+async function drain(response: Response): Promise<void> {
+  await response.body?.cancel();
+}
+
+/** Retries a fetch call on transient failures (network errors, 5xx). */
+async function fetchWithRetry(
+  input: string | URL | Request,
+  init?: RequestInit,
+  maxRetries = 3
+): Promise<Response> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetch(input, init);
+      if (response.status >= 500 && attempt < maxRetries - 1) {
+        await drain(response);
+        await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+        continue;
+      }
+      return response;
+    } catch (error) {
+      if (attempt === maxRetries - 1) throw error;
+      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+    }
+  }
+  throw new Error('fetchWithRetry: unreachable');
+}
+
+/**
+ * Signs up a new user, verifies their email via the test email API, and
+ * returns the session cookie for use in Playwright tests.
  *
- * Requires:
- * - The test server running with NODE_ENV=test
- * - A test admin user already created (adminEmail/adminPassword)
+ * Requires the test server running with NODE_ENV=test (which enables the
+ * mock email client that captures verification emails at /api/test/emails).
  */
 export async function createVerifiedUser(
   baseUrl: string,
-  options: CreateVerifiedUserOptions,
-  admin: { email: string; password: string }
+  options: CreateVerifiedUserOptions
 ): Promise<CreateVerifiedUserResult> {
   // Step 1: Sign up the new user.
-  const signupResponse = await fetch(`${baseUrl}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: options.email,
-      password: options.password,
-      name: options.name ?? options.email.split('@')[0],
-    }),
-  });
+  const signupResponse = await fetchWithRetry(
+    `${baseUrl}/api/auth/sign-up/email`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: baseUrl,
+      },
+      body: JSON.stringify({
+        email: options.email,
+        password: options.password,
+        name: options.name ?? options.email.split('@')[0],
+      }),
+    }
+  );
 
   if (!signupResponse.ok) {
     const body = await signupResponse.text();
@@ -46,54 +83,44 @@ export async function createVerifiedUser(
     throw new Error('Sign-up response did not include user ID');
   }
 
-  // Step 2: Sign in as admin.
-  const adminSigninResponse = await fetch(`${baseUrl}/api/auth/sign-in/email`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: admin.email,
-      password: admin.password,
-    }),
-  });
-
-  if (!adminSigninResponse.ok) {
-    const body = await adminSigninResponse.text();
+  // Step 2: Fetch the verification URL from the captured test email.
+  const emails = await getTestEmails(baseUrl, options.email, 10);
+  const verificationUrl = emails[0]?.verificationUrl;
+  if (!verificationUrl) {
     throw new Error(
-      `Admin sign-in failed (${adminSigninResponse.status}): ${body}`
+      `No verification email captured for ${options.email}. ` +
+        'Is the server running with NODE_ENV=test?'
     );
   }
 
-  const adminCookies = adminSigninResponse.headers.get('set-cookie') ?? '';
-
-  // Step 3: Use admin API to verify the user's email.
-  const verifyResponse = await fetch(`${baseUrl}/api/auth/admin/update-user`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Cookie: adminCookies,
-    },
-    body: JSON.stringify({
-      userId,
-      data: { emailVerified: true },
-    }),
+  // Step 3: Visit the verification URL to verify the email.
+  const verifyResponse = await fetchWithRetry(verificationUrl, {
+    redirect: 'manual',
   });
-
-  if (!verifyResponse.ok) {
+  if (verifyResponse.status !== 302 && !verifyResponse.ok) {
     const body = await verifyResponse.text();
     throw new Error(
-      `Admin verify user failed (${verifyResponse.status}): ${body}`
+      `Email verification failed (${verifyResponse.status}): ${body}`
     );
   }
+  // Drain the body to release the TCP socket (302 redirects still have a body).
+  await drain(verifyResponse);
 
   // Step 4: Sign in as the verified user to get their session cookie.
-  const userSigninResponse = await fetch(`${baseUrl}/api/auth/sign-in/email`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: options.email,
-      password: options.password,
-    }),
-  });
+  const userSigninResponse = await fetchWithRetry(
+    `${baseUrl}/api/auth/sign-in/email`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: baseUrl,
+      },
+      body: JSON.stringify({
+        email: options.email,
+        password: options.password,
+      }),
+    }
+  );
 
   if (!userSigninResponse.ok) {
     const body = await userSigninResponse.text();
@@ -103,6 +130,8 @@ export async function createVerifiedUser(
   }
 
   const userCookie = userSigninResponse.headers.get('set-cookie') ?? '';
+  // Drain the body to release the TCP socket.
+  await drain(userSigninResponse);
 
   return { userId, cookie: userCookie };
 }
