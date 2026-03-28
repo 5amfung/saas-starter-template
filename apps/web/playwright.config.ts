@@ -39,12 +39,15 @@ export default defineConfig({
       env: {
         PORT: '3000',
       },
+      stdout: 'ignore',
+      stderr: 'pipe',
     },
     {
       command:
         'stripe listen --forward-to localhost:3000/api/auth/stripe/webhook',
       reuseExistingServer: !process.env.CI,
-      stdout: 'pipe',
+      stdout: 'ignore',
+      stderr: 'pipe',
     },
   ],
 });
