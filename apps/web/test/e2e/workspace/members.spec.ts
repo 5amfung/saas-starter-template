@@ -36,6 +36,21 @@ async function signInAndGoToMembers(
 }
 
 /**
+ * Resets the browser to a signed-out state so the next /signin visit renders
+ * the guest form instead of redirecting an existing authenticated session.
+ */
+async function resetToSignedOutState(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
+  await page.context().clearCookies();
+  await page.goto('/signin');
+  await page.waitForURL(/\/signin(?:\?|$)/, { timeout: 15000 });
+  await expect(page.getByLabel('Email')).toBeVisible({ timeout: 10000 });
+}
+
+/**
  * Completes a Stripe Checkout session using the test card.
  * Assumes the page has already been redirected to stripe.com.
  *
@@ -935,8 +950,7 @@ test.describe('Workspace Members Page', () => {
     }
 
     // Sign out and sign in as member.
-    await page.goto('/');
-    await page.waitForTimeout(500);
+    await resetToSignedOutState(page);
     await signInAndGoToMembers(page, member);
 
     // Invite button should NOT be visible.
@@ -973,8 +987,7 @@ test.describe('Workspace Members Page', () => {
     }
 
     // Sign out and sign in as member.
-    await page.goto('/');
-    await page.waitForTimeout(500);
+    await resetToSignedOutState(page);
     await signInAndGoToMembers(page, member);
 
     // Navigate to the owner's workspace members page.
@@ -1057,8 +1070,7 @@ test.describe('Workspace Members Page', () => {
     }
 
     // Sign out and sign in as member.
-    await page.goto('/');
-    await page.waitForTimeout(500);
+    await resetToSignedOutState(page);
     await signInAndGoToMembers(page, member);
 
     // Navigate to the owner's workspace.
@@ -1108,8 +1120,7 @@ test.describe('Workspace Members Page', () => {
     }
 
     // Sign out and sign in as member.
-    await page.goto('/');
-    await page.waitForTimeout(500);
+    await resetToSignedOutState(page);
     await signInAndGoToMembers(page, member);
 
     // Navigate to the owner's workspace.
