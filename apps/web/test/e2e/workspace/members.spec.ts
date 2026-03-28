@@ -5,6 +5,7 @@ import {
   createVerifiedUser,
   uniqueEmail,
 } from '@workspace/test-utils';
+import { toCookieHeader } from '../lib/parse-cookie-header';
 import type { Page } from '@playwright/test';
 
 /**
@@ -190,7 +191,9 @@ async function acceptInvitationViaApi(
   });
 
   if (!signinResponse.ok) return false;
-  const inviteeCookie = signinResponse.headers.get('set-cookie') ?? '';
+  const inviteeCookie = toCookieHeader(
+    signinResponse.headers.get('set-cookie') ?? ''
+  );
 
   // List invitations the invitee has received (not org-scoped, which requires membership).
   const invitationsResponse = await fetch(

@@ -5,6 +5,7 @@ import {
   createVerifiedUser,
   uniqueEmail,
 } from '@workspace/test-utils';
+import { parseCookieHeader } from '../lib/parse-cookie-header';
 import type { Page } from '@playwright/test';
 
 /**
@@ -22,22 +23,9 @@ async function setupUserAndGoToBilling(
     password: VALID_PASSWORD,
   });
 
-  // Inject the session cookie into the browser context.
-  const cookies = cookie.split(',').map((c) => c.trim());
-  for (const raw of cookies) {
-    const [nameValue] = raw.split(';');
-    const eqIdx = nameValue.indexOf('=');
-    const name = nameValue.slice(0, eqIdx);
-    const value = nameValue.slice(eqIdx + 1);
-    await page.context().addCookies([
-      {
-        name,
-        value,
-        domain: new URL(baseURL).hostname,
-        path: '/',
-      },
-    ]);
-  }
+  await page
+    .context()
+    .addCookies(parseCookieHeader(cookie, new URL(baseURL).hostname));
 
   // Navigate to /ws — the app redirects to /ws/<workspaceId>/overview.
   await page.goto('/ws');
