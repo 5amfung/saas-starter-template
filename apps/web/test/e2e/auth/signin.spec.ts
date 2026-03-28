@@ -4,34 +4,7 @@ import {
   createVerifiedUser,
   uniqueEmail,
 } from '@workspace/test-utils';
-
-/**
- * Parses a raw Set-Cookie header and returns Playwright-compatible cookie
- * objects for injection via page.context().addCookies().
- */
-function parseCookies(setCookieHeader: string): Array<{
-  name: string;
-  value: string;
-  domain: string;
-  path: string;
-  httpOnly: boolean;
-  secure: boolean;
-  sameSite: 'Lax';
-}> {
-  return setCookieHeader.split(',').map((part) => {
-    const [nameValue] = part.trim().split(';');
-    const idx = nameValue.indexOf('=');
-    return {
-      name: nameValue.slice(0, idx).trim(),
-      value: nameValue.slice(idx + 1).trim(),
-      domain: 'localhost',
-      path: '/',
-      httpOnly: true,
-      secure: false,
-      sameSite: 'Lax' as const,
-    };
-  });
-}
+import { parseCookieHeader } from '../lib/parse-cookie-header';
 
 test.describe('Sign-in flow', () => {
   test('happy path: valid credentials redirect to workspace overview', async ({
@@ -141,7 +114,7 @@ test.describe('Sign-in flow', () => {
       password: VALID_PASSWORD,
     });
 
-    await page.context().addCookies(parseCookies(cookie));
+    await page.context().addCookies(parseCookieHeader(cookie));
     await page.goto('/signin');
 
     // Guest middleware redirects authenticated users away from /signin.

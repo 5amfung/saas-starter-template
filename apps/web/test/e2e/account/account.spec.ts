@@ -4,6 +4,7 @@ import {
   createVerifiedUser,
   uniqueEmail,
 } from '@workspace/test-utils';
+import { parseCookieHeader } from '../lib/parse-cookie-header';
 import type { Page } from '@playwright/test';
 
 /**
@@ -23,21 +24,7 @@ async function loginWithCookie(
     name: opts.name,
   });
 
-  // Parse raw Set-Cookie header and inject into browser context.
-  const cookies = cookie.split(',').map((part) => {
-    const [nameValue] = part.trim().split(';');
-    const idx = nameValue.indexOf('=');
-    return {
-      name: nameValue.slice(0, idx).trim(),
-      value: nameValue.slice(idx + 1).trim(),
-      domain: 'localhost',
-      path: '/',
-      httpOnly: true,
-      secure: false,
-      sameSite: 'Lax' as const,
-    };
-  });
-  await page.context().addCookies(cookies);
+  await page.context().addCookies(parseCookieHeader(cookie));
   return { email, password };
 }
 

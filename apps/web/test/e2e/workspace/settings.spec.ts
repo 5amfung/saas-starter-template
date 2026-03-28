@@ -4,57 +4,8 @@ import {
   createVerifiedUser,
   uniqueEmail,
 } from '@workspace/test-utils';
+import { parseCookieHeader } from '../lib/parse-cookie-header';
 import type { Page } from '@playwright/test';
-
-/**
- * Parses a raw Set-Cookie header into Playwright-compatible cookie objects.
- *
- * The header may contain multiple Set-Cookie values joined by ", " (the
- * standard way Node.js fetch combines them). A naive split on "," breaks when
- * cookie attributes include dates with commas (e.g., "Expires=Thu, 01 Jan ...").
- * To handle this safely we split on ", " only when the text after the comma
- * looks like a new cookie (i.e. contains "=" before any ";").
- */
-function parseCookieHeader(raw: string): Array<{
-  name: string;
-  value: string;
-  domain: string;
-  path: string;
-  httpOnly: boolean;
-  secure: boolean;
-  sameSite: 'Lax';
-}> {
-  // Split individual Set-Cookie strings by looking for ", <token>=" boundaries.
-  const setCookies: Array<string> = [];
-  let current = '';
-  for (const segment of raw.split(', ')) {
-    // A new cookie always starts with "name=value". If the segment before the
-    // first ";" contains "=", it is a new cookie; otherwise it is a
-    // continuation of an attribute (e.g., "01 Jan 2026 00:00:00 GMT; Path=/").
-    const beforeSemicolon = segment.split(';')[0];
-    if (current === '' || beforeSemicolon.includes('=')) {
-      if (current) setCookies.push(current);
-      current = segment;
-    } else {
-      current += ', ' + segment;
-    }
-  }
-  if (current) setCookies.push(current);
-
-  return setCookies.map((entry) => {
-    const [nameValue] = entry.trim().split(';');
-    const idx = nameValue.indexOf('=');
-    return {
-      name: nameValue.slice(0, idx).trim(),
-      value: nameValue.slice(idx + 1).trim(),
-      domain: 'localhost',
-      path: '/',
-      httpOnly: true,
-      secure: false,
-      sameSite: 'Lax' as const,
-    };
-  });
-}
 
 /**
  * Creates a verified user and injects their session cookie into the browser
