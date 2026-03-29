@@ -266,29 +266,6 @@ async function setupInvitedMember(
   return { email: inviteeEmail, password: inviteePassword };
 }
 
-async function setupInvitedMembers(
-  page: Page,
-  baseURL: string,
-  workspaceId: string,
-  emailPrefix: string,
-  count: number
-): Promise<Array<{ email: string; password: string }>> {
-  const members: Array<{ email: string; password: string }> = [];
-
-  for (let index = 0; index < count; index++) {
-    members.push(
-      await setupInvitedMember(
-        page,
-        baseURL,
-        workspaceId,
-        `${emailPrefix}-${index + 1}`
-      )
-    );
-  }
-
-  return members;
-}
-
 /**
  * Upgrades the workspace from Free to Starter via Stripe Checkout.
  * Clicks Invite to trigger the upgrade prompt, completes checkout,
