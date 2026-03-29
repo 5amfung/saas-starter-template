@@ -1,4 +1,4 @@
-import { PLANS } from './plans';
+import { ALL_PLANS } from './plans';
 import type { Plan, PlanLimits } from './plans';
 
 export type PlanAction = 'current' | 'upgrade' | 'downgrade' | 'cancel';
@@ -31,7 +31,7 @@ export const PLAN_ACTION_CONFIG: Record<
  * The highest available downgrade option comes first.
  */
 export function getDowngradePlans(currentPlan: Plan): Array<Plan> {
-  return PLANS.filter((p) => p.tier < currentPlan.tier).sort(
+  return ALL_PLANS.filter((p) => p.tier < currentPlan.tier).sort(
     (a, b) => b.tier - a.tier
   );
 }
