@@ -2,8 +2,11 @@ interface CapturedEmail {
   to: string;
   subject: string;
   verificationUrl: string | null;
+  invitationUrl: string | null;
   sentAt: string;
 }
+
+export type TestEmailMatcher = (email: CapturedEmail) => boolean;
 
 /**
  * Fetches captured emails from the test-only API route.
@@ -25,4 +28,30 @@ export async function getTestEmails(
     await new Promise((r) => setTimeout(r, 500));
   }
   return [];
+}
+
+/**
+ * Waits for a specific captured email to appear for a recipient.
+ *
+ * This is useful when the inbox may already contain unrelated emails and
+ * callers need to wait for a newly-sent message that matches a predicate.
+ */
+export async function waitForTestEmail(
+  baseURL: string,
+  to: string,
+  matcher: TestEmailMatcher,
+  maxRetries = 5
+): Promise<CapturedEmail | null> {
+  for (let i = 0; i < maxRetries; i++) {
+    const emails = await getTestEmails(baseURL, to, 1);
+    const matchedEmail = emails.find(matcher);
+
+    if (matchedEmail) {
+      return matchedEmail;
+    }
+
+    await new Promise((r) => setTimeout(r, 500));
+  }
+
+  return null;
 }

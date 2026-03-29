@@ -4,6 +4,7 @@ import {
   VALID_PASSWORD,
   createVerifiedUser,
   uniqueEmail,
+  waitForTestEmail,
 } from '@workspace/test-utils';
 import { toCookieHeader } from '../lib/parse-cookie-header';
 import type { Page } from '@playwright/test';
@@ -118,65 +119,46 @@ async function completeStripeCheckout(page: Page): Promise<void> {
 }
 
 /**
- * Polls the test email API for an invitation email sent to the given address.
- * Returns the verificationUrl (which is the invitation accept URL) or null.
- *
- * Note: The test email API extracts `verificationUrl` from React props.
- * For invitation emails the prop is `invitationUrl`, so the field will be null.
- * In that case, this helper falls back to constructing the accept-invite URL
- * from the invitation ID found via the organization API.
+ * Polls the test email API for the invitation email and returns its accept URL.
  */
 async function getInvitationUrl(
   baseURL: string,
   to: string,
   maxRetries = 10
-): Promise<string | null> {
-  // Poll until the invitation email arrives.
-  for (let i = 0; i < maxRetries; i++) {
-    const response = await fetch(
-      `${baseURL}/api/test/emails?to=${encodeURIComponent(to)}`
-    );
-    const data = (await response.json()) as {
-      emails: Array<{
-        to: string;
-        subject: string;
-        verificationUrl: string | null;
-        sentAt: string;
-      }>;
-    };
+): Promise<string> {
+  const invitationEmail = await waitForTestEmail(
+    baseURL,
+    to,
+    (email) =>
+      email.subject.toLowerCase().includes('join') &&
+      Boolean(email.invitationUrl),
+    maxRetries
+  );
 
-    // Look for an invitation email (subject contains "Join").
-    const invitationEmail = data.emails.find((e) =>
-      e.subject.toLowerCase().includes('join')
-    );
-
-    if (invitationEmail) {
-      // If verificationUrl is available, use it directly.
-      if (invitationEmail.verificationUrl) {
-        return invitationEmail.verificationUrl;
-      }
-
-      // Otherwise, extract invitation ID from the subject or use the organization API.
-      // The invitation URL format is: /accept-invite?id=<invitationId>
-      // We need to find the invitation ID via an alternative path.
-      // For now, return null and let the test handle it.
-      return null;
-    }
-
-    await new Promise((r) => setTimeout(r, 1000));
+  if (!invitationEmail?.invitationUrl) {
+    throw new Error(`No invitation URL captured for ${to}.`);
   }
-  return null;
+
+  return invitationEmail.invitationUrl;
+}
+
+function getInvitationId(invitationUrl: string): string {
+  const id = new URL(invitationUrl).searchParams.get('id');
+  if (!id) {
+    throw new Error(`Invitation URL did not include an id: ${invitationUrl}`);
+  }
+  return id;
 }
 
 /**
  * Accepts a workspace invitation programmatically.
- * Signs in as the invitee via API, lists the user's invitations, and accepts.
+ * Signs in as the invitee via API and accepts the invitation by ID.
  */
 async function acceptInvitationViaApi(
   baseURL: string,
   inviteeCredentials: { email: string; password: string },
-  workspaceId: string
-): Promise<boolean> {
+  invitationId: string
+): Promise<void> {
   // Sign in as invitee to get session cookie.
   const signinResponse = await fetch(`${baseURL}/api/auth/sign-in/email`, {
     method: 'POST',
@@ -190,33 +172,16 @@ async function acceptInvitationViaApi(
     }),
   });
 
-  if (!signinResponse.ok) return false;
+  if (!signinResponse.ok) {
+    const body = await signinResponse.text();
+    throw new Error(
+      `Invitee sign-in failed (${signinResponse.status}): ${body}`
+    );
+  }
+
   const inviteeCookie = toCookieHeader(
     signinResponse.headers.get('set-cookie') ?? ''
   );
-
-  // List invitations the invitee has received (not org-scoped, which requires membership).
-  const invitationsResponse = await fetch(
-    `${baseURL}/api/auth/organization/list-user-invitations`,
-    {
-      method: 'GET',
-      headers: { Cookie: inviteeCookie },
-    }
-  );
-
-  if (!invitationsResponse.ok) return false;
-
-  const invitationsData = (await invitationsResponse.json()) as Array<{
-    id: string;
-    organizationId: string;
-    status: string;
-  }>;
-
-  const pendingInvitation = invitationsData.find(
-    (inv) => inv.organizationId === workspaceId && inv.status === 'pending'
-  );
-
-  if (!pendingInvitation) return false;
 
   // Accept the invitation.
   const acceptResponse = await fetch(
@@ -228,11 +193,16 @@ async function acceptInvitationViaApi(
         Cookie: inviteeCookie,
         Origin: baseURL,
       },
-      body: JSON.stringify({ invitationId: pendingInvitation.id }),
+      body: JSON.stringify({ invitationId }),
     }
   );
 
-  return acceptResponse.ok;
+  if (!acceptResponse.ok) {
+    const body = await acceptResponse.text();
+    throw new Error(
+      `Invitation acceptance failed (${acceptResponse.status}): ${body}`
+    );
+  }
 }
 
 /**
@@ -244,7 +214,7 @@ async function setupInvitedMember(
   baseURL: string,
   workspaceId: string,
   emailPrefix: string
-): Promise<{ email: string; password: string } | null> {
+): Promise<{ email: string; password: string }> {
   const inviteeEmail = uniqueEmail(emailPrefix);
   const inviteePassword = VALID_PASSWORD;
 
@@ -277,23 +247,46 @@ async function setupInvitedMember(
   await page.getByRole('button', { name: 'Send Invitation' }).click();
 
   // Wait for toast confirming invitation sent.
-  await expect(page.getByText('Invitation sent.')).toBeVisible({
+  await expect(page.getByText('Invitation sent.').last()).toBeVisible({
     timeout: 10000,
   });
 
-  // Poll for invitation email to confirm it was sent.
-  await getInvitationUrl(baseURL, inviteeEmail, 5);
+  const invitationUrl = await getInvitationUrl(baseURL, inviteeEmail, 10);
+  const invitationId = getInvitationId(invitationUrl);
 
-  // Accept invitation via API.
-  const accepted = await acceptInvitationViaApi(
+  await acceptInvitationViaApi(
     baseURL,
-    { email: inviteeEmail, password: inviteePassword },
-    workspaceId
+    {
+      email: inviteeEmail,
+      password: inviteePassword,
+    },
+    invitationId
   );
 
-  if (!accepted) return null;
-
   return { email: inviteeEmail, password: inviteePassword };
+}
+
+async function setupInvitedMembers(
+  page: Page,
+  baseURL: string,
+  workspaceId: string,
+  emailPrefix: string,
+  count: number
+): Promise<Array<{ email: string; password: string }>> {
+  const members: Array<{ email: string; password: string }> = [];
+
+  for (let index = 0; index < count; index++) {
+    members.push(
+      await setupInvitedMember(
+        page,
+        baseURL,
+        workspaceId,
+        `${emailPrefix}-${index + 1}`
+      )
+    );
+  }
+
+  return members;
 }
 
 /**
@@ -664,10 +657,6 @@ test.describe('Workspace Members Page', () => {
       workspaceId,
       'rm-member-invitee'
     );
-    if (!member) {
-      test.skip(true, 'Could not set up invited member for this test.');
-      return;
-    }
 
     // Reload the members page to see the new member.
     await page.goto(`/ws/${workspaceId}/members`);
@@ -845,14 +834,70 @@ test.describe('Workspace Members Page', () => {
 
   // ── 14. Multi-page navigation ──────────────────────────────────────────
 
-  // eslint-disable-next-line @typescript-eslint/require-await
-  test('multi-page navigation', async () => {
-    test.info().annotations.push({
-      type: 'TODO',
-      description:
-        'Requires a fixture with 11+ members to exercise multi-page navigation.',
+  test('multi-page navigation', async ({ page, baseURL }) => {
+    test.setTimeout(180_000);
+    const ownerEmail = uniqueEmail('pagination-owner');
+    await createVerifiedUser(baseURL!, {
+      email: ownerEmail,
+      password: VALID_PASSWORD,
     });
-    test.skip(true, 'Needs 11+ member fixture to test pagination controls.');
+
+    const workspaceId = await signInAndGoToMembers(page, {
+      email: ownerEmail,
+      password: VALID_PASSWORD,
+    });
+
+    await upgradeViaInvitePrompt(page, workspaceId);
+
+    for (let index = 0; index < 11; index++) {
+      await page.getByRole('button', { name: 'Invite' }).click();
+
+      const inviteDialog = page.getByRole('alertdialog');
+      await expect(inviteDialog.getByText('Invite Member')).toBeVisible({
+        timeout: 5000,
+      });
+
+      await inviteDialog
+        .getByLabel('Email')
+        .fill(uniqueEmail(`pagination-invite-${index + 1}`));
+      await inviteDialog
+        .getByRole('button', { name: 'Send Invitation' })
+        .click();
+      await expect(page.getByText('Invitation sent.').last()).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(inviteDialog).not.toBeVisible({ timeout: 10000 });
+    }
+
+    await page.getByRole('tab', { name: 'Pending Invitations' }).click();
+    await expect(
+      page.getByText('11 invitations', { exact: false })
+    ).toBeVisible({
+      timeout: 10000,
+    });
+
+    const firstPageBtn = page.getByRole('button', { name: 'Go to first page' });
+    const prevPageBtn = page.getByRole('button', {
+      name: 'Go to previous page',
+    });
+    const nextPageBtn = page.getByRole('button', { name: 'Go to next page' });
+    const lastPageBtn = page.getByRole('button', { name: 'Go to last page' });
+
+    await expect(page.getByText('Page 1 of 2')).toBeVisible();
+    await expect(firstPageBtn).toBeDisabled();
+    await expect(prevPageBtn).toBeDisabled();
+    await expect(nextPageBtn).toBeEnabled();
+    await expect(lastPageBtn).toBeEnabled();
+
+    await nextPageBtn.click();
+    await expect(page.getByText('Page 2 of 2')).toBeVisible();
+    await expect(firstPageBtn).toBeEnabled();
+    await expect(prevPageBtn).toBeEnabled();
+    await expect(nextPageBtn).toBeDisabled();
+    await expect(lastPageBtn).toBeDisabled();
+
+    await prevPageBtn.click();
+    await expect(page.getByText('Page 1 of 2')).toBeVisible();
   });
 
   // ── 15. Empty email rejected ───────────────────────────────────────────
@@ -947,10 +992,6 @@ test.describe('Workspace Members Page', () => {
       workspaceId,
       'hidden-inv-member'
     );
-    if (!member) {
-      test.skip(true, 'Could not set up invited member for this test.');
-      return;
-    }
 
     // Sign out and sign in as member.
     await resetToSignedOutState(page);
@@ -984,10 +1025,6 @@ test.describe('Workspace Members Page', () => {
       workspaceId,
       'disabled-rm-member'
     );
-    if (!member) {
-      test.skip(true, 'Could not set up invited member for this test.');
-      return;
-    }
 
     // Sign out and sign in as member.
     await resetToSignedOutState(page);
@@ -1067,10 +1104,6 @@ test.describe('Workspace Members Page', () => {
       workspaceId,
       'member-leave-member'
     );
-    if (!member) {
-      test.skip(true, 'Could not set up invited member for this test.');
-      return;
-    }
 
     // Sign out and sign in as member.
     await resetToSignedOutState(page);
@@ -1117,10 +1150,6 @@ test.describe('Workspace Members Page', () => {
       workspaceId,
       'leave-redir-member'
     );
-    if (!member) {
-      test.skip(true, 'Could not set up invited member for this test.');
-      return;
-    }
 
     // Sign out and sign in as member.
     await resetToSignedOutState(page);
@@ -1168,10 +1197,6 @@ test.describe('Workspace Members Page', () => {
       workspaceId,
       'footer-rm-member'
     );
-    if (!member) {
-      test.skip(true, 'Could not set up invited member for this test.');
-      return;
-    }
 
     // Reload to see the new member.
     await page.goto(`/ws/${workspaceId}/members`);
