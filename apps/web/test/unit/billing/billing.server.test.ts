@@ -241,6 +241,36 @@ describe('billing.server', () => {
         'price_starter_monthly'
       );
     });
+
+    it('returns null scheduledTargetPlanId when getSubscriptionSchedule throws', async () => {
+      const periodEnd = new Date('2026-04-12');
+      listActiveSubscriptionsMock.mockResolvedValue([
+        {
+          plan: 'pro',
+          status: 'active',
+          stripeSubscriptionId: 'sub_pro_123',
+          stripeScheduleId: 'sub_sched_abc',
+          periodEnd,
+          cancelAtPeriodEnd: false,
+          cancelAt: null,
+        },
+      ]);
+      getSubscriptionScheduleMock.mockRejectedValue(
+        new Error('Schedule fetch failed')
+      );
+      countWorkspaceMembersMock.mockResolvedValue(2);
+
+      // The error is caught internally in resolveScheduledTargetPlanId,
+      // so the function should resolve successfully with no scheduled plan.
+      const data = await getWorkspaceBillingData(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID
+      );
+
+      expect(data.planId).toBe('pro');
+      expect(data.scheduledTargetPlanId).toBeNull();
+      expect(data.subscription?.stripeScheduleId).toBeNull();
+    });
   });
 
   // ── checkWorkspacePlanLimit - member ────────────────────────────────────
@@ -400,6 +430,27 @@ describe('billing.server', () => {
       );
       expect(restoreSubscriptionMock).not.toHaveBeenCalled();
     });
+
+    it('propagates error when releaseSubscriptionSchedule throws', async () => {
+      listActiveSubscriptionsMock.mockResolvedValue([
+        {
+          id: 'rec_pro',
+          stripeSubscriptionId: 'sub_pro_123',
+          plan: 'pro',
+          status: 'active',
+          cancelAtPeriodEnd: false,
+          stripeScheduleId: 'sub_sched_123',
+        },
+      ]);
+      releaseSubscriptionScheduleMock.mockRejectedValue(
+        new Error('Schedule release failed')
+      );
+
+      await expect(
+        reactivateWorkspaceSubscription(TEST_HEADERS, TEST_WORKSPACE_ID)
+      ).rejects.toThrow('Schedule release failed');
+      expect(restoreSubscriptionMock).not.toHaveBeenCalled();
+    });
   });
 
   // ── createCheckoutForWorkspace ──────────────────────────────────────────
@@ -436,6 +487,14 @@ describe('billing.server', () => {
         },
       });
     });
+
+    it('propagates error when upgradeSubscription throws', async () => {
+      upgradeSubscriptionMock.mockRejectedValue(new Error('Stripe API error'));
+
+      await expect(
+        createCheckoutForWorkspace(TEST_HEADERS, TEST_WORKSPACE_ID, 'pro', true)
+      ).rejects.toThrow('Stripe API error');
+    });
   });
 
   // ── createWorkspaceBillingPortal ────────────────────────────────────────
@@ -464,6 +523,16 @@ describe('billing.server', () => {
           ),
         },
       });
+    });
+
+    it('propagates error when createBillingPortal throws', async () => {
+      createBillingPortalMock.mockRejectedValue(
+        new Error('Portal unavailable')
+      );
+
+      await expect(
+        createWorkspaceBillingPortal(TEST_HEADERS, TEST_WORKSPACE_ID)
+      ).rejects.toThrow('Portal unavailable');
     });
   });
 
@@ -593,6 +662,23 @@ describe('billing.server', () => {
       await expect(
         cancelWorkspaceSubscription(TEST_HEADERS, TEST_WORKSPACE_ID)
       ).rejects.toThrow('No active subscription found.');
+    });
+
+    it('propagates error when cancelSubscriptionAtPeriodEnd throws', async () => {
+      listActiveSubscriptionsMock.mockResolvedValue([
+        {
+          plan: 'pro',
+          status: 'active',
+          stripeSubscriptionId: 'sub_pro_456',
+        },
+      ]);
+      cancelSubscriptionAtPeriodEndMock.mockRejectedValue(
+        new Error('Stripe cancel error')
+      );
+
+      await expect(
+        cancelWorkspaceSubscription(TEST_HEADERS, TEST_WORKSPACE_ID)
+      ).rejects.toThrow('Stripe cancel error');
     });
   });
 
