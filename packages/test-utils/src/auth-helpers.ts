@@ -45,9 +45,6 @@ async function fetchWithRetry(
 /**
  * Signs up a new user, verifies their email via the test email API, and
  * returns the session cookie for use in Playwright tests.
- *
- * Requires the test server running with NODE_ENV=test (which enables the
- * mock email client that captures verification emails at /api/test/emails).
  */
 export async function createVerifiedUser(
   baseUrl: string,
@@ -87,10 +84,7 @@ export async function createVerifiedUser(
   const emails = await getTestEmails(baseUrl, options.email, 10);
   const verificationUrl = emails[0]?.verificationUrl;
   if (!verificationUrl) {
-    throw new Error(
-      `No verification email captured for ${options.email}. ` +
-        'Is the server running with NODE_ENV=test?'
-    );
+    throw new Error(`No verification email captured for ${options.email}.`);
   }
 
   // Step 3: Visit the verification URL to verify the email.

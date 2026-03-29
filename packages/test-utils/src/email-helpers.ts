@@ -10,8 +10,6 @@ interface CapturedEmail {
  *
  * Retries with a short delay because the email may not be captured
  * instantly after form submission.
- *
- * Requires the server to be running with NODE_ENV=test.
  */
 export async function getTestEmails(
   baseURL: string,
