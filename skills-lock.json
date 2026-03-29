@@ -11,6 +11,11 @@
       "sourceType": "github",
       "computedHash": "7e6c8d495e66e88a20dc45d17d24b445d6c5c9072855c78d8800fff994bc813f"
     },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
+    },
     "react-email": {
       "source": "resend/react-email",
       "sourceType": "github",
