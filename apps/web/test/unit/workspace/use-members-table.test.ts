@@ -156,6 +156,81 @@ describe('useMembersTable', () => {
       });
       expect(result.current.page).toBe(1);
     });
+
+    it('does not forward email sorting to the members API', async () => {
+      const { result } = renderHook(() => useMembersTable(WORKSPACE_ID), {
+        wrapper: createHookWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(listMembersMock).toHaveBeenCalledTimes(1);
+      });
+
+      listMembersMock.mockClear();
+
+      act(() => {
+        result.current.onSortingChange([{ id: 'email', desc: false }]);
+      });
+
+      await waitFor(() => {
+        expect(listMembersMock).toHaveBeenCalledTimes(1);
+      });
+
+      expect(listMembersMock).toHaveBeenLastCalledWith({
+        query: {
+          organizationId: WORKSPACE_ID,
+          limit: 10,
+          offset: 0,
+        },
+      });
+    });
+
+    it('sorts members by email client-side when email sorting is selected', async () => {
+      listMembersMock.mockResolvedValue({
+        data: {
+          members: [
+            {
+              id: 'mem-z',
+              userId: 'user-z',
+              role: 'member',
+              user: { email: 'zebra@example.com' },
+            },
+            {
+              id: 'mem-a',
+              userId: 'user-a',
+              role: 'member',
+              user: { email: 'alpha@example.com' },
+            },
+          ],
+          total: 2,
+        },
+        error: null,
+      });
+
+      const { result } = renderHook(() => useMembersTable(WORKSPACE_ID), {
+        wrapper: createHookWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(result.current.data.length).toBe(2);
+      });
+
+      expect(result.current.data.map((member) => member.email)).toEqual([
+        'zebra@example.com',
+        'alpha@example.com',
+      ]);
+
+      act(() => {
+        result.current.onSortingChange([{ id: 'email', desc: false }]);
+      });
+
+      await waitFor(() => {
+        expect(result.current.data.map((member) => member.email)).toEqual([
+          'alpha@example.com',
+          'zebra@example.com',
+        ]);
+      });
+    });
   });
 
   describe('leave workspace', () => {
