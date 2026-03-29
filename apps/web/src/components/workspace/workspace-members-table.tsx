@@ -102,7 +102,7 @@ export function WorkspaceMembersTable({
           const isOwnerRow = role === 'owner';
           const isCurrentUserRow = userId === currentUserId;
           const showDisabledRemove =
-            isOwnerRow || (currentUserRole === 'member' && !isCurrentUserRow);
+            !isCurrentUserRow && (isOwnerRow || currentUserRole === 'member');
 
           return (
             <DropdownMenu>
@@ -196,6 +196,13 @@ export function WorkspaceMembersTable({
                         ? ACTIONS_COLUMN_CLASS
                         : header.column.getCanSort()
                           ? 'cursor-pointer select-none'
+                          : undefined
+                    }
+                    aria-sort={
+                      header.column.getIsSorted() === 'asc'
+                        ? 'ascending'
+                        : header.column.getIsSorted() === 'desc'
+                          ? 'descending'
                           : undefined
                     }
                   >

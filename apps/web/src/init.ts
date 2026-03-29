@@ -6,8 +6,12 @@ import { logger } from '@/lib/logger';
 
 export const db = createDb(process.env.DATABASE_URL!);
 
+// E2E_MOCK_EMAIL is inlined at build time by Nitro's rollupConfig.define
+// (see vite.config.ts). Production builds replace it with "" so Rollup
+// tree-shakes the mock branch entirely. The `build:e2e` script sets it
+// to "true", keeping the mock email client in the E2E bundle.
 export const emailClient =
-  process.env.NODE_ENV === 'test'
+  process.env.E2E_MOCK_EMAIL === 'true'
     ? createMockEmailClient({ appName: process.env.VITE_APP_NAME || 'App' })
     : createEmailClient({
         apiKey: process.env.RESEND_API_KEY!,
