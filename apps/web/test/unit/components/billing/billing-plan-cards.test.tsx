@@ -14,6 +14,7 @@ const FREE_PLAN: Plan = {
   limits: { maxMembers: 1 },
   features: ['1 member'],
   annualBonusFeatures: [],
+  visibility: 'public',
 };
 
 const STARTER_PLAN: Plan = {
@@ -27,6 +28,7 @@ const STARTER_PLAN: Plan = {
   limits: { maxMembers: 5 },
   features: ['Up to 5 members per workspace'],
   annualBonusFeatures: ['2 months free'],
+  visibility: 'public',
 };
 
 const PRO_PLAN: Plan = {
@@ -40,6 +42,7 @@ const PRO_PLAN: Plan = {
   limits: { maxMembers: 25 },
   features: ['Up to 25 members per workspace'],
   annualBonusFeatures: ['2 months free'],
+  visibility: 'public',
 };
 
 describe('BillingPlanCards', () => {

@@ -9,6 +9,7 @@ import {
   TabsTrigger,
 } from '@workspace/ui/components/tabs';
 import { checkWorkspacePlanLimit } from '@/billing/billing.functions';
+import { useBillingDataQuery } from '@/billing/use-billing-data-query';
 import { UpgradePromptDialog } from '@/components/billing/upgrade-prompt-dialog';
 import { WorkspaceInvitationsTable } from '@/components/workspace/workspace-invitations-table';
 import { WorkspaceInviteDialog } from '@/components/workspace/workspace-invite-dialog';
@@ -38,7 +39,9 @@ function WorkspaceMembersPage() {
   const canInvite = currentUserRole === 'owner' || currentUserRole === 'admin';
   const membersTablePropsWithRole = { ...membersTableProps, currentUserRole };
 
-  const upgradePrompt = useUpgradePrompt(workspaceId);
+  const billingQuery = useBillingDataQuery(workspaceId);
+  const currentPlanId = billingQuery.data?.plan.id ?? 'free';
+  const upgradePrompt = useUpgradePrompt(workspaceId, currentPlanId);
 
   const handleInviteClick = async () => {
     try {

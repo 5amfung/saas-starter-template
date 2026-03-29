@@ -17,6 +17,7 @@ const STARTER_PLAN: Plan = {
   limits: { maxMembers: 5 },
   features: ['Up to 5 members per workspace'],
   annualBonusFeatures: ['2 months free'],
+  visibility: 'public',
 };
 
 describe('UpgradePromptDialog', () => {

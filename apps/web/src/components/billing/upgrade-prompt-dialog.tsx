@@ -22,6 +22,7 @@ interface UpgradePromptDialogProps {
   onUpgrade: () => void;
   isAnnual: boolean;
   onToggleInterval: (annual: boolean) => void;
+  isEnterprise?: boolean;
 }
 
 export function UpgradePromptDialog({
@@ -34,6 +35,7 @@ export function UpgradePromptDialog({
   onUpgrade,
   isAnnual,
   onToggleInterval,
+  isEnterprise,
 }: UpgradePromptDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -50,7 +52,18 @@ export function UpgradePromptDialog({
         </div>
 
         <div className="flex flex-col gap-6 p-7">
-          {upgradePlan ? (
+          {isEnterprise ? (
+            /* Enterprise workspace — no self-serve upgrade path. */
+            <div className="flex flex-col items-center gap-3 pt-1">
+              <p className="text-center text-sm text-muted-foreground">
+                You've reached the limits of your current plan. Contact your
+                account manager to increase your plan limits.
+              </p>
+              <AlertDialogCancel variant="outline" size="sm" className="mt-2">
+                Got it
+              </AlertDialogCancel>
+            </div>
+          ) : upgradePlan ? (
             <>
               {/* Plan name + price + toggle */}
               <div className="flex flex-col gap-4">

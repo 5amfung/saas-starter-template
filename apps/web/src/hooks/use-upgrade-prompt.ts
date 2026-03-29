@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { isEnterprisePlan } from '@workspace/auth/plans';
 import type { Plan, PlanId } from '@workspace/auth/plans';
 import { createWorkspaceCheckoutSession } from '@/billing/billing.functions';
 
@@ -27,7 +28,7 @@ const INITIAL_STATE: UpgradePromptState = {
  * When upgradePlan is null (highest tier), the dialog shows a
  * "limit reached" message instead of a checkout offer.
  */
-export function useUpgradePrompt(workspaceId: string) {
+export function useUpgradePrompt(workspaceId: string, currentPlanId: string) {
   const [prompt, setPrompt] = useState<UpgradePromptState>(INITIAL_STATE);
   const [isAnnual, setIsAnnual] = useState(false);
 
@@ -69,6 +70,7 @@ export function useUpgradePrompt(workspaceId: string) {
     },
     isAnnual,
     onToggleInterval: setIsAnnual,
+    isEnterprise: isEnterprisePlan(currentPlanId),
   };
 
   return { show, dialogProps };
