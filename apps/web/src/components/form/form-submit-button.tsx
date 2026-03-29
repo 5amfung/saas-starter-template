@@ -33,7 +33,11 @@ export function FormSubmitButton({
       selector={(state) => [state.isSubmitting]}
       children={([isSubmitting]) => (
         <Button type="submit" disabled={disabled || isSubmitting}>
-          {isSubmitting && <IconLoader2 className="animate-spin" />}
+          {isSubmitting && (
+            <span data-testid="submit-loader">
+              <IconLoader2 className="animate-spin" />
+            </span>
+          )}
           {label}
         </Button>
       )}
