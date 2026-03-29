@@ -69,6 +69,28 @@ describe('getLocalDayStartUtc', () => {
     const result = getLocalDayStartUtc(480);
     expect(result.toISOString()).toBe('2026-03-12T08:00:00.000Z');
   });
+
+  it('handles UTC+14 (offset = -840, date crosses to next UTC day)', () => {
+    // Local time = 15:30 + 14h = 05:30 on Mar 13. Local day start = Mar 13 00:00 local.
+    // In UTC: Mar 13 00:00 UTC+14 = Mar 12 10:00 UTC.
+    const result = getLocalDayStartUtc(-840);
+    expect(result.toISOString()).toBe('2026-03-12T10:00:00.000Z');
+  });
+
+  it('handles UTC-12 (offset = 720, date stays on same UTC day)', () => {
+    // Local time = 15:30 - 12h = 03:30 on Mar 12. Local day start = Mar 12 00:00 local.
+    // In UTC: Mar 12 00:00 UTC-12 = Mar 12 12:00 UTC.
+    const result = getLocalDayStartUtc(720);
+    expect(result.toISOString()).toBe('2026-03-12T12:00:00.000Z');
+  });
+
+  it('handles UTC+5:45 Nepal (offset = -345, sub-hour offset produces non-zero UTC minutes)', () => {
+    // Local time = 15:30 + 5h45m = 21:15 on Mar 12. Local day start = Mar 12 00:00 local.
+    // In UTC: Mar 12 00:00 UTC+5:45 = Mar 11 18:15 UTC. Result minutes should be 15.
+    const result = getLocalDayStartUtc(-345);
+    expect(result.toISOString()).toBe('2026-03-11T18:15:00.000Z');
+    expect(result.getUTCMinutes()).toBe(15);
+  });
 });
 
 describe('getDayBuckets', () => {
@@ -113,6 +135,62 @@ describe('getDayBuckets', () => {
     // UTC-8: local time is 07:30 on Mar 12. Still Mar 12 locally.
     const buckets = getDayBuckets(1, 480);
     expect(buckets[0].label).toBe('2026-03-12');
+  });
+
+  describe('year boundary', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      // UTC-8 (offset=480): local = 2025-12-31T08:00Z - 8h = 2025-12-31T00:00 local.
+      // Using 2025-12-31T08:00Z as system time so local date is Dec 31 (last day of year).
+      vi.setSystemTime(new Date('2025-12-31T08:00:00Z'));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('last bucket label is the local date at year boundary (UTC-8)', () => {
+      // localNow = 2025-12-31T08:00Z - 480min = 2025-12-31T00:00Z. dateStr = '2025-12-31'.
+      // todayStart = 2025-12-31T00:00Z + 480min = 2025-12-31T08:00Z.
+      // label = '2025-12-31'.
+      const buckets = getDayBuckets(7, 480);
+      const last = buckets[buckets.length - 1];
+      expect(last.label).toBe('2025-12-31');
+    });
+
+    it('all 7 buckets span exactly 24 hours despite crossing year boundary', () => {
+      const buckets = getDayBuckets(7, 480);
+      expect(buckets).toHaveLength(7);
+      for (const bucket of buckets) {
+        const diff = bucket.end.getTime() - bucket.start.getTime();
+        expect(diff).toBe(24 * 60 * 60 * 1000);
+      }
+    });
+  });
+
+  describe('month boundary', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-03-01T08:00:00Z'));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('generates correct labels spanning a month boundary', () => {
+      const buckets = getDayBuckets(3, 0);
+      expect(buckets.map((b) => b.label)).toEqual([
+        '2026-02-27',
+        '2026-02-28',
+        '2026-03-01',
+      ]);
+    });
+
+    it('no bucket is skipped at the month boundary', () => {
+      const buckets = getDayBuckets(3, 0);
+      expect(buckets).toHaveLength(3);
+    });
   });
 });
 
@@ -212,6 +290,69 @@ describe('queryMauChartData', () => {
     const result = await queryMauChartData(7, 0);
     result.forEach((bucket) => {
       expect(bucket.mau).toBe(0);
+    });
+  });
+
+  describe('30-day window boundary', () => {
+    // System time: 2026-03-12T15:30:00Z, offset=0.
+    // todayStart = 2026-03-12T00:00:00Z, bucket.end = 2026-03-13T00:00:00Z.
+    // windowStart = todayStart - 30 days = 2026-02-10T00:00:00Z.
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-03-12T15:30:00Z'));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('counts a user whose lastSignInAt is exactly 30 days ago (window start is inclusive)', async () => {
+      // 2026-02-10T15:30:00Z >= 2026-02-10T00:00:00Z (windowStart) → counts.
+      const lastSignInAt = new Date('2026-02-10T15:30:00Z');
+      const mockRows = [{ lastSignInAt }];
+      const whereMock = vi.fn().mockResolvedValue(mockRows);
+      const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+      dbSelectMock.mockReturnValue({ from: fromMock });
+
+      const result = await queryMauChartData(1, 0);
+      expect(result[0].mau).toBe(1);
+    });
+
+    it('does not count a user whose lastSignInAt falls before windowStart', async () => {
+      // 2026-02-09T15:30:00Z < 2026-02-10T00:00:00Z (windowStart) → does not count.
+      const lastSignInAt = new Date('2026-02-09T15:30:00Z');
+      const mockRows = [{ lastSignInAt }];
+      const whereMock = vi.fn().mockResolvedValue(mockRows);
+      const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+      dbSelectMock.mockReturnValue({ from: fromMock });
+
+      const result = await queryMauChartData(1, 0);
+      expect(result[0].mau).toBe(0);
+    });
+
+    it('does not count a user whose lastSignInAt is one millisecond before windowStart', async () => {
+      // windowStart = 2026-02-10T00:00:00.000Z; one ms before = 2026-02-09T23:59:59.999Z → excluded.
+      const lastSignInAt = new Date('2026-02-09T23:59:59.999Z');
+      const mockRows = [{ lastSignInAt }];
+      const whereMock = vi.fn().mockResolvedValue(mockRows);
+      const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+      dbSelectMock.mockReturnValue({ from: fromMock });
+
+      const result = await queryMauChartData(1, 0);
+      expect(result[0].mau).toBe(0);
+    });
+
+    it('counts a user whose lastSignInAt is exactly at windowStart (inclusive boundary)', async () => {
+      // 2026-02-10T00:00:00Z === windowStart → counts (>= is inclusive).
+      const lastSignInAt = new Date('2026-02-10T00:00:00Z');
+      const mockRows = [{ lastSignInAt }];
+      const whereMock = vi.fn().mockResolvedValue(mockRows);
+      const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+      dbSelectMock.mockReturnValue({ from: fromMock });
+
+      const result = await queryMauChartData(1, 0);
+      expect(result[0].mau).toBe(1);
     });
   });
 });

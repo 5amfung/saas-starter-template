@@ -2,12 +2,18 @@ import { APIError } from 'better-auth/api';
 import {
   ensureActiveWorkspaceForSession,
   ensureWorkspaceMembership,
+  getActiveMemberRole,
   listUserWorkspaces,
 } from '@/workspace/workspace.server';
 
-const { listOrganizationsMock, setActiveOrganizationMock } = vi.hoisted(() => ({
+const {
+  listOrganizationsMock,
+  setActiveOrganizationMock,
+  getFullOrganizationMock,
+} = vi.hoisted(() => ({
   listOrganizationsMock: vi.fn(),
   setActiveOrganizationMock: vi.fn(),
+  getFullOrganizationMock: vi.fn(),
 }));
 
 vi.mock('@/init', () => ({
@@ -15,6 +21,7 @@ vi.mock('@/init', () => ({
     api: {
       listOrganizations: listOrganizationsMock,
       setActiveOrganization: setActiveOrganizationMock,
+      getFullOrganization: getFullOrganizationMock,
     },
   },
 }));
@@ -138,6 +145,93 @@ describe('workspace.server', () => {
       ).rejects.toBeInstanceOf(APIError);
 
       consoleSpy.mockRestore();
+    });
+  });
+
+  describe('getActiveMemberRole', () => {
+    it('returns the role when user is a member', async () => {
+      getFullOrganizationMock.mockResolvedValueOnce({
+        id: 'org_1',
+        members: [
+          { userId: 'user_1', role: 'owner' },
+          { userId: 'user_2', role: 'member' },
+        ],
+      });
+
+      const role = await getActiveMemberRole(new Headers(), 'org_1', 'user_1');
+
+      expect(role).toBe('owner');
+    });
+
+    it('returns different role types correctly', async () => {
+      getFullOrganizationMock.mockResolvedValueOnce({
+        id: 'org_1',
+        members: [
+          { userId: 'user_admin', role: 'admin' },
+          { userId: 'user_member', role: 'member' },
+        ],
+      });
+
+      const role = await getActiveMemberRole(
+        new Headers(),
+        'org_1',
+        'user_member'
+      );
+
+      expect(role).toBe('member');
+    });
+
+    it('returns null when organization is not found', async () => {
+      getFullOrganizationMock.mockResolvedValueOnce(null);
+
+      const role = await getActiveMemberRole(
+        new Headers(),
+        'org_missing',
+        'user_1'
+      );
+
+      expect(role).toBeNull();
+    });
+
+    it('returns null when user is not a member of the organization', async () => {
+      getFullOrganizationMock.mockResolvedValueOnce({
+        id: 'org_1',
+        members: [{ userId: 'other_user', role: 'owner' }],
+      });
+
+      const role = await getActiveMemberRole(
+        new Headers(),
+        'org_1',
+        'user_not_in_org'
+      );
+
+      expect(role).toBeNull();
+    });
+
+    it('returns null when organization has empty members array', async () => {
+      getFullOrganizationMock.mockResolvedValueOnce({
+        id: 'org_1',
+        members: [],
+      });
+
+      const role = await getActiveMemberRole(new Headers(), 'org_1', 'user_1');
+
+      expect(role).toBeNull();
+    });
+
+    it('passes correct headers and query to the API', async () => {
+      getFullOrganizationMock.mockResolvedValueOnce({
+        id: 'org_target',
+        members: [{ userId: 'user_1', role: 'member' }],
+      });
+      const headers = new Headers({ authorization: 'Bearer test' });
+
+      await getActiveMemberRole(headers, 'org_target', 'user_1');
+
+      expect(getFullOrganizationMock).toHaveBeenCalledWith({
+        headers,
+        query: { organizationId: 'org_target' },
+      });
     });
   });
 });
