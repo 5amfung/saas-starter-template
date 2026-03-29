@@ -276,6 +276,15 @@ describe('createBillingHelpers', () => {
         },
       ]);
     });
+
+    it('propagates error when stripeClient.invoices.list() throws', async () => {
+      mockDbChain(dbSelectMock, [{ stripeCustomerId: 'cus_123' }]);
+      stripeInvoicesListMock.mockRejectedValueOnce(new Error('Stripe error'));
+
+      await expect(
+        helpers.getInvoicesForWorkspace(TEST_WORKSPACE_ID)
+      ).rejects.toThrow('Stripe error');
+    });
   });
 
   describe('cancelSubscriptionAtPeriodEnd', () => {
@@ -290,6 +299,20 @@ describe('createBillingHelpers', () => {
       });
       expect(result).toEqual(mockResult);
     });
+
+    it('propagates error when stripeClient.subscriptions.update() throws', async () => {
+      stripeSubscriptionsUpdateMock.mockRejectedValueOnce(
+        new Error('Stripe error')
+      );
+
+      await expect(
+        helpers.cancelSubscriptionAtPeriodEnd('sub_123')
+      ).rejects.toThrow('Stripe error');
+
+      expect(stripeSubscriptionsUpdateMock).toHaveBeenCalledWith('sub_123', {
+        cancel_at_period_end: true,
+      });
+    });
   });
 
   describe('getSubscriptionSchedule', () => {
@@ -302,6 +325,18 @@ describe('createBillingHelpers', () => {
       expect(stripeSchedulesRetrieveMock).toHaveBeenCalledWith('sub_sched_456');
       expect(result).toEqual(mockSchedule);
     });
+
+    it('propagates error when stripeClient.subscriptionSchedules.retrieve() throws', async () => {
+      stripeSchedulesRetrieveMock.mockRejectedValueOnce(
+        new Error('Stripe error')
+      );
+
+      await expect(
+        helpers.getSubscriptionSchedule('sub_sched_456')
+      ).rejects.toThrow('Stripe error');
+
+      expect(stripeSchedulesRetrieveMock).toHaveBeenCalledWith('sub_sched_456');
+    });
   });
 
   describe('releaseSubscriptionSchedule', () => {
@@ -313,6 +348,18 @@ describe('createBillingHelpers', () => {
 
       expect(stripeSchedulesReleaseMock).toHaveBeenCalledWith('sub_sched_789');
       expect(result).toEqual(mockSchedule);
+    });
+
+    it('propagates error when stripeClient.subscriptionSchedules.release() throws', async () => {
+      stripeSchedulesReleaseMock.mockRejectedValueOnce(
+        new Error('Stripe error')
+      );
+
+      await expect(
+        helpers.releaseSubscriptionSchedule('sub_sched_789')
+      ).rejects.toThrow('Stripe error');
+
+      expect(stripeSchedulesReleaseMock).toHaveBeenCalledWith('sub_sched_789');
     });
   });
 
