@@ -1,45 +1,21 @@
 import { expect, test } from '@playwright/test';
+import {
+  VALID_PASSWORD,
+  getTestEmails,
+  uniqueEmail,
+} from '@workspace/test-utils';
+import type { Page } from '@playwright/test';
 
-/** Generate a unique email for each test to avoid parallel collisions. */
-function uniqueEmail(): string {
-  return `test-signup-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@example.com`;
-}
-
-const VALID_PASSWORD = 'TestPassword123!';
-
-/**
- * Fetches captured emails from the test-only API route.
- * Retries up to maxRetries times with a delay, since the email
- * may not be captured instantly after form submission.
- */
-async function getTestEmails(
-  baseURL: string,
-  to: string,
-  maxRetries = 5
-): Promise<
-  Array<{
-    to: string;
-    subject: string;
-    verificationUrl: string | null;
-    sentAt: string;
-  }>
-> {
-  for (let i = 0; i < maxRetries; i++) {
-    const response = await fetch(
-      `${baseURL}/api/test/emails?to=${encodeURIComponent(to)}`
-    );
-    const data = (await response.json()) as {
-      emails: Array<{
-        to: string;
-        subject: string;
-        verificationUrl: string | null;
-        sentAt: string;
-      }>;
-    };
-    if (data.emails.length > 0) return data.emails;
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  return [];
+/** Fills the sign-up form fields and submits. */
+async function submitSignupForm(
+  page: Page,
+  email: string,
+  password: string = VALID_PASSWORD
+) {
+  await page.getByLabel('Email').fill(email);
+  await page.getByLabel('Password', { exact: true }).fill(password);
+  await page.getByLabel('Confirm Password').fill(password);
+  await page.getByRole('button', { name: 'Create Account' }).click();
 }
 
 test.describe('Sign-up flow', () => {
@@ -47,19 +23,14 @@ test.describe('Sign-up flow', () => {
     page,
     baseURL,
   }) => {
-    const email = uniqueEmail();
+    const email = uniqueEmail('signup');
 
-    // Navigate to sign-up page.
     await page.goto('/signup');
     await expect(
       page.getByText('Create your account', { exact: true })
     ).toBeVisible();
 
-    // Fill out the form.
-    await page.getByLabel('Email').fill(email);
-    await page.getByLabel('Password', { exact: true }).fill(VALID_PASSWORD);
-    await page.getByLabel('Confirm Password').fill(VALID_PASSWORD);
-    await page.getByRole('button', { name: 'Create Account' }).click();
+    await submitSignupForm(page, email);
 
     // Should navigate to verify page.
     await expect(page).toHaveURL(/\/verify/);
@@ -81,22 +52,16 @@ test.describe('Sign-up flow', () => {
   });
 
   test('duplicate email navigates to verify page', async ({ page }) => {
-    const email = uniqueEmail();
+    const email = uniqueEmail('signup');
 
     // Sign up first time.
     await page.goto('/signup');
-    await page.getByLabel('Email').fill(email);
-    await page.getByLabel('Password', { exact: true }).fill(VALID_PASSWORD);
-    await page.getByLabel('Confirm Password').fill(VALID_PASSWORD);
-    await page.getByRole('button', { name: 'Create Account' }).click();
+    await submitSignupForm(page, email);
     await expect(page).toHaveURL(/\/verify/);
 
     // Sign up second time with same email.
     await page.goto('/signup');
-    await page.getByLabel('Email').fill(email);
-    await page.getByLabel('Password', { exact: true }).fill(VALID_PASSWORD);
-    await page.getByLabel('Confirm Password').fill(VALID_PASSWORD);
-    await page.getByRole('button', { name: 'Create Account' }).click();
+    await submitSignupForm(page, email);
 
     // Better Auth silently handles duplicate sign-ups by redirecting
     // to verify page (does not reveal whether the email exists).
@@ -105,12 +70,11 @@ test.describe('Sign-up flow', () => {
 
   test('weak password shows validation error', async ({ page }) => {
     await page.goto('/signup');
-    await page.getByLabel('Email').fill(uniqueEmail());
+    await page.getByLabel('Email').fill(uniqueEmail('signup'));
     await page.getByLabel('Password', { exact: true }).fill('short');
     await page.getByLabel('Confirm Password').fill('short');
     await page.getByLabel('Password', { exact: true }).blur();
 
-    // Should show password validation error (using role=alert to avoid matching the static description).
     await expect(page.getByRole('alert')).toContainText(
       'Password must be at least 8 characters'
     );
@@ -118,12 +82,11 @@ test.describe('Sign-up flow', () => {
 
   test('password mismatch shows validation error', async ({ page }) => {
     await page.goto('/signup');
-    await page.getByLabel('Email').fill(uniqueEmail());
+    await page.getByLabel('Email').fill(uniqueEmail('signup'));
     await page.getByLabel('Password', { exact: true }).fill(VALID_PASSWORD);
     await page.getByLabel('Confirm Password').fill('DifferentPassword123!');
     await page.getByLabel('Confirm Password').blur();
 
-    // Should show mismatch error.
     await expect(page.getByText('Passwords do not match')).toBeVisible();
   });
 
@@ -131,48 +94,42 @@ test.describe('Sign-up flow', () => {
     page,
     baseURL,
   }) => {
-    const email = uniqueEmail();
+    const email = uniqueEmail('signup');
 
-    // Sign up.
     await page.goto('/signup');
-    await page.getByLabel('Email').fill(email);
-    await page.getByLabel('Password', { exact: true }).fill(VALID_PASSWORD);
-    await page.getByLabel('Confirm Password').fill(VALID_PASSWORD);
-    await page.getByRole('button', { name: 'Create Account' }).click();
+    await submitSignupForm(page, email);
     await expect(page).toHaveURL(/\/verify/);
 
     // Wait for first email to be captured.
-    let emails = await getTestEmails(baseURL!, email);
-    expect(emails.length).toBeGreaterThanOrEqual(1);
-    const firstCount = emails.length;
+    const firstEmails = await getTestEmails(baseURL!, email);
+    expect(firstEmails.length).toBeGreaterThanOrEqual(1);
+    const firstCount = firstEmails.length;
 
     // Click resend.
     await page
       .getByRole('button', { name: 'Resend verification email' })
       .click();
 
-    // Wait for a second email to appear.
-    const maxWait = 10;
-    for (let i = 0; i < maxWait; i++) {
-      emails = await getTestEmails(baseURL!, email);
-      if (emails.length > firstCount) break;
-      await new Promise((r) => setTimeout(r, 500));
-    }
-
-    expect(emails.length).toBeGreaterThan(firstCount);
+    // Poll until a new email arrives.
+    await expect
+      .poll(
+        async () => {
+          const emails = await getTestEmails(baseURL!, email);
+          return emails.length;
+        },
+        { timeout: 10000, intervals: [500] }
+      )
+      .toBeGreaterThan(firstCount);
   });
 
   test('invalid verification link does not reach workspace', async ({
     page,
   }) => {
-    // Visit a malformed verification URL.
     await page.goto(
       '/api/auth/verify-email?token=invalid-token-12345&callbackURL=/ws'
     );
 
-    // Better Auth should reject the invalid token.
-    // Wait for navigation to settle, then verify user is NOT on the workspace.
-    await page.waitForTimeout(3000);
-    expect(page.url()).not.toMatch(/\/ws\/.*\/overview/);
+    // Better Auth rejects the invalid token — user should NOT reach workspace.
+    await expect(page).not.toHaveURL(/\/ws\/.*\/overview/, { timeout: 5000 });
   });
 });

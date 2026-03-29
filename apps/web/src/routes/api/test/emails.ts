@@ -21,7 +21,10 @@ function extractVerificationUrl(react: { props?: unknown }): string | null {
 }
 
 function getMockClient(): MockEmailClient | null {
-  if (process.env.NODE_ENV !== 'test' || !isMockEmailClient(emailClient)) {
+  if (
+    process.env.E2E_MOCK_EMAIL !== 'true' ||
+    !isMockEmailClient(emailClient)
+  ) {
     return null;
   }
   return emailClient;
