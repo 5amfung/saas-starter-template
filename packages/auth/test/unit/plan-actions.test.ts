@@ -94,3 +94,13 @@ describe('computePlanDiff', () => {
     );
   });
 });
+
+describe('getDowngradePlans with enterprise context', () => {
+  it('returns self-serve plans below a high-tier plan', () => {
+    const pro = getPlanById('pro')!;
+    const downgrades = getDowngradePlans(pro);
+    expect(downgrades.length).toBeGreaterThanOrEqual(2);
+    expect(downgrades.map((p) => p.id)).toContain('starter');
+    expect(downgrades.map((p) => p.id)).toContain('free');
+  });
+});

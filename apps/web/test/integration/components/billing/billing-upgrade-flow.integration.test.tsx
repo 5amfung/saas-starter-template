@@ -48,6 +48,7 @@ const freePlan = {
   limits: { maxMembers: 1 },
   features: ['1 member'],
   annualBonusFeatures: [],
+  visibility: 'public' as const,
 };
 
 const proPlan = {
@@ -58,6 +59,7 @@ const proPlan = {
   limits: { maxMembers: 25 },
   features: ['Up to 25 members per workspace'],
   annualBonusFeatures: ['2 months free'],
+  visibility: 'public' as const,
 };
 
 vi.mock('@workspace/auth/plans', async (importOriginal) => {
@@ -73,6 +75,7 @@ vi.mock('@workspace/auth/plans', async (importOriginal) => {
         limits: { maxMembers: 25 },
         features: ['Up to 25 members per workspace'],
         annualBonusFeatures: ['2 months free'],
+        visibility: 'public',
       },
     ]),
   };

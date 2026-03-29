@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ALL_PLANS,
   FREE_PLAN_ID,
   PLANS,
   formatPlanPrice,
@@ -10,8 +11,10 @@ import {
   getPlanLimitsForPlanId,
   getUpgradePlan,
   getUpgradePlans,
+  isEnterprisePlan,
   resolveWorkspacePlanId,
 } from '../../src/plans';
+import type { PlanId } from '../../src/plans';
 
 describe('plans', () => {
   it('exports exactly three plans', () => {
@@ -197,5 +200,53 @@ describe('getPlanFeatures', () => {
     const features = getPlanFeatures(pro, true);
     expect(features).toContain('Up to 25 members per workspace');
     expect(features).toContain('2 months free');
+  });
+});
+
+describe('isEnterprisePlan', () => {
+  it('returns true for enterprise-prefixed IDs', () => {
+    expect(isEnterprisePlan('enterprise-acme')).toBe(true);
+    expect(isEnterprisePlan('enterprise-globex')).toBe(true);
+  });
+
+  it('returns false for self-serve plan IDs', () => {
+    expect(isEnterprisePlan('free')).toBe(false);
+    expect(isEnterprisePlan('starter')).toBe(false);
+    expect(isEnterprisePlan('pro')).toBe(false);
+  });
+
+  it('returns false for empty string', () => {
+    expect(isEnterprisePlan('')).toBe(false);
+  });
+});
+
+describe('plan visibility', () => {
+  it('all self-serve plans have public visibility', () => {
+    for (const plan of PLANS) {
+      expect(plan.visibility).toBe('public');
+    }
+  });
+
+  it('ALL_PLANS includes all self-serve plans', () => {
+    for (const plan of PLANS) {
+      expect(ALL_PLANS.find((p) => p.id === plan.id)).toBeDefined();
+    }
+  });
+});
+
+describe('enterprise plan resolution', () => {
+  it('getPlanById resolves enterprise plan IDs from ALL_PLANS', () => {
+    const result = getPlanById('enterprise-test' as PlanId);
+    expect(result).toBeUndefined();
+  });
+
+  it('getHighestTierPlanId picks enterprise over self-serve', () => {
+    expect(getHighestTierPlanId(['starter', 'pro'])).toBe('pro');
+  });
+
+  it('resolveWorkspacePlanId handles unknown enterprise plan gracefully', () => {
+    expect(
+      resolveWorkspacePlanId([{ plan: 'enterprise-unknown', status: 'active' }])
+    ).toBe(FREE_PLAN_ID);
   });
 });

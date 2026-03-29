@@ -17,7 +17,11 @@
 //   3. Add enforcement in the appropriate org hook (auth.server.ts).
 // ────────────────────────────────────────────────────────────────────────────
 
-export type PlanId = 'free' | 'starter' | 'pro';
+import { ENTERPRISE_PLANS } from './enterprise-plans';
+
+export type SelfServePlanId = 'free' | 'starter' | 'pro';
+export type EnterprisePlanId = `enterprise-${string}`;
+export type PlanId = SelfServePlanId | EnterprisePlanId;
 
 export interface PlanLimits {
   /** Maximum members per workspace. -1 = unlimited. */
@@ -42,6 +46,8 @@ export interface Plan {
   features: Array<string>;
   /** Extra feature bullets shown only for the annual variant. */
   annualBonusFeatures: Array<string>;
+  /** Whether the plan is shown in the public billing UI. */
+  visibility: 'public' | 'hidden';
 }
 
 /** Canonical plan ID for the free tier. */
@@ -68,6 +74,7 @@ export const PLANS: ReadonlyArray<Plan> = [
     limits: FREE_PLAN_LIMITS,
     features: [`${FREE_PLAN_LIMITS.maxMembers} member`],
     annualBonusFeatures: [],
+    visibility: 'public',
   },
   {
     id: 'starter',
@@ -80,6 +87,7 @@ export const PLANS: ReadonlyArray<Plan> = [
     limits: STARTER_LIMITS,
     features: [`Up to ${STARTER_LIMITS.maxMembers} members per workspace`],
     annualBonusFeatures: ['2 months free'],
+    visibility: 'public',
   },
   {
     id: 'pro',
@@ -95,13 +103,22 @@ export const PLANS: ReadonlyArray<Plan> = [
       'Email customer support',
     ],
     annualBonusFeatures: ['2 months free'],
+    visibility: 'public',
   },
 ];
 
+/** Combined array of all self-serve and enterprise plans. */
+export const ALL_PLANS: ReadonlyArray<Plan> = [...PLANS, ...ENTERPRISE_PLANS];
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 
+/** Returns true if the given plan ID belongs to an enterprise plan. */
+export function isEnterprisePlan(planId: string): boolean {
+  return planId.startsWith('enterprise-');
+}
+
 export function getPlanById(id: PlanId): Plan | undefined {
-  return PLANS.find((p) => p.id === id);
+  return ALL_PLANS.find((p) => p.id === id);
 }
 
 export function getFreePlan(): Plan {
@@ -115,7 +132,7 @@ export function getFreePlan(): Plan {
  * Falls back to the free plan limits if the plan ID is unknown.
  */
 export function getPlanLimitsForPlanId(planId: PlanId): PlanLimits {
-  const plan = PLANS.find((p) => p.id === planId);
+  const plan = ALL_PLANS.find((p) => p.id === planId);
   return plan?.limits ?? getFreePlan().limits;
 }
 
@@ -159,7 +176,7 @@ export function getPlanFeatures(plan: Plan, annual: boolean): Array<string> {
 export function getHighestTierPlanId(planIds: Array<string>): PlanId {
   let best: Plan | undefined;
   for (const id of planIds) {
-    const plan = PLANS.find((p) => p.id === id);
+    const plan = ALL_PLANS.find((p) => p.id === id);
     if (plan && (!best || plan.tier > best.tier)) {
       best = plan;
     }
@@ -171,7 +188,7 @@ export function getHighestTierPlanId(planIds: Array<string>): PlanId {
  * Returns all plans above the current plan's tier, sorted by tier ascending.
  */
 export function getUpgradePlans(currentPlan: Plan): Array<Plan> {
-  return PLANS.filter((p) => p.tier > currentPlan.tier).sort(
+  return ALL_PLANS.filter((p) => p.tier > currentPlan.tier).sort(
     (a, b) => a.tier - b.tier
   );
 }

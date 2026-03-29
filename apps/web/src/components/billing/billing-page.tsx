@@ -5,8 +5,10 @@ import {
   getFreePlan,
   getPlanById,
   getUpgradePlans,
+  isEnterprisePlan,
 } from '@workspace/auth/plans';
 import { Card, CardContent } from '@workspace/ui/components/card';
+import { BillingEnterprisePlanCard } from './billing-enterprise-plan-card';
 import { BillingDowngradeBanner } from './billing-downgrade-banner';
 import { BillingDowngradeConfirmDialog } from './billing-downgrade-confirm-dialog';
 import { BillingInvoiceTable } from './billing-invoice-table';
@@ -186,7 +188,10 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
   if (billingQuery.isPending || !billingQuery.data) return null;
 
   const { plan: currentPlan, subscription } = billingQuery.data;
-  const upgradePlans = getUpgradePlans(currentPlan);
+  const isEnterprise = isEnterprisePlan(currentPlan.id);
+  const upgradePlans = getUpgradePlans(currentPlan).filter(
+    (p) => p.visibility === 'public'
+  );
 
   // Stripe Flexible Billing uses cancelAt instead of cancelAtPeriodEnd.
   // Check both to match Better Auth's isPendingCancel logic.
@@ -204,96 +209,119 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
 
   return (
     <div className={PAGE_LAYOUT_CLASS}>
-      {(isPendingCancel || isPendingDowngrade) && effectiveCancelDate && (
-        <BillingDowngradeBanner
-          targetPlanName={
-            billingQuery.data.scheduledTargetPlanId
-              ? (getPlanById(billingQuery.data.scheduledTargetPlanId)?.name ??
-                getFreePlan().name)
-              : getFreePlan().name
-          }
-          periodEnd={effectiveCancelDate}
-          onReactivate={() => reactivateMutation.mutate()}
-          isReactivating={reactivateMutation.isPending}
-        />
-      )}
-
-      <BillingPlanCards
-        currentPlan={currentPlan}
-        upgradePlans={upgradePlans}
-        nextBillingDate={periodEnd}
-        annualByPlan={annualByPlan}
-        onToggleInterval={(planId, annual) =>
-          setAnnualByPlan((prev) => ({ ...prev, [planId]: annual }))
-        }
-        onManagePlan={() => setManagePlanOpen(true)}
-        onUpgrade={(planId, annual) =>
-          upgradeMutation.mutate({
-            planId,
-            annual,
-            subscriptionId: subscription?.stripeSubscriptionId ?? undefined,
-          })
-        }
-        onBillingPortal={() => manageMutation.mutate()}
-        isManaging={manageMutation.isPending}
-        isBillingPortalLoading={manageMutation.isPending}
-        upgradingPlanId={upgradingPlanId}
-      />
-
-      <BillingManagePlanDialog
-        open={managePlanOpen}
-        onOpenChange={setManagePlanOpen}
-        currentPlan={currentPlan}
-        isPendingCancel={isPendingCancel}
-        isPendingDowngrade={isPendingDowngrade}
-        onUpgrade={(planId, annual) => {
-          setManagePlanOpen(false);
-          upgradeMutation.mutate({
-            planId,
-            annual,
-            subscriptionId: subscription?.stripeSubscriptionId ?? undefined,
-          });
-        }}
-        onDowngrade={(targetPlan, annual) => {
-          setDowngradeTarget(targetPlan);
-          setDowngradeAnnual(annual);
-        }}
-        isProcessing={upgradingPlanId !== null}
-      />
-
-      {downgradeTarget && (
-        <BillingDowngradeConfirmDialog
-          open={!!downgradeTarget}
-          onOpenChange={(open) => {
-            if (!open) setDowngradeTarget(null);
-          }}
-          currentPlan={currentPlan}
-          targetPlan={downgradeTarget}
-          periodEnd={periodEnd}
-          currentMemberCount={billingQuery.data.memberCount}
-          onConfirm={() => {
-            if (downgradeTarget.pricing === null) {
-              cancelMutation.mutate();
-            } else {
-              downgradeMutation.mutate({
-                planId: downgradeTarget.id,
-                annual: downgradeAnnual,
-                subscriptionId: subscription!.stripeSubscriptionId!,
-              });
-            }
-          }}
-          isProcessing={downgradeMutation.isPending || cancelMutation.isPending}
-        />
-      )}
-
-      <Card>
-        <CardContent>
-          <BillingInvoiceTable
-            invoices={invoicesQuery.data ?? []}
-            isLoading={invoicesQuery.isLoading}
+      {isEnterprise ? (
+        <>
+          <BillingEnterprisePlanCard
+            currentPlan={currentPlan}
+            nextBillingDate={periodEnd}
+            memberCount={billingQuery.data.memberCount}
           />
-        </CardContent>
-      </Card>
+
+          <Card>
+            <CardContent>
+              <BillingInvoiceTable
+                invoices={invoicesQuery.data ?? []}
+                isLoading={invoicesQuery.isLoading}
+              />
+            </CardContent>
+          </Card>
+        </>
+      ) : (
+        <>
+          {(isPendingCancel || isPendingDowngrade) && effectiveCancelDate && (
+            <BillingDowngradeBanner
+              targetPlanName={
+                billingQuery.data.scheduledTargetPlanId
+                  ? (getPlanById(billingQuery.data.scheduledTargetPlanId)
+                      ?.name ?? getFreePlan().name)
+                  : getFreePlan().name
+              }
+              periodEnd={effectiveCancelDate}
+              onReactivate={() => reactivateMutation.mutate()}
+              isReactivating={reactivateMutation.isPending}
+            />
+          )}
+
+          <BillingPlanCards
+            currentPlan={currentPlan}
+            upgradePlans={upgradePlans}
+            nextBillingDate={periodEnd}
+            annualByPlan={annualByPlan}
+            onToggleInterval={(planId, annual) =>
+              setAnnualByPlan((prev) => ({ ...prev, [planId]: annual }))
+            }
+            onManagePlan={() => setManagePlanOpen(true)}
+            onUpgrade={(planId, annual) =>
+              upgradeMutation.mutate({
+                planId,
+                annual,
+                subscriptionId: subscription?.stripeSubscriptionId ?? undefined,
+              })
+            }
+            onBillingPortal={() => manageMutation.mutate()}
+            isManaging={manageMutation.isPending}
+            isBillingPortalLoading={manageMutation.isPending}
+            upgradingPlanId={upgradingPlanId}
+          />
+
+          <BillingManagePlanDialog
+            open={managePlanOpen}
+            onOpenChange={setManagePlanOpen}
+            currentPlan={currentPlan}
+            isPendingCancel={isPendingCancel}
+            isPendingDowngrade={isPendingDowngrade}
+            onUpgrade={(planId, annual) => {
+              setManagePlanOpen(false);
+              upgradeMutation.mutate({
+                planId,
+                annual,
+                subscriptionId: subscription?.stripeSubscriptionId ?? undefined,
+              });
+            }}
+            onDowngrade={(targetPlan, annual) => {
+              setDowngradeTarget(targetPlan);
+              setDowngradeAnnual(annual);
+            }}
+            isProcessing={upgradingPlanId !== null}
+          />
+
+          {downgradeTarget && (
+            <BillingDowngradeConfirmDialog
+              open={!!downgradeTarget}
+              onOpenChange={(open) => {
+                if (!open) setDowngradeTarget(null);
+              }}
+              currentPlan={currentPlan}
+              targetPlan={downgradeTarget}
+              periodEnd={periodEnd}
+              currentMemberCount={billingQuery.data.memberCount}
+              onConfirm={() => {
+                if (downgradeTarget.pricing === null) {
+                  cancelMutation.mutate();
+                } else {
+                  downgradeMutation.mutate({
+                    planId: downgradeTarget.id,
+                    annual: downgradeAnnual,
+                    subscriptionId: subscription!.stripeSubscriptionId!,
+                  });
+                }
+              }}
+              isProcessing={
+                downgradeMutation.isPending || cancelMutation.isPending
+              }
+            />
+          )}
+
+          <Card>
+            <CardContent>
+              <BillingInvoiceTable
+                invoices={invoicesQuery.data ?? []}
+                isLoading={invoicesQuery.isLoading}
+              />
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 }

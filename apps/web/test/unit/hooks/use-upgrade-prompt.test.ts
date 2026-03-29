@@ -32,6 +32,7 @@ const mockPlan: Plan = {
   limits: { maxMembers: 25 },
   features: ['Up to 25 members per workspace'],
   annualBonusFeatures: ['2 months free'],
+  visibility: 'public',
 };
 
 describe('useUpgradePrompt', () => {
@@ -40,16 +41,22 @@ describe('useUpgradePrompt', () => {
   });
 
   it('starts with dialog closed', () => {
-    const { result } = renderHook(() => useUpgradePrompt(TEST_WORKSPACE_ID), {
-      wrapper: createHookWrapper(),
-    });
+    const { result } = renderHook(
+      () => useUpgradePrompt(TEST_WORKSPACE_ID, 'pro'),
+      {
+        wrapper: createHookWrapper(),
+      }
+    );
     expect(result.current.dialogProps.open).toBe(false);
   });
 
   it('show() populates dialog props', () => {
-    const { result } = renderHook(() => useUpgradePrompt(TEST_WORKSPACE_ID), {
-      wrapper: createHookWrapper(),
-    });
+    const { result } = renderHook(
+      () => useUpgradePrompt(TEST_WORKSPACE_ID, 'pro'),
+      {
+        wrapper: createHookWrapper(),
+      }
+    );
 
     act(() => {
       result.current.show('Upgrade', 'You need more', mockPlan);
@@ -62,9 +69,12 @@ describe('useUpgradePrompt', () => {
   });
 
   it('onOpenChange(false) closes dialog', () => {
-    const { result } = renderHook(() => useUpgradePrompt(TEST_WORKSPACE_ID), {
-      wrapper: createHookWrapper(),
-    });
+    const { result } = renderHook(
+      () => useUpgradePrompt(TEST_WORKSPACE_ID, 'pro'),
+      {
+        wrapper: createHookWrapper(),
+      }
+    );
 
     act(() => {
       result.current.show('Upgrade', 'Description', mockPlan);
@@ -89,9 +99,12 @@ describe('useUpgradePrompt', () => {
       url: 'https://checkout.stripe.com/test',
     });
 
-    const { result } = renderHook(() => useUpgradePrompt(TEST_WORKSPACE_ID), {
-      wrapper: createHookWrapper(),
-    });
+    const { result } = renderHook(
+      () => useUpgradePrompt(TEST_WORKSPACE_ID, 'pro'),
+      {
+        wrapper: createHookWrapper(),
+      }
+    );
 
     act(() => {
       result.current.show('Upgrade', 'Description', mockPlan);
@@ -111,9 +124,12 @@ describe('useUpgradePrompt', () => {
   });
 
   it('onUpgrade() is no-op when upgradePlan is null', () => {
-    const { result } = renderHook(() => useUpgradePrompt(TEST_WORKSPACE_ID), {
-      wrapper: createHookWrapper(),
-    });
+    const { result } = renderHook(
+      () => useUpgradePrompt(TEST_WORKSPACE_ID, 'pro'),
+      {
+        wrapper: createHookWrapper(),
+      }
+    );
 
     act(() => {
       result.current.show('Limit Reached', 'Max tier', null);
@@ -131,9 +147,12 @@ describe('useUpgradePrompt', () => {
       new Error('Checkout failed')
     );
 
-    const { result } = renderHook(() => useUpgradePrompt(TEST_WORKSPACE_ID), {
-      wrapper: createHookWrapper(),
-    });
+    const { result } = renderHook(
+      () => useUpgradePrompt(TEST_WORKSPACE_ID, 'pro'),
+      {
+        wrapper: createHookWrapper(),
+      }
+    );
 
     act(() => {
       result.current.show('Upgrade', 'Description', mockPlan);

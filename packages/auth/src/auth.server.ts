@@ -17,7 +17,7 @@ import {
 import { createAuthEmails } from './auth-emails.server';
 import { isDuplicateOrganizationError, isSignInPath } from './auth-utils';
 import { createBillingHelpers } from './billing.server';
-import { PLANS, getPlanLimitsForPlanId } from './plans';
+import { ALL_PLANS, getPlanLimitsForPlanId } from './plans';
 import type { PlanId } from './plans';
 import type { EmailClient } from '@workspace/email';
 import type { Database } from '@workspace/db';
@@ -82,9 +82,9 @@ export function createAuth(config: AuthConfig) {
   const log = config.logger ?? console.log;
   const stripeClient = new Stripe(config.stripe.secretKey);
 
-  // Build Stripe plan config from PLANS — reads price IDs from process.env.
-  const stripePlans = PLANS.filter((p) => p.pricing !== null).map((p) => {
-    const key = p.id.toUpperCase();
+  // Build Stripe plan config from ALL_PLANS — reads price IDs from process.env.
+  const stripePlans = ALL_PLANS.filter((p) => p.pricing !== null).map((p) => {
+    const key = p.id.toUpperCase().replace(/-/g, '_');
     return {
       name: p.id,
       priceId: process.env[`STRIPE_${key}_MONTHLY_PRICE_ID`]!,
