@@ -33,6 +33,7 @@ export function useMembersTable(workspaceId: string) {
 
   const sortBy = sorting[0]?.id;
   const sortDirection = sorting[0]?.desc ? ('desc' as const) : ('asc' as const);
+  const shouldSortEmailClientSide = sortBy === 'email';
 
   const membersQuery = useQuery({
     queryKey: [
@@ -51,19 +52,30 @@ export function useMembersTable(workspaceId: string) {
           organizationId: workspaceId,
           limit: pageSize,
           offset: (page - 1) * pageSize,
-          ...(sortBy ? { sortBy, sortDirection } : {}),
+          ...(sortBy && !shouldSortEmailClientSide
+            ? { sortBy, sortDirection }
+            : {}),
         },
       });
 
       if (error) throw new Error(error.message);
 
-      return {
-        members: data.members.map((member) => ({
+      const members = data.members
+        .map((member) => ({
           id: member.id,
           userId: member.userId,
           role: member.role,
           email: member.user.email,
-        })),
+        }))
+        .sort((left, right) => {
+          if (!shouldSortEmailClientSide) return 0;
+
+          const comparison = left.email.localeCompare(right.email);
+          return sortDirection === 'desc' ? comparison * -1 : comparison;
+        });
+
+      return {
+        members,
         total: data.total,
         totalPages: Math.max(1, Math.ceil(data.total / pageSize)),
       };

@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import type { MockEmailClient } from '@workspace/email';
 import { emailClient } from '@/init';
+import { extractEmailLinks } from '@/lib/test-email-links';
 
 function isMockEmailClient(client: unknown): client is MockEmailClient {
   return (
@@ -9,15 +10,6 @@ function isMockEmailClient(client: unknown): client is MockEmailClient {
     'getEmailsFor' in client &&
     typeof (client as MockEmailClient).getEmailsFor === 'function'
   );
-}
-
-/** Extract verificationUrl from a React element's props with proper type narrowing. */
-function extractVerificationUrl(react: { props?: unknown }): string | null {
-  const props = react.props as Record<string, unknown> | undefined;
-  if (props && typeof props.verificationUrl === 'string') {
-    return props.verificationUrl;
-  }
-  return null;
 }
 
 function getMockClient(): MockEmailClient | null {
@@ -47,7 +39,7 @@ function handleGet(request: Request): Response {
   const emails = client.getEmailsFor(to).map((email) => ({
     to: email.to,
     subject: email.subject,
-    verificationUrl: extractVerificationUrl(email.react),
+    ...extractEmailLinks(email.react),
     sentAt: email.sentAt.toISOString(),
   }));
 
