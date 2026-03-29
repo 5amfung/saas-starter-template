@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { IconCheck } from '@tabler/icons-react';
 import {
-  PLANS,
+  ALL_PLANS,
   PLAN_ACTION_CONFIG,
   formatPlanPrice,
   getPlanAction,
@@ -101,7 +101,7 @@ export function BillingManagePlanDialog({
 
         {/* Plan cards */}
         <div className="flex flex-col gap-4 p-7 md:flex-row">
-          {PLANS.map((plan) => {
+          {ALL_PLANS.filter((p) => p.visibility === 'public').map((plan) => {
             const action = getPlanAction(currentPlan, plan);
             const config = PLAN_ACTION_CONFIG[action];
             const isCurrent = action === 'current';
