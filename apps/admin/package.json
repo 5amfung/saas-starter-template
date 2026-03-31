@@ -19,12 +19,7 @@
     "lint:fix": "eslint --fix",
     "typecheck": "tsc --noEmit",
     "check": "tsc --noEmit && eslint",
-    "format": "prettier --write ./src",
-    "gen-auth-schema": "dotenv -e .env -- pnpx @better-auth/cli generate --config ./src/auth/auth.cli.ts --output ./src/db/schema.ts --yes && node --experimental-strip-types scripts/patch-auth-schema.ts && eslint --fix ./src/db/schema.ts && prettier --write ./src/db/schema.ts",
-    "db:generate": "dotenv -e .env -- drizzle-kit generate",
-    "db:migrate": "dotenv -e .env -- drizzle-kit migrate",
-    "db:push": "dotenv -e .env -- drizzle-kit push",
-    "db:studio": "dotenv -e .env -- drizzle-kit studio"
+    "format": "prettier --write ./src"
   },
   "dependencies": {
     "@base-ui/react": "^1.1.0",
@@ -41,9 +36,10 @@
     "@neondatabase/serverless": "^1.0.2",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/router-plugin": "^1.159.4",
+    "@workspace/auth": "workspace:*",
     "@workspace/email": "workspace:*",
     "@workspace/db": "workspace:*",
-    "@workspace/admin-db-schema": "workspace:*",
+    "@workspace/web-db-schema": "workspace:*",
     "@workspace/ui": "workspace:*",
     "better-auth": "1.5.5",
     "class-variance-authority": "^0.7.1",

@@ -17,7 +17,7 @@ import {
 } from '@workspace/ui/components/alert-dialog';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
-import { authClient } from '@/auth/admin-auth-client';
+import { authClient } from '@workspace/auth/client';
 
 const CONFIRMATION_TEXT = 'DELETE';
 

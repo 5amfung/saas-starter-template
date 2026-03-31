@@ -20,7 +20,7 @@ const {
   mockToastError: vi.fn(),
 }));
 
-vi.mock('@/auth/admin-auth-client', () => ({
+vi.mock('@workspace/auth/client', () => ({
   authClient: {
     updateUser: updateUserMock,
     changePassword: changePasswordMock,

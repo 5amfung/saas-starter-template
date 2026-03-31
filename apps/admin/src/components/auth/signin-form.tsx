@@ -15,8 +15,8 @@ import {
   FieldSeparator,
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
-import { loginSchema } from '@/auth/schemas';
-import { authClient } from '@/auth/admin-auth-client';
+import { loginSchema } from '@workspace/auth/schemas';
+import { authClient } from '@workspace/auth/client';
 import { FormError } from '@/components/auth/form-error';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 import { FormErrorDisplay } from '@/components/form/form-error-display';

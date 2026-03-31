@@ -10,7 +10,7 @@ const { useSessionMock } = vi.hoisted(() => ({
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
 
-vi.mock('@/auth/admin-auth-client', () => ({
+vi.mock('@workspace/auth/client', () => ({
   authClient: {
     useSession: useSessionMock,
   },

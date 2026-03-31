@@ -10,7 +10,7 @@ const { listAccounts } = vi.hoisted(() => ({
   listAccounts: vi.fn(),
 }));
 
-vi.mock('@/auth/admin-auth-client', () => ({
+vi.mock('@workspace/auth/client', () => ({
   authClient: {
     listAccounts,
   },

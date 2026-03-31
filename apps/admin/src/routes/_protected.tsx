@@ -4,7 +4,7 @@ import {
   SidebarInset,
   SidebarProvider,
 } from '@workspace/ui/components/sidebar';
-import { authClient } from '@/auth/admin-auth-client';
+import { authClient } from '@workspace/auth/client';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SiteHeader } from '@/components/site-header';
 import { authMiddleware } from '@/middleware/auth';

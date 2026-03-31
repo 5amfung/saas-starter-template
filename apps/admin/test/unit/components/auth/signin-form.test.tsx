@@ -12,7 +12,7 @@ const { signInEmail, signUpEmail, navigate } = vi.hoisted(() => ({
   navigate: vi.fn(),
 }));
 
-vi.mock('@/auth/admin-auth-client', () => ({
+vi.mock('@workspace/auth/client', () => ({
   authClient: {
     signIn: { email: signInEmail },
     signUp: { email: signUpEmail },

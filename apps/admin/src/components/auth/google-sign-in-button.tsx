@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { IconLoader } from '@tabler/icons-react';
 import { Button } from '@workspace/ui/components/button';
-import { authClient } from '@/auth/admin-auth-client';
+import { authClient } from '@workspace/auth/client';
 import { GoogleIcon } from '@/components/icons/google-icon';
 
 const DEFAULT_CALLBACK_URL = '/dashboard';

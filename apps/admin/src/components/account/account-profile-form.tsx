@@ -23,7 +23,7 @@ import {
   FieldLabel,
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
-import { authClient } from '@/auth/admin-auth-client';
+import { authClient } from '@workspace/auth/client';
 import { accountProfileSchema } from '@/account/schemas';
 import { SESSION_QUERY_KEY } from '@/hooks/use-session-query';
 import { toFieldErrorItem } from '@/lib/form-utils';

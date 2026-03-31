@@ -35,7 +35,7 @@ import { Separator } from '@workspace/ui/components/separator';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { Textarea } from '@workspace/ui/components/textarea';
 import { cn } from '@workspace/ui/lib/utils';
-import { authClient } from '@/auth/admin-auth-client';
+import { authClient } from '@workspace/auth/client';
 import { adminUserFormSchema } from '@/admin/schemas';
 import { toFieldErrorItem } from '@/lib/form-utils';
 import { getInitials } from '@/lib/get-initials';

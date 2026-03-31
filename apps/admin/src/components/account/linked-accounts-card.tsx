@@ -21,7 +21,7 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card';
 import { Skeleton } from '@workspace/ui/components/skeleton';
-import { authClient } from '@/auth/admin-auth-client';
+import { authClient } from '@workspace/auth/client';
 import { GoogleIcon } from '@/components/icons/google-icon';
 import {
   LINKED_ACCOUNTS_QUERY_KEY,

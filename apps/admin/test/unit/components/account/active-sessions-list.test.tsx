@@ -26,7 +26,7 @@ vi.mock('@/hooks/use-sessions-query', () => ({
   SESSIONS_QUERY_KEY: ['session', 'active-list'],
 }));
 
-vi.mock('@/auth/admin-auth-client', () => ({
+vi.mock('@workspace/auth/client', () => ({
   authClient: {
     revokeSession: mockRevokeSession,
     getLastUsedLoginMethod: mockGetLastUsedLoginMethod,

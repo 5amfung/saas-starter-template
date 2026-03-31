@@ -14,8 +14,8 @@ import {
   FieldGroup,
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
-import { forgotPasswordSchema } from '@/auth/schemas';
-import { authClient } from '@/auth/admin-auth-client';
+import { forgotPasswordSchema } from '@workspace/auth/schemas';
+import { authClient } from '@workspace/auth/client';
 import { FormErrorDisplay } from '@/components/form/form-error-display';
 import { FormSubmitButton } from '@/components/form/form-submit-button';
 import { ValidatedField } from '@/components/form/validated-field';

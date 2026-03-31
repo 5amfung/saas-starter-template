@@ -9,7 +9,7 @@ const { resetPassword } = vi.hoisted(() => ({
   resetPassword: vi.fn(),
 }));
 
-vi.mock('@/auth/admin-auth-client', () => ({
+vi.mock('@workspace/auth/client', () => ({
   authClient: {
     resetPassword,
   },

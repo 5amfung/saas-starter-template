@@ -8,7 +8,7 @@ import {
 } from '@tanstack/react-router';
 import { Button } from '@workspace/ui/components/button';
 import { Separator } from '@workspace/ui/components/separator';
-import { authClient } from '@/auth/admin-auth-client';
+import { authClient } from '@workspace/auth/client';
 import { AdminDeleteUserDialog } from '@/components/admin/admin-delete-user-dialog';
 import {
   AdminUserForm,

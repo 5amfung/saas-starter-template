@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Outlet, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { authClient } from '@/auth/admin-auth-client';
+import { authClient } from '@workspace/auth/client';
 import { AuthLayout } from '@/components/auth/auth-layout';
 import { guestMiddleware } from '@/middleware/auth';
 
