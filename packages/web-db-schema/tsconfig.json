@@ -3,7 +3,7 @@
   "compilerOptions": {
     "types": ["vitest/globals"],
     "paths": {
-      "@workspace/db/*": ["./src/*"]
+      "@workspace/web-db-schema/*": ["./src/*"]
     }
   },
   "include": [
