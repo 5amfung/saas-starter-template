@@ -1,8 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router';
-import data from '../../data.json';
-import { ChartAreaInteractive } from '@/components/chart-area-interactive';
-import { DataTable } from '@/components/data-table';
-import { SectionCards } from '@/components/section-cards';
 
 export const Route = createFileRoute('/_protected/ws/$workspaceId/overview')({
   component: WorkspaceOverviewPage,
@@ -11,12 +7,11 @@ export const Route = createFileRoute('/_protected/ws/$workspaceId/overview')({
 
 function WorkspaceOverviewPage() {
   return (
-    <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-      <SectionCards />
-      <div className="px-4 lg:px-6">
-        <ChartAreaInteractive />
+    <div className="flex flex-1 items-center justify-center py-12">
+      <div className="text-center">
+        <h2 className="text-lg font-medium">Overview</h2>
+        <p className="text-sm text-muted-foreground">Coming soon.</p>
       </div>
-      <DataTable data={data} />
     </div>
   );
 }
