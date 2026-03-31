@@ -4,19 +4,14 @@ import { betterAuth } from 'better-auth/minimal';
 import { admin, lastLoginMethod } from 'better-auth/plugins';
 import { tanstackStartCookies } from 'better-auth/tanstack-start';
 import { eq } from 'drizzle-orm';
-import {
-  account as accountTable,
-  session as sessionTable,
-  user as userTable,
-  verification as verificationTable,
-} from './admin-auth.schema';
+import { admin_user as userTable } from '@workspace/admin-db-schema';
 import { createAdminAuthEmails } from './admin-auth-emails.server';
 import { isSignInPath } from './auth-utils';
-import type { AdminDatabase } from '@/db';
+import type { Database } from '@workspace/db';
 import type { EmailClient } from '@workspace/email';
 
 export interface AdminAuthConfig {
-  db: AdminDatabase;
+  db: Database;
   emailClient: EmailClient;
   baseUrl: string;
   secret: string;
@@ -51,12 +46,6 @@ export function createAdminAuth(config: AdminAuthConfig) {
     },
     database: drizzleAdapter(config.db, {
       provider: 'pg',
-      schema: {
-        user: userTable,
-        session: sessionTable,
-        account: accountTable,
-        verification: verificationTable,
-      },
     }),
     user: {
       modelName: 'admin_user',
@@ -109,7 +98,9 @@ export function createAdminAuth(config: AdminAuthConfig) {
     },
     plugins: [
       lastLoginMethod({ storeInDatabase: true }),
-      admin({}),
+      admin({
+        adminUserIds: [],
+      }),
       tanstackStartCookies(),
     ],
   });

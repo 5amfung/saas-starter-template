@@ -1,10 +1,11 @@
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { createEmailClient, createMockEmailClient } from '@workspace/email';
+import { createDb } from '@workspace/db';
+import * as schema from '@workspace/admin-db-schema';
 import { createAdminAuth } from '@/auth/admin-auth.server';
-import { createAdminDb } from '@/db';
 import { logger } from '@/lib/logger';
 
-export const db = createAdminDb(process.env.DATABASE_URL!);
+export const db = createDb(process.env.DATABASE_URL!, schema);
 
 export const emailClient =
   process.env.E2E_MOCK_EMAIL === 'true'

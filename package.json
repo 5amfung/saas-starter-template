@@ -35,11 +35,11 @@
     "admin:test:e2e:chromium": "pnpm --filter @workspace/admin-web test:e2e:chromium",
     "prepare": "husky || echo 'Skip installing husky'",
     "clean": "npkill",
-    "db:generate": "pnpm --filter @workspace/db db:generate",
-    "db:migrate": "pnpm --filter @workspace/db db:migrate",
-    "db:push": "pnpm --filter @workspace/db db:push",
-    "db:studio": "pnpm --filter @workspace/db db:studio",
-    "gen-auth-schema": "pnpm --filter @workspace/db gen-auth-schema"
+    "gen-schema": "turbo run gen-schema",
+    "web:db:generate": "pnpm --filter @workspace/web-db-schema db:generate",
+    "web:db:migrate": "pnpm --filter @workspace/web-db-schema db:migrate",
+    "web:db:push": "pnpm --filter @workspace/web-db-schema db:push",
+    "web:db:studio": "pnpm --filter @workspace/web-db-schema db:studio"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",
