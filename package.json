@@ -15,6 +15,7 @@
   "packageManager": "pnpm@10.33.0",
   "scripts": {
     "dev": "turbo run dev",
+    "admin:dev": "pnpm --filter @workspace/admin-web dev",
     "web:dev": "turbo run dev dev:stripe-webhook --filter=@workspace/web",
     "build": "turbo run build",
     "lint": "turbo run lint",
@@ -30,9 +31,6 @@
     "web:test:e2e:chromium": "pnpm --filter @workspace/web test:e2e:chromium",
     "web:test:e2e:ui": "pnpm --filter @workspace/web test:e2e:ui",
     "web:test:e2e:report": "pnpm --filter @workspace/web test:e2e:report",
-    "admin:dev": "pnpm --filter @workspace/admin-web dev",
-    "admin:test": "pnpm --filter @workspace/admin-web test",
-    "admin:test:e2e:chromium": "pnpm --filter @workspace/admin-web test:e2e:chromium",
     "prepare": "husky || echo 'Skip installing husky'",
     "clean": "npkill",
     "gen-schema": "turbo run gen-schema",
