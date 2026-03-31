@@ -138,7 +138,6 @@ function buildTestConfig(overrides?: Partial<AuthConfig>): AuthConfig {
     secret: 'test-secret',
     google: { clientId: 'gid', clientSecret: 'gsecret' },
     stripe: { secretKey: 'sk_test', webhookSecret: 'whsec_test' },
-    adminUserIds: ['admin-1'],
     ...overrides,
   };
 }

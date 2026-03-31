@@ -35,7 +35,6 @@ export interface AuthConfig {
     secretKey: string;
     webhookSecret: string;
   };
-  adminUserIds?: Array<string>;
   trustedOrigins?: Array<string>;
   /** Logger callback. Falls back to console.log when not provided. May return a promise for async loggers. */
   logger?: (
@@ -314,9 +313,7 @@ export function createAuth(config: AuthConfig) {
           },
         },
       }),
-      admin({
-        adminUserIds: config.adminUserIds ?? [],
-      }),
+      admin(),
       tanstackStartCookies(),
     ],
   });
