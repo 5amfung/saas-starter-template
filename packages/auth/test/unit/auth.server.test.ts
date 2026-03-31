@@ -110,7 +110,7 @@ vi.mock('drizzle-orm', () => ({
   eq: vi.fn((a, b) => ({ _eq: [a, b] })),
 }));
 
-vi.mock('@workspace/web-db-schema', () => ({
+vi.mock('@workspace/db-schema', () => ({
   subscription: { status: 'status', referenceId: 'referenceId' },
   user: { id: 'user_id' },
 }));

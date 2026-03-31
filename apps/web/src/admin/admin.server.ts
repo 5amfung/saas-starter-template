@@ -1,7 +1,7 @@
 import { redirect } from '@tanstack/react-router';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { and, gte, isNotNull, lt, sql } from 'drizzle-orm';
-import { user as userTable } from '@workspace/web-db-schema';
+import { user as userTable } from '@workspace/db-schema';
 import { auth, db } from '@/init';
 
 // --- Auth ---

@@ -36,10 +36,10 @@
     "prepare": "husky || echo 'Skip installing husky'",
     "clean": "npkill",
     "gen-schema": "turbo run gen-schema",
-    "web:db:generate": "pnpm --filter @workspace/web-db-schema db:generate",
-    "web:db:migrate": "pnpm --filter @workspace/web-db-schema db:migrate",
-    "web:db:push": "pnpm --filter @workspace/web-db-schema db:push",
-    "web:db:studio": "pnpm --filter @workspace/web-db-schema db:studio"
+    "web:db:generate": "pnpm --filter @workspace/db-schema db:generate",
+    "web:db:migrate": "pnpm --filter @workspace/db-schema db:migrate",
+    "web:db:push": "pnpm --filter @workspace/db-schema db:push",
+    "web:db:studio": "pnpm --filter @workspace/db-schema db:studio"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",

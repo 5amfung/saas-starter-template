@@ -13,7 +13,7 @@ import Stripe from 'stripe';
 import {
   subscription as subscriptionTable,
   user as userTable,
-} from '@workspace/web-db-schema';
+} from '@workspace/db-schema';
 import { createAuthEmails } from './auth-emails.server';
 import { isDuplicateOrganizationError, isSignInPath } from './auth-utils';
 import { createBillingHelpers } from './billing.server';

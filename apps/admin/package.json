@@ -39,7 +39,7 @@
     "@workspace/auth": "workspace:*",
     "@workspace/email": "workspace:*",
     "@workspace/db": "workspace:*",
-    "@workspace/web-db-schema": "workspace:*",
+    "@workspace/db-schema": "workspace:*",
     "@workspace/ui": "workspace:*",
     "better-auth": "1.5.5",
     "class-variance-authority": "^0.7.1",

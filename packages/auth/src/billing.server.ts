@@ -4,7 +4,7 @@ import {
   member as memberTable,
   organization as organizationTable,
   subscription as subscriptionTable,
-} from '@workspace/web-db-schema';
+} from '@workspace/db-schema';
 import { resolveWorkspacePlanId } from './plans';
 import type { Database } from '@workspace/db';
 import type { PlanId } from './plans';

@@ -1,7 +1,7 @@
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { createAuth } from '@workspace/auth/server';
 import { createDb } from '@workspace/db';
-import * as schema from '@workspace/web-db-schema';
+import * as schema from '@workspace/db-schema';
 import { createEmailClient, createMockEmailClient } from '@workspace/email';
 import { logger } from '@/lib/logger';
 
