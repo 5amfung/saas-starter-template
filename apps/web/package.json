@@ -43,6 +43,7 @@
     "@tanstack/router-plugin": "^1.159.4",
     "@workspace/auth": "workspace:*",
     "@workspace/db": "workspace:*",
+    "@workspace/web-db-schema": "workspace:*",
     "@workspace/email": "workspace:*",
     "@workspace/ui": "workspace:*",
     "better-auth": "1.5.5",

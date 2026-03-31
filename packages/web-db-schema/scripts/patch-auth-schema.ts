@@ -1,17 +1,24 @@
 /**
- * Patches src/db/auth.schema.ts after Better Auth CLI generate.
+ * Patches an auth.schema.ts file after Better Auth CLI generate.
  * Injects recommended indexes into generated Drizzle tables so they are not lost on regenerate.
+ *
+ * Usage: tsx scripts/patch-auth-schema.ts <path/to/auth.schema.ts>
  *
  * Based on: https://github.com/better-auth/better-auth/discussions/5717
  * Run automatically after gen-auth-schema (see package.json).
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const AUTH_SCHEMA_PATH = join(ROOT, 'src/auth.schema.ts');
+if (!process.argv[2]) {
+  console.error(
+    'Usage: tsx scripts/patch-auth-schema.ts <path/to/auth.schema.ts>'
+  );
+  process.exit(1);
+}
+
+const authSchemaPath = resolve(process.argv[2]);
 
 const EXPORT_PREFIX = 'export const ';
 
@@ -58,7 +65,7 @@ function indexIdFromLine(line: string): string | null {
 }
 
 function main(): void {
-  let content = readFileSync(AUTH_SCHEMA_PATH, 'utf-8');
+  let content = readFileSync(authSchemaPath, 'utf-8');
 
   // Ensure `index` is in the pg-core import if we use it and it's missing.
   const match = content.match(PG_CORE_IMPORT_REGEX);
@@ -116,7 +123,7 @@ function main(): void {
       content.slice(closingParen);
   }
 
-  writeFileSync(AUTH_SCHEMA_PATH, content);
+  writeFileSync(authSchemaPath, content);
 }
 
 main();

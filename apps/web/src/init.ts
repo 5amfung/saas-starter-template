@@ -1,10 +1,11 @@
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { createAuth } from '@workspace/auth/server';
 import { createDb } from '@workspace/db';
+import * as schema from '@workspace/web-db-schema';
 import { createEmailClient, createMockEmailClient } from '@workspace/email';
 import { logger } from '@/lib/logger';
 
-export const db = createDb(process.env.DATABASE_URL!);
+export const db = createDb(process.env.DATABASE_URL!, schema);
 
 // E2E_MOCK_EMAIL is inlined at build time by Nitro's rollupConfig.define
 // (see vite.config.ts). Production builds replace it with "" so Rollup

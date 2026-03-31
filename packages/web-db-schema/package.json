@@ -1,5 +1,5 @@
 {
-  "name": "@workspace/db",
+  "name": "@workspace/web-db-schema",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -14,7 +14,14 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "test:unit": "vitest run --passWithNoTests",
-    "coverage": "vitest run --coverage --passWithNoTests"
+    "coverage": "vitest run --coverage --passWithNoTests",
+    "db:generate": "dotenv -e .env -- drizzle-kit generate",
+    "db:migrate": "dotenv -e .env -- drizzle-kit migrate",
+    "db:push": "dotenv -e .env -- drizzle-kit push",
+    "db:studio": "dotenv -e .env -- drizzle-kit studio",
+    "gen-schema": "pnpm run gen-auth-schema && pnpm run patch-indices",
+    "gen-auth-schema": "dotenv -e .env -- pnpx @better-auth/cli generate --config ../auth/src/auth.cli.ts --output ./src/auth.schema.ts --yes",
+    "patch-indices": "node --experimental-strip-types scripts/patch-auth-schema.ts ./src/auth.schema.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",

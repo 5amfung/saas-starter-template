@@ -10,7 +10,8 @@ import {
   subscription,
   user,
 } from '../../src/auth.schema';
-import { createDb, schema } from '../../src/index';
+import { createDb } from '../../../db/src/index';
+import * as schema from '../../src/schema';
 
 // ---------------------------------------------------------------------------
 // app.schema.ts — notificationPreferences
