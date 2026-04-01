@@ -6,12 +6,13 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card';
 import { FieldDescription } from '@workspace/ui/components/field';
+import type { ReactNode } from 'react';
 
 interface CheckEmailCardProps {
   title: string;
-  description: React.ReactNode;
-  actions?: React.ReactNode;
-  footer?: React.ReactNode;
+  description: ReactNode;
+  actions?: ReactNode;
+  footer?: ReactNode;
 }
 
 export function CheckEmailCard({

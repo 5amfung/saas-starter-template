@@ -28,6 +28,35 @@ interface ResetPasswordFormProps {
 export function ResetPasswordForm({ token, error }: ResetPasswordFormProps) {
   const [isSuccess, setIsSuccess] = useState(false);
 
+  const form = useForm({
+    defaultValues: {
+      newPassword: '',
+      confirmPassword: '',
+    },
+    validators: {
+      onBlur: resetPasswordSchema,
+      onSubmit: resetPasswordSchema,
+    },
+    onSubmit: async ({ value, formApi }) => {
+      // token is guaranteed by the early return below, but narrows the type here.
+      if (!token) return;
+      const { error: resetError } = await authClient.resetPassword({
+        newPassword: value.newPassword,
+        token,
+      });
+      if (resetError) {
+        const message =
+          resetError.message ?? 'Something went wrong. Please try again.';
+        formApi.setErrorMap({
+          ...formApi.state.errorMap,
+          onSubmit: { form: message, fields: {} },
+        });
+        return;
+      }
+      setIsSuccess(true);
+    },
+  });
+
   if (error || !token) {
     return (
       <Card>
@@ -52,34 +81,6 @@ export function ResetPasswordForm({ token, error }: ResetPasswordFormProps) {
       </Card>
     );
   }
-
-  const form = useForm({
-    defaultValues: {
-      newPassword: '',
-      confirmPassword: '',
-    },
-    validators: {
-      onBlur: resetPasswordSchema,
-      onSubmit: resetPasswordSchema,
-    },
-    onSubmit: async ({ value, formApi }) => {
-      if (!token) return;
-      const { error: resetError } = await authClient.resetPassword({
-        newPassword: value.newPassword,
-        token,
-      });
-      if (resetError) {
-        const message =
-          resetError.message ?? 'Something went wrong. Please try again.';
-        formApi.setErrorMap({
-          ...formApi.state.errorMap,
-          onSubmit: { form: message, fields: {} },
-        });
-        return;
-      }
-      setIsSuccess(true);
-    },
-  });
 
   if (isSuccess) {
     return (

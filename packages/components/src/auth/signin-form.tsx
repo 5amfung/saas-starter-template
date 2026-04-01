@@ -1,5 +1,5 @@
 import { useForm } from '@tanstack/react-form';
-import { Link, useNavigate, useSearch } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { authClient } from '@workspace/auth/client';
 import { loginSchema } from '@workspace/auth/schemas';
 import {
@@ -23,9 +23,6 @@ import { FormSubmitButton } from '../form/form-submit-button';
 import { ValidatedField } from '../form/validated-field';
 import { GoogleSignInButton } from './google-sign-in-button';
 
-const ADMIN_ONLY_ERROR_MESSAGE =
-  'Admin access required. Please contact your administrator.';
-
 interface SigninFormProps {
   /** URL to redirect to after successful sign-in when no ?redirect param is present. */
   defaultCallbackUrl?: string;
@@ -48,10 +45,6 @@ export function SigninForm({
 }: SigninFormProps) {
   const navigate = useNavigate();
   const callbackURL = redirect ?? defaultCallbackUrl;
-
-  // Reads ?error=admin_only from URL search params — handled as a known error code.
-  const searchParams = useSearch({ strict: false });
-  const adminOnlyError = searchParams.error === 'admin_only';
 
   const form = useForm({
     defaultValues: { email: '', password: '' },
@@ -103,9 +96,6 @@ export function SigninForm({
                       : 'Google sign-in was cancelled or failed. Please try again.',
                   ]}
                 />
-              )}
-              {adminOnlyError && (
-                <FormError errors={[ADMIN_ONLY_ERROR_MESSAGE]} />
               )}
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 Or continue with
