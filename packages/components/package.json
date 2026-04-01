@@ -16,7 +16,6 @@
     "@tanstack/react-form": "^1.28.0",
     "@tanstack/react-query": "^5.91.2",
     "@tanstack/react-router": "^1.159.4",
-    "@tanstack/react-start": "^1.159.4",
     "@tanstack/react-table": "^8.21.3",
     "@workspace/auth": "workspace:*",
     "@workspace/ui": "workspace:*",
@@ -40,7 +39,6 @@
     "./hooks": "./src/hooks/index.ts",
     "./icons": "./src/icons/index.ts",
     "./layout": "./src/layout/index.ts",
-    "./lib": "./src/lib/index.ts",
-    "./lib/server": "./src/lib/logger.server.ts"
+    "./lib": "./src/lib/index.ts"
   }
 }

@@ -3,11 +3,11 @@ const { mockLogger, mockRequestLogger } = vi.hoisted(() => ({
   mockRequestLogger: vi.fn(),
 }));
 
-vi.mock('@workspace/components/lib', () => ({
+vi.mock('@workspace/logging', () => ({
   createLogger: vi.fn(() => mockLogger),
 }));
 
-vi.mock('@workspace/components/lib/server', () => ({
+vi.mock('@workspace/logging/server', () => ({
   createRequestLogger: vi.fn(() => mockRequestLogger),
 }));
 
@@ -24,7 +24,7 @@ beforeAll(async () => {
 
 describe('logger', () => {
   it('is the logger created by createLogger with service name "web"', async () => {
-    const { createLogger } = await import('@workspace/components/lib');
+    const { createLogger } = await import('@workspace/logging');
     expect(createLogger).toHaveBeenCalledWith('web');
     expect(logger).toBe(mockLogger);
   });
@@ -32,8 +32,7 @@ describe('logger', () => {
 
 describe('requestLogger', () => {
   it('is the request logger created by createRequestLogger with the web logger', async () => {
-    const { createRequestLogger } =
-      await import('@workspace/components/lib/server');
+    const { createRequestLogger } = await import('@workspace/logging/server');
     expect(createRequestLogger).toHaveBeenCalledWith(mockLogger);
     expect(requestLogger).toBe(mockRequestLogger);
   });
