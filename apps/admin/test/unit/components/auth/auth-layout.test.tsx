@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react';
-import { AuthLayout } from '@/components/auth/auth-layout';
+import { AuthLayout } from '@workspace/components/auth';
 
 describe('AuthLayout', () => {
   it('renders children within layout', () => {

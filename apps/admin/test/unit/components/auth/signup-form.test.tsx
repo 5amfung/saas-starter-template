@@ -2,9 +2,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import { createRouterLinkMock } from '../../../mocks/router';
-import { createGoogleSignInButtonMock } from '../../../mocks/google-sign-in-button';
-import { SignupForm } from '@/components/auth/signup-form';
+import { SignupForm } from '@workspace/components/auth';
 
 const { signInEmail, signUpEmail, navigate } = vi.hoisted(() => ({
   signInEmail: vi.fn(),
@@ -22,12 +20,10 @@ vi.mock('@workspace/auth/client', () => ({
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal()),
   useNavigate: () => navigate,
-  Link: createRouterLinkMock(),
+  Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
+    <a href={to}>{children}</a>
+  ),
 }));
-
-vi.mock('@/components/auth/google-sign-in-button', () =>
-  createGoogleSignInButtonMock()
-);
 
 describe('SignupForm', () => {
   beforeEach(() => {
@@ -35,7 +31,7 @@ describe('SignupForm', () => {
   });
 
   it('renders email, password, and confirm password fields', () => {
-    renderWithProviders(<SignupForm />);
+    renderWithProviders(<SignupForm defaultCallbackUrl="/dashboard" />);
     expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument();
@@ -43,7 +39,7 @@ describe('SignupForm', () => {
 
   it('shows validation error for short password', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<SignupForm />);
+    renderWithProviders(<SignupForm defaultCallbackUrl="/dashboard" />);
 
     await user.type(screen.getByLabelText(/^password$/i), 'short');
     await user.tab();
@@ -57,7 +53,7 @@ describe('SignupForm', () => {
 
   it('shows validation error for mismatched passwords', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<SignupForm />);
+    renderWithProviders(<SignupForm defaultCallbackUrl="/dashboard" />);
 
     await user.type(screen.getByLabelText(/^password$/i), 'password123');
     await user.type(screen.getByLabelText(/confirm password/i), 'different99');
@@ -70,7 +66,7 @@ describe('SignupForm', () => {
 
   it('validates password at exact minimum length boundary (8 chars)', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<SignupForm />);
+    renderWithProviders(<SignupForm defaultCallbackUrl="/dashboard" />);
 
     const passwordInput = screen.getByLabelText(/^password$/i);
     await user.type(passwordInput, '12345678');
@@ -86,7 +82,7 @@ describe('SignupForm', () => {
   it('calls authClient.signUp.email with correct params on valid submit', async () => {
     const user = userEvent.setup();
     signUpEmail.mockResolvedValue({ data: {}, error: null });
-    renderWithProviders(<SignupForm />);
+    renderWithProviders(<SignupForm defaultCallbackUrl="/dashboard" />);
 
     await user.type(screen.getByLabelText(/^email$/i), 'new@example.com');
     await user.type(screen.getByLabelText(/^password$/i), 'password123');
@@ -108,7 +104,7 @@ describe('SignupForm', () => {
   it('navigates to /verify on successful signup', async () => {
     const user = userEvent.setup();
     signUpEmail.mockResolvedValue({ data: {}, error: null });
-    renderWithProviders(<SignupForm />);
+    renderWithProviders(<SignupForm defaultCallbackUrl="/dashboard" />);
 
     await user.type(screen.getByLabelText(/^email$/i), 'new@example.com');
     await user.type(screen.getByLabelText(/^password$/i), 'password123');
@@ -131,7 +127,7 @@ describe('SignupForm', () => {
       data: null,
       error: { status: 422, message: 'User already exists' },
     });
-    renderWithProviders(<SignupForm />);
+    renderWithProviders(<SignupForm defaultCallbackUrl="/dashboard" />);
 
     await user.type(screen.getByLabelText(/^email$/i), 'existing@example.com');
     await user.type(screen.getByLabelText(/^password$/i), 'password123');

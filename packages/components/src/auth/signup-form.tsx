@@ -1,5 +1,7 @@
 import { useForm } from '@tanstack/react-form';
 import { Link, useNavigate } from '@tanstack/react-router';
+import { authClient } from '@workspace/auth/client';
+import { signupSchema } from '@workspace/auth/schemas';
 import {
   Card,
   CardContent,
@@ -14,31 +16,27 @@ import {
   FieldSeparator,
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
-import { signupSchema } from '@workspace/auth/schemas';
-import { authClient } from '@workspace/auth/client';
-import {
-  FormErrorDisplay,
-  FormSubmitButton,
-  ValidatedField,
-} from '@workspace/components/form';
-import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
+import { FormErrorDisplay } from '../form/form-error-display';
+import { FormSubmitButton } from '../form/form-submit-button';
+import { ValidatedField } from '../form/validated-field';
+import { GoogleSignInButton } from './google-sign-in-button';
 
-const DEFAULT_CALLBACK_URL = '/dashboard';
+interface SignupFormProps {
+  /** URL to redirect to after successful signup when no ?redirect param is present. */
+  defaultCallbackUrl?: string;
+  redirect?: string;
+}
 
-export function SignupForm({ redirect }: { redirect?: string }) {
+export function SignupForm({
+  defaultCallbackUrl = '/ws',
+  redirect,
+}: SignupFormProps) {
   const navigate = useNavigate();
-  const callbackURL = redirect ?? DEFAULT_CALLBACK_URL;
+  const callbackURL = redirect ?? defaultCallbackUrl;
 
   const form = useForm({
-    defaultValues: {
-      email: '',
-      password: '',
-      confirmPassword: '',
-    },
-    validators: {
-      onBlur: signupSchema,
-      onSubmit: signupSchema,
-    },
+    defaultValues: { email: '', password: '', confirmPassword: '' },
+    validators: { onBlur: signupSchema, onSubmit: signupSchema },
     onSubmit: async ({ value, formApi }) => {
       const { error } = await authClient.signUp.email({
         email: value.email,

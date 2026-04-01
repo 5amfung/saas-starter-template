@@ -2,8 +2,7 @@ import { useEffect } from 'react';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
 import { authClient } from '@workspace/auth/client';
 import { getWebmailLinkForEmail } from '@workspace/components/lib';
-import { AuthLayout } from '@/components/auth/auth-layout';
-import { CheckEmailCard } from '@/components/auth/check-email-card';
+import { AuthLayout, CheckEmailCard } from '@workspace/components/auth';
 
 const SUCCESS_REDIRECT_DELAY_MS = 3000;
 

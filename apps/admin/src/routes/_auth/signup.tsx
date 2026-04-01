@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { signupSearchSchema } from '@workspace/auth/schemas';
-import { SignupForm } from '@/components/auth/signup-form';
+import { SignupForm } from '@workspace/components/auth';
 
 export const Route = createFileRoute('/_auth/signup')({
   validateSearch: (search) => signupSearchSchema.parse(search),
@@ -9,5 +9,5 @@ export const Route = createFileRoute('/_auth/signup')({
 
 function SignUpPage() {
   const { redirect } = Route.useSearch();
-  return <SignupForm redirect={redirect} />;
+  return <SignupForm defaultCallbackUrl="/dashboard" redirect={redirect} />;
 }

@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { Link } from '@tanstack/react-router';
-import { authClient } from '@workspace/auth/client';
-import { forgotPasswordSchema } from '@workspace/auth/schemas';
 import {
   Card,
   CardContent,
@@ -16,19 +14,17 @@ import {
   FieldGroup,
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
-import {
-  FormErrorDisplay,
-  FormSubmitButton,
-  ValidatedField,
-} from '@workspace/components/form';
+import { forgotPasswordSchema } from '@workspace/auth/schemas';
+import { authClient } from '@workspace/auth/client';
+import { FormErrorDisplay } from '../form/form-error-display';
+import { FormSubmitButton } from '../form/form-submit-button';
+import { ValidatedField } from '../form/validated-field';
 
 export function ForgotPasswordForm() {
   const [isSuccess, setIsSuccess] = useState(false);
 
   const form = useForm({
-    defaultValues: {
-      email: '',
-    },
+    defaultValues: { email: '' },
     validators: {
       onBlur: forgotPasswordSchema,
       onSubmit: forgotPasswordSchema,

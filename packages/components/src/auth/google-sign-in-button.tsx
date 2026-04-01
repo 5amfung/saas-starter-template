@@ -1,16 +1,10 @@
 import { useState } from 'react';
 import { IconLoader } from '@tabler/icons-react';
-import { authClient } from '@workspace/auth/client';
 import { Button } from '@workspace/ui/components/button';
-import { GoogleIcon } from '@workspace/components/icons';
+import { authClient } from '@workspace/auth/client';
+import { GoogleIcon } from '../icons/google-icon';
 
-const DEFAULT_CALLBACK_URL = '/ws';
-
-export function GoogleSignInButton({
-  callbackURL = DEFAULT_CALLBACK_URL,
-}: {
-  callbackURL?: string;
-}) {
+export function GoogleSignInButton({ callbackURL }: { callbackURL: string }) {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

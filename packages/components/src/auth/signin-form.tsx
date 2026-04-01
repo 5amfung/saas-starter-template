@@ -1,5 +1,5 @@
 import { useForm } from '@tanstack/react-form';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { authClient } from '@workspace/auth/client';
 import { loginSchema } from '@workspace/auth/schemas';
 import {
@@ -17,35 +17,45 @@ import {
   FieldSeparator,
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
-import {
-  FormError,
-  FormErrorDisplay,
-  FormSubmitButton,
-  ValidatedField,
-} from '@workspace/components/form';
-import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
+import { FormError } from '../form/form-error';
+import { FormErrorDisplay } from '../form/form-error-display';
+import { FormSubmitButton } from '../form/form-submit-button';
+import { ValidatedField } from '../form/validated-field';
+import { GoogleSignInButton } from './google-sign-in-button';
 
-const DEFAULT_CALLBACK_URL = '/ws';
+const ADMIN_ONLY_ERROR_MESSAGE =
+  'Admin access required. Please contact your administrator.';
+
+interface SigninFormProps {
+  /** URL to redirect to after successful sign-in when no ?redirect param is present. */
+  defaultCallbackUrl?: string;
+  /** Card title text. */
+  title?: string;
+  /** Card description text. */
+  description?: string;
+  /** OAuth error code passed from the URL (e.g. 'admin_only'). */
+  oauthError?: string;
+  /** Redirect URL passed from the route search params. */
+  redirect?: string;
+}
 
 export function SigninForm({
+  defaultCallbackUrl = '/ws',
+  title = 'Welcome back',
+  description = 'Sign in with your Google account',
   oauthError,
   redirect,
-}: {
-  oauthError?: string;
-  redirect?: string;
-}) {
+}: SigninFormProps) {
   const navigate = useNavigate();
-  const callbackURL = redirect ?? DEFAULT_CALLBACK_URL;
+  const callbackURL = redirect ?? defaultCallbackUrl;
+
+  // Reads ?error=admin_only from URL search params — handled as a known error code.
+  const searchParams = useSearch({ strict: false });
+  const adminOnlyError = searchParams.error === 'admin_only';
 
   const form = useForm({
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-    validators: {
-      onBlur: loginSchema,
-      onSubmit: loginSchema,
-    },
+    defaultValues: { email: '', password: '' },
+    validators: { onBlur: loginSchema, onSubmit: loginSchema },
     onSubmit: async ({ value, formApi }) => {
       const { error } = await authClient.signIn.email({
         email: value.email,
@@ -65,7 +75,6 @@ export function SigninForm({
           ...formApi.state.errorMap,
           onSubmit: { form: message, fields: {} },
         });
-        return;
       }
     },
   });
@@ -74,8 +83,8 @@ export function SigninForm({
     <>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome back</CardTitle>
-          <CardDescription>Sign in with your Google account</CardDescription>
+          <CardTitle className="text-xl">{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>
           <form
@@ -89,9 +98,14 @@ export function SigninForm({
               {oauthError && (
                 <FormError
                   errors={[
-                    'Google sign-in was cancelled or failed. Please try again.',
+                    oauthError === 'admin_only'
+                      ? 'Access denied. This portal is restricted to administrators.'
+                      : 'Google sign-in was cancelled or failed. Please try again.',
                   ]}
                 />
+              )}
+              {adminOnlyError && (
+                <FormError errors={[ADMIN_ONLY_ERROR_MESSAGE]} />
               )}
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 Or continue with

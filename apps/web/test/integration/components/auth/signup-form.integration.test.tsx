@@ -2,9 +2,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import { createRouterLinkMock } from '../../../mocks/router';
-import { createGoogleSignInButtonMock } from '../../../mocks/google-sign-in-button';
-import { SignupForm } from '@/components/auth/signup-form';
+import { SignupForm } from '@workspace/components/auth';
 
 const { signInEmail, signUpEmail, navigate } = vi.hoisted(() => ({
   signInEmail: vi.fn(),
@@ -22,12 +20,10 @@ vi.mock('@workspace/auth/client', () => ({
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal()),
   useNavigate: () => navigate,
-  Link: createRouterLinkMock(),
+  Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
+    <a href={to}>{children}</a>
+  ),
 }));
-
-vi.mock('@/components/auth/google-sign-in-button', () =>
-  createGoogleSignInButtonMock()
-);
 
 describe('SignupForm integration', () => {
   beforeEach(() => {

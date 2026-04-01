@@ -2,8 +2,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import { createRouterLinkMock } from '../../../mocks/router';
-import { ForgotPasswordForm } from '@/components/auth/forgot-password-form';
+import { ForgotPasswordForm } from '@workspace/components/auth';
 
 const { requestPasswordReset } = vi.hoisted(() => ({
   requestPasswordReset: vi.fn(),
@@ -17,7 +16,9 @@ vi.mock('@workspace/auth/client', () => ({
 
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal()),
-  Link: createRouterLinkMock(),
+  Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
+    <a href={to}>{children}</a>
+  ),
 }));
 
 describe('ForgotPasswordForm', () => {

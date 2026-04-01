@@ -2,9 +2,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import { createRouterLinkMock } from '../../../mocks/router';
-import { createGoogleSignInButtonMock } from '../../../mocks/google-sign-in-button';
-import { SigninForm } from '@/components/auth/signin-form';
+import { SigninForm } from '@workspace/components/auth';
 
 const { signInEmail, signUpEmail, navigate } = vi.hoisted(() => ({
   signInEmail: vi.fn(),
@@ -23,12 +21,10 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal()),
   useNavigate: () => navigate,
   useSearch: () => ({}),
-  Link: createRouterLinkMock(),
+  Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
+    <a href={to}>{children}</a>
+  ),
 }));
-
-vi.mock('@/components/auth/google-sign-in-button', () =>
-  createGoogleSignInButtonMock()
-);
 
 describe('SigninForm integration', () => {
   beforeEach(() => {
@@ -38,7 +34,7 @@ describe('SigninForm integration', () => {
   it('completes full sign-in flow: fill -> submit -> navigate', async () => {
     const user = userEvent.setup();
     signInEmail.mockResolvedValue({ data: {}, error: null });
-    renderWithProviders(<SigninForm />);
+    renderWithProviders(<SigninForm defaultCallbackUrl="/dashboard" />);
 
     await user.type(screen.getByLabelText(/email/i), 'test@example.com');
     await user.type(screen.getByLabelText(/password/i), 'password123');
@@ -58,7 +54,7 @@ describe('SigninForm integration', () => {
       })
       .mockResolvedValueOnce({ data: {}, error: null });
 
-    renderWithProviders(<SigninForm />);
+    renderWithProviders(<SigninForm defaultCallbackUrl="/dashboard" />);
 
     await user.type(screen.getByLabelText(/email/i), 'test@example.com');
     await user.type(screen.getByLabelText(/password/i), 'wrong');

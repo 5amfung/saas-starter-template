@@ -2,9 +2,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import { createRouterLinkMock } from '../../../mocks/router';
-import { createGoogleSignInButtonMock } from '../../../mocks/google-sign-in-button';
-import { SigninForm } from '@/components/auth/signin-form';
+import { SigninForm } from '@workspace/components/auth';
 
 const { signInEmail, signUpEmail, navigate } = vi.hoisted(() => ({
   signInEmail: vi.fn(),
@@ -23,13 +21,10 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal()),
   useNavigate: () => navigate,
   useSearch: () => ({}),
-  Link: createRouterLinkMock(),
+  Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
+    <a href={to}>{children}</a>
+  ),
 }));
-
-// Mock Google sign-in button to avoid OAuth setup.
-vi.mock('@/components/auth/google-sign-in-button', () =>
-  createGoogleSignInButtonMock()
-);
 
 describe('SigninForm', () => {
   beforeEach(() => {
@@ -37,14 +32,14 @@ describe('SigninForm', () => {
   });
 
   it('renders email and password fields', () => {
-    renderWithProviders(<SigninForm />);
+    renderWithProviders(<SigninForm defaultCallbackUrl="/dashboard" />);
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
   });
 
   it('shows validation errors on empty submit', async () => {
     const user = userEvent.setup();
-    renderWithProviders(<SigninForm />);
+    renderWithProviders(<SigninForm defaultCallbackUrl="/dashboard" />);
 
     await user.click(screen.getByLabelText(/email/i));
     await user.tab();
@@ -62,7 +57,7 @@ describe('SigninForm', () => {
   it('calls authClient.signIn.email with correct params on submit', async () => {
     const user = userEvent.setup();
     signInEmail.mockResolvedValue({ data: {}, error: null });
-    renderWithProviders(<SigninForm />);
+    renderWithProviders(<SigninForm defaultCallbackUrl="/dashboard" />);
 
     await user.type(screen.getByLabelText(/email/i), 'test@example.com');
     await user.type(screen.getByLabelText(/password/i), 'password123');
@@ -85,7 +80,7 @@ describe('SigninForm', () => {
       data: null,
       error: { status: 401, message: 'Invalid credentials' },
     });
-    renderWithProviders(<SigninForm />);
+    renderWithProviders(<SigninForm defaultCallbackUrl="/dashboard" />);
 
     await user.type(screen.getByLabelText(/email/i), 'test@example.com');
     await user.type(screen.getByLabelText(/password/i), 'wrong');
@@ -105,7 +100,7 @@ describe('SigninForm', () => {
     });
 
     const user = userEvent.setup();
-    renderWithProviders(<SigninForm />);
+    renderWithProviders(<SigninForm defaultCallbackUrl="/dashboard" />);
 
     await user.type(screen.getByLabelText(/email/i), 'test@example.com');
     await user.type(screen.getByLabelText(/password/i), 'password123');
@@ -120,7 +115,7 @@ describe('SigninForm', () => {
     signInEmail.mockImplementation(() => new Promise(() => {}));
 
     const user = userEvent.setup();
-    renderWithProviders(<SigninForm />);
+    renderWithProviders(<SigninForm defaultCallbackUrl="/dashboard" />);
 
     await user.type(screen.getByLabelText(/email/i), 'test@example.com');
     await user.type(screen.getByLabelText(/password/i), 'password123');
@@ -137,7 +132,7 @@ describe('SigninForm', () => {
       data: null,
       error: { status: 403, message: 'Email not verified' },
     });
-    renderWithProviders(<SigninForm />);
+    renderWithProviders(<SigninForm defaultCallbackUrl="/dashboard" />);
 
     await user.type(screen.getByLabelText(/email/i), 'test@example.com');
     await user.type(screen.getByLabelText(/password/i), 'password123');
@@ -156,7 +151,9 @@ describe('SigninForm', () => {
   it('uses redirect as callbackURL when provided', async () => {
     const user = userEvent.setup();
     signInEmail.mockResolvedValue({ data: {}, error: null });
-    renderWithProviders(<SigninForm redirect="/custom-redirect" />);
+    renderWithProviders(
+      <SigninForm defaultCallbackUrl="/dashboard" redirect="/custom-redirect" />
+    );
 
     await user.type(screen.getByLabelText(/email/i), 'test@example.com');
     await user.type(screen.getByLabelText(/password/i), 'password123');
@@ -172,7 +169,7 @@ describe('SigninForm', () => {
   it('falls back to /dashboard when redirect is not provided', async () => {
     const user = userEvent.setup();
     signInEmail.mockResolvedValue({ data: {}, error: null });
-    renderWithProviders(<SigninForm />);
+    renderWithProviders(<SigninForm defaultCallbackUrl="/dashboard" />);
 
     await user.type(screen.getByLabelText(/email/i), 'test@example.com');
     await user.type(screen.getByLabelText(/password/i), 'password123');
@@ -193,7 +190,9 @@ describe('SigninForm', () => {
       ...(await importOriginal()),
       useNavigate: () => navigate,
       useSearch: () => ({ error: 'admin_only' }),
-      Link: createRouterLinkMock(),
+      Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
+        <a href={to}>{children}</a>
+      ),
     }));
   });
 });

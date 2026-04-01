@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react';
-import { CheckEmailCard } from '@/components/auth/check-email-card';
+import { CheckEmailCard } from '@workspace/components/auth';
 
 describe('CheckEmailCard', () => {
   it('renders title and description', () => {
