@@ -61,7 +61,7 @@ export function NavUser({
   async function handleLogout() {
     try {
       await authClient.signOut();
-      navigate({ to: '/' });
+      await navigate({ to: '/' });
     } catch (error) {
       console.error('Logout failed', error);
       toast.error('Logout failed. Please try again.');

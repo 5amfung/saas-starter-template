@@ -6,6 +6,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@workspace/ui/components/sidebar';
+import type { ReactNode } from 'react';
 
 export function NavAdmin({
   items,
@@ -13,7 +14,7 @@ export function NavAdmin({
   items: Array<{
     title: string;
     url: string;
-    icon: React.ReactNode;
+    icon: ReactNode;
   }>;
 }) {
   const matchRoute = useMatchRoute();
