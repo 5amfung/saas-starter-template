@@ -2,7 +2,6 @@ import * as React from 'react';
 import { IconLoader2 } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { authClient } from '@workspace/auth/client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,11 +21,9 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card';
 import { Skeleton } from '@workspace/ui/components/skeleton';
-import {
-  LINKED_ACCOUNTS_QUERY_KEY,
-  useLinkedAccountsQuery,
-} from '@workspace/components/hooks';
-import { GoogleIcon } from '@workspace/components/icons';
+import { authClient } from '@workspace/auth/client';
+import { LINKED_ACCOUNTS_QUERY_KEY, useLinkedAccountsQuery } from '../hooks';
+import { GoogleIcon } from '../icons';
 
 /** Subset of social providers configured for this app. */
 type SocialProviderId = 'google';

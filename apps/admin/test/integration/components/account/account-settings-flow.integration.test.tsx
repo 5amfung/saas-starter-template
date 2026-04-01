@@ -2,9 +2,11 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import { AccountProfileForm } from '@/components/account/account-profile-form';
-import { ChangePasswordDialog } from '@/components/account/change-password-dialog';
-import { ChangeEmailDialog } from '@/components/account/change-email-dialog';
+import {
+  AccountProfileForm,
+  ChangeEmailDialog,
+  ChangePasswordDialog,
+} from '@workspace/components/account';
 
 const {
   updateUserMock,

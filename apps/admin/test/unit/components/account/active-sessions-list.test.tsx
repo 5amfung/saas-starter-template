@@ -2,7 +2,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import { ActiveSessionsList } from '@/components/account/active-sessions-list';
+import { ActiveSessionsList } from '@workspace/components/account';
 
 const {
   mockUseSessionQuery,

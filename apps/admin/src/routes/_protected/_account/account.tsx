@@ -12,12 +12,14 @@ import {
   useLinkedAccountsQuery,
   useSessionQuery,
 } from '@workspace/components/hooks';
-import { AccountProfileForm } from '@/components/account/account-profile-form';
-import { ActiveSessionsList } from '@/components/account/active-sessions-list';
-import { ChangeEmailDialog } from '@/components/account/change-email-dialog';
-import { ChangePasswordDialog } from '@/components/account/change-password-dialog';
-import { LinkedAccountsCard } from '@/components/account/linked-accounts-card';
-import { SetPasswordDialog } from '@/components/account/set-password-dialog';
+import {
+  AccountProfileForm,
+  ActiveSessionsList,
+  ChangeEmailDialog,
+  ChangePasswordDialog,
+  LinkedAccountsCard,
+  SetPasswordDialog,
+} from '@workspace/components/account';
 
 export const Route = createFileRoute('/_protected/_account/account')({
   component: AccountPage,

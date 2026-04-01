@@ -2,7 +2,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import { ChangeEmailDialog } from '@/components/account/change-email-dialog';
+import { ChangeEmailDialog } from '@workspace/components/account';
 
 const { changeEmailMock } = vi.hoisted(() => ({
   changeEmailMock: vi.fn(),

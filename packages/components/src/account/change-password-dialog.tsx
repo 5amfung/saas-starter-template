@@ -3,7 +3,6 @@ import { IconLoader2 } from '@tabler/icons-react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { authClient } from '@workspace/auth/client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,8 +22,9 @@ import {
   FieldLabel,
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
-import { toFieldErrorItem } from '@workspace/components/lib';
-import { changePasswordSchema } from '@/account/schemas';
+import { authClient } from '@workspace/auth/client';
+import { toFieldErrorItem } from '../lib';
+import { changePasswordSchema } from './schemas';
 
 export function ChangePasswordDialog() {
   const [open, setOpen] = React.useState(false);

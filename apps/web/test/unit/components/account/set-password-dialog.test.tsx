@@ -2,7 +2,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import { SetPasswordDialog } from '@/components/account/set-password-dialog';
+import { SetPasswordDialog } from '@workspace/components/account';
 
 const { requestPasswordResetMock, signOutMock } = vi.hoisted(() => ({
   requestPasswordResetMock: vi.fn(),

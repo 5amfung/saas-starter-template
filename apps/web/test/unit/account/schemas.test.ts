@@ -2,7 +2,7 @@ import {
   accountProfileSchema,
   changeEmailSchema,
   changePasswordSchema,
-} from '@/account/schemas';
+} from '@workspace/components/account';
 
 describe('accountProfileSchema', () => {
   it('accepts valid name', () => {

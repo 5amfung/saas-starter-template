@@ -7,7 +7,6 @@ import {
 } from '@tabler/icons-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { authClient } from '@workspace/auth/client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,11 +27,12 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card';
 import { Skeleton } from '@workspace/ui/components/skeleton';
+import { authClient } from '@workspace/auth/client';
 import {
   SESSIONS_QUERY_KEY,
   useSessionQuery,
   useSessionsQuery,
-} from '@workspace/components/hooks';
+} from '../hooks';
 
 interface SessionItem {
   id: string;

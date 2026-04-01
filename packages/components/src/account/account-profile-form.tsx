@@ -24,9 +24,10 @@ import {
   FieldLabel,
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
-import { getInitials, toFieldErrorItem } from '@workspace/components/lib';
-import { SESSION_QUERY_KEY } from '@workspace/components/hooks';
-import { accountProfileSchema } from '@/account/schemas';
+import { toFieldErrorItem } from '../lib/form-utils';
+import { getInitials } from '../lib/get-initials';
+import { SESSION_QUERY_KEY } from '../hooks/use-session-query';
+import { accountProfileSchema } from './schemas';
 
 const CARD_FOOTER_CLASS = 'flex justify-end gap-2 pt-6';
 
@@ -42,9 +43,7 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
   const queryClient = useQueryClient();
 
   const form = useForm({
-    defaultValues: {
-      name: user.name,
-    },
+    defaultValues: { name: user.name },
     validators: {
       onBlur: accountProfileSchema,
       onSubmit: accountProfileSchema,
@@ -111,7 +110,6 @@ export function AccountProfileForm({ user }: AccountProfileFormProps) {
               </p>
             </div>
           </div>
-
           <FieldGroup className="gap-6">
             <form.Field
               name="name"
