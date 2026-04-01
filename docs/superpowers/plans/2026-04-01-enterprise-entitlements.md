@@ -141,31 +141,29 @@ export const UNLIMITED = -1;
 // ── Resolution ───────────────────────────────────────────────────────────
 
 /**
+ * Typed override shape — used by the resolver and all callers.
+ * The DB stores JSONB as Record<string, ...> (schemaless), so callers
+ * must cast through this type at the DB read boundary.
+ */
+export type EntitlementOverrides = {
+  limits?: Partial<Record<LimitKey, number>> | null;
+  features?: Partial<Record<FeatureKey, boolean>> | null;
+  quotas?: Partial<Record<QuotaKey, number>> | null;
+};
+
+/**
  * Merges base plan entitlements with optional per-workspace overrides.
  * Pure function — no DB, no Stripe, no side effects.
  */
 export function resolveEntitlements(
   base: Entitlements,
-  overrides?: {
-    limits?: Partial<Record<string, number>> | null;
-    features?: Partial<Record<string, boolean>> | null;
-    quotas?: Partial<Record<string, number>> | null;
-  } | null
+  overrides?: EntitlementOverrides | null
 ): Entitlements {
   if (!overrides) return base;
   return {
-    limits: {
-      ...base.limits,
-      ...(overrides.limits as Partial<Record<LimitKey, number>>),
-    },
-    features: {
-      ...base.features,
-      ...(overrides.features as Partial<Record<FeatureKey, boolean>>),
-    },
-    quotas: {
-      ...base.quotas,
-      ...(overrides.quotas as Partial<Record<QuotaKey, number>>),
-    },
+    limits: { ...base.limits, ...overrides.limits },
+    features: { ...base.features, ...overrides.features },
+    quotas: { ...base.quotas, ...overrides.quotas },
   };
 }
 
@@ -630,6 +628,9 @@ export const workspaceEntitlementOverrides = pgTable(
       .notNull()
       .unique()
       .references(() => organization.id, { onDelete: 'cascade' }),
+    // JSONB columns use Record<string, ...> because Drizzle can't enforce
+    // key unions at the DB layer. Callers must cast to EntitlementOverrides
+    // (keyed by LimitKey/FeatureKey/QuotaKey) at the read boundary.
     limits: jsonb('limits').$type<Partial<Record<string, number>>>(),
     features: jsonb('features').$type<Partial<Record<string, boolean>>>(),
     quotas: jsonb('quotas').$type<Partial<Record<string, number>>>(),
@@ -769,7 +770,10 @@ import {
   checkLimit,
   describeEntitlements,
 } from '@workspace/auth/entitlements';
-import type { Entitlements } from '@workspace/auth/entitlements';
+import type {
+  Entitlements,
+  EntitlementOverrides,
+} from '@workspace/auth/entitlements';
 import { db } from '@workspace/db';
 import { workspaceEntitlementOverrides } from '@workspace/db-schema';
 import { eq } from 'drizzle-orm';
@@ -796,11 +800,12 @@ export async function getWorkspaceEntitlements(
       })
     : undefined;
 
-  const overrides = overrideRow
+  // Cast from Record<string, ...> (DB layer) to EntitlementOverrides (typed keys).
+  const overrides: EntitlementOverrides | undefined = overrideRow
     ? {
-        limits: overrideRow.limits,
-        features: overrideRow.features,
-        quotas: overrideRow.quotas,
+        limits: overrideRow.limits as EntitlementOverrides['limits'],
+        features: overrideRow.features as EntitlementOverrides['features'],
+        quotas: overrideRow.quotas as EntitlementOverrides['quotas'],
       }
     : undefined;
 
