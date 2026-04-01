@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react';
-import { SiteHeader } from '@/components/site-header';
+import { SiteHeader } from '@workspace/components/layout';
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
 
@@ -16,8 +16,32 @@ vi.mock('@workspace/ui/components/separator', () => ({
   ),
 }));
 
-vi.mock('@/components/dynamic-breadcrumb', () => ({
-  DynamicBreadcrumb: () => <nav data-testid="dynamic-breadcrumb" />,
+// Mock router hooks so DynamicBreadcrumb (rendered by SiteHeader) doesn't need a router context.
+vi.mock('@tanstack/react-router', async () => {
+  const actual = await import('@tanstack/react-router');
+  return {
+    ...actual,
+    useMatches: () => [],
+  };
+});
+
+vi.mock('@workspace/ui/components/breadcrumb', () => ({
+  Breadcrumb: ({ children }: { children: React.ReactNode }) => (
+    <nav data-testid="dynamic-breadcrumb">{children}</nav>
+  ),
+  BreadcrumbList: ({ children }: { children: React.ReactNode }) => (
+    <ol>{children}</ol>
+  ),
+  BreadcrumbItem: ({ children }: { children: React.ReactNode }) => (
+    <li>{children}</li>
+  ),
+  BreadcrumbLink: ({ children }: { children: React.ReactNode }) => (
+    <a>{children}</a>
+  ),
+  BreadcrumbPage: ({ children }: { children: React.ReactNode }) => (
+    <span>{children}</span>
+  ),
+  BreadcrumbSeparator: () => <li />,
 }));
 
 // ── Tests ─────────────────────────────────────────────────────────────────────

@@ -5,8 +5,8 @@ import {
   SidebarProvider,
 } from '@workspace/ui/components/sidebar';
 import { authClient } from '@workspace/auth/client';
+import { SiteHeader } from '@workspace/components/layout';
 import { AppSidebar } from '@/components/app-sidebar';
-import { SiteHeader } from '@/components/site-header';
 import { authMiddleware } from '@/middleware/auth';
 
 export const Route = createFileRoute('/_protected')({

@@ -19,11 +19,14 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from '@workspace/ui/components/sidebar';
-import { NavAdmin } from '@/components/nav-admin';
+import {
+  NavAdmin,
+  NavSecondary,
+  NavUser,
+  NavUserSkeleton,
+} from '@workspace/components/layout';
 import { useActiveMemberRoleQuery } from '@/hooks/use-active-member-role-query';
 import { NavMain } from '@/components/nav-main';
-import { NavSecondary } from '@/components/nav-secondary';
-import { NavUser, NavUserSkeleton } from '@/components/nav-user';
 import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 
 const data = {

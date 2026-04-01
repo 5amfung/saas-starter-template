@@ -45,21 +45,15 @@ vi.mock('@workspace/ui/components/sidebar', () => ({
   }) => <button>{children}</button>,
 }));
 
-vi.mock('@/components/nav-admin', () => ({
+vi.mock('@workspace/components/layout', () => ({
   NavAdmin: ({ items }: { items: Array<{ title: string; url: string }> }) => (
     <nav data-testid="nav-admin" data-item-count={items.length} />
   ),
-}));
-
-vi.mock('@/components/nav-secondary', () => ({
   NavSecondary: ({
     items,
   }: {
     items: Array<{ title: string; url: string }>;
   }) => <nav data-testid="nav-secondary" data-item-count={items.length} />,
-}));
-
-vi.mock('@/components/nav-user', () => ({
   NavUser: ({ user }: { user: { name: string; email: string } }) => (
     <div data-testid="nav-user" data-name={user.name} />
   ),

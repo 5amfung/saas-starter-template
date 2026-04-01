@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { IconShield, IconUsers } from '@tabler/icons-react';
 import { render, screen } from '@testing-library/react';
-import { NavAdmin } from '@/components/nav-admin';
+import { NavAdmin } from '@workspace/components/layout';
 
 const { matchRouteMock } = vi.hoisted(() => ({
   matchRouteMock: vi.fn(),

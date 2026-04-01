@@ -50,15 +50,13 @@ import {
   formatDate,
 } from '@workspace/components/lib';
 import { useColumnSort } from '@workspace/components/hooks';
+import { SortableHeader, TablePagination } from '@workspace/components/layout';
 import type {
   ColumnDef,
   Table as ReactTable,
   SortingState,
   VisibilityState,
 } from '@tanstack/react-table';
-
-import { SortableHeader } from '@/components/sortable-header';
-import { TablePagination } from '@/components/table-pagination';
 
 interface UserRow {
   id: string;

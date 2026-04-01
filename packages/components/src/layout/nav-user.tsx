@@ -1,15 +1,12 @@
 'use client';
 
 import {
-  IconCreditCard,
   IconDotsVertical,
   IconLogout,
-  IconNotification,
   IconUserCircle,
 } from '@tabler/icons-react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
-import { authClient } from '@workspace/auth/client';
 import {
   Avatar,
   AvatarFallback,
@@ -31,7 +28,7 @@ import {
   useSidebar,
 } from '@workspace/ui/components/sidebar';
 import { Skeleton } from '@workspace/ui/components/skeleton';
-import { logger } from '@/lib/logger';
+import { authClient } from '@workspace/auth/client';
 
 export function NavUserSkeleton() {
   return (
@@ -66,7 +63,7 @@ export function NavUser({
       await authClient.signOut();
       navigate({ to: '/' });
     } catch (error) {
-      logger('error', 'Logout failed', error);
+      console.error('Logout failed', error);
       toast.error('Logout failed. Please try again.');
     }
   }
@@ -119,16 +116,6 @@ export function NavUser({
               <DropdownMenuItem onClick={() => navigate({ to: '/account' })}>
                 <IconUserCircle />
                 Account
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate({ to: '/billing' })}>
-                <IconCreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => navigate({ to: '/notifications' })}
-              >
-                <IconNotification />
-                Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

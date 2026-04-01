@@ -19,9 +19,12 @@ import {
   SidebarMenuItem,
 } from '@workspace/ui/components/sidebar';
 import { authClient } from '@workspace/auth/client';
-import { NavAdmin } from '@/components/nav-admin';
-import { NavSecondary } from '@/components/nav-secondary';
-import { NavUser, NavUserSkeleton } from '@/components/nav-user';
+import {
+  NavAdmin,
+  NavSecondary,
+  NavUser,
+  NavUserSkeleton,
+} from '@workspace/components/layout';
 
 const navItems = [
   { title: 'Dashboard', url: '/dashboard', icon: <IconDashboard /> },

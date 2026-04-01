@@ -16,7 +16,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@workspace/ui/components/sidebar';
-import { useTheme } from '@/components/theme-provider';
+import { useTheme } from './theme-provider';
 
 export function NavSecondary({
   items,

@@ -2,19 +2,7 @@
 import { IconHelp, IconHome } from '@tabler/icons-react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { NavSecondary } from '@/components/nav-secondary';
-
-const { setThemeMock } = vi.hoisted(() => ({
-  setThemeMock: vi.fn(),
-}));
-
-vi.mock('@/components/theme-provider', () => ({
-  useTheme: () => ({
-    theme: 'system',
-    setTheme: setThemeMock,
-    resolvedTheme: 'light',
-  }),
-}));
+import { NavSecondary, ThemeProvider } from '@workspace/components/layout';
 
 vi.mock('@workspace/ui/components/sidebar', () => ({
   SidebarGroup: ({ children, ...props }: React.ComponentProps<'div'>) => (
@@ -93,58 +81,77 @@ const items = [
   },
 ];
 
+// jsdom does not implement matchMedia — provide a minimal stub.
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }),
+});
+
+function renderWithTheme(ui: React.ReactNode) {
+  return render(<ThemeProvider>{ui}</ThemeProvider>);
+}
+
 beforeEach(() => {
-  vi.clearAllMocks();
+  localStorage.clear();
 });
 
 describe('NavSecondary', () => {
   it('renders theme toggle button', () => {
-    render(<NavSecondary items={items} />);
+    renderWithTheme(<NavSecondary items={items} />);
     expect(screen.getByText('Theme')).toBeInTheDocument();
   });
 
   it('renders all navigation item titles', () => {
-    render(<NavSecondary items={items} />);
+    renderWithTheme(<NavSecondary items={items} />);
     expect(screen.getByText('Home')).toBeInTheDocument();
     expect(screen.getByText('Help')).toBeInTheDocument();
   });
 
   it('renders item links with correct hrefs', () => {
-    render(<NavSecondary items={items} />);
+    renderWithTheme(<NavSecondary items={items} />);
     const homeLink = screen.getByRole('link', { name: /home/i });
     expect(homeLink).toHaveAttribute('href', 'https://example.com');
   });
 
   it('renders new tab items with target _blank', () => {
-    render(<NavSecondary items={items} />);
+    renderWithTheme(<NavSecondary items={items} />);
     const helpLink = screen.getByRole('link', { name: /help/i });
     expect(helpLink).toHaveAttribute('target', '_blank');
     expect(helpLink).toHaveAttribute('rel', 'noreferrer noopener');
   });
 
   it('renders screen reader text for new tab items', () => {
-    render(<NavSecondary items={items} />);
+    renderWithTheme(<NavSecondary items={items} />);
     expect(screen.getByText('(opens in a new tab)')).toBeInTheDocument();
   });
 
-  it('calls setTheme with light when Light is clicked', async () => {
+  it('sets light theme in localStorage when Light is clicked', async () => {
     const user = userEvent.setup();
-    render(<NavSecondary items={items} />);
+    renderWithTheme(<NavSecondary items={items} />);
     await user.click(screen.getByText('Light'));
-    expect(setThemeMock).toHaveBeenCalledWith('light');
+    expect(localStorage.getItem('app-theme')).toBe('light');
   });
 
-  it('calls setTheme with dark when Dark is clicked', async () => {
+  it('sets dark theme in localStorage when Dark is clicked', async () => {
     const user = userEvent.setup();
-    render(<NavSecondary items={items} />);
+    renderWithTheme(<NavSecondary items={items} />);
     await user.click(screen.getByText('Dark'));
-    expect(setThemeMock).toHaveBeenCalledWith('dark');
+    expect(localStorage.getItem('app-theme')).toBe('dark');
   });
 
-  it('calls setTheme with system when System is clicked', async () => {
+  it('sets system theme in localStorage when System is clicked', async () => {
     const user = userEvent.setup();
-    render(<NavSecondary items={items} />);
+    renderWithTheme(<NavSecondary items={items} />);
     await user.click(screen.getByText('System'));
-    expect(setThemeMock).toHaveBeenCalledWith('system');
+    expect(localStorage.getItem('app-theme')).toBe('system');
   });
 });

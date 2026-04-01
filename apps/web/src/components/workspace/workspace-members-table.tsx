@@ -28,10 +28,8 @@ import {
   normalizeRole,
 } from '@workspace/components/lib';
 import { useColumnSort } from '@workspace/components/hooks';
+import { SortableHeader, TablePagination } from '@workspace/components/layout';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-
-import { SortableHeader } from '@/components/sortable-header';
-import { TablePagination } from '@/components/table-pagination';
 
 export interface WorkspaceMemberRow {
   id: string;

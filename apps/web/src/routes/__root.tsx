@@ -9,9 +9,12 @@ import {
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { Toaster } from '@workspace/ui/components/sonner';
 import appCss from '@workspace/ui/globals.css?url';
+import {
+  NotFound,
+  ThemeProvider,
+  useTheme,
+} from '@workspace/components/layout';
 import type { QueryClient } from '@tanstack/react-query';
-import { NotFound } from '@/components/not-found';
-import { ThemeProvider, useTheme } from '@/components/theme-provider';
 
 interface RouterContext {
   queryClient: QueryClient;
