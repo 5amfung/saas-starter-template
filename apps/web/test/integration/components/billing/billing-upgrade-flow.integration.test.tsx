@@ -35,7 +35,7 @@ vi.mock('sonner', () => ({
 }));
 
 vi.mock('@workspace/components/hooks', () => ({
-  SESSION_QUERY_KEY: ['session'],
+  SESSION_QUERY_KEY: ['session', 'current'] as const,
 }));
 
 const TEST_WORKSPACE_ID = 'ws_integration_test';
