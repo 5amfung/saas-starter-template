@@ -57,7 +57,7 @@ export function NavUser({
     email: string;
     avatar: string;
   };
-  menuItems?: NavUserMenuItem[];
+  menuItems?: Array<NavUserMenuItem>;
 }) {
   const navigate = useNavigate();
   const { isMobile } = useSidebar();
