@@ -1,0 +1,24 @@
+{
+  "name": "@workspace/logging",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/logger.ts",
+    "./server": "./src/request-logger.server.ts"
+  },
+  "scripts": {
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tanstack/react-start": "^1.159.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@workspace/eslint-config": "workspace:*",
+    "typescript": "^5.9.3"
+  }
+}

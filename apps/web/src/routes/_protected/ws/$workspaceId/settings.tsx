@@ -24,9 +24,9 @@ import {
 import { Input } from '@workspace/ui/components/input';
 import { Separator } from '@workspace/ui/components/separator';
 import { FREE_PLAN_ID } from '@workspace/auth/plans';
+import { toFieldErrorItem } from '@workspace/components/lib';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
 import { useBillingDataQuery } from '@/billing/use-billing-data-query';
-import { toFieldErrorItem } from '@/lib/form-utils';
 
 const workspaceSettingsSchema = z.object({
   name: z.string().trim().min(1, 'Workspace name is required.'),

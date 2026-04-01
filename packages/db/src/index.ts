@@ -1,8 +1,10 @@
 import { Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import * as schema from './schema';
 
-export function createDb(connectionString: string) {
+export function createDb<TSchema extends Record<string, unknown>>(
+  connectionString: string,
+  schema: TSchema
+) {
   const pool = new Pool({
     connectionString,
     max: 20,
@@ -13,4 +15,3 @@ export function createDb(connectionString: string) {
 }
 
 export type Database = ReturnType<typeof createDb>;
-export { schema };

@@ -21,17 +21,16 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table';
-import type { ColumnDef, SortingState } from '@tanstack/react-table';
-
-import { SortableHeader } from '@/components/sortable-header';
-import { TablePagination } from '@/components/table-pagination';
-import { useColumnSort } from '@/hooks/use-column-sort';
-import { formatDate, normalizeRole } from '@/lib/format';
 import {
   ACTIONS_COLUMN_CLASS,
   DEFAULT_PAGE_SIZE_OPTIONS,
   MAX_SKELETON_ROWS,
-} from '@/lib/table-constants';
+  formatDate,
+  normalizeRole,
+} from '@workspace/components/lib';
+import { useColumnSort } from '@workspace/components/hooks';
+import { SortableHeader, TablePagination } from '@workspace/components/layout';
+import type { ColumnDef, SortingState } from '@tanstack/react-table';
 
 export interface WorkspaceInvitationRow {
   id: string;

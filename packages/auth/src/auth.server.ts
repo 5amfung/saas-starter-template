@@ -13,7 +13,7 @@ import Stripe from 'stripe';
 import {
   subscription as subscriptionTable,
   user as userTable,
-} from '@workspace/db/schema';
+} from '@workspace/db-schema';
 import { createAuthEmails } from './auth-emails.server';
 import { isDuplicateOrganizationError, isSignInPath } from './auth-utils';
 import { createBillingHelpers } from './billing.server';
@@ -35,7 +35,6 @@ export interface AuthConfig {
     secretKey: string;
     webhookSecret: string;
   };
-  adminUserIds?: Array<string>;
   trustedOrigins?: Array<string>;
   /** Logger callback. Falls back to console.log when not provided. May return a promise for async loggers. */
   logger?: (
@@ -314,9 +313,7 @@ export function createAuth(config: AuthConfig) {
           },
         },
       }),
-      admin({
-        adminUserIds: config.adminUserIds ?? [],
-      }),
+      admin(),
       tanstackStartCookies(),
     ],
   });

@@ -16,8 +16,8 @@ const {
   stripeMock,
   organizationPluginSpy,
 } = vi.hoisted(() => {
-  const createOrganizationMock = vi.fn();
-  const billingMock = {
+  const createOrganizationFn = vi.fn();
+  const billingHelpers = {
     getWorkspaceOwnerUserId: vi.fn(),
     countOwnedWorkspaces: vi.fn(),
     countWorkspaceMembers: vi.fn(),
@@ -29,25 +29,25 @@ const {
       return Promise.resolve([]);
     }),
   };
-  const dbSelectMock = vi.fn().mockReturnValue(selectChain);
+  const dbSelectFn = vi.fn().mockReturnValue(selectChain);
   const updateChain = {
     set: vi.fn().mockReturnThis(),
     where: vi.fn().mockResolvedValue(undefined),
   };
-  const dbUpdateMock = vi.fn().mockReturnValue(updateChain);
+  const dbUpdateFn = vi.fn().mockReturnValue(updateChain);
   return {
-    createOrganizationMock,
+    createOrganizationMock: createOrganizationFn,
     betterAuthSpy: vi.fn(),
-    createBillingHelpersMock: vi.fn().mockReturnValue(billingMock),
-    billingMock,
+    createBillingHelpersMock: vi.fn().mockReturnValue(billingHelpers),
+    billingMock: billingHelpers,
     createAuthEmailsMock: vi.fn().mockReturnValue({
       sendChangeEmailConfirmation: vi.fn(),
       sendResetPasswordEmail: vi.fn(),
       sendVerificationEmail: vi.fn(),
       sendInvitationEmail: vi.fn(),
     }),
-    dbSelectMock,
-    dbUpdateMock,
+    dbSelectMock: dbSelectFn,
+    dbUpdateMock: dbUpdateFn,
     stripeMock: vi.fn(),
     organizationPluginSpy: vi.fn(),
   };
@@ -110,7 +110,7 @@ vi.mock('drizzle-orm', () => ({
   eq: vi.fn((a, b) => ({ _eq: [a, b] })),
 }));
 
-vi.mock('@workspace/db/schema', () => ({
+vi.mock('@workspace/db-schema', () => ({
   subscription: { status: 'status', referenceId: 'referenceId' },
   user: { id: 'user_id' },
 }));
@@ -138,7 +138,6 @@ function buildTestConfig(overrides?: Partial<AuthConfig>): AuthConfig {
     secret: 'test-secret',
     google: { clientId: 'gid', clientSecret: 'gsecret' },
     stripe: { secretKey: 'sk_test', webhookSecret: 'whsec_test' },
-    adminUserIds: ['admin-1'],
     ...overrides,
   };
 }

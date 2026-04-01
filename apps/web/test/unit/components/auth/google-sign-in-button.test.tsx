@@ -3,7 +3,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
+import { GoogleSignInButton } from '@workspace/components/auth';
 
 const { signInSocial } = vi.hoisted(() => ({
   signInSocial: vi.fn(),
@@ -16,7 +16,7 @@ vi.mock('@workspace/auth/client', () => ({
 }));
 
 // Mock the GoogleIcon SVG component.
-vi.mock('@/components/icons/google-icon', () => ({
+vi.mock('@workspace/components/icons', () => ({
   GoogleIcon: (props: React.ComponentProps<'svg'>) => (
     <svg data-testid="google-icon" {...props} />
   ),
@@ -29,7 +29,7 @@ describe('GoogleSignInButton', () => {
 
   it('renders Google icon and button text', () => {
     signInSocial.mockResolvedValue({ data: null, error: null });
-    renderWithProviders(<GoogleSignInButton />);
+    renderWithProviders(<GoogleSignInButton callbackURL="/ws" />);
     expect(
       screen.getByRole('button', { name: /sign in with google/i })
     ).toBeInTheDocument();
@@ -38,7 +38,7 @@ describe('GoogleSignInButton', () => {
   it('calls authClient.signIn.social with google provider on click', async () => {
     const user = userEvent.setup();
     signInSocial.mockResolvedValue({ data: null, error: null });
-    renderWithProviders(<GoogleSignInButton />);
+    renderWithProviders(<GoogleSignInButton callbackURL="/ws" />);
 
     await user.click(
       screen.getByRole('button', { name: /sign in with google/i })
@@ -51,10 +51,10 @@ describe('GoogleSignInButton', () => {
     });
   });
 
-  it('uses default callbackURL /ws when no prop provided', async () => {
+  it('uses callbackURL /ws when prop is provided', async () => {
     const user = userEvent.setup();
     signInSocial.mockResolvedValue({ data: null, error: null });
-    renderWithProviders(<GoogleSignInButton />);
+    renderWithProviders(<GoogleSignInButton callbackURL="/ws" />);
     await user.click(
       screen.getByRole('button', { name: /sign in with google/i })
     );

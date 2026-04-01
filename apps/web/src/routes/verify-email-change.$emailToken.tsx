@@ -1,9 +1,18 @@
 import { useEffect } from 'react';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
+import { IconStack2 } from '@tabler/icons-react';
 import { authClient } from '@workspace/auth/client';
-import { AuthLayout } from '@/components/auth/auth-layout';
-import { CheckEmailCard } from '@/components/auth/check-email-card';
-import { getWebmailLinkForEmail } from '@/lib/email-provider';
+import { getWebmailLinkForEmail } from '@workspace/components/lib';
+import { AuthLayout, CheckEmailCard } from '@workspace/components/auth';
+
+const WEB_LOGO = (
+  <a href="/" className="flex items-center gap-2 self-center font-medium">
+    <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
+      <IconStack2 className="size-4" />
+    </div>
+    Acme Inc.
+  </a>
+);
 
 const SUCCESS_REDIRECT_DELAY_MS = 3000;
 
@@ -50,7 +59,7 @@ function VerifyEmailChangePage() {
 
   if (!email) {
     return (
-      <AuthLayout>
+      <AuthLayout logo={WEB_LOGO}>
         <CheckEmailCard
           title="Check your email"
           description="We sent a verification link to your new email address. Click the link to complete the change."
@@ -63,7 +72,7 @@ function VerifyEmailChangePage() {
 
   if (isEmailUpdated) {
     return (
-      <AuthLayout>
+      <AuthLayout logo={WEB_LOGO}>
         <CheckEmailCard
           title="Email updated"
           description={

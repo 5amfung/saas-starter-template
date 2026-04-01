@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { NavUser, NavUserSkeleton } from '@/components/nav-user';
+import { NavUser, NavUserSkeleton } from '@workspace/components/layout';
 
 const { signOutMock, navigateMock } = vi.hoisted(() => ({
   signOutMock: vi.fn(),
@@ -27,10 +27,6 @@ vi.mock('sonner', () => ({
     success: vi.fn(),
     error: vi.fn(),
   },
-}));
-
-vi.mock('@/lib/logger', () => ({
-  logger: vi.fn(),
 }));
 
 vi.mock('@workspace/ui/components/sidebar', () => ({
@@ -110,6 +106,12 @@ const defaultUser = {
   avatar: 'https://example.com/avatar.jpg',
 };
 
+const accountMenuItem = {
+  label: 'Account',
+  icon: null,
+  href: '/account',
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -146,18 +148,8 @@ describe('NavUser', () => {
   });
 
   it('renders account navigation option', () => {
-    render(<NavUser user={defaultUser} />);
+    render(<NavUser user={defaultUser} menuItems={[accountMenuItem]} />);
     expect(screen.getByText('Account')).toBeInTheDocument();
-  });
-
-  it('renders billing navigation option', () => {
-    render(<NavUser user={defaultUser} />);
-    expect(screen.getByText('Billing')).toBeInTheDocument();
-  });
-
-  it('renders notifications navigation option', () => {
-    render(<NavUser user={defaultUser} />);
-    expect(screen.getByText('Notifications')).toBeInTheDocument();
   });
 
   it('renders log out option', () => {
@@ -200,19 +192,10 @@ describe('NavUser', () => {
 
   it('navigates to account page when Account is clicked', async () => {
     const user = userEvent.setup();
-    render(<NavUser user={defaultUser} />);
+    render(<NavUser user={defaultUser} menuItems={[accountMenuItem]} />);
 
     await user.click(screen.getByText('Account'));
 
     expect(navigateMock).toHaveBeenCalledWith({ to: '/account' });
-  });
-
-  it('navigates to billing page when Billing is clicked', async () => {
-    const user = userEvent.setup();
-    render(<NavUser user={defaultUser} />);
-
-    await user.click(screen.getByText('Billing'));
-
-    expect(navigateMock).toHaveBeenCalledWith({ to: '/billing' });
   });
 });

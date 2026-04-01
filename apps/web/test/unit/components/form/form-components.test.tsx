@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 // apps/web/test/unit/components/form/form-components.test.tsx
 import { render, screen } from '@testing-library/react';
-import { FormErrorDisplay } from '@/components/form/form-error-display';
-import { FormSubmitButton } from '@/components/form/form-submit-button';
-import { ValidatedField } from '@/components/form/validated-field';
+import {
+  FormErrorDisplay,
+  FormSubmitButton,
+  ValidatedField,
+} from '@workspace/components/form';
 
 // ---------------------------------------------------------------------------
 // Helpers: minimal fake form/field APIs

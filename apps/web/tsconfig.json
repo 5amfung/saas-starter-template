@@ -34,6 +34,11 @@
       "@workspace/email/*": ["../../packages/email/src/*"],
       "@workspace/auth": ["../../packages/auth/src/index.ts"],
       "@workspace/auth/*": ["../../packages/auth/src/*"],
+      "@workspace/components/*": ["../../packages/components/src/*/index.ts"],
+      "@workspace/logging": ["../../packages/logging/src/logger.ts"],
+      "@workspace/logging/server": [
+        "../../packages/logging/src/request-logger.server.ts"
+      ],
       "@workspace/test-utils": ["../../packages/test-utils/src/index.ts"]
     }
   }

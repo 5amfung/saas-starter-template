@@ -34,8 +34,8 @@ vi.mock('sonner', () => ({
   toast: { success: mockToastSuccess, error: mockToastError },
 }));
 
-vi.mock('@/hooks/use-session-query', () => ({
-  SESSION_QUERY_KEY: ['session'],
+vi.mock('@workspace/components/hooks', () => ({
+  SESSION_QUERY_KEY: ['session', 'current'] as const,
 }));
 
 const TEST_WORKSPACE_ID = 'ws_integration_test';

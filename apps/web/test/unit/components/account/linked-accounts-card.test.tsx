@@ -15,7 +15,7 @@ vi.mock('@workspace/auth/client', () => ({
   },
 }));
 
-vi.mock('@/hooks/use-linked-accounts-query', () => ({
+vi.mock('@workspace/components/hooks', () => ({
   useLinkedAccountsQuery: () => ({
     // Include a credential account so Google is not the only auth method,
     // which keeps the Disconnect button enabled.
@@ -35,7 +35,7 @@ describe('LinkedAccountsCard', () => {
 
   it('renders Google provider with disconnect button when linked', async () => {
     const { LinkedAccountsCard } =
-      await import('@/components/account/linked-accounts-card');
+      await import('@workspace/components/account');
 
     renderWithProviders(<LinkedAccountsCard />);
 
@@ -54,7 +54,7 @@ describe('LinkedAccountsCard', () => {
   it('opens disconnect confirmation dialog when disconnect button is clicked', async () => {
     const user = userEvent.setup();
     const { LinkedAccountsCard } =
-      await import('@/components/account/linked-accounts-card');
+      await import('@workspace/components/account');
 
     renderWithProviders(<LinkedAccountsCard />);
 
@@ -80,7 +80,7 @@ describe('LinkedAccountsCard', () => {
     const user = userEvent.setup();
     unlinkAccountMock.mockResolvedValue({});
     const { LinkedAccountsCard } =
-      await import('@/components/account/linked-accounts-card');
+      await import('@workspace/components/account');
 
     renderWithProviders(<LinkedAccountsCard />);
 
@@ -106,7 +106,7 @@ describe('LinkedAccountsCard', () => {
     const user = userEvent.setup();
     unlinkAccountMock.mockRejectedValue(new Error('Disconnect failed'));
     const { LinkedAccountsCard } =
-      await import('@/components/account/linked-accounts-card');
+      await import('@workspace/components/account');
 
     renderWithProviders(<LinkedAccountsCard />);
 
@@ -139,7 +139,7 @@ describe('LinkedAccountsCard', () => {
     });
 
     const { LinkedAccountsCard } =
-      await import('@/components/account/linked-accounts-card');
+      await import('@workspace/components/account');
 
     renderWithProviders(<LinkedAccountsCard />);
 
@@ -168,7 +168,7 @@ describe('LinkedAccountsCard — unlinked provider', () => {
       },
     }));
 
-    vi.doMock('@/hooks/use-linked-accounts-query', () => ({
+    vi.doMock('@workspace/components/hooks', () => ({
       useLinkedAccountsQuery: () => ({
         data: [],
         isPending: false,
@@ -177,7 +177,7 @@ describe('LinkedAccountsCard — unlinked provider', () => {
     }));
 
     const { LinkedAccountsCard } =
-      await import('@/components/account/linked-accounts-card');
+      await import('@workspace/components/account');
 
     renderWithProviders(<LinkedAccountsCard />);
 
@@ -204,7 +204,7 @@ describe('LinkedAccountsCard — unlinked provider', () => {
       },
     }));
 
-    vi.doMock('@/hooks/use-linked-accounts-query', () => ({
+    vi.doMock('@workspace/components/hooks', () => ({
       useLinkedAccountsQuery: () => ({
         data: [],
         isPending: false,
@@ -213,7 +213,7 @@ describe('LinkedAccountsCard — unlinked provider', () => {
     }));
 
     const { LinkedAccountsCard } =
-      await import('@/components/account/linked-accounts-card');
+      await import('@workspace/components/account');
 
     renderWithProviders(<LinkedAccountsCard />);
 

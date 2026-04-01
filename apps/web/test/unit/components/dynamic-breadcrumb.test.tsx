@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
-import { DynamicBreadcrumb } from '@/components/dynamic-breadcrumb';
+import { DynamicBreadcrumb } from '@workspace/components/layout';
 
 // ── Hoisted mocks ────────────────────────────────────────────────────────────
 

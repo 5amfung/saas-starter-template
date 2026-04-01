@@ -14,8 +14,9 @@
   "homepage": "https://github.com/5amfung/saas-starter-template#readme",
   "packageManager": "pnpm@10.33.0",
   "scripts": {
-    "dev": "turbo run dev",
-    "web:dev": "turbo run dev dev:stripe-webhook --filter=@workspace/web",
+    "dev": "turbo run dev dev:stripe-webhook --filter @workspace/web --filter @workspace/admin-web",
+    "admin:dev": "pnpm --filter @workspace/admin-web dev",
+    "web:dev": "turbo run dev dev:stripe-webhook --filter @workspace/web",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
@@ -31,12 +32,7 @@
     "web:test:e2e:ui": "pnpm --filter @workspace/web test:e2e:ui",
     "web:test:e2e:report": "pnpm --filter @workspace/web test:e2e:report",
     "prepare": "husky || echo 'Skip installing husky'",
-    "clean": "npkill",
-    "db:generate": "pnpm --filter @workspace/db db:generate",
-    "db:migrate": "pnpm --filter @workspace/db db:migrate",
-    "db:push": "pnpm --filter @workspace/db db:push",
-    "db:studio": "pnpm --filter @workspace/db db:studio",
-    "gen-auth-schema": "pnpm --filter @workspace/db gen-auth-schema"
+    "clean": "npkill"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",

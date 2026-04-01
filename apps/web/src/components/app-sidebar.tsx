@@ -7,9 +7,11 @@ import {
   IconFolder,
   IconHelp,
   IconHome,
+  IconNotification,
   IconSearch,
   IconSettings,
   IconStack2,
+  IconUserCircle,
   IconUsers,
 } from '@tabler/icons-react';
 import { authClient } from '@workspace/auth/client';
@@ -19,11 +21,13 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from '@workspace/ui/components/sidebar';
-import { NavAdmin } from '@/components/nav-admin';
+import {
+  NavSecondary,
+  NavUser,
+  NavUserSkeleton,
+} from '@workspace/components/layout';
 import { useActiveMemberRoleQuery } from '@/hooks/use-active-member-role-query';
 import { NavMain } from '@/components/nav-main';
-import { NavSecondary } from '@/components/nav-secondary';
-import { NavUser, NavUserSkeleton } from '@/components/nav-user';
 import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 
 const data = {
@@ -45,10 +49,6 @@ const data = {
       icon: <IconHome />,
       newTab: true,
     },
-  ],
-  navAdmin: [
-    { title: 'Dashboard', url: '/admin/dashboard', icon: <IconDashboard /> },
-    { title: 'User', url: '/admin/user', icon: <IconUsers /> },
   ],
 };
 
@@ -120,14 +120,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMain} />
-        {session?.user.role === 'admin' && <NavAdmin items={data.navAdmin} />}
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         {isPending ? (
           <NavUserSkeleton />
         ) : user ? (
-          <NavUser user={user} />
+          <NavUser
+            user={user}
+            menuItems={[
+              { label: 'Account', icon: <IconUserCircle />, href: '/account' },
+              { label: 'Billing', icon: <IconCreditCard />, href: '/billing' },
+              {
+                label: 'Notifications',
+                icon: <IconNotification />,
+                href: '/notifications',
+              },
+            ]}
+          />
         ) : null}
       </SidebarFooter>
     </Sidebar>

@@ -10,7 +10,6 @@
     "src/**/*.ts",
     "test/**/*.ts",
     "test/**/*.tsx",
-    "drizzle.config.ts",
     "vitest.config.ts",
     "scripts/**/*.ts",
     "eslint.config.ts"

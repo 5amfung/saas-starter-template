@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { Outlet, createFileRoute, useNavigate } from '@tanstack/react-router';
+import { IconStack2 } from '@tabler/icons-react';
 import { authClient } from '@workspace/auth/client';
-import { AuthLayout } from '@/components/auth/auth-layout';
+import { AuthLayout } from '@workspace/components/auth';
 import { guestMiddleware } from '@/middleware/auth';
 
 export const Route = createFileRoute('/_auth')({
@@ -30,8 +31,17 @@ function AuthPage() {
     return null;
   }
 
+  const webLogo = (
+    <a href="/" className="flex items-center gap-2 self-center font-medium">
+      <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
+        <IconStack2 className="size-4" />
+      </div>
+      Acme Inc.
+    </a>
+  );
+
   return (
-    <AuthLayout>
+    <AuthLayout logo={webLogo}>
       <Outlet />
     </AuthLayout>
   );

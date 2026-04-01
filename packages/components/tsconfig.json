@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@workspace/ui/*": ["../../packages/ui/src/*"],
+      "@workspace/auth": ["../../packages/auth/src/index.ts"],
+      "@workspace/auth/*": ["../../packages/auth/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "eslint.config.ts"],
+  "exclude": ["node_modules"]
+}
