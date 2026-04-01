@@ -17,11 +17,13 @@ import {
 import { Input } from '@workspace/ui/components/input';
 import { loginSchema } from '@workspace/auth/schemas';
 import { authClient } from '@workspace/auth/client';
-import { FormError } from '@/components/auth/form-error';
+import {
+  FormError,
+  FormErrorDisplay,
+  FormSubmitButton,
+  ValidatedField,
+} from '@workspace/components/form';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
-import { FormErrorDisplay } from '@/components/form/form-error-display';
-import { FormSubmitButton } from '@/components/form/form-submit-button';
-import { ValidatedField } from '@/components/form/validated-field';
 
 const DEFAULT_CALLBACK_URL = '/dashboard';
 

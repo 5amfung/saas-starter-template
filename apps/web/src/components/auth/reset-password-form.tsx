@@ -16,9 +16,11 @@ import {
   FieldGroup,
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
-import { FormErrorDisplay } from '@/components/form/form-error-display';
-import { FormSubmitButton } from '@/components/form/form-submit-button';
-import { ValidatedField } from '@/components/form/validated-field';
+import {
+  FormErrorDisplay,
+  FormSubmitButton,
+  ValidatedField,
+} from '@workspace/components/form';
 
 interface ResetPasswordFormProps {
   token?: string;

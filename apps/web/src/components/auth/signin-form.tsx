@@ -17,11 +17,13 @@ import {
   FieldSeparator,
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
-import { FormError } from '@/components/auth/form-error';
+import {
+  FormError,
+  FormErrorDisplay,
+  FormSubmitButton,
+  ValidatedField,
+} from '@workspace/components/form';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
-import { FormErrorDisplay } from '@/components/form/form-error-display';
-import { FormSubmitButton } from '@/components/form/form-submit-button';
-import { ValidatedField } from '@/components/form/validated-field';
 
 const DEFAULT_CALLBACK_URL = '/ws';
 

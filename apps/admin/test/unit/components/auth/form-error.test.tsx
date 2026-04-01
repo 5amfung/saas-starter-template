@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react';
-import { FormError } from '@/components/auth/form-error';
+import { FormError } from '@workspace/components/form';
 
 describe('FormError', () => {
   it('renders nothing when errors array is empty', () => {

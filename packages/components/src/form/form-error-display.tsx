@@ -1,5 +1,5 @@
+import { FormError } from './form-error';
 import type { ReactFormExtendedApi } from '@tanstack/react-form';
-import { FormError } from '@/components/auth/form-error';
 
 type AnyReactFormApi = ReactFormExtendedApi<
   any,

@@ -16,9 +16,11 @@ import {
 import { Input } from '@workspace/ui/components/input';
 import { forgotPasswordSchema } from '@workspace/auth/schemas';
 import { authClient } from '@workspace/auth/client';
-import { FormErrorDisplay } from '@/components/form/form-error-display';
-import { FormSubmitButton } from '@/components/form/form-submit-button';
-import { ValidatedField } from '@/components/form/validated-field';
+import {
+  FormErrorDisplay,
+  FormSubmitButton,
+  ValidatedField,
+} from '@workspace/components/form';
 
 export function ForgotPasswordForm() {
   const [isSuccess, setIsSuccess] = useState(false);
