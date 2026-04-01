@@ -35,6 +35,9 @@
       "@workspace/auth": ["../../packages/auth/src/index.ts"],
       "@workspace/auth/*": ["../../packages/auth/src/*"],
       "@workspace/components/*": ["../../packages/components/src/*/index.ts"],
+      "@workspace/components/lib/server": [
+        "../../packages/components/src/lib/logger.server.ts"
+      ],
       "@workspace/test-utils": ["../../packages/test-utils/src/index.ts"]
     }
   }

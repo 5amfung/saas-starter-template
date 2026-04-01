@@ -5,6 +5,9 @@ const { mockLogger, mockRequestLogger } = vi.hoisted(() => ({
 
 vi.mock('@workspace/components/lib', () => ({
   createLogger: vi.fn(() => mockLogger),
+}));
+
+vi.mock('@workspace/components/lib/server', () => ({
   createRequestLogger: vi.fn(() => mockRequestLogger),
 }));
 
@@ -29,7 +32,8 @@ describe('logger', () => {
 
 describe('requestLogger', () => {
   it('is the request logger created by createRequestLogger with the web logger', async () => {
-    const { createRequestLogger } = await import('@workspace/components/lib');
+    const { createRequestLogger } =
+      await import('@workspace/components/lib/server');
     expect(createRequestLogger).toHaveBeenCalledWith(mockLogger);
     expect(requestLogger).toBe(mockRequestLogger);
   });

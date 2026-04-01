@@ -40,6 +40,7 @@
     "./hooks": "./src/hooks/index.ts",
     "./icons": "./src/icons/index.ts",
     "./layout": "./src/layout/index.ts",
-    "./lib": "./src/lib/index.ts"
+    "./lib": "./src/lib/index.ts",
+    "./lib/server": "./src/lib/logger.server.ts"
   }
 }
