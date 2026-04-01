@@ -26,7 +26,7 @@ import {
   LINKED_ACCOUNTS_QUERY_KEY,
   useLinkedAccountsQuery,
 } from '@workspace/components/hooks';
-import { GoogleIcon } from '@/components/icons/google-icon';
+import { GoogleIcon } from '@workspace/components/icons';
 
 /** Subset of social providers configured for this app. */
 type SocialProviderId = 'google';

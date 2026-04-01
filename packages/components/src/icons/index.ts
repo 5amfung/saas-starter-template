@@ -1,1 +1,1 @@
-// Placeholder — populated by subsequent tasks.
+export * from './google-icon';
