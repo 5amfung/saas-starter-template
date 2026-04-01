@@ -109,19 +109,9 @@ export function createBillingHelpers(
   async function cancelSubscriptionAtPeriodEnd(
     stripeSubscriptionId: string
   ): Promise<Stripe.Subscription> {
-    const updated = await stripeClient.subscriptions.update(
-      stripeSubscriptionId,
-      { cancel_at_period_end: true }
-    );
-
-    // Mirror the change in the local DB immediately so subsequent reads reflect
-    // the cancellation without waiting for a Stripe webhook.
-    await db
-      .update(subscriptionTable)
-      .set({ cancelAtPeriodEnd: true })
-      .where(eq(subscriptionTable.stripeSubscriptionId, stripeSubscriptionId));
-
-    return updated;
+    return stripeClient.subscriptions.update(stripeSubscriptionId, {
+      cancel_at_period_end: true,
+    });
   }
 
   /** Retrieves a Stripe Subscription Schedule by ID. */
