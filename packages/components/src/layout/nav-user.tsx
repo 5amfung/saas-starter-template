@@ -1,8 +1,10 @@
 'use client';
 
 import {
+  IconCreditCard,
   IconDotsVertical,
   IconLogout,
+  IconNotification,
   IconUserCircle,
 } from '@tabler/icons-react';
 import { useNavigate } from '@tanstack/react-router';
@@ -116,6 +118,16 @@ export function NavUser({
               <DropdownMenuItem onClick={() => navigate({ to: '/account' })}>
                 <IconUserCircle />
                 Account
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate({ to: '/billing' })}>
+                <IconCreditCard />
+                Billing
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => navigate({ to: '/notifications' })}
+              >
+                <IconNotification />
+                Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
