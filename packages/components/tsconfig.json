@@ -17,6 +17,6 @@
       "@workspace/auth/*": ["../../packages/auth/src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "eslint.config.ts"],
   "exclude": ["node_modules"]
 }
