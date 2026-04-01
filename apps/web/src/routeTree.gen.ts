@@ -17,7 +17,6 @@ import { Route as AuthRouteImport } from './routes/_auth';
 import { Route as IndexRouteImport } from './routes/index';
 import { Route as VerifyEmailChangeEmailTokenRouteImport } from './routes/verify-email-change.$emailToken';
 import { Route as ProtectedWsRouteImport } from './routes/_protected/ws';
-import { Route as ProtectedAdminRouteImport } from './routes/_protected/admin';
 import { Route as AuthVerifyRouteImport } from './routes/_auth/verify';
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup';
 import { Route as AuthSigninRouteImport } from './routes/_auth/signin';
@@ -27,18 +26,14 @@ import { Route as ProtectedWsIndexRouteImport } from './routes/_protected/ws/ind
 import { Route as ApiTestEmailsRouteImport } from './routes/api/test/emails';
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$';
 import { Route as ProtectedWsWorkspaceIdRouteImport } from './routes/_protected/ws/$workspaceId';
-import { Route as ProtectedAdminUserRouteImport } from './routes/_protected/admin/user';
-import { Route as ProtectedAdminDashboardRouteImport } from './routes/_protected/admin/dashboard';
 import { Route as ProtectedAccountNotificationsRouteImport } from './routes/_protected/_account/notifications';
 import { Route as ProtectedAccountBillingRouteImport } from './routes/_protected/_account/billing';
 import { Route as ProtectedAccountAccountRouteImport } from './routes/_protected/_account/account';
-import { Route as ProtectedAdminUserIndexRouteImport } from './routes/_protected/admin/user/index';
 import { Route as ProtectedWsWorkspaceIdSettingsRouteImport } from './routes/_protected/ws/$workspaceId/settings';
 import { Route as ProtectedWsWorkspaceIdProjectsRouteImport } from './routes/_protected/ws/$workspaceId/projects';
 import { Route as ProtectedWsWorkspaceIdOverviewRouteImport } from './routes/_protected/ws/$workspaceId/overview';
 import { Route as ProtectedWsWorkspaceIdMembersRouteImport } from './routes/_protected/ws/$workspaceId/members';
 import { Route as ProtectedWsWorkspaceIdBillingRouteImport } from './routes/_protected/ws/$workspaceId/billing';
-import { Route as ProtectedAdminUserUserIdRouteImport } from './routes/_protected/admin/user/$userId';
 
 const PingRoute = PingRouteImport.update({
   id: '/ping',
@@ -77,11 +72,6 @@ const VerifyEmailChangeEmailTokenRoute =
 const ProtectedWsRoute = ProtectedWsRouteImport.update({
   id: '/ws',
   path: '/ws',
-  getParentRoute: () => ProtectedRoute,
-} as any);
-const ProtectedAdminRoute = ProtectedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
   getParentRoute: () => ProtectedRoute,
 } as any);
 const AuthVerifyRoute = AuthVerifyRouteImport.update({
@@ -129,16 +119,6 @@ const ProtectedWsWorkspaceIdRoute = ProtectedWsWorkspaceIdRouteImport.update({
   path: '/$workspaceId',
   getParentRoute: () => ProtectedWsRoute,
 } as any);
-const ProtectedAdminUserRoute = ProtectedAdminUserRouteImport.update({
-  id: '/user',
-  path: '/user',
-  getParentRoute: () => ProtectedAdminRoute,
-} as any);
-const ProtectedAdminDashboardRoute = ProtectedAdminDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => ProtectedAdminRoute,
-} as any);
 const ProtectedAccountNotificationsRoute =
   ProtectedAccountNotificationsRouteImport.update({
     id: '/_account/notifications',
@@ -154,11 +134,6 @@ const ProtectedAccountAccountRoute = ProtectedAccountAccountRouteImport.update({
   id: '/_account/account',
   path: '/account',
   getParentRoute: () => ProtectedRoute,
-} as any);
-const ProtectedAdminUserIndexRoute = ProtectedAdminUserIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProtectedAdminUserRoute,
 } as any);
 const ProtectedWsWorkspaceIdSettingsRoute =
   ProtectedWsWorkspaceIdSettingsRouteImport.update({
@@ -190,12 +165,6 @@ const ProtectedWsWorkspaceIdBillingRoute =
     path: '/billing',
     getParentRoute: () => ProtectedWsWorkspaceIdRoute,
   } as any);
-const ProtectedAdminUserUserIdRoute =
-  ProtectedAdminUserUserIdRouteImport.update({
-    id: '/$userId',
-    path: '/$userId',
-    getParentRoute: () => ProtectedAdminUserRoute,
-  } as any);
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute;
@@ -207,25 +176,20 @@ export interface FileRoutesByFullPath {
   '/signin': typeof AuthSigninRoute;
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
-  '/admin': typeof ProtectedAdminRouteWithChildren;
   '/ws': typeof ProtectedWsRouteWithChildren;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/account': typeof ProtectedAccountAccountRoute;
   '/billing': typeof ProtectedAccountBillingRoute;
   '/notifications': typeof ProtectedAccountNotificationsRoute;
-  '/admin/dashboard': typeof ProtectedAdminDashboardRoute;
-  '/admin/user': typeof ProtectedAdminUserRouteWithChildren;
   '/ws/$workspaceId': typeof ProtectedWsWorkspaceIdRouteWithChildren;
   '/api/auth/$': typeof ApiAuthSplatRoute;
   '/api/test/emails': typeof ApiTestEmailsRoute;
   '/ws/': typeof ProtectedWsIndexRoute;
-  '/admin/user/$userId': typeof ProtectedAdminUserUserIdRoute;
   '/ws/$workspaceId/billing': typeof ProtectedWsWorkspaceIdBillingRoute;
   '/ws/$workspaceId/members': typeof ProtectedWsWorkspaceIdMembersRoute;
   '/ws/$workspaceId/overview': typeof ProtectedWsWorkspaceIdOverviewRoute;
   '/ws/$workspaceId/projects': typeof ProtectedWsWorkspaceIdProjectsRoute;
   '/ws/$workspaceId/settings': typeof ProtectedWsWorkspaceIdSettingsRoute;
-  '/admin/user/': typeof ProtectedAdminUserIndexRoute;
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute;
@@ -237,23 +201,19 @@ export interface FileRoutesByTo {
   '/signin': typeof AuthSigninRoute;
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
-  '/admin': typeof ProtectedAdminRouteWithChildren;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/account': typeof ProtectedAccountAccountRoute;
   '/billing': typeof ProtectedAccountBillingRoute;
   '/notifications': typeof ProtectedAccountNotificationsRoute;
-  '/admin/dashboard': typeof ProtectedAdminDashboardRoute;
   '/ws/$workspaceId': typeof ProtectedWsWorkspaceIdRouteWithChildren;
   '/api/auth/$': typeof ApiAuthSplatRoute;
   '/api/test/emails': typeof ApiTestEmailsRoute;
   '/ws': typeof ProtectedWsIndexRoute;
-  '/admin/user/$userId': typeof ProtectedAdminUserUserIdRoute;
   '/ws/$workspaceId/billing': typeof ProtectedWsWorkspaceIdBillingRoute;
   '/ws/$workspaceId/members': typeof ProtectedWsWorkspaceIdMembersRoute;
   '/ws/$workspaceId/overview': typeof ProtectedWsWorkspaceIdOverviewRoute;
   '/ws/$workspaceId/projects': typeof ProtectedWsWorkspaceIdProjectsRoute;
   '/ws/$workspaceId/settings': typeof ProtectedWsWorkspaceIdSettingsRoute;
-  '/admin/user': typeof ProtectedAdminUserIndexRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
@@ -268,25 +228,20 @@ export interface FileRoutesById {
   '/_auth/signin': typeof AuthSigninRoute;
   '/_auth/signup': typeof AuthSignupRoute;
   '/_auth/verify': typeof AuthVerifyRoute;
-  '/_protected/admin': typeof ProtectedAdminRouteWithChildren;
   '/_protected/ws': typeof ProtectedWsRouteWithChildren;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/_protected/_account/account': typeof ProtectedAccountAccountRoute;
   '/_protected/_account/billing': typeof ProtectedAccountBillingRoute;
   '/_protected/_account/notifications': typeof ProtectedAccountNotificationsRoute;
-  '/_protected/admin/dashboard': typeof ProtectedAdminDashboardRoute;
-  '/_protected/admin/user': typeof ProtectedAdminUserRouteWithChildren;
   '/_protected/ws/$workspaceId': typeof ProtectedWsWorkspaceIdRouteWithChildren;
   '/api/auth/$': typeof ApiAuthSplatRoute;
   '/api/test/emails': typeof ApiTestEmailsRoute;
   '/_protected/ws/': typeof ProtectedWsIndexRoute;
-  '/_protected/admin/user/$userId': typeof ProtectedAdminUserUserIdRoute;
   '/_protected/ws/$workspaceId/billing': typeof ProtectedWsWorkspaceIdBillingRoute;
   '/_protected/ws/$workspaceId/members': typeof ProtectedWsWorkspaceIdMembersRoute;
   '/_protected/ws/$workspaceId/overview': typeof ProtectedWsWorkspaceIdOverviewRoute;
   '/_protected/ws/$workspaceId/projects': typeof ProtectedWsWorkspaceIdProjectsRoute;
   '/_protected/ws/$workspaceId/settings': typeof ProtectedWsWorkspaceIdSettingsRoute;
-  '/_protected/admin/user/': typeof ProtectedAdminUserIndexRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
@@ -300,25 +255,20 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/verify'
-    | '/admin'
     | '/ws'
     | '/verify-email-change/$emailToken'
     | '/account'
     | '/billing'
     | '/notifications'
-    | '/admin/dashboard'
-    | '/admin/user'
     | '/ws/$workspaceId'
     | '/api/auth/$'
     | '/api/test/emails'
     | '/ws/'
-    | '/admin/user/$userId'
     | '/ws/$workspaceId/billing'
     | '/ws/$workspaceId/members'
     | '/ws/$workspaceId/overview'
     | '/ws/$workspaceId/projects'
-    | '/ws/$workspaceId/settings'
-    | '/admin/user/';
+    | '/ws/$workspaceId/settings';
   fileRoutesByTo: FileRoutesByTo;
   to:
     | '/'
@@ -330,23 +280,19 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/verify'
-    | '/admin'
     | '/verify-email-change/$emailToken'
     | '/account'
     | '/billing'
     | '/notifications'
-    | '/admin/dashboard'
     | '/ws/$workspaceId'
     | '/api/auth/$'
     | '/api/test/emails'
     | '/ws'
-    | '/admin/user/$userId'
     | '/ws/$workspaceId/billing'
     | '/ws/$workspaceId/members'
     | '/ws/$workspaceId/overview'
     | '/ws/$workspaceId/projects'
-    | '/ws/$workspaceId/settings'
-    | '/admin/user';
+    | '/ws/$workspaceId/settings';
   id:
     | '__root__'
     | '/'
@@ -360,25 +306,20 @@ export interface FileRouteTypes {
     | '/_auth/signin'
     | '/_auth/signup'
     | '/_auth/verify'
-    | '/_protected/admin'
     | '/_protected/ws'
     | '/verify-email-change/$emailToken'
     | '/_protected/_account/account'
     | '/_protected/_account/billing'
     | '/_protected/_account/notifications'
-    | '/_protected/admin/dashboard'
-    | '/_protected/admin/user'
     | '/_protected/ws/$workspaceId'
     | '/api/auth/$'
     | '/api/test/emails'
     | '/_protected/ws/'
-    | '/_protected/admin/user/$userId'
     | '/_protected/ws/$workspaceId/billing'
     | '/_protected/ws/$workspaceId/members'
     | '/_protected/ws/$workspaceId/overview'
     | '/_protected/ws/$workspaceId/projects'
-    | '/_protected/ws/$workspaceId/settings'
-    | '/_protected/admin/user/';
+    | '/_protected/ws/$workspaceId/settings';
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
@@ -451,13 +392,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedWsRouteImport;
       parentRoute: typeof ProtectedRoute;
     };
-    '/_protected/admin': {
-      id: '/_protected/admin';
-      path: '/admin';
-      fullPath: '/admin';
-      preLoaderRoute: typeof ProtectedAdminRouteImport;
-      parentRoute: typeof ProtectedRoute;
-    };
     '/_auth/verify': {
       id: '/_auth/verify';
       path: '/verify';
@@ -521,20 +455,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedWsWorkspaceIdRouteImport;
       parentRoute: typeof ProtectedWsRoute;
     };
-    '/_protected/admin/user': {
-      id: '/_protected/admin/user';
-      path: '/user';
-      fullPath: '/admin/user';
-      preLoaderRoute: typeof ProtectedAdminUserRouteImport;
-      parentRoute: typeof ProtectedAdminRoute;
-    };
-    '/_protected/admin/dashboard': {
-      id: '/_protected/admin/dashboard';
-      path: '/dashboard';
-      fullPath: '/admin/dashboard';
-      preLoaderRoute: typeof ProtectedAdminDashboardRouteImport;
-      parentRoute: typeof ProtectedAdminRoute;
-    };
     '/_protected/_account/notifications': {
       id: '/_protected/_account/notifications';
       path: '/notifications';
@@ -555,13 +475,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/account';
       preLoaderRoute: typeof ProtectedAccountAccountRouteImport;
       parentRoute: typeof ProtectedRoute;
-    };
-    '/_protected/admin/user/': {
-      id: '/_protected/admin/user/';
-      path: '/';
-      fullPath: '/admin/user/';
-      preLoaderRoute: typeof ProtectedAdminUserIndexRouteImport;
-      parentRoute: typeof ProtectedAdminUserRoute;
     };
     '/_protected/ws/$workspaceId/settings': {
       id: '/_protected/ws/$workspaceId/settings';
@@ -598,13 +511,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedWsWorkspaceIdBillingRouteImport;
       parentRoute: typeof ProtectedWsWorkspaceIdRoute;
     };
-    '/_protected/admin/user/$userId': {
-      id: '/_protected/admin/user/$userId';
-      path: '/$userId';
-      fullPath: '/admin/user/$userId';
-      preLoaderRoute: typeof ProtectedAdminUserUserIdRouteImport;
-      parentRoute: typeof ProtectedAdminUserRoute;
-    };
   }
 }
 
@@ -625,33 +531,6 @@ const AuthRouteChildren: AuthRouteChildren = {
 };
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren);
-
-interface ProtectedAdminUserRouteChildren {
-  ProtectedAdminUserUserIdRoute: typeof ProtectedAdminUserUserIdRoute;
-  ProtectedAdminUserIndexRoute: typeof ProtectedAdminUserIndexRoute;
-}
-
-const ProtectedAdminUserRouteChildren: ProtectedAdminUserRouteChildren = {
-  ProtectedAdminUserUserIdRoute: ProtectedAdminUserUserIdRoute,
-  ProtectedAdminUserIndexRoute: ProtectedAdminUserIndexRoute,
-};
-
-const ProtectedAdminUserRouteWithChildren =
-  ProtectedAdminUserRoute._addFileChildren(ProtectedAdminUserRouteChildren);
-
-interface ProtectedAdminRouteChildren {
-  ProtectedAdminDashboardRoute: typeof ProtectedAdminDashboardRoute;
-  ProtectedAdminUserRoute: typeof ProtectedAdminUserRouteWithChildren;
-}
-
-const ProtectedAdminRouteChildren: ProtectedAdminRouteChildren = {
-  ProtectedAdminDashboardRoute: ProtectedAdminDashboardRoute,
-  ProtectedAdminUserRoute: ProtectedAdminUserRouteWithChildren,
-};
-
-const ProtectedAdminRouteWithChildren = ProtectedAdminRoute._addFileChildren(
-  ProtectedAdminRouteChildren,
-);
 
 interface ProtectedWsWorkspaceIdRouteChildren {
   ProtectedWsWorkspaceIdBillingRoute: typeof ProtectedWsWorkspaceIdBillingRoute;
@@ -690,7 +569,6 @@ const ProtectedWsRouteWithChildren = ProtectedWsRoute._addFileChildren(
 );
 
 interface ProtectedRouteChildren {
-  ProtectedAdminRoute: typeof ProtectedAdminRouteWithChildren;
   ProtectedWsRoute: typeof ProtectedWsRouteWithChildren;
   ProtectedAccountAccountRoute: typeof ProtectedAccountAccountRoute;
   ProtectedAccountBillingRoute: typeof ProtectedAccountBillingRoute;
@@ -698,7 +576,6 @@ interface ProtectedRouteChildren {
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
-  ProtectedAdminRoute: ProtectedAdminRouteWithChildren,
   ProtectedWsRoute: ProtectedWsRouteWithChildren,
   ProtectedAccountAccountRoute: ProtectedAccountAccountRoute,
   ProtectedAccountBillingRoute: ProtectedAccountBillingRoute,

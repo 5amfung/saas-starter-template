@@ -20,7 +20,6 @@ import {
   SidebarHeader,
 } from '@workspace/ui/components/sidebar';
 import {
-  NavAdmin,
   NavSecondary,
   NavUser,
   NavUserSkeleton,
@@ -48,10 +47,6 @@ const data = {
       icon: <IconHome />,
       newTab: true,
     },
-  ],
-  navAdmin: [
-    { title: 'Dashboard', url: '/admin/dashboard', icon: <IconDashboard /> },
-    { title: 'User', url: '/admin/user', icon: <IconUsers /> },
   ],
 };
 
@@ -123,7 +118,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMain} />
-        {session?.user.role === 'admin' && <NavAdmin items={data.navAdmin} />}
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

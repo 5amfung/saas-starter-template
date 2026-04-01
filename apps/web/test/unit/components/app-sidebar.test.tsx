@@ -70,9 +70,6 @@ vi.mock('@/components/nav-main', () => ({
 }));
 
 vi.mock('@workspace/components/layout', () => ({
-  NavAdmin: ({ items }: { items: Array<{ title: string; url: string }> }) => (
-    <nav data-testid="nav-admin" data-item-count={items.length} />
-  ),
   NavSecondary: ({
     items,
   }: {
@@ -198,27 +195,6 @@ describe('AppSidebar', () => {
 
     expect(screen.getByTestId('nav-user-skeleton')).toBeInTheDocument();
     expect(screen.queryByTestId('nav-user')).not.toBeInTheDocument();
-  });
-
-  it('renders NavAdmin only for admin users', async () => {
-    const adminSession = { user: { ...mockUser, role: 'admin' as const } };
-    useSessionMock.mockReturnValue({ data: adminSession, isPending: false });
-    useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
-    useActiveOrganizationMock.mockReturnValue({ data: null });
-
-    await renderSidebar();
-
-    expect(screen.getByTestId('nav-admin')).toBeInTheDocument();
-  });
-
-  it('does not render NavAdmin for regular users', async () => {
-    useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
-    useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
-    useActiveOrganizationMock.mockReturnValue({ data: null });
-
-    await renderSidebar();
-
-    expect(screen.queryByTestId('nav-admin')).not.toBeInTheDocument();
   });
 
   it('hides Billing nav item for non-owner workspace members', async () => {
