@@ -331,7 +331,7 @@ export function describeEntitlements(entitlements: Entitlements): string[] {
 }
 ```
 
-- [ ] **Step 2: Write failing tests for entitlements**
+- [ ] **Step 2: Write tests for entitlements**
 
 ```typescript
 // packages/auth/test/unit/entitlements.test.ts
@@ -497,17 +497,12 @@ describe('describeEntitlements', () => {
 });
 ```
 
-- [ ] **Step 3: Run tests to verify they fail**
-
-Run: `pnpm --filter @workspace/auth test test/unit/entitlements.test.ts`
-Expected: FAIL — `entitlements.ts` module doesn't exist yet (but we created it in Step 1, so these should pass).
-
-- [ ] **Step 4: Run tests to verify they pass**
+- [ ] **Step 3: Run tests to verify they pass**
 
 Run: `pnpm --filter @workspace/auth test test/unit/entitlements.test.ts`
 Expected: All tests PASS.
 
-- [ ] **Step 5: Rewrite `plans.ts` with new `PlanDefinition` type and enterprise plan**
+- [ ] **Step 4: Rewrite `plans.ts` with new `PlanDefinition` type and enterprise plan**
 
 Rewrite `packages/auth/src/plans.ts` completely. The new version uses `PlanDefinition` with `Entitlements`, `stripeEnabled`, `isEnterprise` flags. Remove `PlanLimits`, `features: string[]`, `annualBonusFeatures`. Keep all existing helper functions but update signatures to use new types. Add enterprise plan.
 
@@ -522,16 +517,16 @@ Key changes:
 - Keep `resolveWorkspacePlanId()`, `getHighestTierPlanId()`, `getPlanById()`, `getFreePlan()`, `getUpgradePlans()`, `getUpgradePlan()`, `formatPlanPrice()`
 - Re-export entitlement types and functions from `entitlements.ts`
 
-- [ ] **Step 6: Update `plans.test.ts` for new plan shape**
+- [ ] **Step 5: Update `plans.test.ts` for new plan shape**
 
 Update test assertions to match new `PlanDefinition` structure. Tests for removed functions (`getPlanFeatures`, `getPlanLimitsForPlanId`) should be removed. Add tests for enterprise plan, `stripeEnabled`/`isEnterprise` flags, and verify `resolveWorkspacePlanId` works with `'enterprise'` plan ID.
 
-- [ ] **Step 7: Run all auth package tests**
+- [ ] **Step 6: Run all auth package tests**
 
 Run: `pnpm --filter @workspace/auth test`
 Expected: All tests PASS.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add packages/auth/src/entitlements.ts packages/auth/src/plans.ts packages/auth/test/unit/entitlements.test.ts packages/auth/test/unit/plans.test.ts
@@ -794,10 +789,19 @@ export async function getWorkspaceEntitlements(
   const plan = getPlanById(planId) ?? getFreePlan();
   const upgradePlan = getUpgradePlan(plan);
 
-  const overrides = plan.isEnterprise
+  // Project only entitlement fields from the DB row — never pass the full row.
+  const overrideRow = plan.isEnterprise
     ? await db.query.workspaceEntitlementOverrides.findFirst({
         where: eq(workspaceEntitlementOverrides.workspaceId, workspaceId),
       })
+    : undefined;
+
+  const overrides = overrideRow
+    ? {
+        limits: overrideRow.limits,
+        features: overrideRow.features,
+        quotas: overrideRow.quotas,
+      }
     : undefined;
 
   const entitlements = resolveEntitlements(plan.entitlements, overrides);
@@ -1008,7 +1012,7 @@ Data table following the pattern from `apps/admin/src/components/admin/admin-use
 
 - [ ] **Step 5: Create `admin-entitlement-override-form.tsx`**
 
-Form component for editing overrides. Renders numeric inputs for each `LimitKey` and `QuotaKey` (iterating `LIMIT_METADATA` and `QUOTA_METADATA`), checkboxes for each `FeatureKey` (iterating `FEATURE_METADATA`), notes textarea, Save and Clear buttons.
+Form component for editing overrides. Three-state representation for numeric fields: blank = no override (omit key from JSONB, defer to plan default), a number = explicit cap, "Unlimited" toggle = write `-1`. Tri-state checkboxes for features: no override / force true / force false. Iterates `LIMIT_METADATA`, `QUOTA_METADATA`, and `FEATURE_METADATA` for auto-generation. Notes textarea, Save and Clear buttons.
 
 - [ ] **Step 6: Create workspace list route `workspaces/index.tsx`**
 
@@ -1066,7 +1070,7 @@ Document the ops workflow:
 
 1. **Standard Enterprise Deal** — Create $0 Stripe subscription → done
 2. **Custom Enterprise Deal** — Create subscription → set overrides in admin
-3. **Self-Serve to Enterprise Upgrade** — Create enterprise subscription → cancel self-serve → optionally set overrides
+3. **Self-Serve to Enterprise Upgrade** — Cancel self-serve subscription first → create enterprise subscription → optionally set overrides. Order matters: if both coexist, billing UI actions target the enterprise subscription (highest tier), making the self-serve subscription unreachable.
 4. **Enterprise Downgrade** — Cancel enterprise subscription → workspace falls to free
 5. **Stripe Setup** — How to create the $0 enterprise product/price in Stripe Dashboard
 

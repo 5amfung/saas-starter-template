@@ -186,13 +186,22 @@ async function getWorkspaceEntitlements(workspaceId: string): Promise<{
   const planId = await auth.billing.resolveWorkspacePlanIdFromDb(workspaceId);
   const plan = getPlanById(planId);
 
-  const overrides = plan.isEnterprise
+  // Project only entitlement fields from the DB row — never pass the full row.
+  const overrideRow = plan.isEnterprise
     ? await db.query.workspaceEntitlementOverrides.findFirst({
         where: eq(workspaceEntitlementOverrides.workspaceId, workspaceId),
       })
     : undefined;
 
-  const entitlements = resolveEntitlements(planId, overrides ?? undefined);
+  const overrides = overrideRow
+    ? {
+        limits: overrideRow.limits,
+        features: overrideRow.features,
+        quotas: overrideRow.quotas,
+      }
+    : undefined;
+
+  const entitlements = resolveEntitlements(plan.entitlements, overrides);
   return { planId, entitlements, plan };
 }
 ```
@@ -235,10 +244,11 @@ export const workspaceEntitlementOverrides = pgTable(
 ```
 
 - One row per workspace (`workspaceId` unique constraint).
-- JSONB columns store only keys that differ from enterprise plan defaults. Blank = use default.
+- JSONB columns store only keys that are explicitly overridden. Absent keys mean "use plan default." This distinction is important: `{ members: -1 }` means "force unlimited," while an absent `members` key means "defer to the plan's default value."
 - `onDelete: cascade` — if workspace is deleted, overrides go with it.
 - `notes` — free-text field for ops to record deal context (e.g. "Acme Corp — Contract #1234").
 - No `planId` field — plan identity lives in Better Auth's `subscription` table.
+- **DB→resolver boundary**: When passing override data to `resolveEntitlements()`, callers must project only `{ limits, features, quotas }` from the DB row — never pass the full row (which includes `id`, `workspaceId`, `notes`, timestamps). This keeps the resolver's input cleanly typed.
 
 ### Migration
 
@@ -372,8 +382,8 @@ Three sections:
 1. **Info** — workspace name, slug, owner, member count, created date. Read-only.
 2. **Subscription** — plan badge, Stripe subscription ID (links to Stripe Dashboard), status, period end. Read-only. From Better Auth's subscription table.
 3. **Entitlement Overrides** — only visible when workspace is on enterprise plan. Form with:
-   - Numeric inputs for each `LimitKey` and `QuotaKey` (blank = unlimited, use plan default).
-   - Checkboxes for each `FeatureKey` (derived from `FEATURE_METADATA`).
+   - Numeric inputs for each `LimitKey` and `QuotaKey`. Three-state representation: blank = no override (use plan default), a number = explicit cap, "Unlimited" toggle = explicitly write `-1`. Blank and unlimited are distinct — blank defers to the plan default, unlimited forces `-1` regardless of the default. Only non-blank values are written to the JSONB; blank keys are omitted entirely.
+   - Checkboxes for each `FeatureKey` (derived from `FEATURE_METADATA`). Tri-state: unchecked = no override, checked on = force true, checked off = force false.
    - Notes text field.
    - "Save Overrides" button writes/updates the override row.
    - "Clear All Overrides" button removes the row, restoring enterprise defaults.
@@ -435,9 +445,9 @@ Generalized to accept any `LimitKey`, `QuotaKey`, or `FeatureKey`. Title and des
 
 1. Customer contacts sales via "Contact Sales" CTA on billing page.
 2. Sales negotiates contract.
-3. Ops creates enterprise Stripe subscription using `STRIPE_ENTERPRISE_PRICE_ID`.
-4. Workspace immediately resolves to enterprise — `resolveWorkspacePlanId()` picks the highest tier, so the enterprise subscription (tier 3) wins even if the self-serve subscription is still active.
-5. Ops cancels the existing self-serve Stripe subscription (can happen any time after step 3 — no strict ordering required).
+3. Ops cancels the existing self-serve Stripe subscription first. This is required — if both subscriptions coexist, the billing UI's cancel/reactivate/downgrade actions will target the enterprise subscription (the highest tier) instead of the old self-serve one, making the self-serve subscription unreachable through normal UI flows.
+4. Ops creates enterprise Stripe subscription using `STRIPE_ENTERPRISE_PRICE_ID`.
+5. Webhook fires → `subscription.plan = 'enterprise'`.
 6. Optionally sets custom overrides in admin panel.
 7. Customer's workspace now resolves to enterprise entitlements.
 
