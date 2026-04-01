@@ -154,13 +154,6 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
         subscription: { stripeScheduleId: 'pending' },
       });
       void queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
-      // Mark stale without an immediate refetch — the Stripe webhook updates the
-      // DB asynchronously, so a refetch here would return pre-webhook data and
-      // overwrite the optimistic state set above.
-      void queryClient.invalidateQueries({
-        queryKey: BILLING_DATA_QUERY_KEY(workspaceId),
-        refetchType: 'none',
-      });
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to schedule downgrade.');
@@ -178,13 +171,6 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
         subscription: { cancelAtPeriodEnd: true },
       });
       void queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
-      // Mark stale without an immediate refetch — the Stripe webhook updates the
-      // DB asynchronously, so a refetch here would return pre-webhook data and
-      // overwrite the optimistic state set above.
-      void queryClient.invalidateQueries({
-        queryKey: BILLING_DATA_QUERY_KEY(workspaceId),
-        refetchType: 'none',
-      });
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to cancel subscription.');
