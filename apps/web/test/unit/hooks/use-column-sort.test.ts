@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, renderHook } from '@testing-library/react';
+import { useColumnSort } from '@workspace/components/hooks';
 import type { SortingState } from '@tanstack/react-table';
-import { useColumnSort } from '@/hooks/use-column-sort';
 
 describe('useColumnSort', () => {
   it('sets ascending sort when column is unsorted', () => {

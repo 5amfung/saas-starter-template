@@ -41,7 +41,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
   useNavigate: () => navigateMock,
 }));
 
-vi.mock('@/hooks/use-session-query', () => ({
+vi.mock('@workspace/components/hooks', () => ({
   useSessionQuery: useSessionQueryMock,
 }));
 

@@ -34,7 +34,7 @@ vi.mock('sonner', () => ({
   toast: { success: mockToastSuccess, error: mockToastError },
 }));
 
-vi.mock('@/hooks/use-session-query', () => ({
+vi.mock('@workspace/components/hooks', () => ({
   SESSION_QUERY_KEY: ['session'],
 }));
 

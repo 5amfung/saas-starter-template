@@ -7,13 +7,13 @@ import {
   getUpgradePlans,
 } from '@workspace/auth/plans';
 import { Card, CardContent } from '@workspace/ui/components/card';
+import { SESSION_QUERY_KEY } from '@workspace/components/hooks';
 import { BillingDowngradeBanner } from './billing-downgrade-banner';
 import { BillingDowngradeConfirmDialog } from './billing-downgrade-confirm-dialog';
 import { BillingInvoiceTable } from './billing-invoice-table';
 import { BillingManagePlanDialog } from './billing-manage-plan-dialog';
 import { BillingPlanCards } from './billing-plan-cards';
 import type { Plan, PlanId } from '@workspace/auth/plans';
-import { SESSION_QUERY_KEY } from '@/hooks/use-session-query';
 import {
   cancelWorkspaceSubscription,
   createWorkspaceCheckoutSession,

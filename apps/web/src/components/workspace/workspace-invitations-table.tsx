@@ -28,11 +28,11 @@ import {
   formatDate,
   normalizeRole,
 } from '@workspace/components/lib';
+import { useColumnSort } from '@workspace/components/hooks';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 
 import { SortableHeader } from '@/components/sortable-header';
 import { TablePagination } from '@/components/table-pagination';
-import { useColumnSort } from '@/hooks/use-column-sort';
 
 export interface WorkspaceInvitationRow {
   id: string;

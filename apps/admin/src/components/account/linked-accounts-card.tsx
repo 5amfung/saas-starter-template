@@ -22,11 +22,11 @@ import {
 } from '@workspace/ui/components/card';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { authClient } from '@workspace/auth/client';
-import { GoogleIcon } from '@/components/icons/google-icon';
 import {
   LINKED_ACCOUNTS_QUERY_KEY,
   useLinkedAccountsQuery,
-} from '@/hooks/use-linked-accounts-query';
+} from '@workspace/components/hooks';
+import { GoogleIcon } from '@/components/icons/google-icon';
 
 /** Subset of social providers configured for this app. */
 type SocialProviderId = 'google';

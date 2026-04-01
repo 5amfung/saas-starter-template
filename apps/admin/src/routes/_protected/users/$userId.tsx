@@ -9,12 +9,12 @@ import {
 import { Button } from '@workspace/ui/components/button';
 import { Separator } from '@workspace/ui/components/separator';
 import { authClient } from '@workspace/auth/client';
+import { useSessionQuery } from '@workspace/components/hooks';
 import { AdminDeleteUserDialog } from '@/components/admin/admin-delete-user-dialog';
 import {
   AdminUserForm,
   AdminUserFormSkeleton,
 } from '@/components/admin/admin-user-form';
-import { useSessionQuery } from '@/hooks/use-session-query';
 
 export const Route = createFileRoute('/_protected/users/$userId')({
   component: AdminUserDetailPage,

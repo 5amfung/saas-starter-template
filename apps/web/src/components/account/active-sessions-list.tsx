@@ -28,11 +28,11 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card';
 import { Skeleton } from '@workspace/ui/components/skeleton';
-import { useSessionQuery } from '@/hooks/use-session-query';
 import {
   SESSIONS_QUERY_KEY,
+  useSessionQuery,
   useSessionsQuery,
-} from '@/hooks/use-sessions-query';
+} from '@workspace/components/hooks';
 
 interface SessionItem {
   id: string;

@@ -49,6 +49,7 @@ import {
   MAX_SKELETON_ROWS,
   formatDate,
 } from '@workspace/components/lib';
+import { useColumnSort } from '@workspace/components/hooks';
 import type {
   ColumnDef,
   Table as ReactTable,
@@ -58,7 +59,6 @@ import type {
 
 import { SortableHeader } from '@/components/sortable-header';
 import { TablePagination } from '@/components/table-pagination';
-import { useColumnSort } from '@/hooks/use-column-sort';
 
 interface UserRow {
   id: string;

@@ -4,7 +4,7 @@ import { createHookWrapper } from '@workspace/test-utils';
 import {
   LINKED_ACCOUNTS_QUERY_KEY,
   useLinkedAccountsQuery,
-} from '@/hooks/use-linked-accounts-query';
+} from '@workspace/components/hooks';
 
 const { listAccounts } = vi.hoisted(() => ({
   listAccounts: vi.fn(),

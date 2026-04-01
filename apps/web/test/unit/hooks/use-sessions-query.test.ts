@@ -4,7 +4,7 @@ import { createHookWrapper } from '@workspace/test-utils';
 import {
   SESSIONS_QUERY_KEY,
   useSessionsQuery,
-} from '@/hooks/use-sessions-query';
+} from '@workspace/components/hooks';
 
 const { listSessions } = vi.hoisted(() => ({
   listSessions: vi.fn(),
