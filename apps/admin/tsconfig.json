@@ -30,6 +30,7 @@
       "@workspace/ui/*": ["../../packages/ui/src/*"],
       "@workspace/email": ["../../packages/email/src/index.ts"],
       "@workspace/email/*": ["../../packages/email/src/*"],
+      "@workspace/components/*": ["../../packages/components/src/*/index.ts"],
       "@workspace/test-utils": ["../../packages/test-utils/src/index.ts"]
     }
   }

@@ -45,6 +45,7 @@
     "@workspace/db": "workspace:*",
     "@workspace/db-schema": "workspace:*",
     "@workspace/email": "workspace:*",
+    "@workspace/components": "workspace:*",
     "@workspace/ui": "workspace:*",
     "better-auth": "1.5.5",
     "class-variance-authority": "^0.7.1",
