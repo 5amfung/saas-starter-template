@@ -1,4 +1,4 @@
-import { getInitials } from '@/lib/get-initials';
+import { getInitials } from '@workspace/components/lib';
 
 describe('getInitials', () => {
   it('returns first and last initials for multi-word names', () => {

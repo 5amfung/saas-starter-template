@@ -1,4 +1,4 @@
-import { getWebmailLinkForEmail } from '@/lib/email-provider';
+import { getWebmailLinkForEmail } from '@workspace/components/lib';
 
 describe('getWebmailLinkForEmail', () => {
   it.each([

@@ -17,8 +17,8 @@ import {
 import { Button } from '@workspace/ui/components/button';
 import { Field, FieldError, FieldLabel } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
+import { toBase64Url } from '@workspace/components/lib';
 import { changeEmailSchema } from '@/account/schemas';
-import { toBase64Url } from '@/lib/format';
 
 const CONFIRMATION_TEXT = 'CHANGE';
 

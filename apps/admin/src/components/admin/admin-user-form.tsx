@@ -36,9 +36,8 @@ import { Skeleton } from '@workspace/ui/components/skeleton';
 import { Textarea } from '@workspace/ui/components/textarea';
 import { cn } from '@workspace/ui/lib/utils';
 import { authClient } from '@workspace/auth/client';
+import { getInitials, toFieldErrorItem } from '@workspace/components/lib';
 import { adminUserFormSchema } from '@/admin/schemas';
-import { toFieldErrorItem } from '@/lib/form-utils';
-import { getInitials } from '@/lib/get-initials';
 
 interface UserData {
   id: string;

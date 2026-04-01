@@ -24,10 +24,9 @@ import {
   FieldLabel,
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
+import { getInitials, toFieldErrorItem } from '@workspace/components/lib';
 import { accountProfileSchema } from '@/account/schemas';
 import { SESSION_QUERY_KEY } from '@/hooks/use-session-query';
-import { toFieldErrorItem } from '@/lib/form-utils';
-import { getInitials } from '@/lib/get-initials';
 
 const CARD_FOOTER_CLASS = 'flex justify-end gap-2 pt-6';
 

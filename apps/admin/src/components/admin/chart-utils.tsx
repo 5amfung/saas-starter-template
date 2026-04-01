@@ -9,7 +9,7 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from '@workspace/ui/components/toggle-group';
-import { formatDate } from '@/lib/format';
+import { formatDate } from '@workspace/components/lib';
 
 interface TimeRangeToggleProps {
   value: string;

@@ -43,6 +43,12 @@ import {
   TableRow,
 } from '@workspace/ui/components/table';
 import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
+import {
+  ACTIONS_COLUMN_CLASS,
+  ADMIN_PAGE_SIZE_OPTIONS,
+  MAX_SKELETON_ROWS,
+  formatDate,
+} from '@workspace/components/lib';
 import type {
   ColumnDef,
   Table as ReactTable,
@@ -53,12 +59,6 @@ import type {
 import { SortableHeader } from '@/components/sortable-header';
 import { TablePagination } from '@/components/table-pagination';
 import { useColumnSort } from '@/hooks/use-column-sort';
-import { formatDate } from '@/lib/format';
-import {
-  ACTIONS_COLUMN_CLASS,
-  ADMIN_PAGE_SIZE_OPTIONS,
-  MAX_SKELETON_ROWS,
-} from '@/lib/table-constants';
 
 interface UserRow {
   id: string;

@@ -1,6 +1,6 @@
 import { Field, FieldError, FieldLabel } from '@workspace/ui/components/field';
+import { toFieldErrorItem } from '@workspace/components/lib';
 import type { AnyFieldApi } from '@tanstack/react-form';
-import { toFieldErrorItem } from '@/lib/form-utils';
 
 interface ValidatedFieldProps {
   field: AnyFieldApi;

@@ -1,4 +1,8 @@
-import { formatDate, normalizeRole, toBase64Url } from '@/lib/format';
+import {
+  formatDate,
+  normalizeRole,
+  toBase64Url,
+} from '@workspace/components/lib';
 
 describe('formatDate', () => {
   it('formats a Date object to en-US short format', () => {
