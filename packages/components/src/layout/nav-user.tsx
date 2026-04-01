@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  IconCreditCard,
-  IconDotsVertical,
-  IconLogout,
-  IconNotification,
-  IconUserCircle,
-} from '@tabler/icons-react';
+import { IconDotsVertical, IconLogout } from '@tabler/icons-react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import {
@@ -48,14 +42,22 @@ export function NavUserSkeleton() {
   );
 }
 
+export interface NavUserMenuItem {
+  label: string;
+  icon: React.ReactNode;
+  href: string;
+}
+
 export function NavUser({
   user,
+  menuItems = [],
 }: {
   user: {
     name: string;
     email: string;
     avatar: string;
   };
+  menuItems?: NavUserMenuItem[];
 }) {
   const navigate = useNavigate();
   const { isMobile } = useSidebar();
@@ -113,23 +115,22 @@ export function NavUser({
                 </div>
               </DropdownMenuLabel>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => navigate({ to: '/account' })}>
-                <IconUserCircle />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate({ to: '/billing' })}>
-                <IconCreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => navigate({ to: '/notifications' })}
-              >
-                <IconNotification />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
+            {menuItems.length > 0 && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  {menuItems.map((item) => (
+                    <DropdownMenuItem
+                      key={item.href}
+                      onClick={() => navigate({ to: item.href })}
+                    >
+                      {item.icon}
+                      {item.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuGroup>
+              </>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               <IconLogout />

@@ -106,6 +106,12 @@ const defaultUser = {
   avatar: 'https://example.com/avatar.jpg',
 };
 
+const accountMenuItem = {
+  label: 'Account',
+  icon: null,
+  href: '/account',
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -142,7 +148,7 @@ describe('NavUser', () => {
   });
 
   it('renders account navigation option', () => {
-    render(<NavUser user={defaultUser} />);
+    render(<NavUser user={defaultUser} menuItems={[accountMenuItem]} />);
     expect(screen.getByText('Account')).toBeInTheDocument();
   });
 
@@ -186,7 +192,7 @@ describe('NavUser', () => {
 
   it('navigates to account page when Account is clicked', async () => {
     const user = userEvent.setup();
-    render(<NavUser user={defaultUser} />);
+    render(<NavUser user={defaultUser} menuItems={[accountMenuItem]} />);
 
     await user.click(screen.getByText('Account'));
 

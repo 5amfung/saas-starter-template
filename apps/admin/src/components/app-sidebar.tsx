@@ -7,6 +7,7 @@ import {
   IconHome,
   IconSearch,
   IconShieldHalfFilled,
+  IconUserCircle,
   IconUsers,
 } from '@tabler/icons-react';
 import {
@@ -82,7 +83,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {isPending ? (
           <NavUserSkeleton />
         ) : user ? (
-          <NavUser user={user} />
+          <NavUser
+            user={user}
+            menuItems={[
+              {
+                label: 'Account',
+                icon: <IconUserCircle />,
+                href: '/account',
+              },
+            ]}
+          />
         ) : null}
       </SidebarFooter>
     </Sidebar>

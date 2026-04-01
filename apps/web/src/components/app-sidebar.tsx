@@ -7,9 +7,11 @@ import {
   IconFolder,
   IconHelp,
   IconHome,
+  IconNotification,
   IconSearch,
   IconSettings,
   IconStack2,
+  IconUserCircle,
   IconUsers,
 } from '@tabler/icons-react';
 import { authClient } from '@workspace/auth/client';
@@ -124,7 +126,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {isPending ? (
           <NavUserSkeleton />
         ) : user ? (
-          <NavUser user={user} />
+          <NavUser
+            user={user}
+            menuItems={[
+              { label: 'Account', icon: <IconUserCircle />, href: '/account' },
+              { label: 'Billing', icon: <IconCreditCard />, href: '/billing' },
+              {
+                label: 'Notifications',
+                icon: <IconNotification />,
+                href: '/notifications',
+              },
+            ]}
+          />
         ) : null}
       </SidebarFooter>
     </Sidebar>
