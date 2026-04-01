@@ -21,7 +21,7 @@ export function NavAdmin({
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+      <SidebarGroupLabel>Admin</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>

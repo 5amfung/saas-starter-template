@@ -79,9 +79,9 @@ beforeEach(() => {
 });
 
 describe('NavAdmin', () => {
-  it('renders Navigation label', () => {
+  it('renders Admin label', () => {
     render(<NavAdmin items={items} />);
-    expect(screen.getByText('Navigation')).toBeInTheDocument();
+    expect(screen.getByText('Admin')).toBeInTheDocument();
   });
 
   it('renders all navigation item titles', () => {
