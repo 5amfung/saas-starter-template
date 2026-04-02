@@ -1,4 +1,4 @@
-# Design: Add Standalone Hono API in `apps/appfolio-api-server`
+# Design: Add Standalone Hono API in `apps/api-server`
 
 **Date:** 2026-04-01
 **Status:** Approved
@@ -9,7 +9,7 @@ The monorepo currently has frontend applications in `apps/web` and `apps/admin`,
 
 ## Goal
 
-Add a new standalone Hono server in `apps/appfolio-api-server` with a single `GET /hello` endpoint for smoke testing. The new app should follow the monorepo's workspace conventions, include essential HTTP middlewares, and be runnable, type-checkable, and lintable as a first-class app.
+Add a new standalone Hono server in `apps/api-server` with a single `GET /hello` endpoint for smoke testing. The new app should follow the monorepo's workspace conventions, include essential HTTP middlewares, and be runnable, type-checkable, and lintable as a first-class app.
 
 ---
 
@@ -17,7 +17,7 @@ Add a new standalone Hono server in `apps/appfolio-api-server` with a single `GE
 
 ### Included
 
-- Create a new workspace app at `apps/appfolio-api-server`.
+- Create a new workspace app at `apps/api-server`.
 - Use Hono with the Node server adapter.
 - Expose `GET /hello` that returns JSON confirming the server is up.
 - Add essential middleware for:
@@ -44,7 +44,7 @@ Add a new standalone Hono server in `apps/appfolio-api-server` with a single `GE
 ## App Structure
 
 ```
-apps/appfolio-api-server/
+apps/api-server/
 ├── package.json
 ├── tsconfig.json
 ├── eslint.config.js
@@ -63,15 +63,15 @@ apps/appfolio-api-server/
 
 ### Responsibilities
 
-| File                                                        | Responsibility                                                                                        |
-| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `apps/appfolio-api-server/src/app.ts`                       | Create the Hono app, register global middleware, mount routes, and attach not-found / error handling. |
-| `apps/appfolio-api-server/src/index.ts`                     | Start the Node HTTP server on the configured port.                                                    |
-| `apps/appfolio-api-server/src/routes/hello.ts`              | Define the `GET /hello` test endpoint.                                                                |
-| `apps/appfolio-api-server/src/lib/env.ts`                   | Parse and expose server environment values such as port and CORS origin.                              |
-| `apps/appfolio-api-server/src/middleware/request-id.ts`     | Ensure each request has a stable request ID attached to the context and response headers.             |
-| `apps/appfolio-api-server/src/middleware/request-logger.ts` | Log request/response metadata, including request ID and duration.                                     |
-| `apps/appfolio-api-server/src/middleware/error-handler.ts`  | Normalize thrown errors into JSON responses for API consumers.                                        |
+| File                                               | Responsibility                                                                                        |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `apps/api-server/src/app.ts`                       | Create the Hono app, register global middleware, mount routes, and attach not-found / error handling. |
+| `apps/api-server/src/index.ts`                     | Start the Node HTTP server on the configured port.                                                    |
+| `apps/api-server/src/routes/hello.ts`              | Define the `GET /hello` test endpoint.                                                                |
+| `apps/api-server/src/lib/env.ts`                   | Parse and expose server environment values such as port and CORS origin.                              |
+| `apps/api-server/src/middleware/request-id.ts`     | Ensure each request has a stable request ID attached to the context and response headers.             |
+| `apps/api-server/src/middleware/request-logger.ts` | Log request/response metadata, including request ID and duration.                                     |
+| `apps/api-server/src/middleware/error-handler.ts`  | Normalize thrown errors into JSON responses for API consumers.                                        |
 
 ---
 
@@ -146,7 +146,7 @@ This route intentionally stays simple. It should not depend on the database, aut
 
 ## Runtime and Scripts
 
-`apps/appfolio-api-server` should be a workspace package with scripts aligned to the existing apps, adapted for a server-only runtime:
+`apps/api-server` should be a workspace package with scripts aligned to the existing apps, adapted for a server-only runtime:
 
 - `dev`: run the TypeScript server in watch mode.
 - `build`: compile TypeScript into a distributable output directory.
@@ -161,7 +161,7 @@ The root `package.json` should also gain an API-focused development entry so the
 
 ## TypeScript and Tooling
 
-- `apps/appfolio-api-server/tsconfig.json` should extend the root TypeScript config like the other apps.
+- `apps/api-server/tsconfig.json` should extend the root TypeScript config like the other apps.
 - Because this is a server-only app, the config should use Node-oriented libs and types rather than DOM-oriented ones.
 - Linting should follow the repo's ESLint conventions instead of introducing a one-off toolchain.
 - The implementation should avoid Vite unless a concrete requirement emerges; a plain TypeScript + Node server is enough for this app.
@@ -193,7 +193,7 @@ For the first version:
 
 The implementation must prove all of the following:
 
-1. `apps/appfolio-api-server` is recognized as a workspace app.
+1. `apps/api-server` is recognized as a workspace app.
 2. TypeScript succeeds for the new app.
 3. ESLint succeeds for the new app.
 4. The server boots locally.
