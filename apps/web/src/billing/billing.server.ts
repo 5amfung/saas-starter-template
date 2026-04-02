@@ -9,14 +9,14 @@ import {
   resolveEntitlements,
   resolveWorkspacePlanId,
 } from '@workspace/auth/plans';
+import { workspaceEntitlementOverrides } from '@workspace/db-schema';
+import { eq } from 'drizzle-orm';
 import type {
-  Entitlements,
   EntitlementOverrides,
+  Entitlements,
   PlanDefinition,
   PlanId,
 } from '@workspace/auth/plans';
-import { workspaceEntitlementOverrides } from '@workspace/db-schema';
-import { eq } from 'drizzle-orm';
 import { auth, db } from '@/init';
 
 export async function requireVerifiedSession() {

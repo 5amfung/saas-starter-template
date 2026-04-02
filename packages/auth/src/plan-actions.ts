@@ -1,11 +1,11 @@
 import { PLANS, describeEntitlements } from './plans';
-import type { PlanDefinition } from './plans';
 import {
-  computeEntitlementDiff,
   LIMIT_METADATA,
   QUOTA_METADATA,
   UNLIMITED,
+  computeEntitlementDiff,
 } from './entitlements';
+import type { PlanDefinition } from './plans';
 
 export type PlanAction =
   | 'current'

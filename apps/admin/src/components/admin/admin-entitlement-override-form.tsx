@@ -95,13 +95,13 @@ export function AdminEntitlementOverrideForm({
   const buildInitialState = React.useCallback(() => {
     const limitFields: Record<LimitKey, { value: string; unlimited: boolean }> =
       {} as Record<LimitKey, { value: string; unlimited: boolean }>;
-    for (const key of Object.keys(LIMIT_METADATA) as LimitKey[]) {
+    for (const key of Object.keys(LIMIT_METADATA) as Array<LimitKey>) {
       limitFields[key] = toNumericField(overrides?.limits?.[key]);
     }
 
     const quotaFields: Record<QuotaKey, { value: string; unlimited: boolean }> =
       {} as Record<QuotaKey, { value: string; unlimited: boolean }>;
-    for (const key of Object.keys(QUOTA_METADATA) as QuotaKey[]) {
+    for (const key of Object.keys(QUOTA_METADATA) as Array<QuotaKey>) {
       quotaFields[key] = toNumericField(overrides?.quotas?.[key]);
     }
 
@@ -109,7 +109,7 @@ export function AdminEntitlementOverrideForm({
       FeatureKey,
       boolean | undefined
     >;
-    for (const key of Object.keys(FEATURE_METADATA) as FeatureKey[]) {
+    for (const key of Object.keys(FEATURE_METADATA) as Array<FeatureKey>) {
       featureFields[key] = overrides?.features?.[key];
     }
 
@@ -131,19 +131,19 @@ export function AdminEntitlementOverrideForm({
   const saveMutation = useMutation({
     mutationFn: async () => {
       const limits: Partial<Record<LimitKey, number>> = {};
-      for (const key of Object.keys(LIMIT_METADATA) as LimitKey[]) {
+      for (const key of Object.keys(LIMIT_METADATA) as Array<LimitKey>) {
         const val = fromNumericField(formState.limits[key]);
         if (val !== undefined) limits[key] = val;
       }
 
       const quotas: Partial<Record<QuotaKey, number>> = {};
-      for (const key of Object.keys(QUOTA_METADATA) as QuotaKey[]) {
+      for (const key of Object.keys(QUOTA_METADATA) as Array<QuotaKey>) {
         const val = fromNumericField(formState.quotas[key]);
         if (val !== undefined) quotas[key] = val;
       }
 
       const features: Partial<Record<FeatureKey, boolean>> = {};
-      for (const key of Object.keys(FEATURE_METADATA) as FeatureKey[]) {
+      for (const key of Object.keys(FEATURE_METADATA) as Array<FeatureKey>) {
         if (formState.features[key] !== undefined) {
           features[key] = formState.features[key];
         }
@@ -208,7 +208,7 @@ export function AdminEntitlementOverrideForm({
         <div className="space-y-4">
           <h3 className="text-sm font-medium">Limits</h3>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {(Object.keys(LIMIT_METADATA) as LimitKey[]).map((key) => {
+            {(Object.keys(LIMIT_METADATA) as Array<LimitKey>).map((key) => {
               const meta = LIMIT_METADATA[key];
               const field = formState.limits[key];
               return (
@@ -250,7 +250,7 @@ export function AdminEntitlementOverrideForm({
         <div className="space-y-4">
           <h3 className="text-sm font-medium">Quotas</h3>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {(Object.keys(QUOTA_METADATA) as QuotaKey[]).map((key) => {
+            {(Object.keys(QUOTA_METADATA) as Array<QuotaKey>).map((key) => {
               const meta = QUOTA_METADATA[key];
               const field = formState.quotas[key];
               return (
@@ -292,7 +292,7 @@ export function AdminEntitlementOverrideForm({
         <div className="space-y-4">
           <h3 className="text-sm font-medium">Features</h3>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {(Object.keys(FEATURE_METADATA) as FeatureKey[]).map((key) => {
+            {(Object.keys(FEATURE_METADATA) as Array<FeatureKey>).map((key) => {
               const meta = FEATURE_METADATA[key];
               const value = formState.features[key];
               return (

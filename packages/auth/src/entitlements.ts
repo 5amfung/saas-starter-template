@@ -155,12 +155,12 @@ export interface NumericChange {
 
 export interface EntitlementDiff {
   gained: {
-    features: FeatureKey[];
-    increasedLimits: NumericChange[];
+    features: Array<FeatureKey>;
+    increasedLimits: Array<NumericChange>;
   };
   lost: {
-    features: FeatureKey[];
-    decreasedLimits: NumericChange[];
+    features: Array<FeatureKey>;
+    decreasedLimits: Array<NumericChange>;
   };
 }
 
@@ -172,23 +172,25 @@ export function computeEntitlementDiff(
   current: Entitlements,
   target: Entitlements
 ): EntitlementDiff {
-  const gainedFeatures: FeatureKey[] = [];
-  const lostFeatures: FeatureKey[] = [];
+  const gainedFeatures: Array<FeatureKey> = [];
+  const lostFeatures: Array<FeatureKey> = [];
 
-  for (const key of Object.keys(FEATURE_METADATA) as FeatureKey[]) {
+  for (const key of Object.keys(FEATURE_METADATA) as Array<FeatureKey>) {
     if (!current.features[key] && target.features[key])
       gainedFeatures.push(key);
     if (current.features[key] && !target.features[key]) lostFeatures.push(key);
   }
 
-  const increasedLimits: NumericChange[] = [];
-  const decreasedLimits: NumericChange[] = [];
+  const increasedLimits: Array<NumericChange> = [];
+  const decreasedLimits: Array<NumericChange> = [];
 
   const allNumericMeta = { ...LIMIT_METADATA, ...QUOTA_METADATA };
   const currentNumerics = { ...current.limits, ...current.quotas };
   const targetNumerics = { ...target.limits, ...target.quotas };
 
-  for (const key of Object.keys(allNumericMeta) as NumericEntitlementKey[]) {
+  for (const key of Object.keys(
+    allNumericMeta
+  ) as Array<NumericEntitlementKey>) {
     const from = currentNumerics[key];
     const to = targetNumerics[key];
     if (from === to) continue;
@@ -225,14 +227,15 @@ export function formatEntitlementValue(value: number): string {
  * Generates human-readable feature bullets from a plan's entitlements.
  * Replaces the hardcoded `features: string[]` on the old Plan type.
  */
-export function describeEntitlements(entitlements: Entitlements): string[] {
-  const bullets: string[] = [];
+export function describeEntitlements(
+  entitlements: Entitlements
+): Array<string> {
+  const bullets: Array<string> = [];
 
   // Limits.
-  for (const [key, meta] of Object.entries(LIMIT_METADATA) as [
-    LimitKey,
-    NumericEntitlementMeta,
-  ][]) {
+  for (const [key, meta] of Object.entries(LIMIT_METADATA) as Array<
+    [LimitKey, NumericEntitlementMeta]
+  >) {
     const value = entitlements.limits[key];
     if (value === 0) continue; // Don't show "0 API Keys".
     bullets.push(
@@ -243,20 +246,18 @@ export function describeEntitlements(entitlements: Entitlements): string[] {
   }
 
   // Features.
-  for (const [key, meta] of Object.entries(FEATURE_METADATA) as [
-    FeatureKey,
-    EntitlementMeta,
-  ][]) {
+  for (const [key, meta] of Object.entries(FEATURE_METADATA) as Array<
+    [FeatureKey, EntitlementMeta]
+  >) {
     if (entitlements.features[key]) {
       bullets.push(meta.label);
     }
   }
 
   // Quotas.
-  for (const [key, meta] of Object.entries(QUOTA_METADATA) as [
-    QuotaKey,
-    NumericEntitlementMeta,
-  ][]) {
+  for (const [key, meta] of Object.entries(QUOTA_METADATA) as Array<
+    [QuotaKey, NumericEntitlementMeta]
+  >) {
     const value = entitlements.quotas[key];
     if (value === 0) continue;
     bullets.push(
