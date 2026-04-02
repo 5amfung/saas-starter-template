@@ -10,10 +10,15 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card';
 import { Toggle } from '@workspace/ui/components/toggle';
-import type { PlanDefinition, PlanId } from '@workspace/auth/plans';
+import type {
+  Entitlements,
+  PlanDefinition,
+  PlanId,
+} from '@workspace/auth/plans';
 
 interface BillingPlanCardsProps {
   currentPlan: PlanDefinition;
+  currentEntitlements: Entitlements;
   upgradePlans: Array<PlanDefinition>;
   /** Next billing date for paid plans. null for free tier. */
   nextBillingDate: Date | null;
@@ -39,6 +44,7 @@ const DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
 
 export function BillingPlanCards({
   currentPlan,
+  currentEntitlements,
   upgradePlans,
   nextBillingDate,
   annualByPlan,
@@ -61,9 +67,11 @@ export function BillingPlanCards({
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <p className="text-sm text-muted-foreground">
-            {!currentPlan.pricing
-              ? 'Free forever'
-              : formatPlanPrice(currentPlan, false)}
+            {currentPlan.isEnterprise
+              ? 'Custom pricing'
+              : !currentPlan.pricing
+                ? 'Free forever'
+                : formatPlanPrice(currentPlan, false)}
           </p>
           {nextBillingDate && (
             <p className="text-sm text-muted-foreground">
@@ -71,7 +79,7 @@ export function BillingPlanCards({
             </p>
           )}
           <ul className="mt-1 flex flex-col gap-2">
-            {describeEntitlements(currentPlan.entitlements).map((feature) => (
+            {describeEntitlements(currentEntitlements).map((feature) => (
               <li key={feature} className="flex items-center gap-2 text-sm">
                 <IconCheck className="size-3.5 shrink-0 text-muted-foreground" />
                 {feature}

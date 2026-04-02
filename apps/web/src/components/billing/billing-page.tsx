@@ -181,7 +181,7 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
 
   if (billingQuery.isPending || !billingQuery.data) return null;
 
-  const { plan: currentPlan, subscription } = billingQuery.data;
+  const { plan: currentPlan, entitlements, subscription } = billingQuery.data;
   const upgradePlans = getUpgradePlans(currentPlan);
 
   // Stripe Flexible Billing uses cancelAt instead of cancelAtPeriodEnd.
@@ -216,6 +216,7 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
 
       <BillingPlanCards
         currentPlan={currentPlan}
+        currentEntitlements={entitlements}
         upgradePlans={upgradePlans}
         nextBillingDate={periodEnd}
         annualByPlan={annualByPlan}

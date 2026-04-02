@@ -13,12 +13,13 @@ import Stripe from 'stripe';
 import {
   subscription as subscriptionTable,
   user as userTable,
+  workspaceEntitlementOverrides,
 } from '@workspace/db-schema';
 import { createAuthEmails } from './auth-emails.server';
 import { isDuplicateOrganizationError, isSignInPath } from './auth-utils';
 import { createBillingHelpers } from './billing.server';
 import { PLANS, getFreePlan, getPlanById } from './plans';
-import { checkLimit } from './entitlements';
+import { checkLimit, resolveEntitlements } from './entitlements';
 import type { PlanId } from './plans';
 import type { EmailClient } from '@workspace/email';
 import type { Database } from '@workspace/db';
@@ -310,14 +311,32 @@ export function createAuth(config: AuthConfig) {
               organization.id
             );
             const plan = getPlanById(planId) ?? getFreePlan();
+            const overrideRow = plan.isEnterprise
+              ? (
+                  await config.db
+                    .select({
+                      limits: workspaceEntitlementOverrides.limits,
+                      features: workspaceEntitlementOverrides.features,
+                      quotas: workspaceEntitlementOverrides.quotas,
+                    })
+                    .from(workspaceEntitlementOverrides)
+                    .where(
+                      eq(
+                        workspaceEntitlementOverrides.workspaceId,
+                        organization.id
+                      )
+                    )
+                )[0]
+              : undefined;
+            const entitlements = resolveEntitlements(plan.entitlements, {
+              limits: overrideRow?.limits ?? undefined,
+              features: overrideRow?.features ?? undefined,
+              quotas: overrideRow?.quotas ?? undefined,
+            });
             const memberCount = await billing.countWorkspaceMembers(
               organization.id
             );
-            const result = checkLimit(
-              plan.entitlements,
-              'members',
-              memberCount
-            );
+            const result = checkLimit(entitlements, 'members', memberCount);
             if (!result.allowed) {
               throw new APIError('FORBIDDEN', {
                 message: `This workspace has reached its member limit (${result.limit}). Upgrade the workspace plan to invite more members.`,

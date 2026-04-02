@@ -3,7 +3,7 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import type { PlanDefinition } from '@workspace/auth/plans';
+import type { Entitlements, PlanDefinition } from '@workspace/auth/plans';
 import { BillingPlanCards } from '@/components/billing/billing-plan-cards';
 
 const FREE_PLAN: PlanDefinition = {
@@ -88,9 +88,21 @@ const ENTERPRISE_PLAN: PlanDefinition = {
   isEnterprise: true,
 };
 
+const ENTERPRISE_OVERRIDE_ENTITLEMENTS: Entitlements = {
+  limits: { members: 42, projects: -1, workspaces: -1, apiKeys: 2 },
+  features: {
+    sso: true,
+    auditLogs: false,
+    apiAccess: true,
+    prioritySupport: true,
+  },
+  quotas: { storageGb: 500, apiCallsMonthly: -1 },
+};
+
 describe('BillingPlanCards', () => {
   const defaultProps = {
     currentPlan: FREE_PLAN,
+    currentEntitlements: FREE_PLAN.entitlements,
     upgradePlans: [STARTER_PLAN],
     nextBillingDate: null,
     annualByPlan: {},
@@ -120,6 +132,20 @@ describe('BillingPlanCards', () => {
       expect(screen.getByText('Free forever')).toBeInTheDocument();
     });
 
+    it('shows custom pricing for enterprise current plan', () => {
+      renderWithProviders(
+        <BillingPlanCards
+          {...defaultProps}
+          currentPlan={ENTERPRISE_PLAN}
+          currentEntitlements={ENTERPRISE_OVERRIDE_ENTITLEMENTS}
+          upgradePlans={[]}
+        />
+      );
+
+      expect(screen.getByText('Custom pricing')).toBeInTheDocument();
+      expect(screen.queryByText('Free forever')).not.toBeInTheDocument();
+    });
+
     it('shows formatted price for paid plan', () => {
       renderWithProviders(
         <BillingPlanCards
@@ -132,10 +158,22 @@ describe('BillingPlanCards', () => {
       expect(screen.getByText('$5/mo')).toBeInTheDocument();
     });
 
-    it('shows current plan features from entitlements', () => {
-      renderWithProviders(<BillingPlanCards {...defaultProps} />);
-      // describeEntitlements for FREE_PLAN produces "Up to 1 members".
-      expect(screen.getByText(/up to 1 members/i)).toBeInTheDocument();
+    it('shows current plan features from resolved entitlements', () => {
+      const currentEntitlements: Entitlements = {
+        ...FREE_PLAN.entitlements,
+        limits: {
+          ...FREE_PLAN.entitlements.limits,
+          members: 3,
+        },
+      };
+
+      renderWithProviders(
+        <BillingPlanCards
+          {...defaultProps}
+          currentEntitlements={currentEntitlements}
+        />
+      );
+      expect(screen.getByText(/up to 3 members/i)).toBeInTheDocument();
     });
 
     it('shows renewal date when nextBillingDate is provided', () => {

@@ -1,5 +1,5 @@
 // packages/auth/test/unit/validators.test.ts
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   getVerifiedSession,
   validateAdminSession,

@@ -43,6 +43,25 @@ const mockPlan: PlanDefinition = {
   isEnterprise: false,
 };
 
+const enterprisePlan: PlanDefinition = {
+  id: 'enterprise',
+  name: 'Enterprise',
+  tier: 3,
+  pricing: null,
+  entitlements: {
+    limits: { members: -1, projects: -1, workspaces: -1, apiKeys: -1 },
+    features: {
+      sso: true,
+      auditLogs: true,
+      apiAccess: true,
+      prioritySupport: true,
+    },
+    quotas: { storageGb: -1, apiCallsMonthly: -1 },
+  },
+  stripeEnabled: true,
+  isEnterprise: true,
+};
+
 describe('useUpgradePrompt', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -67,7 +86,10 @@ describe('useUpgradePrompt', () => {
     expect(result.current.dialogProps.open).toBe(true);
     expect(result.current.dialogProps.title).toBe('Upgrade');
     expect(result.current.dialogProps.description).toBe('You need more');
-    expect(result.current.dialogProps.upgradePlan).toBe(mockPlan);
+    expect(result.current.dialogProps.action).toEqual({
+      type: 'checkout',
+      plan: mockPlan,
+    });
   });
 
   it('onOpenChange(false) closes dialog', () => {
@@ -86,7 +108,7 @@ describe('useUpgradePrompt', () => {
     expect(result.current.dialogProps.open).toBe(false);
   });
 
-  it('onUpgrade() fires mutation with correct workspaceId, planId and annual', async () => {
+  it('onAction() fires mutation with correct workspaceId, planId and annual', async () => {
     const locationHrefSpy = vi
       .spyOn(window, 'location', 'get')
       .mockReturnValue({
@@ -107,7 +129,7 @@ describe('useUpgradePrompt', () => {
     });
 
     act(() => {
-      result.current.dialogProps.onUpgrade();
+      result.current.dialogProps.onAction();
     });
 
     await waitFor(() => {
@@ -119,7 +141,7 @@ describe('useUpgradePrompt', () => {
     locationHrefSpy.mockRestore();
   });
 
-  it('onUpgrade() is no-op when upgradePlan is null', () => {
+  it('onAction() is no-op when no upgrade action exists', () => {
     const { result } = renderHook(() => useUpgradePrompt(TEST_WORKSPACE_ID), {
       wrapper: createHookWrapper(),
     });
@@ -129,10 +151,25 @@ describe('useUpgradePrompt', () => {
     });
 
     act(() => {
-      result.current.dialogProps.onUpgrade();
+      result.current.dialogProps.onAction();
     });
 
     expect(mockCreateWorkspaceCheckoutSession).not.toHaveBeenCalled();
+  });
+
+  it('show() exposes contact-sales action for enterprise plan', () => {
+    const { result } = renderHook(() => useUpgradePrompt(TEST_WORKSPACE_ID), {
+      wrapper: createHookWrapper(),
+    });
+
+    act(() => {
+      result.current.show('Upgrade', 'Description', enterprisePlan);
+    });
+
+    expect(result.current.dialogProps.action).toEqual({
+      type: 'contact_sales',
+      plan: enterprisePlan,
+    });
   });
 
   it('shows toast on checkout error', async () => {
@@ -149,7 +186,7 @@ describe('useUpgradePrompt', () => {
     });
 
     act(() => {
-      result.current.dialogProps.onUpgrade();
+      result.current.dialogProps.onAction();
     });
 
     await waitFor(() => {
