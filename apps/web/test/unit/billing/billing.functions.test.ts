@@ -1,7 +1,7 @@
 import { createMockSessionResponse } from '@workspace/test-utils';
 import { createServerFnMock } from '../../mocks/server-fn';
 import {
-  checkWorkspacePlanLimit,
+  checkWorkspaceEntitlement,
   createWorkspaceCheckoutSession,
   createWorkspacePortalSession,
   getWorkspaceBillingData,
@@ -16,7 +16,7 @@ const {
   createWorkspaceBillingPortalMock,
   getWorkspaceBillingDataMock,
   reactivateWorkspaceSubscriptionMock,
-  checkWorkspacePlanLimitMock,
+  checkWorkspaceEntitlementMock,
   getInvoicesForWorkspaceMock,
   getWorkspaceOwnerUserIdMock,
 } = vi.hoisted(() => ({
@@ -26,7 +26,7 @@ const {
   createWorkspaceBillingPortalMock: vi.fn(),
   getWorkspaceBillingDataMock: vi.fn(),
   reactivateWorkspaceSubscriptionMock: vi.fn(),
-  checkWorkspacePlanLimitMock: vi.fn(),
+  checkWorkspaceEntitlementMock: vi.fn(),
   getInvoicesForWorkspaceMock: vi.fn(),
   getWorkspaceOwnerUserIdMock: vi.fn(),
 }));
@@ -43,7 +43,7 @@ vi.mock('@/billing/billing.server', () => ({
   createWorkspaceBillingPortal: createWorkspaceBillingPortalMock,
   getWorkspaceBillingData: getWorkspaceBillingDataMock,
   reactivateWorkspaceSubscription: reactivateWorkspaceSubscriptionMock,
-  checkWorkspacePlanLimit: checkWorkspacePlanLimitMock,
+  checkWorkspaceEntitlement: checkWorkspaceEntitlementMock,
 }));
 
 vi.mock('@/init', () => ({
@@ -335,7 +335,7 @@ describe('reactivateWorkspaceSubscription', () => {
   });
 });
 
-describe('checkWorkspacePlanLimit', () => {
+describe('checkWorkspaceEntitlement', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getRequestHeadersMock.mockReturnValue(new Headers());
@@ -344,8 +344,8 @@ describe('checkWorkspacePlanLimit', () => {
   it('rejects when session not verified', async () => {
     requireVerifiedSessionMock.mockRejectedValueOnce(new Error('Unauthorized'));
     await expect(
-      checkWorkspacePlanLimit({
-        data: { workspaceId: TEST_WORKSPACE_ID, feature: 'member' },
+      checkWorkspaceEntitlement({
+        data: { workspaceId: TEST_WORKSPACE_ID, key: 'members' },
       })
     ).rejects.toThrow('Unauthorized');
   });
@@ -355,33 +355,33 @@ describe('checkWorkspacePlanLimit', () => {
     requireVerifiedSessionMock.mockResolvedValueOnce(session);
     getWorkspaceOwnerUserIdMock.mockResolvedValueOnce('other-user-id');
     await expect(
-      checkWorkspacePlanLimit({
-        data: { workspaceId: TEST_WORKSPACE_ID, feature: 'member' },
+      checkWorkspaceEntitlement({
+        data: { workspaceId: TEST_WORKSPACE_ID, key: 'members' },
       })
     ).rejects.toThrow('Only the workspace owner can manage billing.');
   });
 
-  it('passes headers, workspaceId, and feature to checkWorkspacePlanLimit', async () => {
+  it('passes headers, workspaceId, and key to checkWorkspaceEntitlement', async () => {
     const headers = new Headers();
     mockOwnerSession();
     getRequestHeadersMock.mockReturnValue(headers);
-    checkWorkspacePlanLimitMock.mockResolvedValueOnce({ allowed: true });
-    await checkWorkspacePlanLimit({
-      data: { workspaceId: TEST_WORKSPACE_ID, feature: 'member' },
+    checkWorkspaceEntitlementMock.mockResolvedValueOnce({ allowed: true });
+    await checkWorkspaceEntitlement({
+      data: { workspaceId: TEST_WORKSPACE_ID, key: 'members' },
     });
-    expect(checkWorkspacePlanLimitMock).toHaveBeenCalledWith(
+    expect(checkWorkspaceEntitlementMock).toHaveBeenCalledWith(
       headers,
       TEST_WORKSPACE_ID,
-      'member'
+      'members'
     );
   });
 
-  it('returns the plan limit check result', async () => {
+  it('returns the entitlement check result', async () => {
     const limitResult = { allowed: false, limit: 1, current: 1 };
     mockOwnerSession();
-    checkWorkspacePlanLimitMock.mockResolvedValueOnce(limitResult);
-    const result = await checkWorkspacePlanLimit({
-      data: { workspaceId: TEST_WORKSPACE_ID, feature: 'member' },
+    checkWorkspaceEntitlementMock.mockResolvedValueOnce(limitResult);
+    const result = await checkWorkspaceEntitlement({
+      data: { workspaceId: TEST_WORKSPACE_ID, key: 'members' },
     });
     expect(result).toEqual(limitResult);
   });

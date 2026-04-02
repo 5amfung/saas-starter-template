@@ -5,12 +5,19 @@ import {
   PLANS,
   getFreePlan,
   getPlanById,
-  getPlanLimitsForPlanId,
   getUpgradePlan,
+  resolveEntitlements,
   resolveWorkspacePlanId,
 } from '@workspace/auth/plans';
-import type { Plan, PlanId, PlanLimits } from '@workspace/auth/plans';
-import { auth } from '@/init';
+import type {
+  Entitlements,
+  EntitlementOverrides,
+  PlanDefinition,
+  PlanId,
+} from '@workspace/auth/plans';
+import { workspaceEntitlementOverrides } from '@workspace/db-schema';
+import { eq } from 'drizzle-orm';
+import { auth, db } from '@/init';
 
 export async function requireVerifiedSession() {
   const headers = getRequestHeaders();
@@ -36,35 +43,44 @@ export async function getWorkspaceActivePlanId(
   return resolveWorkspacePlanId(Array.from(subscriptions));
 }
 
-export interface WorkspacePlanContext {
+export interface WorkspaceEntitlementsContext {
   planId: PlanId;
-  plan: Plan;
-  planName: string;
-  limits: PlanLimits;
-  upgradePlan: Plan | null;
+  plan: PlanDefinition;
+  entitlements: Entitlements;
+  upgradePlan: PlanDefinition | null;
 }
 
 /**
- * Resolves a workspace's full plan context — plan, limits, and upgrade path.
- * Consolidates the repeated plan resolution pattern used by billing data
- * and plan limit checks.
+ * Resolves a workspace's full entitlement context — plan, entitlements,
+ * and upgrade path. Enterprise workspaces may have per-workspace overrides
+ * stored in the database.
  */
-export async function getWorkspacePlanContext(
+export async function getWorkspaceEntitlements(
   headers: Headers,
   workspaceId: string
-): Promise<WorkspacePlanContext> {
+): Promise<WorkspaceEntitlementsContext> {
   const planId = await getWorkspaceActivePlanId(headers, workspaceId);
   const plan = getPlanById(planId) ?? getFreePlan();
-  const limits = getPlanLimitsForPlanId(planId);
   const upgradePlan = getUpgradePlan(plan);
 
-  return {
-    planId,
-    plan,
-    planName: plan.name,
-    limits,
-    upgradePlan,
-  };
+  // Project only entitlement fields from the DB row — never pass the full row.
+  const overrideRow = plan.isEnterprise
+    ? await db.query.workspaceEntitlementOverrides.findFirst({
+        where: eq(workspaceEntitlementOverrides.workspaceId, workspaceId),
+      })
+    : undefined;
+
+  // Cast from Record<string, ...> (DB layer) to EntitlementOverrides (typed keys).
+  const overrides: EntitlementOverrides | undefined = overrideRow
+    ? {
+        limits: overrideRow.limits as EntitlementOverrides['limits'],
+        features: overrideRow.features as EntitlementOverrides['features'],
+        quotas: overrideRow.quotas as EntitlementOverrides['quotas'],
+      }
+    : undefined;
+
+  const entitlements = resolveEntitlements(plan.entitlements, overrides);
+  return { planId, plan, entitlements, upgradePlan };
 }
 
 /**
@@ -101,12 +117,30 @@ export async function getWorkspaceBillingData(
     ? { ...subscription, stripeScheduleId: null }
     : subscription;
 
+  // Resolve entitlements (with enterprise overrides if applicable).
+  const overrideRow = plan.isEnterprise
+    ? await db.query.workspaceEntitlementOverrides.findFirst({
+        where: eq(workspaceEntitlementOverrides.workspaceId, workspaceId),
+      })
+    : undefined;
+
+  const overrides: EntitlementOverrides | undefined = overrideRow
+    ? {
+        limits: overrideRow.limits as EntitlementOverrides['limits'],
+        features: overrideRow.features as EntitlementOverrides['features'],
+        quotas: overrideRow.quotas as EntitlementOverrides['quotas'],
+      }
+    : undefined;
+
+  const entitlements = resolveEntitlements(plan.entitlements, overrides);
+
   // Count workspace members for UI display.
   const memberCount = await auth.billing.countWorkspaceMembers(workspaceId);
 
   return {
     planId,
     plan,
+    entitlements,
     subscription: cleanedSubscription,
     scheduledTargetPlanId: isScheduleStale ? null : scheduledTargetPlanId,
     memberCount,
@@ -163,43 +197,42 @@ export async function getOwnedWorkspacesBillingSummary(
   return summaries;
 }
 
-export interface CheckPlanLimitResult {
+export interface CheckEntitlementResult {
   allowed: boolean;
   current: number;
   limit: number;
   planName: string;
-  upgradePlan: Plan | null;
+  upgradePlan: PlanDefinition | null;
 }
 
 /**
- * Checks whether a workspace can perform a plan-limited action.
- * Resolves the workspace's own plan directly.
+ * Checks whether a workspace can perform an entitlement-limited action.
+ * Resolves the workspace's entitlements (including enterprise overrides).
  */
-export async function checkWorkspacePlanLimit(
+export async function checkWorkspaceEntitlement(
   headers: Headers,
   workspaceId: string,
-  // Currently only 'member' is supported. The parameter exists so callers
-  // document which limit they're checking and the signature is ready for
-  // additional feature types (e.g. 'storage', 'project') without a breaking change.
-  _feature: 'member'
-): Promise<CheckPlanLimitResult> {
-  const ctx = await getWorkspacePlanContext(headers, workspaceId);
-  const limit = ctx.limits.maxMembers;
+  key: 'members'
+): Promise<CheckEntitlementResult> {
+  const ctx = await getWorkspaceEntitlements(headers, workspaceId);
+  const limit = ctx.entitlements.limits[key];
+
   if (limit === -1) {
     return {
       allowed: true,
       current: 0,
       limit: -1,
-      planName: ctx.planName,
+      planName: ctx.plan.name,
       upgradePlan: ctx.upgradePlan,
     };
   }
+
   const current = await auth.billing.countWorkspaceMembers(workspaceId);
   return {
     allowed: current < limit,
     current,
     limit,
-    planName: ctx.planName,
+    planName: ctx.plan.name,
     upgradePlan: ctx.upgradePlan,
   };
 }

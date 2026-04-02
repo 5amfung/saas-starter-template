@@ -5,7 +5,7 @@ import { PLANS } from '@workspace/auth/plans';
 import type { PlanId } from '@workspace/auth/plans';
 import {
   cancelWorkspaceSubscription as cancelWorkspaceSubscriptionServer,
-  checkWorkspacePlanLimit as checkWorkspacePlanLimitServer,
+  checkWorkspaceEntitlement as checkWorkspaceEntitlementServer,
   createCheckoutForWorkspace,
   createWorkspaceBillingPortal,
   downgradeWorkspaceSubscription as downgradeWorkspaceSubscriptionServer,
@@ -151,23 +151,23 @@ export const cancelWorkspaceSubscription = createServerFn()
     return cancelWorkspaceSubscriptionServer(headers, data.workspaceId);
   });
 
-const checkPlanLimitInput = z.object({
+const checkEntitlementInput = z.object({
   workspaceId: z.string(),
-  feature: z.enum(['member']),
+  key: z.enum(['members']),
 });
 
 /**
- * Checks whether the workspace can perform a plan-limited action.
+ * Checks whether the workspace can perform an entitlement-limited action.
  */
-export const checkWorkspacePlanLimit = createServerFn()
-  .inputValidator(checkPlanLimitInput)
+export const checkWorkspaceEntitlement = createServerFn()
+  .inputValidator(checkEntitlementInput)
   .handler(async ({ data }) => {
     const session = await requireVerifiedSession();
     await requireWorkspaceOwner(session, data.workspaceId);
     const headers = getRequestHeaders();
-    return checkWorkspacePlanLimitServer(
+    return checkWorkspaceEntitlementServer(
       headers,
       data.workspaceId,
-      data.feature
+      data.key
     );
   });
