@@ -25,15 +25,15 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
-    "drizzle-orm": "^0.45.1"
+    "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "4.1.0",
     "@workspace/eslint-config": "workspace:*",
     "dotenv-cli": "^8.0.0",
-    "drizzle-kit": "^0.31.9",
+    "drizzle-kit": "^0.31.10",
     "typescript": "^5.9.3",
-    "vite-tsconfig-paths": "^6.1.0",
-    "vitest": "^4.0.18"
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^4.1.2"
   }
 }

@@ -373,7 +373,7 @@ describe('billing.server', () => {
 
       await expect(
         reactivateWorkspaceSubscription(TEST_HEADERS, TEST_WORKSPACE_ID)
-      ).rejects.toThrow('No active subscription found.');
+      ).rejects.toMatchObject({ message: 'No active subscription found.' });
     });
 
     it('calls restoreSubscription for pending cancellation (no schedule)', async () => {
@@ -448,7 +448,7 @@ describe('billing.server', () => {
 
       await expect(
         reactivateWorkspaceSubscription(TEST_HEADERS, TEST_WORKSPACE_ID)
-      ).rejects.toThrow('Schedule release failed');
+      ).rejects.toMatchObject({ message: 'Schedule release failed' });
       expect(restoreSubscriptionMock).not.toHaveBeenCalled();
     });
   });
@@ -493,7 +493,7 @@ describe('billing.server', () => {
 
       await expect(
         createCheckoutForWorkspace(TEST_HEADERS, TEST_WORKSPACE_ID, 'pro', true)
-      ).rejects.toThrow('Stripe API error');
+      ).rejects.toMatchObject({ message: 'Stripe API error' });
     });
   });
 
@@ -532,7 +532,7 @@ describe('billing.server', () => {
 
       await expect(
         createWorkspaceBillingPortal(TEST_HEADERS, TEST_WORKSPACE_ID)
-      ).rejects.toThrow('Portal unavailable');
+      ).rejects.toMatchObject({ message: 'Portal unavailable' });
     });
   });
 
@@ -607,9 +607,9 @@ describe('billing.server', () => {
           false,
           'sub_starter_123'
         )
-      ).rejects.toThrow(
-        'Target plan must be a lower tier than the current plan.'
-      );
+      ).rejects.toMatchObject({
+        message: 'Target plan must be a lower tier than the current plan.',
+      });
     });
 
     it('throws if target plan has no pricing', async () => {
@@ -626,7 +626,9 @@ describe('billing.server', () => {
           false,
           'sub_starter_123'
         )
-      ).rejects.toThrow('Cannot downgrade to a plan without pricing.');
+      ).rejects.toMatchObject({
+        message: 'Cannot downgrade to a plan without pricing.',
+      });
     });
   });
 
@@ -661,7 +663,7 @@ describe('billing.server', () => {
 
       await expect(
         cancelWorkspaceSubscription(TEST_HEADERS, TEST_WORKSPACE_ID)
-      ).rejects.toThrow('No active subscription found.');
+      ).rejects.toMatchObject({ message: 'No active subscription found.' });
     });
 
     it('propagates error when cancelSubscriptionAtPeriodEnd throws', async () => {
@@ -678,7 +680,7 @@ describe('billing.server', () => {
 
       await expect(
         cancelWorkspaceSubscription(TEST_HEADERS, TEST_WORKSPACE_ID)
-      ).rejects.toThrow('Stripe cancel error');
+      ).rejects.toMatchObject({ message: 'Stripe cancel error' });
     });
   });
 

@@ -15,8 +15,8 @@
   },
   "dependencies": {
     "@tanstack/eslint-config": "^0.3.4",
-    "@tanstack/eslint-plugin-query": "^5.91.4",
-    "@tanstack/eslint-plugin-router": "^1.155.0",
+    "@tanstack/eslint-plugin-query": "^5.96.1",
+    "@tanstack/eslint-plugin-router": "^1.161.6",
     "eslint": "^9.39.4"
   }
 }

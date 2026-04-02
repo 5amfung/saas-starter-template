@@ -79,7 +79,7 @@ describe('getWorkspaceInvoices', () => {
     requireVerifiedSessionMock.mockRejectedValueOnce(new Error('Unauthorized'));
     await expect(
       getWorkspaceInvoices({ data: { workspaceId: TEST_WORKSPACE_ID } })
-    ).rejects.toThrow('Unauthorized');
+    ).rejects.toMatchObject({ message: 'Unauthorized' });
   });
 
   it('rejects when user is not the workspace owner', async () => {
@@ -88,7 +88,9 @@ describe('getWorkspaceInvoices', () => {
     getWorkspaceOwnerUserIdMock.mockResolvedValueOnce('other-user-id');
     await expect(
       getWorkspaceInvoices({ data: { workspaceId: TEST_WORKSPACE_ID } })
-    ).rejects.toThrow('Only the workspace owner can manage billing.');
+    ).rejects.toMatchObject({
+      message: 'Only the workspace owner can manage billing.',
+    });
   });
 
   it('calls getInvoicesForWorkspace with workspace ID', async () => {
@@ -125,7 +127,7 @@ describe('createWorkspaceCheckoutSession', () => {
           annual: false,
         },
       })
-    ).rejects.toThrow('Unauthorized');
+    ).rejects.toMatchObject({ message: 'Unauthorized' });
   });
 
   it('rejects when user is not the workspace owner', async () => {
@@ -140,7 +142,9 @@ describe('createWorkspaceCheckoutSession', () => {
           annual: false,
         },
       })
-    ).rejects.toThrow('Only the workspace owner can manage billing.');
+    ).rejects.toMatchObject({
+      message: 'Only the workspace owner can manage billing.',
+    });
   });
 
   it('passes workspaceId, planId, annual, and headers to createCheckoutForWorkspace', async () => {
@@ -193,7 +197,7 @@ describe('createWorkspacePortalSession', () => {
       createWorkspacePortalSession({
         data: { workspaceId: TEST_WORKSPACE_ID },
       })
-    ).rejects.toThrow('Unauthorized');
+    ).rejects.toMatchObject({ message: 'Unauthorized' });
   });
 
   it('rejects when user is not the workspace owner', async () => {
@@ -204,7 +208,9 @@ describe('createWorkspacePortalSession', () => {
       createWorkspacePortalSession({
         data: { workspaceId: TEST_WORKSPACE_ID },
       })
-    ).rejects.toThrow('Only the workspace owner can manage billing.');
+    ).rejects.toMatchObject({
+      message: 'Only the workspace owner can manage billing.',
+    });
   });
 
   it('calls createWorkspaceBillingPortal with headers and workspaceId', async () => {
@@ -244,7 +250,7 @@ describe('getWorkspaceBillingData', () => {
     requireVerifiedSessionMock.mockRejectedValueOnce(new Error('Unauthorized'));
     await expect(
       getWorkspaceBillingData({ data: { workspaceId: TEST_WORKSPACE_ID } })
-    ).rejects.toThrow('Unauthorized');
+    ).rejects.toMatchObject({ message: 'Unauthorized' });
   });
 
   it('rejects when user is not the workspace owner', async () => {
@@ -253,7 +259,9 @@ describe('getWorkspaceBillingData', () => {
     getWorkspaceOwnerUserIdMock.mockResolvedValueOnce('other-user-id');
     await expect(
       getWorkspaceBillingData({ data: { workspaceId: TEST_WORKSPACE_ID } })
-    ).rejects.toThrow('Only the workspace owner can manage billing.');
+    ).rejects.toMatchObject({
+      message: 'Only the workspace owner can manage billing.',
+    });
   });
 
   it('passes headers and workspaceId to getWorkspaceBillingData', async () => {
@@ -296,7 +304,7 @@ describe('reactivateWorkspaceSubscription', () => {
       reactivateWorkspaceSubscription({
         data: { workspaceId: TEST_WORKSPACE_ID },
       })
-    ).rejects.toThrow('Unauthorized');
+    ).rejects.toMatchObject({ message: 'Unauthorized' });
   });
 
   it('rejects when user is not the workspace owner', async () => {
@@ -307,7 +315,9 @@ describe('reactivateWorkspaceSubscription', () => {
       reactivateWorkspaceSubscription({
         data: { workspaceId: TEST_WORKSPACE_ID },
       })
-    ).rejects.toThrow('Only the workspace owner can manage billing.');
+    ).rejects.toMatchObject({
+      message: 'Only the workspace owner can manage billing.',
+    });
   });
 
   it('calls reactivateWorkspaceSubscription with headers and workspaceId', async () => {
@@ -347,7 +357,7 @@ describe('checkWorkspacePlanLimit', () => {
       checkWorkspacePlanLimit({
         data: { workspaceId: TEST_WORKSPACE_ID, feature: 'member' },
       })
-    ).rejects.toThrow('Unauthorized');
+    ).rejects.toMatchObject({ message: 'Unauthorized' });
   });
 
   it('rejects when user is not the workspace owner', async () => {
@@ -358,7 +368,9 @@ describe('checkWorkspacePlanLimit', () => {
       checkWorkspacePlanLimit({
         data: { workspaceId: TEST_WORKSPACE_ID, feature: 'member' },
       })
-    ).rejects.toThrow('Only the workspace owner can manage billing.');
+    ).rejects.toMatchObject({
+      message: 'Only the workspace owner can manage billing.',
+    });
   });
 
   it('passes headers, workspaceId, and feature to checkWorkspacePlanLimit', async () => {

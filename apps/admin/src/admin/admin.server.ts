@@ -18,6 +18,15 @@ const MILLISECONDS_PER_MINUTE = 60_000;
 const MILLISECONDS_PER_DAY = 24 * 60 * MILLISECONDS_PER_MINUTE;
 export const MAU_WINDOW_DAYS = 30;
 
+const EMPTY_DASHBOARD_METRICS = {
+  totalUsers: 0,
+  verifiedUsers: 0,
+  unverifiedUsers: 0,
+  signupsToday: 0,
+  verifiedToday: 0,
+  unverifiedToday: 0,
+};
+
 /**
  * Compute UTC timestamp for the start of "today" in the admin's local timezone.
  * offsetMinutes comes from `new Date().getTimezoneOffset()` (positive = behind UTC).
@@ -64,17 +73,31 @@ export async function queryDashboardMetrics(timezoneOffset: number) {
 
   const rows = await db
     .select({
-      totalUsers: sql<number>`count(*)::int`,
-      verifiedUsers: sql<number>`count(*) filter (where ${userTable.emailVerified} = true)::int`,
-      unverifiedUsers: sql<number>`count(*) filter (where ${userTable.emailVerified} = false)::int`,
-      signupsToday: sql<number>`count(*) filter (where ${userTable.createdAt} >= ${todayStart} and ${userTable.createdAt} < ${todayEnd})::int`,
-      verifiedToday: sql<number>`count(*) filter (where ${userTable.createdAt} >= ${todayStart} and ${userTable.createdAt} < ${todayEnd} and ${userTable.emailVerified} = true)::int`,
-      unverifiedToday: sql<number>`count(*) filter (where ${userTable.createdAt} >= ${todayStart} and ${userTable.createdAt} < ${todayEnd} and ${userTable.emailVerified} = false)::int`,
+      totalUsers: sql<number>`count(*)::int`.as('total_users'),
+      verifiedUsers:
+        sql<number>`count(*) filter (where ${userTable.emailVerified} = true)::int`.as(
+          'verified_users'
+        ),
+      unverifiedUsers:
+        sql<number>`count(*) filter (where ${userTable.emailVerified} = false)::int`.as(
+          'unverified_users'
+        ),
+      signupsToday:
+        sql<number>`count(*) filter (where ${userTable.createdAt} >= ${todayStart} and ${userTable.createdAt} < ${todayEnd})::int`.as(
+          'signups_today'
+        ),
+      verifiedToday:
+        sql<number>`count(*) filter (where ${userTable.createdAt} >= ${todayStart} and ${userTable.createdAt} < ${todayEnd} and ${userTable.emailVerified} = true)::int`.as(
+          'verified_today'
+        ),
+      unverifiedToday:
+        sql<number>`count(*) filter (where ${userTable.createdAt} >= ${todayStart} and ${userTable.createdAt} < ${todayEnd} and ${userTable.emailVerified} = false)::int`.as(
+          'unverified_today'
+        ),
     })
     .from(userTable);
 
-  const metrics = rows[0];
-  return metrics;
+  return rows[0] ?? EMPTY_DASHBOARD_METRICS;
 }
 
 export async function querySignupChartData(

@@ -19,13 +19,16 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 vi.mock('drizzle-orm', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
+  const sqlMock = vi.fn(() => ({
+    as: vi.fn((alias: string) => ({ alias })),
+  }));
   return {
     ...actual,
     and: vi.fn(),
     gte: vi.fn(),
     isNotNull: vi.fn(),
     lt: vi.fn(),
-    sql: vi.fn(),
+    sql: sqlMock,
   };
 });
 vi.mock('@/init', () => ({
