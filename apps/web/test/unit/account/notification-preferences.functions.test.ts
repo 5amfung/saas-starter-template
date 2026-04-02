@@ -31,7 +31,9 @@ describe('getNotificationPreferences', () => {
 
   it('rejects when session not verified', async () => {
     requireVerifiedSessionMock.mockRejectedValueOnce(new Error('Unauthorized'));
-    await expect(getNotificationPreferences()).rejects.toThrow('Unauthorized');
+    await expect(getNotificationPreferences()).rejects.toMatchObject({
+      message: 'Unauthorized',
+    });
   });
 
   it('calls getNotificationPreferencesForUser with user ID', async () => {
@@ -67,7 +69,7 @@ describe('updateNotificationPreferences', () => {
     requireVerifiedSessionMock.mockRejectedValueOnce(new Error('Unauthorized'));
     await expect(
       updateNotificationPreferences({ data: { marketingEmails: true } })
-    ).rejects.toThrow('Unauthorized');
+    ).rejects.toMatchObject({ message: 'Unauthorized' });
   });
 
   it('passes user ID and data to upsertNotificationPreferencesForUser', async () => {

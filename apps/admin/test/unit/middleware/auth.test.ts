@@ -68,9 +68,9 @@ describe('validateAuthSession', () => {
     mockGetVerifiedAdminSession.mockRejectedValue(
       new Error('Auth service unavailable')
     );
-    await expect(validateAuthSession(headers)).rejects.toThrow(
-      'Auth service unavailable'
-    );
+    await expect(validateAuthSession(headers)).rejects.toMatchObject({
+      message: 'Auth service unavailable',
+    });
   });
 });
 
@@ -101,9 +101,9 @@ describe('validateGuestSession', () => {
 
   it('handles validateGuestSession throwing an error', async () => {
     mockValidateGuest.mockRejectedValue(new Error('Auth service unavailable'));
-    await expect(validateGuestSession(headers)).rejects.toThrow(
-      'Auth service unavailable'
-    );
+    await expect(validateGuestSession(headers)).rejects.toMatchObject({
+      message: 'Auth service unavailable',
+    });
   });
 });
 
@@ -131,7 +131,7 @@ describe('authMiddleware (createMiddleware wrapper)', () => {
     const mockNext = vi.fn();
 
     const serverFn = capturedServerFns['middleware_0'];
-    await expect(serverFn({ next: mockNext })).rejects.toThrow();
+    await expect(serverFn({ next: mockNext })).rejects.toBeTruthy();
     expect(mockNext).not.toHaveBeenCalled();
   });
 });

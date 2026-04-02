@@ -35,7 +35,7 @@ describe('getAdminDashboardMetrics', () => {
     requireAdminMock.mockRejectedValueOnce(new Error('Forbidden'));
     await expect(
       getAdminDashboardMetrics({ data: { timezoneOffset: -300 } })
-    ).rejects.toThrow('Forbidden');
+    ).rejects.toMatchObject({ message: 'Forbidden' });
   });
 
   it('passes timezoneOffset to queryDashboardMetrics', async () => {
@@ -65,7 +65,7 @@ describe('getSignupChartData', () => {
     requireAdminMock.mockRejectedValueOnce(new Error('Forbidden'));
     await expect(
       getSignupChartData({ data: { days: 7, timezoneOffset: -300 } })
-    ).rejects.toThrow('Forbidden');
+    ).rejects.toMatchObject({ message: 'Forbidden' });
   });
 
   it('passes days and timezoneOffset to querySignupChartData', async () => {
@@ -95,7 +95,7 @@ describe('getMauChartData', () => {
     requireAdminMock.mockRejectedValueOnce(new Error('Forbidden'));
     await expect(
       getMauChartData({ data: { days: 7, timezoneOffset: -300 } })
-    ).rejects.toThrow('Forbidden');
+    ).rejects.toMatchObject({ message: 'Forbidden' });
   });
 
   it('passes days and timezoneOffset to queryMauChartData', async () => {

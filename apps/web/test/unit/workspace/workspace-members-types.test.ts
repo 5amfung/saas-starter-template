@@ -68,9 +68,9 @@ describe('withPendingId', () => {
     const setPendingId = vi.fn();
     const action = vi.fn().mockRejectedValue(new Error('fail'));
 
-    await expect(withPendingId(setPendingId, 'item-2', action)).rejects.toThrow(
-      'fail'
-    );
+    await expect(
+      withPendingId(setPendingId, 'item-2', action)
+    ).rejects.toMatchObject({ message: 'fail' });
 
     expect(setPendingId).toHaveBeenCalledTimes(2);
     expect(setPendingId).toHaveBeenNthCalledWith(1, 'item-2');

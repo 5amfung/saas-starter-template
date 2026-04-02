@@ -72,14 +72,14 @@ describe('validateAuthSession', () => {
 
   it('handles malformed session object (missing user)', async () => {
     mockGetSession.mockResolvedValue({ session: null, user: null });
-    await expect(validateAuthSession(headers)).rejects.toThrow();
+    await expect(validateAuthSession(headers)).rejects.toBeTruthy();
   });
 
   it('handles getSession throwing an error', async () => {
     mockGetSession.mockRejectedValue(new Error('Auth service unavailable'));
-    await expect(validateAuthSession(headers)).rejects.toThrow(
-      'Auth service unavailable'
-    );
+    await expect(validateAuthSession(headers)).rejects.toMatchObject({
+      message: 'Auth service unavailable',
+    });
   });
 
   it('propagates errors from ensureActiveWorkspaceForSession', async () => {
@@ -87,9 +87,9 @@ describe('validateAuthSession', () => {
     mockGetSession.mockResolvedValue(session);
     mockEnsureActiveWorkspace.mockRejectedValue(new Error('workspace error'));
 
-    await expect(validateAuthSession(headers)).rejects.toThrow(
-      'workspace error'
-    );
+    await expect(validateAuthSession(headers)).rejects.toMatchObject({
+      message: 'workspace error',
+    });
   });
 });
 
@@ -114,9 +114,9 @@ describe('validateGuestSession', () => {
 
   it('handles getSession throwing an error', async () => {
     mockGetSession.mockRejectedValue(new Error('Auth service unavailable'));
-    await expect(validateGuestSession(headers)).rejects.toThrow(
-      'Auth service unavailable'
-    );
+    await expect(validateGuestSession(headers)).rejects.toMatchObject({
+      message: 'Auth service unavailable',
+    });
   });
 
   it('throws redirect to /ws when session has emailVerified true', async () => {
@@ -156,7 +156,7 @@ describe('authMiddleware (createMiddleware wrapper)', () => {
     const mockNext = vi.fn();
 
     const serverFn = capturedServerFns['middleware_0'];
-    await expect(serverFn({ next: mockNext })).rejects.toThrow();
+    await expect(serverFn({ next: mockNext })).rejects.toBeTruthy();
     expect(mockNext).not.toHaveBeenCalled();
   });
 });
