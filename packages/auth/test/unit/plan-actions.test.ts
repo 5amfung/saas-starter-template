@@ -16,11 +16,16 @@ describe('getPlanAction', () => {
     expect(getPlanAction(pro, pro)).toBe('current');
   });
 
-  it('returns "upgrade" when target tier is higher', () => {
+  it('returns "upgrade" when target tier is higher (non-enterprise)', () => {
     expect(getPlanAction(free, starter)).toBe('upgrade');
     expect(getPlanAction(free, pro)).toBe('upgrade');
     expect(getPlanAction(starter, pro)).toBe('upgrade');
-    expect(getPlanAction(pro, enterprise)).toBe('upgrade');
+  });
+
+  it('returns "contact_sales" when target plan is enterprise', () => {
+    expect(getPlanAction(free, enterprise)).toBe('contact_sales');
+    expect(getPlanAction(starter, enterprise)).toBe('contact_sales');
+    expect(getPlanAction(pro, enterprise)).toBe('contact_sales');
   });
 
   it('returns "cancel" when target is free (no pricing, not enterprise)', () => {
