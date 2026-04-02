@@ -8,7 +8,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@workspace/ui/components/tabs';
-import { checkWorkspacePlanLimit } from '@/billing/billing.functions';
+import { checkWorkspaceEntitlement } from '@/billing/billing.functions';
 import { UpgradePromptDialog } from '@/components/billing/upgrade-prompt-dialog';
 import { WorkspaceInvitationsTable } from '@/components/workspace/workspace-invitations-table';
 import { WorkspaceInviteDialog } from '@/components/workspace/workspace-invite-dialog';
@@ -42,8 +42,8 @@ function WorkspaceMembersPage() {
 
   const handleInviteClick = async () => {
     try {
-      const result = await checkWorkspacePlanLimit({
-        data: { workspaceId, feature: 'member' },
+      const result = await checkWorkspaceEntitlement({
+        data: { workspaceId, key: 'members' },
       });
       if (result.allowed) {
         inviteDialog.onOpenChange(true);

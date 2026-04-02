@@ -1,18 +1,18 @@
 import { getRequestHeaders } from '@tanstack/react-start/server';
-import type { AnyColumn } from 'drizzle-orm';
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
 import {
   member as memberTable,
   organization as organizationTable,
+  workspaceEntitlementOverrides as overrideTable,
   subscription as subscriptionTable,
   user as userTable,
-  workspaceEntitlementOverrides as overrideTable,
 } from '@workspace/db-schema';
 import { resolveWorkspacePlanId } from '@workspace/auth/plans';
+import type { AnyColumn } from 'drizzle-orm';
 import type { EntitlementOverrides, PlanId } from '@workspace/auth/plans';
-import { getVerifiedAdminSession } from '@/auth/validators';
-import { auth, db } from '@/init';
 import type { EntitlementOverrideInput } from './workspaces.schemas';
+import { auth, db } from '@/init';
+import { getVerifiedAdminSession } from '@/auth/validators';
 
 // --- Auth ---
 
@@ -80,7 +80,7 @@ export interface WorkspaceDetail {
 
 // --- Queries ---
 
-const VALID_SORT_COLUMNS: Record<string, AnyColumn> = {
+const VALID_SORT_COLUMNS: Record<string, AnyColumn | undefined> = {
   name: organizationTable.name,
   createdAt: organizationTable.createdAt,
 };
@@ -126,13 +126,16 @@ export async function listWorkspacesWithPlan(
   const subscriptionSq = db
     .select({
       referenceId: subscriptionTable.referenceId,
-      plan: sql<string>`(array_agg(${subscriptionTable.plan} order by ${subscriptionTable.periodStart} desc nulls last))[1]`.as(
+      plan: sql<
+        string | null
+      >`(array_agg(${subscriptionTable.plan} order by ${subscriptionTable.periodStart} desc nulls last))[1]`.as(
         'latest_plan'
       ),
-      status:
-        sql<string>`(array_agg(${subscriptionTable.status} order by ${subscriptionTable.periodStart} desc nulls last))[1]`.as(
-          'latest_status'
-        ),
+      status: sql<
+        string | null
+      >`(array_agg(${subscriptionTable.status} order by ${subscriptionTable.periodStart} desc nulls last))[1]`.as(
+        'latest_status'
+      ),
     })
     .from(subscriptionTable)
     .where(
@@ -262,7 +265,7 @@ export async function getWorkspaceDetail(
     )
     .limit(1);
 
-  const owner = ownerMember[0] ?? null;
+  const owner = ownerMember.length > 0 ? ownerMember[0] : null;
 
   // Count members.
   const memberCountResult = await db
@@ -286,7 +289,7 @@ export async function getWorkspaceDetail(
     )
     .limit(1);
 
-  const subscription = sub[0] ?? null;
+  const subscription = sub.length > 0 ? sub[0] : null;
 
   // Resolve plan ID from subscriptions.
   const allSubs = await db

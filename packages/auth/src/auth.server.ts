@@ -17,7 +17,7 @@ import {
 import { createAuthEmails } from './auth-emails.server';
 import { isDuplicateOrganizationError, isSignInPath } from './auth-utils';
 import { createBillingHelpers } from './billing.server';
-import { PLANS, getPlanById, getFreePlan } from './plans';
+import { PLANS, getFreePlan, getPlanById } from './plans';
 import { checkLimit } from './entitlements';
 import type { PlanId } from './plans';
 import type { EmailClient } from '@workspace/email';

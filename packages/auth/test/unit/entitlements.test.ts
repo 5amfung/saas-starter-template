@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  UNLIMITED,
   checkLimit,
   computeEntitlementDiff,
   describeEntitlements,
   formatEntitlementValue,
   hasFeature,
   resolveEntitlements,
-  UNLIMITED,
 } from '../../src/entitlements';
 import type { Entitlements } from '../../src/entitlements';
 
