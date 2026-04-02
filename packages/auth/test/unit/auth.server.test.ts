@@ -112,6 +112,12 @@ vi.mock('drizzle-orm', () => ({
 vi.mock('@workspace/db-schema', () => ({
   subscription: { status: 'status', referenceId: 'referenceId' },
   user: { id: 'user_id' },
+  workspaceEntitlementOverrides: {
+    workspaceId: 'workspaceId',
+    limits: 'limits',
+    features: 'features',
+    quotas: 'quotas',
+  },
 }));
 
 vi.mock('../../src/billing.server', () => ({
@@ -416,6 +422,34 @@ describe('createAuth', () => {
       await expect(
         opts.organizationHooks.beforeCreateInvitation({
           organization: { id: 'org_full' },
+        })
+      ).rejects.toThrow('reached its member limit');
+    });
+
+    it('uses enterprise entitlement overrides when enforcing member limits', async () => {
+      const createAuth = await importCreateAuth();
+      createAuth(buildTestConfig());
+      const opts = getOrganizationPluginOpts();
+
+      billingMock.resolveWorkspacePlanIdFromDb.mockResolvedValueOnce(
+        'enterprise'
+      );
+      billingMock.countWorkspaceMembers.mockResolvedValueOnce(3);
+      dbSelectMock.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce([
+            {
+              limits: { members: 3 },
+              features: null,
+              quotas: null,
+            },
+          ]),
+        }),
+      });
+
+      await expect(
+        opts.organizationHooks.beforeCreateInvitation({
+          organization: { id: 'org_enterprise' },
         })
       ).rejects.toThrow('reached its member limit');
     });

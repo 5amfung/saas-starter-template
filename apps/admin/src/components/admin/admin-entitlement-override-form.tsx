@@ -47,6 +47,8 @@ interface AdminEntitlementOverrideFormProps {
   overrides: OverrideData | null;
 }
 
+type FeatureOverrideState = 'inherit' | 'enabled' | 'disabled';
+
 // --- Helpers ---
 
 const CARD_FOOTER_CLASS = 'flex justify-end gap-2 pt-6';
@@ -105,12 +107,12 @@ export function AdminEntitlementOverrideForm({
       quotaFields[key] = toNumericField(overrides?.quotas?.[key]);
     }
 
-    const featureFields: Record<FeatureKey, boolean | undefined> = {} as Record<
-      FeatureKey,
-      boolean | undefined
-    >;
+    const featureFields: Record<FeatureKey, FeatureOverrideState> =
+      {} as Record<FeatureKey, FeatureOverrideState>;
     for (const key of Object.keys(FEATURE_METADATA) as Array<FeatureKey>) {
-      featureFields[key] = overrides?.features?.[key];
+      const value = overrides?.features?.[key];
+      featureFields[key] =
+        value === undefined ? 'inherit' : value ? 'enabled' : 'disabled';
     }
 
     return {
@@ -144,8 +146,11 @@ export function AdminEntitlementOverrideForm({
 
       const features: Partial<Record<FeatureKey, boolean>> = {};
       for (const key of Object.keys(FEATURE_METADATA) as Array<FeatureKey>) {
-        if (formState.features[key] !== undefined) {
-          features[key] = formState.features[key];
+        const value = formState.features[key];
+        if (value === 'enabled') {
+          features[key] = true;
+        } else if (value === 'disabled') {
+          features[key] = false;
         }
       }
 
@@ -296,21 +301,7 @@ export function AdminEntitlementOverrideForm({
               const meta = FEATURE_METADATA[key];
               const value = formState.features[key];
               return (
-                <div key={key} className="flex items-center gap-3">
-                  <Checkbox
-                    id={`feature-${key}`}
-                    checked={value ?? false}
-                    disabled={isDisabled}
-                    onCheckedChange={(checked) =>
-                      setFormState((prev) => ({
-                        ...prev,
-                        features: {
-                          ...prev.features,
-                          [key]: checked === true,
-                        },
-                      }))
-                    }
-                  />
+                <div key={key} className="space-y-2">
                   <div className="space-y-0.5">
                     <Label htmlFor={`feature-${key}`} className="text-sm">
                       {meta.label}
@@ -319,6 +310,26 @@ export function AdminEntitlementOverrideForm({
                       {meta.description}
                     </p>
                   </div>
+                  <select
+                    id={`feature-${key}`}
+                    aria-label={meta.label}
+                    value={value}
+                    disabled={isDisabled}
+                    onChange={(event) =>
+                      setFormState((prev) => ({
+                        ...prev,
+                        features: {
+                          ...prev.features,
+                          [key]: event.target.value as FeatureOverrideState,
+                        },
+                      }))
+                    }
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-2.5 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30"
+                  >
+                    <option value="inherit">inherit</option>
+                    <option value="enabled">enabled</option>
+                    <option value="disabled">disabled</option>
+                  </select>
                 </div>
               );
             })}

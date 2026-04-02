@@ -104,6 +104,25 @@ const PRO_PLAN = {
   isEnterprise: false,
 };
 
+const ENTERPRISE_PLAN = {
+  id: 'enterprise' as const,
+  name: 'Enterprise',
+  tier: 3,
+  pricing: null,
+  entitlements: {
+    limits: { members: -1, projects: -1, workspaces: -1, apiKeys: -1 },
+    features: {
+      sso: true,
+      auditLogs: true,
+      apiAccess: true,
+      prioritySupport: true,
+    },
+    quotas: { storageGb: -1, apiCallsMonthly: -1 },
+  },
+  stripeEnabled: true,
+  isEnterprise: true,
+};
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('BillingPage', () => {
@@ -146,6 +165,7 @@ describe('BillingPage', () => {
     getWorkspaceBillingData.mockResolvedValue({
       planId: 'free',
       plan: FREE_PLAN,
+      entitlements: FREE_PLAN.entitlements,
       subscription: null,
     });
 
@@ -168,6 +188,7 @@ describe('BillingPage', () => {
     getWorkspaceBillingData.mockResolvedValue({
       planId: 'free',
       plan: FREE_PLAN,
+      entitlements: FREE_PLAN.entitlements,
       subscription: null,
     });
     getWorkspaceInvoices.mockResolvedValue([]);
@@ -191,6 +212,7 @@ describe('BillingPage', () => {
     getWorkspaceBillingData.mockResolvedValue({
       planId: 'starter',
       plan: STARTER_PLAN,
+      entitlements: STARTER_PLAN.entitlements,
       subscription: {
         status: 'active',
         periodEnd: new Date('2026-04-01'),
@@ -219,6 +241,7 @@ describe('BillingPage', () => {
     getWorkspaceBillingData.mockResolvedValue({
       planId: 'starter',
       plan: STARTER_PLAN,
+      entitlements: STARTER_PLAN.entitlements,
       subscription: {
         status: 'active',
         periodEnd: new Date('2026-04-15'),
@@ -243,6 +266,7 @@ describe('BillingPage', () => {
     getWorkspaceBillingData.mockResolvedValue({
       planId: 'free',
       plan: FREE_PLAN,
+      entitlements: FREE_PLAN.entitlements,
       subscription: null,
     });
     createWorkspaceCheckoutSession.mockResolvedValue({
@@ -274,6 +298,7 @@ describe('BillingPage', () => {
     getWorkspaceBillingData.mockResolvedValue({
       planId: 'starter',
       plan: STARTER_PLAN,
+      entitlements: STARTER_PLAN.entitlements,
       subscription: {
         status: 'active',
         periodEnd: new Date('2026-04-01'),
@@ -310,6 +335,7 @@ describe('BillingPage', () => {
     getWorkspaceBillingData.mockResolvedValue({
       planId: 'starter',
       plan: STARTER_PLAN,
+      entitlements: STARTER_PLAN.entitlements,
       subscription: {
         status: 'active',
         periodEnd: new Date('2026-04-15'),
@@ -349,6 +375,7 @@ describe('BillingPage', () => {
     getWorkspaceBillingData.mockResolvedValue({
       planId: 'free',
       plan: FREE_PLAN,
+      entitlements: FREE_PLAN.entitlements,
       subscription: null,
     });
     createWorkspaceCheckoutSession.mockRejectedValue(
@@ -380,6 +407,7 @@ describe('BillingPage', () => {
     getWorkspaceBillingData.mockResolvedValue({
       planId: 'pro',
       plan: PRO_PLAN,
+      entitlements: PRO_PLAN.entitlements,
       subscription: {
         status: 'active',
         periodEnd: new Date('2026-04-01'),
@@ -404,5 +432,43 @@ describe('BillingPage', () => {
     expect(
       screen.getByRole('link', { name: /contact sales/i })
     ).toBeInTheDocument();
+  });
+
+  it('shows current enterprise entitlements and custom pricing language', async () => {
+    getWorkspaceBillingData.mockResolvedValue({
+      planId: 'enterprise',
+      plan: ENTERPRISE_PLAN,
+      entitlements: {
+        limits: { members: 42, projects: -1, workspaces: -1, apiKeys: 2 },
+        features: {
+          sso: true,
+          auditLogs: false,
+          apiAccess: true,
+          prioritySupport: true,
+        },
+        quotas: { storageGb: 500, apiCallsMonthly: -1 },
+      },
+      subscription: {
+        status: 'active',
+        periodEnd: new Date('2026-04-01'),
+        cancelAtPeriodEnd: false,
+        cancelAt: null,
+      },
+    });
+
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Enterprise')).toBeInTheDocument();
+    });
+
+    expect(screen.getAllByText('Custom pricing').length).toBeGreaterThan(0);
+    expect(screen.getByText(/up to 42 members/i)).toBeInTheDocument();
+    expect(screen.queryByText('Free forever')).not.toBeInTheDocument();
   });
 });
