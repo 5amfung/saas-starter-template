@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createHookWrapper } from '@workspace/test-utils';
-import type { Plan } from '@workspace/auth/plans';
+import type { PlanDefinition } from '@workspace/auth/plans';
 import { useUpgradePrompt } from '@/hooks/use-upgrade-prompt';
 
 const { mockCreateWorkspaceCheckoutSession, mockToastError } = vi.hoisted(
@@ -21,17 +21,26 @@ vi.mock('sonner', () => ({
 
 const TEST_WORKSPACE_ID = 'ws_123';
 
-const mockPlan: Plan = {
+const mockPlan: PlanDefinition = {
   id: 'pro',
   name: 'Pro',
-  tier: 1,
+  tier: 2,
   pricing: {
     monthly: { price: 49_00 },
     annual: { price: 490_00 },
   },
-  limits: { maxMembers: 25 },
-  features: ['Up to 25 members per workspace'],
-  annualBonusFeatures: ['2 months free'],
+  entitlements: {
+    limits: { members: 25, projects: 100, workspaces: 10, apiKeys: 5 },
+    features: {
+      sso: false,
+      auditLogs: true,
+      apiAccess: true,
+      prioritySupport: true,
+    },
+    quotas: { storageGb: 50, apiCallsMonthly: 1000 },
+  },
+  stripeEnabled: true,
+  isEnterprise: false,
 };
 
 describe('useUpgradePrompt', () => {

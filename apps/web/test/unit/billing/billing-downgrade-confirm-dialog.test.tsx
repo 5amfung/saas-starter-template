@@ -36,12 +36,14 @@ describe('BillingDowngradeConfirmDialog', () => {
 
   it('shows lost features from computePlanDiff', () => {
     renderWithProviders(<BillingDowngradeConfirmDialog {...defaultProps} />);
-    expect(screen.getByText(/email customer support/i)).toBeInTheDocument();
+    // Pro has Priority Support enabled; Starter does not.
+    expect(screen.getByText(/priority support/i)).toBeInTheDocument();
   });
 
   it('shows limit changes from computePlanDiff', () => {
     renderWithProviders(<BillingDowngradeConfirmDialog {...defaultProps} />);
-    expect(screen.getByText(/member limit/i)).toBeInTheDocument();
+    // LIMIT_METADATA.members.label is "Members".
+    expect(screen.getByText(/members/i)).toBeInTheDocument();
     expect(screen.getByText(/25/)).toBeInTheDocument();
     expect(screen.getByText(/5/)).toBeInTheDocument();
   });

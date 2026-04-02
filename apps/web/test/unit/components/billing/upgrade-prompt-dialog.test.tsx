@@ -3,10 +3,10 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import type { Plan } from '@workspace/auth/plans';
+import type { PlanDefinition } from '@workspace/auth/plans';
 import { UpgradePromptDialog } from '@/components/billing/upgrade-prompt-dialog';
 
-const STARTER_PLAN: Plan = {
+const STARTER_PLAN: PlanDefinition = {
   id: 'starter',
   name: 'Starter',
   tier: 1,
@@ -14,9 +14,18 @@ const STARTER_PLAN: Plan = {
     monthly: { price: 500 },
     annual: { price: 5000 },
   },
-  limits: { maxMembers: 5 },
-  features: ['Up to 5 members per workspace'],
-  annualBonusFeatures: ['2 months free'],
+  entitlements: {
+    limits: { members: 5, projects: 5, workspaces: 5, apiKeys: 0 },
+    features: {
+      sso: false,
+      auditLogs: false,
+      apiAccess: false,
+      prioritySupport: false,
+    },
+    quotas: { storageGb: 10, apiCallsMonthly: 0 },
+  },
+  stripeEnabled: true,
+  isEnterprise: false,
 };
 
 describe('UpgradePromptDialog', () => {

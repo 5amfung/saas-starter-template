@@ -45,19 +45,37 @@ const freePlan = {
   name: 'Free',
   tier: 0,
   pricing: null,
-  limits: { maxMembers: 1 },
-  features: ['1 member'],
-  annualBonusFeatures: [],
+  entitlements: {
+    limits: { members: 1, projects: 1, workspaces: 1, apiKeys: 0 },
+    features: {
+      sso: false,
+      auditLogs: false,
+      apiAccess: false,
+      prioritySupport: false,
+    },
+    quotas: { storageGb: 1, apiCallsMonthly: 0 },
+  },
+  stripeEnabled: false,
+  isEnterprise: false,
 };
 
 const proPlan = {
   id: 'pro',
   name: 'Pro',
-  tier: 1,
+  tier: 2,
   pricing: { monthly: { price: 4900 }, annual: { price: 49000 } },
-  limits: { maxMembers: 25 },
-  features: ['Up to 25 members per workspace'],
-  annualBonusFeatures: ['2 months free'],
+  entitlements: {
+    limits: { members: 25, projects: 100, workspaces: 10, apiKeys: 5 },
+    features: {
+      sso: false,
+      auditLogs: true,
+      apiAccess: true,
+      prioritySupport: true,
+    },
+    quotas: { storageGb: 50, apiCallsMonthly: 1000 },
+  },
+  stripeEnabled: true,
+  isEnterprise: false,
 };
 
 vi.mock('@workspace/auth/plans', async (importOriginal) => {
@@ -68,11 +86,20 @@ vi.mock('@workspace/auth/plans', async (importOriginal) => {
       {
         id: 'pro',
         name: 'Pro',
-        tier: 1,
+        tier: 2,
         pricing: { monthly: { price: 4900 }, annual: { price: 49000 } },
-        limits: { maxMembers: 25 },
-        features: ['Up to 25 members per workspace'],
-        annualBonusFeatures: ['2 months free'],
+        entitlements: {
+          limits: { members: 25, projects: 100, workspaces: 10, apiKeys: 5 },
+          features: {
+            sso: false,
+            auditLogs: true,
+            apiAccess: true,
+            prioritySupport: true,
+          },
+          quotas: { storageGb: 50, apiCallsMonthly: 1000 },
+        },
+        stripeEnabled: true,
+        isEnterprise: false,
       },
     ]),
   };
@@ -98,7 +125,12 @@ describe('BillingPage integration', () => {
 
   it('renders current plan details after data loads', async () => {
     setupBillingData();
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Free')).toBeInTheDocument();
@@ -113,7 +145,12 @@ describe('BillingPage integration', () => {
     createWorkspaceCheckoutSessionMock.mockResolvedValueOnce({
       url: 'https://stripe.com/checkout',
     });
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Free')).toBeInTheDocument();
@@ -134,7 +171,12 @@ describe('BillingPage integration', () => {
     createWorkspaceCheckoutSessionMock.mockRejectedValueOnce(
       new Error('Checkout failed')
     );
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Free')).toBeInTheDocument();
@@ -160,7 +202,12 @@ describe('BillingPage integration', () => {
       url: 'https://portal.stripe.com',
     });
 
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Pro')).toBeInTheDocument();
@@ -185,7 +232,12 @@ describe('BillingPage integration', () => {
     getWorkspaceInvoicesMock.mockResolvedValue([]);
     reactivateWorkspaceSubscriptionMock.mockResolvedValueOnce({});
 
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/will downgrade/i)).toBeInTheDocument();
@@ -220,7 +272,12 @@ describe('BillingPage integration', () => {
       new Error('Reactivation failed')
     );
 
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/will downgrade/i)).toBeInTheDocument();

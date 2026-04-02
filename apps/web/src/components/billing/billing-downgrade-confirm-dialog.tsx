@@ -10,7 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog';
-import type { Plan } from '@workspace/auth/plans';
+import type { PlanDefinition } from '@workspace/auth/plans';
 
 const DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
   month: 'long',
@@ -22,8 +22,8 @@ const DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
 interface BillingDowngradeConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  currentPlan: Plan;
-  targetPlan: Plan;
+  currentPlan: PlanDefinition;
+  targetPlan: PlanDefinition;
   periodEnd: Date | null;
   currentMemberCount: number;
   onConfirm: () => void;
@@ -66,8 +66,8 @@ export function BillingDowngradeConfirmDialog({
   );
 
   const exceedsMemberLimit =
-    targetPlan.limits.maxMembers !== -1 &&
-    currentMemberCount > targetPlan.limits.maxMembers;
+    targetPlan.entitlements.limits.members !== -1 &&
+    currentMemberCount > targetPlan.entitlements.limits.members;
 
   // Build the full summary as a single string so all content is in one text
   // node. This keeps test queries (getByText) unambiguous — each query finds
@@ -104,8 +104,9 @@ export function BillingDowngradeConfirmDialog({
             <IconAlertTriangle className="mt-0.5 size-4 shrink-0" />
             <p>
               You currently have {currentMemberCount} members. The{' '}
-              {targetPlan.name} plan allows up to {targetPlan.limits.maxMembers}
-              . You'll need to remove members before the change takes effect.
+              {targetPlan.name} plan allows up to{' '}
+              {targetPlan.entitlements.limits.members}. You'll need to remove
+              members before the change takes effect.
             </p>
           </div>
         )}

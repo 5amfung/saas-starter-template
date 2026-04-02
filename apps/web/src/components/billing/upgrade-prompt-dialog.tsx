@@ -1,5 +1,5 @@
 import { IconCheck, IconLoader2, IconSparkles } from '@tabler/icons-react';
-import { formatPlanPrice, getPlanFeatures } from '@workspace/auth/plans';
+import { describeEntitlements, formatPlanPrice } from '@workspace/auth/plans';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -9,7 +9,7 @@ import {
 } from '@workspace/ui/components/alert-dialog';
 import { Button } from '@workspace/ui/components/button';
 import { Toggle } from '@workspace/ui/components/toggle';
-import type { Plan } from '@workspace/auth/plans';
+import type { PlanDefinition } from '@workspace/auth/plans';
 
 interface UpgradePromptDialogProps {
   open: boolean;
@@ -17,7 +17,7 @@ interface UpgradePromptDialogProps {
   title: string;
   description: string;
   /** The plan to offer. null = show limit-reached message. */
-  upgradePlan: Plan | null;
+  upgradePlan: PlanDefinition | null;
   isUpgrading: boolean;
   onUpgrade: () => void;
   isAnnual: boolean;
@@ -89,15 +89,17 @@ export function UpgradePromptDialog({
 
               {/* Features */}
               <ul className="flex flex-col gap-2.5">
-                {getPlanFeatures(upgradePlan, isAnnual).map((feature) => (
-                  <li
-                    key={feature}
-                    className="flex items-center gap-2.5 text-sm"
-                  >
-                    <IconCheck className="size-3.5 shrink-0 text-primary" />
-                    {feature}
-                  </li>
-                ))}
+                {describeEntitlements(upgradePlan.entitlements).map(
+                  (feature) => (
+                    <li
+                      key={feature}
+                      className="flex items-center gap-2.5 text-sm"
+                    >
+                      <IconCheck className="size-3.5 shrink-0 text-primary" />
+                      {feature}
+                    </li>
+                  )
+                )}
               </ul>
 
               {/* Actions */}

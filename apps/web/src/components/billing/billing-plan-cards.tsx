@@ -1,5 +1,5 @@
 import { IconCheck } from '@tabler/icons-react';
-import { formatPlanPrice, getPlanFeatures } from '@workspace/auth/plans';
+import { describeEntitlements, formatPlanPrice } from '@workspace/auth/plans';
 import { Button } from '@workspace/ui/components/button';
 import {
   Card,
@@ -10,11 +10,11 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card';
 import { Toggle } from '@workspace/ui/components/toggle';
-import type { Plan, PlanId } from '@workspace/auth/plans';
+import type { PlanDefinition, PlanId } from '@workspace/auth/plans';
 
 interface BillingPlanCardsProps {
-  currentPlan: Plan;
-  upgradePlans: Array<Plan>;
+  currentPlan: PlanDefinition;
+  upgradePlans: Array<PlanDefinition>;
   /** Next billing date for paid plans. null for free tier. */
   nextBillingDate: Date | null;
   /** Per-plan annual toggle state. Missing keys default to monthly. */
@@ -27,6 +27,8 @@ interface BillingPlanCardsProps {
   isBillingPortalLoading: boolean;
   /** The plan ID currently being upgraded, or null if no checkout in progress. */
   upgradingPlanId: PlanId | null;
+  /** Workspace name for enterprise mailto link subject. */
+  workspaceName: string;
 }
 
 const DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
@@ -47,6 +49,7 @@ export function BillingPlanCards({
   isManaging,
   isBillingPortalLoading,
   upgradingPlanId,
+  workspaceName,
 }: BillingPlanCardsProps) {
   return (
     <div className="flex flex-col gap-4">
@@ -68,7 +71,7 @@ export function BillingPlanCards({
             </p>
           )}
           <ul className="mt-1 flex flex-col gap-2">
-            {currentPlan.features.map((feature) => (
+            {describeEntitlements(currentPlan.entitlements).map((feature) => (
               <li key={feature} className="flex items-center gap-2 text-sm">
                 <IconCheck className="size-3.5 shrink-0 text-muted-foreground" />
                 {feature}
@@ -112,34 +115,38 @@ export function BillingPlanCards({
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
                 <div className="flex items-center gap-2">
-                  {plan.pricing && (
+                  {plan.isEnterprise ? (
+                    <p className="text-sm font-medium">Custom pricing</p>
+                  ) : plan.pricing ? (
                     <p className="text-sm font-medium">
                       {formatPlanPrice(plan, isAnnual)}
                     </p>
+                  ) : null}
+                  {!plan.isEnterprise && (
+                    <div className="flex items-center gap-0.5 rounded-full border p-0.5">
+                      <Toggle
+                        pressed={!isAnnual}
+                        onPressedChange={() => onToggleInterval(plan.id, false)}
+                        size="sm"
+                        className="h-6 rounded-full px-2.5 text-xs aria-pressed:bg-foreground aria-pressed:text-background"
+                        aria-label="Monthly billing"
+                      >
+                        Monthly
+                      </Toggle>
+                      <Toggle
+                        pressed={isAnnual}
+                        onPressedChange={() => onToggleInterval(plan.id, true)}
+                        size="sm"
+                        className="h-6 rounded-full px-2.5 text-xs aria-pressed:bg-foreground aria-pressed:text-background"
+                        aria-label="Annual billing"
+                      >
+                        Annual
+                      </Toggle>
+                    </div>
                   )}
-                  <div className="flex items-center gap-0.5 rounded-full border p-0.5">
-                    <Toggle
-                      pressed={!isAnnual}
-                      onPressedChange={() => onToggleInterval(plan.id, false)}
-                      size="sm"
-                      className="h-6 rounded-full px-2.5 text-xs aria-pressed:bg-foreground aria-pressed:text-background"
-                      aria-label="Monthly billing"
-                    >
-                      Monthly
-                    </Toggle>
-                    <Toggle
-                      pressed={isAnnual}
-                      onPressedChange={() => onToggleInterval(plan.id, true)}
-                      size="sm"
-                      className="h-6 rounded-full px-2.5 text-xs aria-pressed:bg-foreground aria-pressed:text-background"
-                      aria-label="Annual billing"
-                    >
-                      Annual
-                    </Toggle>
-                  </div>
                 </div>
                 <ul className="mt-1 flex flex-col gap-2">
-                  {getPlanFeatures(plan, isAnnual).map((feature) => (
+                  {describeEntitlements(plan.entitlements).map((feature) => (
                     <li
                       key={feature}
                       className="flex items-center gap-2 text-sm"
@@ -151,15 +158,28 @@ export function BillingPlanCards({
                 </ul>
               </CardContent>
               <CardFooter>
-                <Button
-                  className="w-full"
-                  onClick={() => onUpgrade(plan.id, isAnnual)}
-                  disabled={upgradingPlanId !== null}
-                >
-                  {isThisPlanUpgrading
-                    ? 'Redirecting...'
-                    : `Upgrade to ${plan.name}`}
-                </Button>
+                {plan.isEnterprise ? (
+                  <Button
+                    className="w-full"
+                    render={
+                      <a
+                        href={`mailto:sales@example.com?subject=${encodeURIComponent(`Enterprise inquiry — ${workspaceName}`)}`}
+                      />
+                    }
+                  >
+                    Contact Sales
+                  </Button>
+                ) : (
+                  <Button
+                    className="w-full"
+                    onClick={() => onUpgrade(plan.id, isAnnual)}
+                    disabled={upgradingPlanId !== null}
+                  >
+                    {isThisPlanUpgrading
+                      ? 'Redirecting...'
+                      : `Upgrade to ${plan.name}`}
+                  </Button>
+                )}
               </CardFooter>
             </Card>
           );

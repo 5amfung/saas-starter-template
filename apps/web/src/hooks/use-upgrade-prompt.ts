@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import type { Plan, PlanId } from '@workspace/auth/plans';
+import type { PlanDefinition, PlanId } from '@workspace/auth/plans';
 import { createWorkspaceCheckoutSession } from '@/billing/billing.functions';
 
 interface UpgradePromptState {
@@ -9,7 +9,7 @@ interface UpgradePromptState {
   title: string;
   description: string;
   /** The plan to offer. null = highest tier, show limit-reached message. */
-  upgradePlan: Plan | null;
+  upgradePlan: PlanDefinition | null;
 }
 
 const INITIAL_STATE: UpgradePromptState = {
@@ -47,7 +47,7 @@ export function useUpgradePrompt(workspaceId: string) {
   const show = (
     title: string,
     description: string,
-    upgradePlan: Plan | null
+    upgradePlan: PlanDefinition | null
   ) => {
     setPrompt({ open: true, title, description, upgradePlan });
   };

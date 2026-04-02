@@ -46,9 +46,18 @@ const FREE_PLAN = {
   name: 'Free',
   tier: 0,
   pricing: null,
-  limits: { maxMembers: 1 },
-  features: ['1 member'],
-  annualBonusFeatures: [],
+  entitlements: {
+    limits: { members: 1, projects: 1, workspaces: 1, apiKeys: 0 },
+    features: {
+      sso: false,
+      auditLogs: false,
+      apiAccess: false,
+      prioritySupport: false,
+    },
+    quotas: { storageGb: 1, apiCallsMonthly: 0 },
+  },
+  stripeEnabled: false,
+  isEnterprise: false,
 };
 
 const STARTER_PLAN = {
@@ -59,9 +68,18 @@ const STARTER_PLAN = {
     monthly: { price: 500 },
     annual: { price: 5000 },
   },
-  limits: { maxMembers: 5 },
-  features: ['Up to 5 members per workspace'],
-  annualBonusFeatures: ['2 months free'],
+  entitlements: {
+    limits: { members: 5, projects: 5, workspaces: 5, apiKeys: 0 },
+    features: {
+      sso: false,
+      auditLogs: false,
+      apiAccess: false,
+      prioritySupport: false,
+    },
+    quotas: { storageGb: 10, apiCallsMonthly: 0 },
+  },
+  stripeEnabled: true,
+  isEnterprise: false,
 };
 
 const PRO_PLAN = {
@@ -72,9 +90,18 @@ const PRO_PLAN = {
     monthly: { price: 2000 },
     annual: { price: 20000 },
   },
-  limits: { maxMembers: 25 },
-  features: ['Up to 25 members per workspace'],
-  annualBonusFeatures: ['2 months free'],
+  entitlements: {
+    limits: { members: 25, projects: 100, workspaces: 10, apiKeys: 5 },
+    features: {
+      sso: false,
+      auditLogs: true,
+      apiAccess: true,
+      prioritySupport: true,
+    },
+    quotas: { storageGb: 50, apiCallsMonthly: 1000 },
+  },
+  stripeEnabled: true,
+  isEnterprise: false,
 };
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -106,7 +133,10 @@ describe('BillingPage', () => {
     getWorkspaceBillingData.mockImplementation(() => new Promise(() => {}));
 
     const { container } = renderWithProviders(
-      <BillingPage workspaceId={TEST_WORKSPACE_ID} />
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
     );
 
     expect(container.firstChild).toBeNull();
@@ -119,7 +149,12 @@ describe('BillingPage', () => {
       subscription: null,
     });
 
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Free')).toBeInTheDocument();
@@ -137,7 +172,12 @@ describe('BillingPage', () => {
     });
     getWorkspaceInvoices.mockResolvedValue([]);
 
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       // The invoice section renders an h3 with text "Invoices".
@@ -159,7 +199,12 @@ describe('BillingPage', () => {
       },
     });
 
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Starter')).toBeInTheDocument();
@@ -182,7 +227,12 @@ describe('BillingPage', () => {
       },
     });
 
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/your plan will downgrade/i)).toBeInTheDocument();
@@ -200,7 +250,12 @@ describe('BillingPage', () => {
     });
 
     const user = userEvent.setup();
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/upgrade to starter/i)).toBeInTheDocument();
@@ -231,7 +286,12 @@ describe('BillingPage', () => {
     });
 
     const user = userEvent.setup();
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(
@@ -260,7 +320,12 @@ describe('BillingPage', () => {
     reactivateWorkspaceSubscription.mockResolvedValue({ success: true });
 
     const user = userEvent.setup();
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(
@@ -291,7 +356,12 @@ describe('BillingPage', () => {
     );
 
     const user = userEvent.setup();
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/upgrade to starter/i)).toBeInTheDocument();
@@ -306,7 +376,7 @@ describe('BillingPage', () => {
     });
   });
 
-  it('shows custom plan card when user is on highest tier plan', async () => {
+  it('shows enterprise card with Contact Sales when user is on Pro plan', async () => {
     getWorkspaceBillingData.mockResolvedValue({
       planId: 'pro',
       plan: PRO_PLAN,
@@ -318,12 +388,21 @@ describe('BillingPage', () => {
       },
     });
 
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Pro')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Custom plan')).toBeInTheDocument();
+    expect(screen.getByText('Enterprise')).toBeInTheDocument();
+    expect(screen.getByText('Custom pricing')).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /contact sales/i })
+    ).toBeInTheDocument();
   });
 });
