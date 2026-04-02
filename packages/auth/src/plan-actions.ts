@@ -7,7 +7,12 @@ import {
   UNLIMITED,
 } from './entitlements';
 
-export type PlanAction = 'current' | 'upgrade' | 'downgrade' | 'cancel';
+export type PlanAction =
+  | 'current'
+  | 'upgrade'
+  | 'downgrade'
+  | 'cancel'
+  | 'contact_sales';
 
 /**
  * Determines the action type for switching from one plan to another.
@@ -18,8 +23,9 @@ export function getPlanAction(
   targetPlan: PlanDefinition
 ): PlanAction {
   if (targetPlan.tier === currentPlan.tier) return 'current';
+  if (targetPlan.isEnterprise) return 'contact_sales';
   if (targetPlan.tier > currentPlan.tier) return 'upgrade';
-  if (targetPlan.pricing === null && !targetPlan.isEnterprise) return 'cancel';
+  if (targetPlan.pricing === null) return 'cancel';
   return 'downgrade';
 }
 
@@ -33,6 +39,7 @@ export const PLAN_ACTION_CONFIG: Record<
   upgrade: { label: 'Upgrade', variant: 'default' },
   downgrade: { label: 'Downgrade', variant: 'outline' },
   cancel: { label: 'Downgrade', variant: 'outline' },
+  contact_sales: { label: 'Contact Sales', variant: 'default' },
 };
 
 /**
