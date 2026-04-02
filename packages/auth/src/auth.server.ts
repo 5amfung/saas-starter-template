@@ -83,8 +83,16 @@ export function createAuth(config: AuthConfig) {
   const stripeClient = new Stripe(config.stripe.secretKey);
 
   // Build Stripe plan config from PLANS — reads price IDs from process.env.
-  const stripePlans = PLANS.filter((p) => p.pricing !== null).map((p) => {
+  const stripePlans = PLANS.filter((p) => p.stripeEnabled).map((p) => {
     const key = p.id.toUpperCase();
+    // Enterprise uses a single STRIPE_ENTERPRISE_PRICE_ID env var.
+    // Self-serve plans use STRIPE_{PLAN}_MONTHLY_PRICE_ID and STRIPE_{PLAN}_ANNUAL_PRICE_ID.
+    if (p.isEnterprise) {
+      return {
+        name: p.id,
+        priceId: process.env[`STRIPE_${key}_PRICE_ID`]!,
+      };
+    }
     return {
       name: p.id,
       priceId: process.env[`STRIPE_${key}_MONTHLY_PRICE_ID`]!,
