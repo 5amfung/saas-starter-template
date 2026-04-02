@@ -108,8 +108,8 @@ describe('AppSidebar', () => {
 
     const navAdmin = screen.getByTestId('nav-admin');
     expect(navAdmin).toBeInTheDocument();
-    // Dashboard, Users = 2 items.
-    expect(navAdmin).toHaveAttribute('data-item-count', '2');
+    // Dashboard, Users, Workspaces = 3 items.
+    expect(navAdmin).toHaveAttribute('data-item-count', '3');
   });
 
   it('renders NavSecondary', async () => {
