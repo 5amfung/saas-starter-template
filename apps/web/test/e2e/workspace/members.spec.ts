@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test';
 import {
-  STRIPE_TEST_CARD as STRIPE_CARD,
   VALID_PASSWORD,
   createVerifiedUser,
   uniqueEmail,
   waitForTestEmail,
 } from '@workspace/test-utils';
+import { completeStripeCheckout } from '../lib/complete-stripe-checkout';
 import { toCookieHeader } from '../lib/parse-cookie-header';
 import type { Page } from '@playwright/test';
 
@@ -50,72 +50,6 @@ async function resetToSignedOutState(page: Page): Promise<void> {
   await page.goto('/signin');
   await page.waitForURL(/\/signin(?:\?|$)/, { timeout: 15000 });
   await expect(page.getByLabel('Email')).toBeVisible({ timeout: 10000 });
-}
-
-/**
- * Completes a Stripe Checkout session using the test card.
- * Assumes the page has already been redirected to stripe.com.
- *
- * Stripe Checkout shows payment-method tabs (Card, Cash App, etc.) and
- * a "Save my information" Link flow by default. We select the Card radio
- * to expand the card form, then fill the fields which appear as direct
- * inputs on the Checkout hosted page.
- */
-async function completeStripeCheckout(page: Page): Promise<void> {
-  await page.waitForURL(/stripe\.com/, { timeout: 30000 });
-
-  // Step 1: Fill email — this triggers the Stripe Link verification modal
-  // if the email is recognized as a Link account.
-  const emailField = page.getByRole('textbox', { name: 'Email' });
-  await expect(emailField).toBeVisible({ timeout: 10000 });
-  await emailField.fill(STRIPE_CARD.email);
-
-  // Step 2: Dismiss the Link verification modal if it appears.
-  // After dismissal, "Save my information" disappears and the page shows
-  // a clean payment method accordion with "Continue with Link" next to email.
-  const linkDialog = page.getByRole('dialog');
-  const dialogAppeared = await linkDialog
-    .waitFor({ state: 'visible', timeout: 5000 })
-    .then(() => true)
-    .catch(() => false);
-
-  if (dialogAppeared) {
-    // Click the X close button at the top-right of the Link modal.
-    // It's the second child of the dialog header (after the Link logo link).
-    const closeBtn = linkDialog.locator('button').first();
-    await closeBtn.click();
-    await expect(linkDialog).not.toBeVisible({ timeout: 5000 });
-  }
-
-  // Step 3: Select Card payment method. After dismissing Link, the Card
-  // accordion is collapsed. Force-click the radio since the accordion
-  // button overlay intercepts normal clicks.
-  const cardRadio = page.getByRole('radio', { name: 'Card' });
-  await cardRadio.click({ force: true });
-
-  // Step 4: Fill card fields (direct inputs on Stripe Checkout, no iframes).
-  const cardNumberInput = page.getByPlaceholder('1234 1234 1234 1234');
-  await expect(cardNumberInput).toBeVisible({ timeout: 10000 });
-
-  await cardNumberInput.fill(STRIPE_CARD.number);
-  await page.getByPlaceholder('MM / YY').fill(STRIPE_CARD.expiry);
-  await page.getByPlaceholder('CVC').fill(STRIPE_CARD.cvc);
-
-  const nameInput = page.getByPlaceholder('Full name on card');
-  if (await nameInput.isVisible({ timeout: 1000 }).catch(() => false)) {
-    await nameInput.fill(STRIPE_CARD.name);
-  }
-
-  const zipInput = page.getByPlaceholder('ZIP');
-  if (await zipInput.isVisible({ timeout: 1000 }).catch(() => false)) {
-    await zipInput.fill(STRIPE_CARD.zip);
-  }
-
-  // Step 5: Submit.
-  await page.getByRole('button', { name: /subscribe/i }).click();
-
-  // Wait for redirect back to localhost.
-  await page.waitForURL(/localhost/, { timeout: 60000 });
 }
 
 /**

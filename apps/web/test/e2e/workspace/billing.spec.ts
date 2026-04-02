@@ -1,11 +1,12 @@
 import { expect, test } from '@playwright/test';
 import {
-  STRIPE_TEST_CARD,
   VALID_PASSWORD,
   createVerifiedUser,
   uniqueEmail,
+  waitForTestEmail,
 } from '@workspace/test-utils';
-import { parseCookieHeader } from '../lib/parse-cookie-header';
+import { completeStripeCheckout } from '../lib/complete-stripe-checkout';
+import { parseCookieHeader, toCookieHeader } from '../lib/parse-cookie-header';
 import type { Page } from '@playwright/test';
 
 /**
@@ -34,76 +35,197 @@ async function setupUserAndGoToBilling(
   const workspaceId = page.url().match(/\/ws\/([^/]+)\//)?.[1];
   if (!workspaceId) throw new Error('Could not extract workspaceId from URL');
 
-  // Navigate to the billing page.
-  await page.goto(`/ws/${workspaceId}/billing`);
+  await navigateToWorkspaceBilling(page, workspaceId);
   await expect(page.getByText('Current plan')).toBeVisible({ timeout: 15000 });
 
   return { workspaceId };
 }
 
-/**
- * Completes a Stripe Checkout session using the test card.
- *
- * Stripe Checkout renders a card accordion that must be expanded before the
- * card fields become visible. Fields are rendered directly in the main frame
- * (no iframes) on the hosted checkout page at checkout.stripe.com.
- */
-async function completeStripeCheckout(
+async function navigateToWorkspaceBilling(
   page: Page,
-  redirectPattern: RegExp = /\/billing\?success=true/
+  workspaceId: string
 ): Promise<void> {
-  await page.waitForURL(/stripe\.com/, { timeout: 30000 });
-
-  // Step 1: Fill email — this triggers the Stripe Link verification modal
-  // if the email is recognized as a Link account.
-  const emailField = page.getByRole('textbox', { name: 'Email' });
-  await expect(emailField).toBeVisible({ timeout: 10000 });
-  await emailField.fill(STRIPE_TEST_CARD.email);
-
-  // Step 2: Dismiss the Link verification modal if it appears.
-  // After dismissal, "Save my information" disappears and the page shows
-  // a clean payment method accordion with "Continue with Link" next to email.
-  const linkDialog = page.getByRole('dialog');
-  const dialogAppeared = await linkDialog
-    .waitFor({ state: 'visible', timeout: 5000 })
-    .then(() => true)
-    .catch(() => false);
-
-  if (dialogAppeared) {
-    const closeBtn = linkDialog.locator('button').first();
-    await closeBtn.click();
-    await expect(linkDialog).not.toBeVisible({ timeout: 5000 });
+  try {
+    await page.goto(`/ws/${workspaceId}/billing`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!message.includes('interrupted by another navigation')) {
+      throw error;
+    }
   }
 
-  // Step 3: Select Card payment method. After dismissing Link, the Card
-  // accordion is collapsed. Force-click the radio since the accordion
-  // button overlay intercepts normal clicks.
-  const cardRadio = page.getByRole('radio', { name: 'Card' });
-  await cardRadio.click({ force: true });
+  await page.waitForURL(`**/ws/${workspaceId}/billing`, { timeout: 15000 });
+}
 
-  // Step 4: Fill card fields (direct inputs on Stripe Checkout, no iframes).
-  const cardNumberInput = page.getByPlaceholder('1234 1234 1234 1234');
-  await expect(cardNumberInput).toBeVisible({ timeout: 10000 });
+async function signInAndGoToWorkspacePage(
+  page: Page,
+  credentials: { email: string; password: string },
+  pagePath: 'members' | 'billing' | 'overview'
+): Promise<string> {
+  await page.goto('/signin');
+  await page.getByLabel('Email').fill(credentials.email);
+  await page.getByLabel('Password', { exact: true }).fill(credentials.password);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await page.waitForURL(/\/ws\/.*\/overview/, { timeout: 15000 });
 
-  await cardNumberInput.fill(STRIPE_TEST_CARD.number);
-  await page.getByPlaceholder('MM / YY').fill(STRIPE_TEST_CARD.expiry);
-  await page.getByPlaceholder('CVC').fill(STRIPE_TEST_CARD.cvc);
-
-  const nameInput = page.getByPlaceholder('Full name on card');
-  if (await nameInput.isVisible({ timeout: 1000 }).catch(() => false)) {
-    await nameInput.fill(STRIPE_TEST_CARD.name);
+  const workspaceId = page.url().match(/\/ws\/([^/]+)\//)?.[1];
+  if (!workspaceId) {
+    throw new Error('Could not extract workspaceId from URL');
   }
 
-  const zipInput = page.getByPlaceholder('ZIP');
-  if (await zipInput.isVisible({ timeout: 1000 }).catch(() => false)) {
-    await zipInput.fill(STRIPE_TEST_CARD.zip);
+  if (pagePath === 'billing') {
+    await navigateToWorkspaceBilling(page, workspaceId);
+  } else if (pagePath !== 'overview') {
+    await page.goto(`/ws/${workspaceId}/${pagePath}`);
+    await page.waitForURL(`**/ws/${workspaceId}/${pagePath}`, {
+      timeout: 15000,
+    });
   }
 
-  // Step 5: Submit.
-  await page.getByRole('button', { name: /subscribe/i }).click();
+  return workspaceId;
+}
 
-  // Wait for redirect back to the app.
-  await page.waitForURL(redirectPattern, { timeout: 60000 });
+async function resetToSignedOutState(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
+  await page.context().clearCookies();
+  await page.goto('/signin');
+  await page.waitForURL(/\/signin(?:\?|$)/, { timeout: 15000 });
+  await expect(page.getByLabel('Email')).toBeVisible({ timeout: 10000 });
+}
+
+async function getInvitationUrl(
+  baseURL: string,
+  to: string,
+  maxRetries = 10
+): Promise<string> {
+  const invitationEmail = await waitForTestEmail(
+    baseURL,
+    to,
+    (email) =>
+      email.subject.toLowerCase().includes('join') &&
+      Boolean(email.invitationUrl),
+    maxRetries
+  );
+
+  if (!invitationEmail?.invitationUrl) {
+    throw new Error(`No invitation URL captured for ${to}.`);
+  }
+
+  return invitationEmail.invitationUrl;
+}
+
+function getInvitationId(invitationUrl: string): string {
+  const id = new URL(invitationUrl).searchParams.get('id');
+  if (!id) {
+    throw new Error(`Invitation URL did not include an id: ${invitationUrl}`);
+  }
+  return id;
+}
+
+async function acceptInvitationViaApi(
+  page: Page,
+  baseURL: string,
+  inviteeCredentials: { email: string; password: string },
+  invitationId: string
+): Promise<void> {
+  const signinResponse = await page.request.post(
+    `${baseURL}/api/auth/sign-in/email`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: baseURL,
+      },
+      data: {
+        email: inviteeCredentials.email,
+        password: inviteeCredentials.password,
+      },
+    }
+  );
+
+  if (!signinResponse.ok()) {
+    const body = await signinResponse.text();
+    throw new Error(
+      `Invitee sign-in failed (${signinResponse.status()}): ${body}`
+    );
+  }
+
+  const inviteeCookie = toCookieHeader(
+    signinResponse.headers()['set-cookie'] ?? ''
+  );
+
+  const acceptResponse = await page.request.post(
+    `${baseURL}/api/auth/organization/accept-invitation`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: inviteeCookie,
+        Origin: baseURL,
+      },
+      data: { invitationId },
+    }
+  );
+
+  if (!acceptResponse.ok()) {
+    const body = await acceptResponse.text();
+    throw new Error(
+      `Invitation acceptance failed (${acceptResponse.status()}): ${body}`
+    );
+  }
+}
+
+async function setupInvitedMember(
+  page: Page,
+  baseURL: string,
+  workspaceId: string,
+  emailPrefix: string
+): Promise<{ email: string; password: string }> {
+  const inviteeEmail = uniqueEmail(emailPrefix);
+  const inviteePassword = VALID_PASSWORD;
+
+  await createVerifiedUser(baseURL, {
+    email: inviteeEmail,
+    password: inviteePassword,
+  });
+
+  await page.getByRole('button', { name: 'Invite' }).click();
+
+  const alertdialog = page.getByRole('alertdialog');
+  await expect(alertdialog).toBeVisible({ timeout: 10000 });
+
+  const upgradeBtn = alertdialog.getByRole('button', { name: /upgrade to/i });
+  if (await upgradeBtn.isVisible()) {
+    await upgradeBtn.click();
+    await completeStripeCheckout(page, { redirectPattern: /localhost/ });
+    await page.goto(`/ws/${workspaceId}/members`);
+    await page.waitForURL(`**/ws/${workspaceId}/members`, { timeout: 15000 });
+    await page.getByRole('button', { name: 'Invite' }).click();
+  }
+
+  await expect(page.getByText('Invite Member')).toBeVisible({ timeout: 5000 });
+  await page.getByLabel('Email').fill(inviteeEmail);
+  await page.getByRole('button', { name: 'Send Invitation' }).click();
+
+  await expect(page.getByText('Invitation sent.').last()).toBeVisible({
+    timeout: 10000,
+  });
+
+  const invitationUrl = await getInvitationUrl(baseURL, inviteeEmail, 10);
+  const invitationId = getInvitationId(invitationUrl);
+
+  await acceptInvitationViaApi(
+    page,
+    baseURL,
+    {
+      email: inviteeEmail,
+      password: inviteePassword,
+    },
+    invitationId
+  );
+
+  return { email: inviteeEmail, password: inviteePassword };
 }
 
 // ── Test Suite ───────────────────────────────────────────────────────────────
@@ -366,7 +488,7 @@ test.describe('Workspace Billing', () => {
     page,
     baseURL,
   }) => {
-    await setupUserAndGoToBilling(page, baseURL!);
+    const { workspaceId } = await setupUserAndGoToBilling(page, baseURL!);
 
     // Toggle Pro to Annual.
     const proAnnualToggle = page
@@ -377,7 +499,9 @@ test.describe('Workspace Billing', () => {
 
     // Click upgrade to Pro.
     await page.getByRole('button', { name: 'Upgrade to Pro' }).click();
-    await completeStripeCheckout(page);
+    await completeStripeCheckout(page, {
+      redirectPattern: new RegExp(`/ws/${workspaceId}/(?:billing|overview)`),
+    });
 
     // After redirect, billing page should show Pro as current plan.
     await expect(page.getByText('Current plan')).toBeVisible({
@@ -630,11 +754,13 @@ test.describe('Workspace Billing', () => {
     page,
     baseURL,
   }) => {
-    await setupUserAndGoToBilling(page, baseURL!);
+    const { workspaceId } = await setupUserAndGoToBilling(page, baseURL!);
 
     // Upgrade to Pro.
     await page.getByRole('button', { name: 'Upgrade to Pro' }).click();
-    await completeStripeCheckout(page);
+    await completeStripeCheckout(page, {
+      redirectPattern: new RegExp(`/ws/${workspaceId}/(?:billing|overview)`),
+    });
     await expect(page.getByText('Current plan')).toBeVisible({
       timeout: 15000,
     });
@@ -724,9 +850,78 @@ test.describe('Workspace Billing', () => {
 
   // ── 22. Member count exceeds limit warning ────────────────────────────
 
-  test.fixme('member count exceeds limit shows warning in downgrade dialog', async () => {
-    // Requires a multi-member workspace to test the member count warning
-    // in the downgrade confirmation dialog.
+  test('member count exceeds limit shows warning in downgrade dialog', async ({
+    page,
+    baseURL,
+  }) => {
+    test.setTimeout(180_000);
+
+    const ownerCredentials = {
+      email: uniqueEmail('billing-downgrade-owner'),
+      password: VALID_PASSWORD,
+    };
+    await createVerifiedUser(baseURL!, ownerCredentials);
+
+    const workspaceId = await signInAndGoToWorkspacePage(
+      page,
+      ownerCredentials,
+      'members'
+    );
+
+    for (let i = 0; i < 4; i++) {
+      await setupInvitedMember(
+        page,
+        baseURL!,
+        workspaceId,
+        `billing-downgrade-${i}`
+      );
+      await resetToSignedOutState(page);
+      await signInAndGoToWorkspacePage(page, ownerCredentials, 'members');
+    }
+
+    await navigateToWorkspaceBilling(page, workspaceId);
+    await expect(page.getByText('Current plan')).toBeVisible({
+      timeout: 15000,
+    });
+
+    await page.getByRole('button', { name: 'Upgrade to Pro' }).click();
+    await completeStripeCheckout(page, {
+      redirectPattern: new RegExp(`/ws/${workspaceId}/(?:billing|overview)`),
+    });
+    await navigateToWorkspaceBilling(page, workspaceId);
+    await expect(page.getByText('Current plan')).toBeVisible({
+      timeout: 15000,
+    });
+
+    await page.goto(`/ws/${workspaceId}/members`);
+    await page.waitForURL(`**/ws/${workspaceId}/members`, { timeout: 15000 });
+    await setupInvitedMember(
+      page,
+      baseURL!,
+      workspaceId,
+      'billing-downgrade-over-limit'
+    );
+    await resetToSignedOutState(page);
+    await signInAndGoToWorkspacePage(page, ownerCredentials, 'billing');
+
+    await navigateToWorkspaceBilling(page, workspaceId);
+    await expect(page.getByText('Current plan')).toBeVisible({
+      timeout: 15000,
+    });
+
+    await page.getByRole('button', { name: 'Manage plan' }).click();
+    const manageDialog = page.locator('[role="alertdialog"]');
+    await manageDialog
+      .getByRole('button', { name: 'Downgrade' })
+      .nth(1)
+      .click();
+
+    await expect(page.getByText('Downgrade to Starter?')).toBeVisible();
+    await expect(
+      page.getByText(
+        "You currently have 6 members. The Starter plan allows up to 5. You'll need to remove members before the change takes effect."
+      )
+    ).toBeVisible({ timeout: 10000 });
   });
 
   // ── 23. Billing portal navigates to Stripe ────────────────────────────
@@ -762,9 +957,43 @@ test.describe('Workspace Billing', () => {
 
   // ── 25. Non-owner cannot access billing ───────────────────────────────
 
-  test.fixme('non-owner member cannot access billing page', async () => {
-    // Requires invite flow to add a non-owner member to the workspace
-    // and verify they cannot access the billing page.
+  test('non-owner member cannot access billing page', async ({
+    page,
+    baseURL,
+  }) => {
+    test.setTimeout(180_000);
+
+    const ownerCredentials = {
+      email: uniqueEmail('billing-member-owner'),
+      password: VALID_PASSWORD,
+    };
+    await createVerifiedUser(baseURL!, ownerCredentials);
+
+    const workspaceId = await signInAndGoToWorkspacePage(
+      page,
+      ownerCredentials,
+      'members'
+    );
+
+    const inviteeCredentials = await setupInvitedMember(
+      page,
+      baseURL!,
+      workspaceId,
+      'billing-member-access'
+    );
+
+    await resetToSignedOutState(page);
+    await signInAndGoToWorkspacePage(page, inviteeCredentials, 'overview');
+
+    await expect(page.getByRole('link', { name: 'Billing' })).not.toBeVisible();
+
+    await page.goto(`/ws/${workspaceId}/billing`);
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.getByText('Current plan')).not.toBeVisible();
+    await expect(
+      page.getByText('Only the workspace owner can manage billing.')
+    ).not.toBeVisible();
   });
 
   // ── 26. Concurrent upgrade button lockout ─────────────────────────────
