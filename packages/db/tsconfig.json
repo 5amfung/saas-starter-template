@@ -10,8 +10,8 @@
     "src/**/*.ts",
     "test/**/*.ts",
     "test/**/*.tsx",
-    "vitest.config.ts",
     "scripts/**/*.ts",
+    "vitest.config.ts",
     "eslint.config.ts"
   ]
 }
