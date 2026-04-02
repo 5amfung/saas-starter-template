@@ -108,6 +108,7 @@ vi.mock('@workspace/auth/plans', async (importOriginal) => {
 function setupBillingData(overrides = {}) {
   getWorkspaceBillingDataMock.mockResolvedValue({
     plan: freePlan,
+    entitlements: freePlan.entitlements,
     subscription: null,
     ...overrides,
   });
@@ -193,6 +194,7 @@ describe('BillingPage integration', () => {
     const user = userEvent.setup();
     getWorkspaceBillingDataMock.mockResolvedValue({
       plan: proPlan,
+      entitlements: proPlan.entitlements,
       subscription: { periodEnd: new Date('2026-04-20').toISOString() },
     });
     getWorkspaceInvoicesMock.mockResolvedValue([]);
@@ -224,6 +226,7 @@ describe('BillingPage integration', () => {
     const user = userEvent.setup();
     getWorkspaceBillingDataMock.mockResolvedValue({
       plan: proPlan,
+      entitlements: proPlan.entitlements,
       subscription: {
         periodEnd: new Date('2026-04-20').toISOString(),
         cancelAtPeriodEnd: true,
@@ -262,6 +265,7 @@ describe('BillingPage integration', () => {
     const user = userEvent.setup();
     getWorkspaceBillingDataMock.mockResolvedValue({
       plan: proPlan,
+      entitlements: proPlan.entitlements,
       subscription: {
         periodEnd: new Date('2026-04-20').toISOString(),
         cancelAtPeriodEnd: true,
