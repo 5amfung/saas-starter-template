@@ -4,7 +4,6 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
     "types": ["vitest/globals"],
-    "noEmit": true,
     "baseUrl": ".",
     "paths": {
       "@workspace/ui/*": ["./src/*"]
