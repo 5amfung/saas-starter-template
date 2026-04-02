@@ -8,5 +8,15 @@
 export type { AuthConfig, Auth } from './auth.server';
 export * from './permissions';
 export { isRecord } from './auth-utils';
-export type { PlanId, Plan, PlanLimits, PlanPricing } from './plans';
+export type {
+  PlanId,
+  PlanDefinition,
+  Plan,
+  PlanPricing,
+  Entitlements,
+  EntitlementOverrides,
+  LimitKey,
+  FeatureKey,
+  QuotaKey,
+} from './plans';
 export type { AuthBilling } from './billing.server';

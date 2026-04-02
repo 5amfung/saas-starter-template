@@ -17,7 +17,8 @@ import {
 import { createAuthEmails } from './auth-emails.server';
 import { isDuplicateOrganizationError, isSignInPath } from './auth-utils';
 import { createBillingHelpers } from './billing.server';
-import { PLANS, getPlanLimitsForPlanId } from './plans';
+import { PLANS, getPlanById, getFreePlan } from './plans';
+import { checkLimit } from './entitlements';
 import type { PlanId } from './plans';
 import type { EmailClient } from '@workspace/email';
 import type { Database } from '@workspace/db';
@@ -300,14 +301,18 @@ export function createAuth(config: AuthConfig) {
             const planId = await billing.resolveWorkspacePlanIdFromDb(
               organization.id
             );
-            const limits = getPlanLimitsForPlanId(planId);
-            if (limits.maxMembers === -1) return;
+            const plan = getPlanById(planId) ?? getFreePlan();
             const memberCount = await billing.countWorkspaceMembers(
               organization.id
             );
-            if (memberCount >= limits.maxMembers) {
+            const result = checkLimit(
+              plan.entitlements,
+              'members',
+              memberCount
+            );
+            if (!result.allowed) {
               throw new APIError('FORBIDDEN', {
-                message: `This workspace has reached its member limit (${limits.maxMembers}). Upgrade the workspace plan to invite more members.`,
+                message: `This workspace has reached its member limit (${result.limit}). Upgrade the workspace plan to invite more members.`,
               });
             }
           },
