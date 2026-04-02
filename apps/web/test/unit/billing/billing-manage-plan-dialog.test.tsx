@@ -3,13 +3,13 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { getPlanById } from '@workspace/auth/plans';
 import { renderWithProviders } from '@workspace/test-utils';
-import type { Plan } from '@workspace/auth/plans';
+import type { PlanDefinition } from '@workspace/auth/plans';
 
 import { BillingManagePlanDialog } from '@/components/billing/billing-manage-plan-dialog';
 
-const PRO_PLAN = getPlanById('pro') as Plan;
-const STARTER_PLAN = getPlanById('starter') as Plan;
-const FREE_PLAN = getPlanById('free') as Plan;
+const PRO_PLAN = getPlanById('pro') as PlanDefinition;
+const STARTER_PLAN = getPlanById('starter') as PlanDefinition;
+const FREE_PLAN = getPlanById('free') as PlanDefinition;
 
 describe('BillingManagePlanDialog', () => {
   const defaultProps = {
@@ -21,6 +21,7 @@ describe('BillingManagePlanDialog', () => {
     onUpgrade: vi.fn(),
     onDowngrade: vi.fn(),
     isProcessing: false,
+    workspaceName: 'Test Workspace',
   };
 
   beforeEach(() => {
@@ -32,6 +33,7 @@ describe('BillingManagePlanDialog', () => {
     expect(screen.getByText('Free')).toBeInTheDocument();
     expect(screen.getByText('Starter')).toBeInTheDocument();
     expect(screen.getByText('Pro')).toBeInTheDocument();
+    expect(screen.getByText('Enterprise')).toBeInTheDocument();
   });
 
   it('shows "Current plan" disabled button for current plan', () => {

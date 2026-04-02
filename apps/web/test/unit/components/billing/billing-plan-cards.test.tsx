@@ -3,20 +3,29 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import type { Plan } from '@workspace/auth/plans';
+import type { PlanDefinition } from '@workspace/auth/plans';
 import { BillingPlanCards } from '@/components/billing/billing-plan-cards';
 
-const FREE_PLAN: Plan = {
+const FREE_PLAN: PlanDefinition = {
   id: 'free',
   name: 'Free',
   tier: 0,
   pricing: null,
-  limits: { maxMembers: 1 },
-  features: ['1 member'],
-  annualBonusFeatures: [],
+  entitlements: {
+    limits: { members: 1, projects: 1, workspaces: 1, apiKeys: 0 },
+    features: {
+      sso: false,
+      auditLogs: false,
+      apiAccess: false,
+      prioritySupport: false,
+    },
+    quotas: { storageGb: 1, apiCallsMonthly: 0 },
+  },
+  stripeEnabled: false,
+  isEnterprise: false,
 };
 
-const STARTER_PLAN: Plan = {
+const STARTER_PLAN: PlanDefinition = {
   id: 'starter',
   name: 'Starter',
   tier: 1,
@@ -24,12 +33,21 @@ const STARTER_PLAN: Plan = {
     monthly: { price: 500 },
     annual: { price: 5000 },
   },
-  limits: { maxMembers: 5 },
-  features: ['Up to 5 members per workspace'],
-  annualBonusFeatures: ['2 months free'],
+  entitlements: {
+    limits: { members: 5, projects: 5, workspaces: 5, apiKeys: 0 },
+    features: {
+      sso: false,
+      auditLogs: false,
+      apiAccess: false,
+      prioritySupport: false,
+    },
+    quotas: { storageGb: 10, apiCallsMonthly: 0 },
+  },
+  stripeEnabled: true,
+  isEnterprise: false,
 };
 
-const PRO_PLAN: Plan = {
+const PRO_PLAN: PlanDefinition = {
   id: 'pro',
   name: 'Pro',
   tier: 2,
@@ -37,9 +55,37 @@ const PRO_PLAN: Plan = {
     monthly: { price: 2000 },
     annual: { price: 20000 },
   },
-  limits: { maxMembers: 25 },
-  features: ['Up to 25 members per workspace'],
-  annualBonusFeatures: ['2 months free'],
+  entitlements: {
+    limits: { members: 25, projects: 100, workspaces: 10, apiKeys: 5 },
+    features: {
+      sso: false,
+      auditLogs: true,
+      apiAccess: true,
+      prioritySupport: true,
+    },
+    quotas: { storageGb: 50, apiCallsMonthly: 1000 },
+  },
+  stripeEnabled: true,
+  isEnterprise: false,
+};
+
+const ENTERPRISE_PLAN: PlanDefinition = {
+  id: 'enterprise',
+  name: 'Enterprise',
+  tier: 3,
+  pricing: null,
+  entitlements: {
+    limits: { members: -1, projects: -1, workspaces: -1, apiKeys: -1 },
+    features: {
+      sso: true,
+      auditLogs: true,
+      apiAccess: true,
+      prioritySupport: true,
+    },
+    quotas: { storageGb: -1, apiCallsMonthly: -1 },
+  },
+  stripeEnabled: true,
+  isEnterprise: true,
 };
 
 describe('BillingPlanCards', () => {
@@ -55,6 +101,7 @@ describe('BillingPlanCards', () => {
     isManaging: false,
     isBillingPortalLoading: false,
     upgradingPlanId: null,
+    workspaceName: 'Test Workspace',
   };
 
   beforeEach(() => {
@@ -81,13 +128,14 @@ describe('BillingPlanCards', () => {
           upgradePlans={[PRO_PLAN]}
         />
       );
-      // formatPlanPrice(STARTER_PLAN, false) = "$5/mo"
+      // formatPlanPrice(STARTER_PLAN, false) = "$5/mo".
       expect(screen.getByText('$5/mo')).toBeInTheDocument();
     });
 
-    it('shows current plan features', () => {
+    it('shows current plan features from entitlements', () => {
       renderWithProviders(<BillingPlanCards {...defaultProps} />);
-      expect(screen.getByText('1 member')).toBeInTheDocument();
+      // describeEntitlements for FREE_PLAN produces "Up to 1 members".
+      expect(screen.getByText(/up to 1 members/i)).toBeInTheDocument();
     });
 
     it('shows renewal date when nextBillingDate is provided', () => {
@@ -195,7 +243,7 @@ describe('BillingPlanCards', () => {
       renderWithProviders(
         <BillingPlanCards {...defaultProps} annualByPlan={{}} />
       );
-      // formatPlanPrice(STARTER_PLAN, false) = "$5/mo"
+      // formatPlanPrice(STARTER_PLAN, false) = "$5/mo".
       expect(screen.getByText('$5/mo')).toBeInTheDocument();
     });
 
@@ -203,7 +251,7 @@ describe('BillingPlanCards', () => {
       renderWithProviders(
         <BillingPlanCards {...defaultProps} annualByPlan={{ starter: true }} />
       );
-      // formatPlanPrice(STARTER_PLAN, true) = annual price / 12 / 100 ≈ $4.17/mo
+      // formatPlanPrice(STARTER_PLAN, true) = annual price / 12 / 100 ~ $4.17/mo.
       expect(screen.getByText(/\$4/)).toBeInTheDocument();
     });
 
@@ -237,11 +285,12 @@ describe('BillingPlanCards', () => {
       expect(onToggleInterval).toHaveBeenCalledWith('starter', true);
     });
 
-    it('shows annual bonus features when annualByPlan has plan set to true', () => {
+    it('shows entitlement-derived features for upgrade plan', () => {
       renderWithProviders(
         <BillingPlanCards {...defaultProps} annualByPlan={{ starter: true }} />
       );
-      expect(screen.getByText('2 months free')).toBeInTheDocument();
+      // describeEntitlements for STARTER_PLAN produces "Up to 5 members".
+      expect(screen.getByText(/up to 5 members/i)).toBeInTheDocument();
     });
 
     it('calls onUpgrade with the upgrade plan id and annual state when upgrade button is clicked', async () => {
@@ -296,12 +345,62 @@ describe('BillingPlanCards', () => {
     });
   });
 
+  describe('enterprise plan card', () => {
+    it('shows "Custom pricing" and "Contact Sales" link for enterprise plan', () => {
+      renderWithProviders(
+        <BillingPlanCards
+          {...defaultProps}
+          currentPlan={PRO_PLAN}
+          upgradePlans={[ENTERPRISE_PLAN]}
+        />
+      );
+      expect(screen.getByText('Custom pricing')).toBeInTheDocument();
+      expect(
+        screen.getByRole('link', { name: /contact sales/i })
+      ).toBeInTheDocument();
+    });
+
+    it('does not show monthly/annual toggle for enterprise plan', () => {
+      renderWithProviders(
+        <BillingPlanCards
+          {...defaultProps}
+          currentPlan={PRO_PLAN}
+          upgradePlans={[ENTERPRISE_PLAN]}
+        />
+      );
+      // Only the current plan card has no toggle; enterprise upgrade card also has none.
+      expect(
+        screen.queryByRole('button', { name: /monthly billing/i })
+      ).not.toBeInTheDocument();
+    });
+
+    it('enterprise Contact Sales link has mailto href with workspace name', () => {
+      renderWithProviders(
+        <BillingPlanCards
+          {...defaultProps}
+          currentPlan={PRO_PLAN}
+          upgradePlans={[ENTERPRISE_PLAN]}
+          workspaceName="Acme Corp"
+        />
+      );
+      const link = screen.getByRole('link', { name: /contact sales/i });
+      expect(link).toHaveAttribute(
+        'href',
+        expect.stringContaining('mailto:sales@example.com')
+      );
+      expect(link).toHaveAttribute(
+        'href',
+        expect.stringContaining('Acme%20Corp')
+      );
+    });
+  });
+
   describe('no upgrade plan (highest tier)', () => {
     it('shows custom plan card when upgradePlans is empty', () => {
       renderWithProviders(
         <BillingPlanCards
           {...defaultProps}
-          currentPlan={PRO_PLAN}
+          currentPlan={ENTERPRISE_PLAN}
           upgradePlans={[]}
         />
       );

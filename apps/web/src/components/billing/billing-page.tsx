@@ -13,7 +13,7 @@ import { BillingDowngradeConfirmDialog } from './billing-downgrade-confirm-dialo
 import { BillingInvoiceTable } from './billing-invoice-table';
 import { BillingManagePlanDialog } from './billing-manage-plan-dialog';
 import { BillingPlanCards } from './billing-plan-cards';
-import type { Plan, PlanId } from '@workspace/auth/plans';
+import type { PlanDefinition, PlanId } from '@workspace/auth/plans';
 import {
   cancelWorkspaceSubscription,
   createWorkspaceCheckoutSession,
@@ -30,16 +30,18 @@ import {
 const PAGE_LAYOUT_CLASS =
   'mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6';
 
-type BillingPageProps = { workspaceId: string };
+type BillingPageProps = { workspaceId: string; workspaceName: string };
 
-export function BillingPage({ workspaceId }: BillingPageProps) {
+export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
   const queryClient = useQueryClient();
   const [annualByPlan, setAnnualByPlan] = useState<
     Partial<Record<PlanId, boolean>>
   >({});
   const [upgradingPlanId, setUpgradingPlanId] = useState<PlanId | null>(null);
   const [managePlanOpen, setManagePlanOpen] = useState(false);
-  const [downgradeTarget, setDowngradeTarget] = useState<Plan | null>(null);
+  const [downgradeTarget, setDowngradeTarget] = useState<PlanDefinition | null>(
+    null
+  );
   const [downgradeAnnual, setDowngradeAnnual] = useState(false);
 
   const INVOICES_QUERY_KEY = ['billing', 'invoices', workspaceId] as const;
@@ -232,6 +234,7 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
         isManaging={manageMutation.isPending}
         isBillingPortalLoading={manageMutation.isPending}
         upgradingPlanId={upgradingPlanId}
+        workspaceName={workspaceName}
       />
 
       <BillingManagePlanDialog
@@ -253,6 +256,7 @@ export function BillingPage({ workspaceId }: BillingPageProps) {
           setDowngradeAnnual(annual);
         }}
         isProcessing={upgradingPlanId !== null}
+        workspaceName={workspaceName}
       />
 
       {downgradeTarget && (
