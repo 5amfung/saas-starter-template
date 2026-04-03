@@ -1,4 +1,3 @@
-import { APIError } from 'better-auth/api';
 import type { AuthConfig } from '../../src/auth.server';
 
 // ---------------------------------------------------------------------------
