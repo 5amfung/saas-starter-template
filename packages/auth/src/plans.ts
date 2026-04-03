@@ -87,7 +87,7 @@ export const FREE_PLAN_ID: PlanId = 'free';
 // ── Entitlement defaults per plan ────────────────────────────────────────
 
 const FREE_ENTITLEMENTS: Entitlements = {
-  limits: { members: 1, projects: 1, workspaces: 1, apiKeys: 0 },
+  limits: { members: 1, projects: 1, apiKeys: 0 },
   features: {
     sso: false,
     auditLogs: false,
@@ -98,7 +98,7 @@ const FREE_ENTITLEMENTS: Entitlements = {
 };
 
 const STARTER_ENTITLEMENTS: Entitlements = {
-  limits: { members: 5, projects: 5, workspaces: 5, apiKeys: 0 },
+  limits: { members: 5, projects: 5, apiKeys: 0 },
   features: {
     sso: false,
     auditLogs: false,
@@ -109,7 +109,7 @@ const STARTER_ENTITLEMENTS: Entitlements = {
 };
 
 const PRO_ENTITLEMENTS: Entitlements = {
-  limits: { members: 25, projects: 100, workspaces: 10, apiKeys: 5 },
+  limits: { members: 25, projects: 100, apiKeys: 5 },
   features: {
     sso: false,
     auditLogs: true,
@@ -120,7 +120,7 @@ const PRO_ENTITLEMENTS: Entitlements = {
 };
 
 const ENTERPRISE_ENTITLEMENTS: Entitlements = {
-  limits: { members: -1, projects: -1, workspaces: -1, apiKeys: -1 },
+  limits: { members: -1, projects: -1, apiKeys: -1 },
   features: {
     sso: true,
     auditLogs: true,

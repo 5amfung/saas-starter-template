@@ -13,7 +13,7 @@
 // ── Key registries ───────────────────────────────────────────────────────
 
 /** Hard caps — block actions when exceeded. */
-export type LimitKey = 'members' | 'projects' | 'workspaces' | 'apiKeys';
+export type LimitKey = 'members' | 'projects' | 'apiKeys';
 
 /** Boolean gates — enable/disable capabilities. */
 export type FeatureKey = 'sso' | 'auditLogs' | 'apiAccess' | 'prioritySupport';
@@ -63,7 +63,6 @@ export const FEATURE_METADATA: Record<FeatureKey, EntitlementMeta> = {
 export const LIMIT_METADATA: Record<LimitKey, NumericEntitlementMeta> = {
   members: { label: 'Members', unit: 'members' },
   projects: { label: 'Projects', unit: 'projects' },
-  workspaces: { label: 'Workspaces', unit: 'workspaces' },
   apiKeys: { label: 'API Keys', unit: 'keys' },
 };
 
