@@ -24,6 +24,7 @@ This is a clean-slate implementation focused on stabilization and modularity.
 - Make invitation and billing enforcement always use resolved entitlements.
 - Preserve current self-serve experience for Free/Starter/Pro flows.
 - Enforce explicit contact-sales behavior for enterprise targets.
+- Route admin override CRUD through the same domain contract and remove direct schema dependency from admin.
 
 ## Task 1 — Domain package and type contracts
 
@@ -64,6 +65,7 @@ This is a clean-slate implementation focused on stabilization and modularity.
 - [ ] Ensure numeric form supports inherit / explicit value / unlimited.
 - [ ] Save only explicit override keys; avoid writing inherited keys.
 - [ ] Add tests that cover empty, explicit true, explicit false, and explicit unlimited updates.
+- [ ] Add `@workspace/billing` admin mutation/read APIs and switch `apps/admin` override CRUD to consume only those contracts.
 
 ## Task 5 — Regression lock
 

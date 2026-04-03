@@ -102,7 +102,11 @@ flowchart LR
   C -->|schema rows| B
   C -->|override rows| V
   B -->|workspace context| C
+  Admin -->|temporary: direct DB table writes| C
+  Admin -->|contracted override API| A
 ```
+
+> In the target architecture, admin override CRUD is routed through `@workspace/billing` only; the direct `apps/admin -> @workspace/db-schema` edge is temporary and removed during migration.
 
 ### 3.1 `@workspace/billing` (new)
 

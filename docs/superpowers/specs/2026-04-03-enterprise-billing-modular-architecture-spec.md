@@ -84,7 +84,7 @@ Billing UI payload must provide:
   - receives resolved entitlements from server,
   - renders UI states only; must not re-compute enforcement policy.
 - `apps/admin`
-  - manages admin-only override CRUD only,
+  - manages admin-only override CRUD only through contract APIs from `@workspace/billing`
   - serializes tri-state overrides cleanly.
 
 ## Required behavior
@@ -123,6 +123,12 @@ Billing UI payload must provide:
    - contract completeness (no undefined entitlements),
    - enterprise vs self-serve transitions,
    - accessibility-safe button/link usage.
+
+### Admin boundary requirement
+
+- `apps/admin` must not access entitlement override tables directly.
+- `apps/admin` reads/writes overrides via `@workspace/billing` contract methods.
+- `@workspace/db-schema` remains available to domain layers for storage ownership, not direct UI app callers.
 
 ## Execution checkpoints
 
