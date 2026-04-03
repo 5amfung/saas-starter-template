@@ -15,7 +15,7 @@ const STARTER_PLAN: PlanDefinition = {
     annual: { price: 5000 },
   },
   entitlements: {
-    limits: { members: 5, projects: 5, workspaces: 5, apiKeys: 0 },
+    limits: { members: 5, projects: 5, apiKeys: 0 },
     features: {
       sso: false,
       auditLogs: false,

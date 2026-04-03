@@ -11,7 +11,7 @@ import {
 import type { Entitlements } from '../../src/entitlements';
 
 const BASE: Entitlements = {
-  limits: { members: 5, projects: 10, workspaces: 3, apiKeys: 0 },
+  limits: { members: 5, projects: 10, apiKeys: 0 },
   features: {
     sso: false,
     auditLogs: false,
@@ -22,7 +22,7 @@ const BASE: Entitlements = {
 };
 
 const ENTERPRISE: Entitlements = {
-  limits: { members: -1, projects: -1, workspaces: -1, apiKeys: -1 },
+  limits: { members: -1, projects: -1, apiKeys: -1 },
   features: {
     sso: true,
     auditLogs: true,

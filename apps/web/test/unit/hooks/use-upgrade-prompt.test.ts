@@ -30,7 +30,7 @@ const mockPlan: PlanDefinition = {
     annual: { price: 490_00 },
   },
   entitlements: {
-    limits: { members: 25, projects: 100, workspaces: 10, apiKeys: 5 },
+    limits: { members: 25, projects: 100, apiKeys: 5 },
     features: {
       sso: false,
       auditLogs: true,
@@ -49,7 +49,7 @@ const enterprisePlan: PlanDefinition = {
   tier: 3,
   pricing: null,
   entitlements: {
-    limits: { members: -1, projects: -1, workspaces: -1, apiKeys: -1 },
+    limits: { members: -1, projects: -1, apiKeys: -1 },
     features: {
       sso: true,
       auditLogs: true,

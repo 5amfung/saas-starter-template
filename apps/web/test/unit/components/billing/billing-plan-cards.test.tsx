@@ -12,7 +12,7 @@ const FREE_PLAN: PlanDefinition = {
   tier: 0,
   pricing: null,
   entitlements: {
-    limits: { members: 1, projects: 1, workspaces: 1, apiKeys: 0 },
+    limits: { members: 1, projects: 1, apiKeys: 0 },
     features: {
       sso: false,
       auditLogs: false,
@@ -34,7 +34,7 @@ const STARTER_PLAN: PlanDefinition = {
     annual: { price: 5000 },
   },
   entitlements: {
-    limits: { members: 5, projects: 5, workspaces: 5, apiKeys: 0 },
+    limits: { members: 5, projects: 5, apiKeys: 0 },
     features: {
       sso: false,
       auditLogs: false,
@@ -56,7 +56,7 @@ const PRO_PLAN: PlanDefinition = {
     annual: { price: 20000 },
   },
   entitlements: {
-    limits: { members: 25, projects: 100, workspaces: 10, apiKeys: 5 },
+    limits: { members: 25, projects: 100, apiKeys: 5 },
     features: {
       sso: false,
       auditLogs: true,
@@ -75,7 +75,7 @@ const ENTERPRISE_PLAN: PlanDefinition = {
   tier: 3,
   pricing: null,
   entitlements: {
-    limits: { members: -1, projects: -1, workspaces: -1, apiKeys: -1 },
+    limits: { members: -1, projects: -1, apiKeys: -1 },
     features: {
       sso: true,
       auditLogs: true,
@@ -89,7 +89,7 @@ const ENTERPRISE_PLAN: PlanDefinition = {
 };
 
 const ENTERPRISE_OVERRIDE_ENTITLEMENTS: Entitlements = {
-  limits: { members: 42, projects: -1, workspaces: -1, apiKeys: 2 },
+  limits: { members: 42, projects: -1, apiKeys: 2 },
   features: {
     sso: true,
     auditLogs: false,
