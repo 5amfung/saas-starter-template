@@ -93,33 +93,45 @@ const sanitizeLimitOverrides = (
   limits?: EntitlementOverrides['limits'] | null
 ) =>
   limits
-    ? {
+    ? Object.entries({
         members: limits.members,
         projects: limits.projects,
         apiKeys: limits.apiKeys,
-      }
+      }).reduce(
+        (acc, [key, value]) =>
+          value === undefined ? acc : { ...acc, [key]: value },
+        {} as Partial<Entitlements['limits']>
+      )
     : undefined;
 
 const sanitizeFeatureOverrides = (
   features?: EntitlementOverrides['features'] | null
 ) =>
   features
-    ? {
+    ? Object.entries({
         sso: features.sso,
         auditLogs: features.auditLogs,
         apiAccess: features.apiAccess,
         prioritySupport: features.prioritySupport,
-      }
+      }).reduce(
+        (acc, [key, value]) =>
+          value === undefined ? acc : { ...acc, [key]: value },
+        {} as Partial<Entitlements['features']>
+      )
     : undefined;
 
 const sanitizeQuotaOverrides = (
   quotas?: EntitlementOverrides['quotas'] | null
 ) =>
   quotas
-    ? {
+    ? Object.entries({
         storageGb: quotas.storageGb,
         apiCallsMonthly: quotas.apiCallsMonthly,
-      }
+      }).reduce(
+        (acc, [key, value]) =>
+          value === undefined ? acc : { ...acc, [key]: value },
+        {} as Partial<Entitlements['quotas']>
+      )
     : undefined;
 
 /**
