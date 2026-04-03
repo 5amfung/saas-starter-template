@@ -18,13 +18,9 @@ const DEFAULT_LOGO = (
 export function AuthLayout({ children, logo = DEFAULT_LOGO }: AuthLayoutProps) {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
-      <div
-        data-testid="auth-layout-content"
-        className="flex w-full max-w-sm flex-col items-center gap-6"
-        style={{ maxWidth: '24rem' }}
-      >
+      <div className="flex w-full max-w-sm flex-col gap-6">
         {logo}
-        <div className="flex w-full flex-col gap-6">{children}</div>
+        <div className="flex flex-col gap-6">{children}</div>
       </div>
     </div>
   );
