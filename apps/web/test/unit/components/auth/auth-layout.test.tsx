@@ -32,4 +32,16 @@ describe('AuthLayout', () => {
     );
     expect(screen.getByText('Admin Portal')).toBeInTheDocument();
   });
+
+  it('constrains the auth content width', () => {
+    render(
+      <AuthLayout logo={webLogo}>
+        <div />
+      </AuthLayout>
+    );
+
+    expect(screen.getByTestId('auth-layout-content')).toHaveStyle({
+      maxWidth: '24rem',
+    });
+  });
 });
