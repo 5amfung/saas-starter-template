@@ -1,5 +1,8 @@
 # Enterprise Entitlements & Plan System Redesign
 
+**Status:** superseded  
+**See also:** [2026-04-03 modular architecture spec](2026-04-03-enterprise-billing-modular-architecture-spec.md), [2026-04-03 modular architecture plan](../plans/2026-04-03-enterprise-billing-modular-architecture.md).
+
 ## Problem
 
 The billing system supports three self-serve tiers (Free, Starter, Pro) with member count as the only enforced limit. Features displayed in plan cards are hardcoded strings that don't map to actual enforcement. There is no support for enterprise customers who have custom pricing negotiated by sales, per-workspace limits and feature sets, and require ops-managed onboarding.

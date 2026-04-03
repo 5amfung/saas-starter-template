@@ -1,5 +1,8 @@
 # Enterprise Entitlements Implementation Plan
 
+**Status:** superseded  
+**See also:** [2026-04-03 modular architecture spec](../specs/2026-04-03-enterprise-billing-modular-architecture-spec.md), [2026-04-03 modular architecture plan](2026-04-03-enterprise-billing-modular-architecture.md).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the member-count-only plan system with a full entitlements layer (limits, features, quotas), add enterprise tier with per-workspace overrides, and build admin panel workspace management.
@@ -8,7 +11,7 @@
 
 **Tech Stack:** TypeScript, Drizzle ORM (PostgreSQL), Better Auth + Stripe plugin, TanStack Start/Router/Query, React 19, shadcn/ui, Vitest, Zod v4
 
-**Spec:** `docs/superpowers/specs/2026-04-01-enterprise-entitlements-design.md`
+**Spec:** `docs/superpowers/specs/2026-04-03-enterprise-billing-modular-architecture-spec.md` (superseding `2026-04-01`)
 
 ---
 
