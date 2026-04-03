@@ -57,12 +57,7 @@ vi.mock('@/init', () => ({
 
 vi.mock('@workspace/auth/plans', () => ({
   getPlanById: (planId: string) =>
-    [
-      'starter',
-      'pro',
-      'enterprise',
-      'free',
-    ].includes(planId as string)
+    ['starter', 'pro', 'enterprise', 'free'].includes(planId)
       ? {
           id: planId,
           stripeEnabled: planId !== 'free',
