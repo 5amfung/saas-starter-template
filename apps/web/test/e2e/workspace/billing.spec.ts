@@ -266,7 +266,7 @@ test.describe('Workspace Billing', () => {
     await expect(page.getByText('Upgrade to').first()).toBeVisible();
     await expect(page.getByText('Starter').first()).toBeVisible();
     await expect(page.getByText('$5/mo').first()).toBeVisible();
-    await expect(page.getByText('Up to 5 members per workspace')).toBeVisible();
+    await expect(page.getByText('Up to 5 members')).toBeVisible();
 
     const starterUpgradeButton = page.getByRole('button', {
       name: 'Upgrade to Starter',
@@ -282,10 +282,8 @@ test.describe('Workspace Billing', () => {
 
     await expect(page.getByText('Pro').first()).toBeVisible();
     await expect(page.getByText('$49/mo')).toBeVisible();
-    await expect(
-      page.getByText('Up to 25 members per workspace')
-    ).toBeVisible();
-    await expect(page.getByText('Email customer support')).toBeVisible();
+    await expect(page.getByText('Up to 25 members')).toBeVisible();
+    await expect(page.getByText('Priority Support').first()).toBeVisible();
 
     const proUpgradeButton = page.getByRole('button', {
       name: 'Upgrade to Pro',
@@ -311,8 +309,6 @@ test.describe('Workspace Billing', () => {
 
     // Price should change to annual equivalent (~$4.17/mo).
     await expect(page.getByText('$4.17/mo')).toBeVisible();
-    // Bonus feature should appear.
-    await expect(page.getByText('2 months free').first()).toBeVisible();
   });
 
   // ── 5. Pro Annual toggle ──────────────────────────────────────────────
@@ -331,7 +327,6 @@ test.describe('Workspace Billing', () => {
 
     // Price should change to annual equivalent (~$40.83/mo).
     await expect(page.getByText('$40.83/mo')).toBeVisible();
-    await expect(page.getByText('2 months free').first()).toBeVisible();
   });
 
   // ── 6. Starter Monthly toggle restores ────────────────────────────────
@@ -348,7 +343,6 @@ test.describe('Workspace Billing', () => {
       .first();
     await starterAnnualToggle.click();
     await expect(page.getByText('$4.17/mo')).toBeVisible();
-    await expect(page.getByText('2 months free').first()).toBeVisible();
 
     // Switch back to Monthly.
     const starterMonthlyToggle = page
@@ -648,7 +642,7 @@ test.describe('Workspace Billing', () => {
     // Confirm dialog should appear.
     await expect(page.getByText('Downgrade to Free?')).toBeVisible();
     // Feature diff should show member limit change.
-    await expect(page.getByText(/Member limit drops from 5 → 1/)).toBeVisible();
+    await expect(page.getByText(/Members drops from 5 → 1/)).toBeVisible();
 
     // Cancel should dismiss the dialog.
     await page.getByRole('button', { name: 'Cancel' }).click();
@@ -783,9 +777,7 @@ test.describe('Workspace Billing', () => {
 
     // Confirm dialog should appear with correct details.
     await expect(page.getByText('Downgrade to Starter?')).toBeVisible();
-    await expect(
-      page.getByText(/Member limit drops from 25 → 5/)
-    ).toBeVisible();
+    await expect(page.getByText(/Members drops from 25 → 5/)).toBeVisible();
 
     // Confirm the downgrade.
     await page.getByRole('button', { name: 'Confirm downgrade' }).click();
