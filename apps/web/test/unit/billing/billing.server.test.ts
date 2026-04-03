@@ -564,10 +564,16 @@ describe('billing.server', () => {
 
     it('rejects enterprise plans', async () => {
       await expect(
-        createCheckoutForWorkspace(TEST_HEADERS, TEST_WORKSPACE_ID, 'enterprise', true)
-      ).rejects.toThrow(
-        'Checkout is not available for plan "enterprise". Contact sales for enterprise plans.'
-      );
+        createCheckoutForWorkspace(
+          TEST_HEADERS,
+          TEST_WORKSPACE_ID,
+          'enterprise',
+          true
+        )
+      ).rejects.toMatchObject({
+        message:
+          'Checkout is not available for plan "enterprise". Contact sales for enterprise plans.',
+      });
       expect(upgradeSubscriptionMock).not.toHaveBeenCalled();
     });
   });

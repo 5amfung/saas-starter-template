@@ -206,9 +206,10 @@ describe('createWorkspaceCheckoutSession', () => {
           annual: false,
         },
       })
-    ).rejects.toThrow(
-      'Checkout is not available for plan "enterprise". Contact sales for enterprise plans.'
-    );
+    ).rejects.toMatchObject({
+      message:
+        'Checkout is not available for plan "enterprise". Contact sales for enterprise plans.',
+    });
     expect(createCheckoutForWorkspaceMock).not.toHaveBeenCalled();
   });
 });

@@ -101,4 +101,61 @@ describe('AdminEntitlementOverrideForm', () => {
       });
     });
   });
+
+  it('can revert an explicit true feature override back to inherit', async () => {
+    const user = userEvent.setup();
+
+    renderForm({
+      limits: null,
+      features: {
+        sso: true,
+      },
+      quotas: null,
+      notes: null,
+    });
+
+    const ssoSelect = screen.getByRole('combobox', { name: /sso/i });
+    expect(ssoSelect).toHaveValue('enabled');
+
+    await user.selectOptions(ssoSelect, 'inherit');
+    await user.click(screen.getByRole('button', { name: /save overrides/i }));
+
+    await waitFor(() => {
+      expect(saveEntitlementOverridesMock).toHaveBeenCalledWith({
+        data: {
+          workspaceId: 'ws_123',
+        },
+      });
+    });
+  });
+
+  it('can force a feature override to false from a previously true override', async () => {
+    const user = userEvent.setup();
+
+    renderForm({
+      limits: null,
+      features: {
+        sso: true,
+      },
+      quotas: null,
+      notes: null,
+    });
+
+    const ssoSelect = screen.getByRole('combobox', { name: /sso/i });
+    expect(ssoSelect).toHaveValue('enabled');
+
+    await user.selectOptions(ssoSelect, 'disabled');
+    await user.click(screen.getByRole('button', { name: /save overrides/i }));
+
+    await waitFor(() => {
+      expect(saveEntitlementOverridesMock).toHaveBeenCalledWith({
+        data: {
+          workspaceId: 'ws_123',
+          features: {
+            sso: false,
+          },
+        },
+      });
+    });
+  });
 });

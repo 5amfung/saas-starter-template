@@ -1,6 +1,6 @@
 import { IconCheck } from '@tabler/icons-react';
 import { describeEntitlements, formatPlanPrice } from '@workspace/auth/plans';
-import { Button } from '@workspace/ui/components/button';
+import { Button, buttonVariants } from '@workspace/ui/components/button';
 import {
   Card,
   CardContent,
@@ -167,16 +167,12 @@ export function BillingPlanCards({
               </CardContent>
               <CardFooter>
                 {plan.isEnterprise ? (
-                  <Button
-                    className="w-full"
-                    render={
-                      <a
-                        href={`mailto:sales@example.com?subject=${encodeURIComponent(`Enterprise inquiry — ${workspaceName}`)}`}
-                      />
-                    }
+                  <a
+                    href={`mailto:sales@example.com?subject=${encodeURIComponent(`Enterprise inquiry — ${workspaceName}`)}`}
+                    className={`${buttonVariants()} w-full`}
                   >
                     Contact Sales
-                  </Button>
+                  </a>
                 ) : (
                   <Button
                     className="w-full"

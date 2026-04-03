@@ -14,5 +14,25 @@ export default [
       'routeTree.gen.ts',
     ],
   },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                '@workspace/billing/infrastructure/*',
+                '@workspace/billing/internal/*',
+              ],
+              message:
+                'Import from @workspace/billing public API only (package root exports).',
+            },
+          ],
+        },
+      ],
+    },
+  },
   ...config,
 ];

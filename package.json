@@ -21,8 +21,9 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
+    "check:boundaries": "depcruise --config .dependency-cruiser.cjs apps/web/src apps/admin/src --output-type err",
     "typecheck": "turbo run typecheck",
-    "check": "turbo run lint typecheck",
+    "check": "pnpm run check:boundaries && turbo run lint typecheck",
     "format": "turbo run format",
     "test": "turbo run test",
     "test:unit": "turbo run test:unit",
@@ -39,6 +40,7 @@
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",
+    "dependency-cruiser": "^17.3.10",
     "eslint": "^9.39.4",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",

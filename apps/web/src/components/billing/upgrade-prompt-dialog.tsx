@@ -7,7 +7,7 @@ import {
   AlertDialogDescription,
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog';
-import { Button } from '@workspace/ui/components/button';
+import { Button, buttonVariants } from '@workspace/ui/components/button';
 import { Toggle } from '@workspace/ui/components/toggle';
 import type { UpgradePromptAction } from '@/hooks/use-upgrade-prompt';
 
@@ -117,16 +117,12 @@ export function UpgradePromptDialog({
               {/* Actions */}
               <div className="flex flex-col items-center gap-3 pt-1">
                 {isContactSales ? (
-                  <Button
-                    className="w-full"
-                    render={
-                      <a
-                        href={`mailto:sales@example.com?subject=${encodeURIComponent(`Enterprise inquiry — ${workspaceName}`)}`}
-                      />
-                    }
+                  <a
+                    href={`mailto:sales@example.com?subject=${encodeURIComponent(`Enterprise inquiry — ${workspaceName}`)}`}
+                    className={`${buttonVariants()} w-full`}
                   >
                     Contact Sales
-                  </Button>
+                  </a>
                 ) : (
                   <Button
                     className="w-full"

@@ -15,7 +15,7 @@ import {
   AlertDialogDescription,
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog';
-import { Button } from '@workspace/ui/components/button';
+import { Button, buttonVariants } from '@workspace/ui/components/button';
 import { Toggle } from '@workspace/ui/components/toggle';
 import type { PlanDefinition, PlanId } from '@workspace/auth/plans';
 
@@ -148,16 +148,12 @@ export function BillingManagePlanDialog({
 
                 {/* Action button */}
                 {action === 'contact_sales' ? (
-                  <Button
-                    variant={config.variant}
-                    render={
-                      <a
-                        href={`mailto:sales@example.com?subject=${encodeURIComponent(`Enterprise inquiry — ${workspaceName}`)}`}
-                      />
-                    }
+                  <a
+                    href={`mailto:sales@example.com?subject=${encodeURIComponent(`Enterprise inquiry — ${workspaceName}`)}`}
+                    className={buttonVariants({ variant: config.variant })}
                   >
                     {config.label}
-                  </Button>
+                  </a>
                 ) : (
                   <Button
                     variant={config.variant}

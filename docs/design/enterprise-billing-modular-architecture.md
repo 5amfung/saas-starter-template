@@ -1,15 +1,8 @@
-# Enterprise Billing & Entitlement Architecture (Modular Migration)
+# Enterprise Billing and Entitlement Modular Architecture
 
 **Status:** `[ ] Planned [x] In Progress [ ] Completed`  
-**Next Action:** Finalize domain package ownership and begin server-level migration.  
-**Date:** 2026-04-03
-**Goal:** Rebuild the billing/payment/entitlement stack as explicit domains with a small, stable contract surface and no hidden coupling between auth, billing UI, and admin flows.
-
-**Revision Log:**
-
-- 2026-04-03 (owner: design) — Added initial architecture and checkpoint framework.
-- 2026-04-03 (owner: design) — Fixed Mermaid compatibility and execution evidence.
-- 2026-04-03 (owner: design) — Added DoD tables, status tags, revision log, and cross-document linkage.
+**Date:** 2026-04-03  
+**Goal:** Create a long-term, low-coupling billing and entitlement architecture where application layers depend only on domain contracts, never directly on billing tables or Stripe primitives.
 
 **Cross-links:**
 
@@ -18,271 +11,303 @@
 - [Original entitlements plan](../superpowers/plans/2026-04-01-enterprise-entitlements.md)
 - [Original entitlements design](../superpowers/specs/2026-04-01-enterprise-entitlements-design.md)
 
-## Execution checkpoints
+## 1. Why this rewrite exists
 
-- [ ] Capture canonical API contracts for entitlement resolver, plan actions, and effective workspace entitlements.
-- [ ] Reconcile all billing enforcement and checkout decisions to the action model.
-- [ ] Remove implicit plan fallback assumptions from UI and server payloads.
-- [ ] Implement and verify enterprise contact-sales behavior without checkout fallback.
-- [ ] Validate admin override tri-state behavior and explicit serialization semantics.
-- [ ] Close loop on accessibility regressions introduced by mixed button/link render patterns.
+The previous branch drifted because policy, storage, and UI concerns were mixed:
 
-### Checkpoint Evidence
+- app code read and wrote override tables directly,
+- entitlement checks were duplicated in multiple server paths,
+- checkout eligibility was inferred from plan identity instead of a formal action policy,
+- and UI relied on partial payloads and fallback assumptions.
 
-| Checkpoint                | Owner                  | Validation signal                                                                                 |
-| ------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------- |
-| API contracts             | billing domain owner   | Domain package exports and test coverage exist for entitlements, actions, and limits.             |
-| Enforcement/action model  | billing + web owner    | `checkout` paths never execute for enterprise actions; plan matrix unit tests cover transitions.  |
-| Payload correctness       | web backend owner      | Billing loaders return `currentEntitlements` and tests fail on missing payload field.             |
-| Contact-sales behavior    | product/checkout owner | Manual and automated test cases confirm contact link opens only for enterprise target.            |
-| Admin override semantics  | admin owner            | Form tests include inherit, explicit true/false, and explicit unlimited cases.                    |
-| Accessibility regressions | UI owner               | Button/link render tests include no `nativeButton` warnings and snapshot or strict output checks. |
+This design removes those failure modes with strict boundaries and explicit APIs.
 
-### Definition of Done
+## 2. Architecture principles
 
-| Checkpoint                | Test / gate                                                                                                                                       | Done when                                                                                                               |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| API contracts             | `pnpm --filter @workspace/auth test packages/auth/test/unit/entitlements.test.ts` (or equivalent domain package path)                             | All contract tests pass and no direct plan-ID limit reads remain in web/auth enforcement code.                          |
-| Billing enforcement model | `pnpm --filter @workspace/web test test/unit/billing/billing.functions.test.ts`                                                                   | Enterprise plan branch never calls checkout and returns `contact_sales` action/model.                                   |
-| Payload correctness       | `pnpm --filter @workspace/web test test/integration/components/billing/billing-upgrade-flow.integration.test.tsx`                                 | Integration fixture uses resolved entitlements; missing entitlements cause deterministic, intentional failure handling. |
-| Contact-sales behavior    | `pnpm --filter @workspace/web test test/unit/components/billing/billing-plan-cards.test.tsx`                                                      | Card and prompt render a link-based `Contact Sales` interaction for enterprise and no checkout CTA.                     |
-| Admin override semantics  | `pnpm --filter @workspace/admin test apps/admin/test/unit/admin/workspaces.functions.test.ts`                                                     | Tri-state and unlimited cases persist only explicit override keys; inherited keys are omitted.                          |
-| Accessibility regressions | `pnpm --filter @workspace/web test test/unit/components/billing` and `pnpm --filter @workspace/admin test test/unit/components/nav-user.test.tsx` | No Base UI `nativeButton` misuse warnings for anchor link actions.                                                      |
+1. **Single enforcement model.** Every limit and feature check runs through one billing domain policy surface.
+2. **No app-to-table coupling.** `apps/web` and `apps/admin` cannot read or write billing tables.
+3. **No checkout inference.** Plan transitions are represented by explicit action types.
+4. **Server authority.** UI renders from a resolved workspace billing snapshot.
+5. **Contract-first evolution.** Domain APIs are stable; internals can change freely.
 
-## 1) Why this document now
+## 2.1 Drift prevention guardrails
 
-The current implementation evolved through incremental fixes and has drifted across:
+The following controls are part of the architecture, not optional process notes:
 
-- `packages/auth` (plan definitions + subscription helpers),
-- `apps/web` billing pages and hooks,
-- Admin override pages, and
-- auth hooks for invitation/invite enforcement.
+1. **Fitness function: forbidden imports.** CI fails if `apps/web` or `apps/admin` imports billing tables or internal billing adapter modules.
+2. **Fitness function: one-way dependency flow.** CI fails if `@workspace/billing` imports app modules, or if apps import `@workspace/billing/infrastructure/*`.
+3. **Contract gate for payloads.** `WorkspaceBillingSnapshot` is schema-validated in server responses and fixture builders; tests fail on missing required fields.
+4. **Single-policy gate.** Invite/member/feature enforcement call only billing policy APIs (`assert*` methods). Ad-hoc checks against raw plan IDs are forbidden.
+5. **Contract change protocol.** Any public API/type change in `@workspace/billing` requires same-PR updates to:
+   - design/spec/plan docs,
+   - package contract tests,
+   - impacted app callsites and fixtures.
+6. **Delete-legacy rule.** During each slice migration, remove replaced helpers in the same PR to avoid dual-path drift.
 
-This has produced repeated regressions because the boundaries were implicit and partial contracts leaked through UI and server layers.
-
-This document defines a **clean modular architecture**: one domain package owns policy and entitlement resolution, while web apps depend on that contract as read-only input.
-
-## 2) Design principles
-
-1. **Single source of truth for entitlement semantics.**  
-   All checks (`limits`, `features`, `quotas`) use `resolveWorkspaceEntitlements()` + `checkLimit()`/`hasFeature()` from one module.
-
-2. **Plan identity and entitlement math are not the same.**  
-   Stripe plan pricing/state determines **billing state**; entitlements determine **effective workspace capability**.
-
-3. **Overrides are additive, partial, and explicit.**  
-   `{}` means inherit plan defaults; any key present in an override object is authoritative.
-
-4. **No RBAC in this phase.**  
-   Workspace admin/member authorization is out of scope for this billing rewrite, per decision. We keep role checks where they already live.
-
-5. **Server is authoritative.**  
-   UI can render best-effort suggestions, but enforcement always happens in server code paths before commit/write.
-
-## 3) Module boundaries and public contracts
+## 3. Module boundaries
 
 ```mermaid
 flowchart LR
-  subgraph DomainPackages
-    A["@workspace/billing<br/>PlanCatalog<br/>EntitlementResolver<br/>PolicyEngine"]
-    B["@workspace/auth<br/>Auth/session<br/>Better Auth plugin wiring<br/>Subscription tables"]
-    C["@workspace/db-schema<br/>schema (plans metadata + overrides table)"]
+  subgraph APP
+    WEB["apps/web"]
+    ADMIN["apps/admin"]
   end
 
-  subgraph ApplicationLayers
-    W["apps/web<br/>Billing page<br/>Invite/member flows<br/>Checkout orchestration"]
-    V["apps/web server functions<br/>billing.server.ts<br/>workspace.server.ts"]
-    Admin["apps/admin<br/>Workspace management<br/>Override maintenance UI"]
+  subgraph BILLING
+    API["@workspace/billing: Public API"]
+    APPSVC["Application services"]
+    DOMAIN["Domain policy engine"]
+    PORTS["Repository and gateway ports"]
+    INFRA["Internal adapters"]
   end
 
-  A -->|resolveEntitlements / describeEntitlements / plan actions| V
-  A -->|same contract| Admin
-  A -->|same contract| W
-  B -->|subscription.plan| A
-  C -->|schema rows| B
-  C -->|override rows| V
-  B -->|workspace context| C
-  Admin -->|temporary: direct DB table writes| C
-  Admin -->|contracted override API| A
+  subgraph AUTH
+    AUTHAPI["@workspace/auth: Auth and workspace context APIs"]
+  end
+
+  subgraph DATA
+    DB[("Postgres")]
+    STRIPE["Stripe"]
+  end
+
+  WEB --> API
+  ADMIN --> API
+  API --> APPSVC
+  APPSVC --> DOMAIN
+  APPSVC --> PORTS
+  INFRA --> PORTS
+  INFRA --> DB
+  INFRA --> STRIPE
+  INFRA --> AUTHAPI
 ```
 
-> In the target architecture, admin override CRUD is routed through `@workspace/billing` only; the direct `apps/admin -> @workspace/db-schema` edge is temporary and removed during migration.
+### Boundary rules
 
-### 3.1 `@workspace/billing` (new)
+- `apps/web` imports only `@workspace/billing` public exports.
+- `apps/admin` imports only `@workspace/billing` public exports.
+- Table-level access for overrides and subscriptions lives in billing internal adapters.
+- `@workspace/auth` provides auth/session/workspace context and subscription identity APIs; it does not own entitlement math.
 
-- `getWorkspaceEntitlements(workspaceId, db, headers)`  
-  Resolves the effective entitlements for one workspace.
-- `resolveEntitlements(planEntitlements, overrides)`  
-  Pure merge of plan defaults + explicit overrides.
-- `checkWorkspaceLimit(ctx)`  
-  Checks `members`, `projects`, `workspaces`, `apiKeys` against current usage.
-- `checkWorkspaceFeature(ctx)`  
-  Feature gate checks for `sso`, `auditLogs`, etc.
-- `computeEntitlementDiff(current, target)`  
-  Returns changed numeric and boolean keys for UI.
-- `getWorkspacePlanAction(fromPlan, toPlan)`  
-  Returns `upgrade | downgrade | cancel | current | contact_sales`.
-- `describeEntitlements(entitlements)`  
-  UI-friendly formatter for feature/limit/quota lines.
+## 4. Public contracts
 
-### 3.2 `@workspace/auth` responsibilities
+This is the only API surface application code can use.
 
-- Keep this package focused on identity and session/workspace ownership, Better Auth plugin hooks, and webhook plumbing.
-- Provide helpers that are narrow and domain-aligned:
-  - subscription lookup (workspace-scoped)
-  - subscription plan id resolution
-  - plan ↔ price map wiring for Stripe (`priceToPlanMap`, `stripePlans`)
-- Expose only what is needed by `@workspace/billing`; do not re-implement entitlement math.
+### 4.1 Queries
 
-### 3.3 `apps/web` server boundary
+- `getWorkspaceBillingSnapshot(input): Promise<WorkspaceBillingSnapshot>`
+  - Inputs: `workspaceId`, `actor`, optional consistency options.
+  - Output includes:
+    - `currentPlanId`
+    - `subscriptionState`
+    - `currentEntitlements` (fully resolved)
+    - `catalogPlans`
+    - `targetActionsByPlan` (`current | upgrade | downgrade | cancel | contact_sales | unavailable`)
 
-- `apps/web/src/billing/billing.server.ts` owns all outbound calls to `@workspace/billing` and DB reads.
-- Billing UI components receive fully resolved data (`current plan`, `currentEntitlements`, `plan catalog`) and stay presentational.
-- Invite/member flows call a single helper:
-  - `beforeCreateInvitation` policy check from a shared `checkWorkspaceEntitlementLimit` path.
+- `getWorkspaceEntitlements(input): Promise<Entitlements>`
+- `previewPlanChange(input): Promise<PlanChangePreview>`
+- `getWorkspaceEntitlementOverrides(input): Promise<EntitlementOverrides | null>`
 
-### 3.4 `apps/admin` domain
+### 4.2 Commands
 
-- Admin writes only override data and metadata notes.
-- Admin never infers payment behavior.
-- UI only handles tri-state interpretation (omit / false / true for features, blank / value / unlimited for numerics) and converts form state into resolver-safe payloads.
+- `setWorkspaceEntitlementOverrides(input): Promise<OverrideWriteResult>`
+- `clearWorkspaceEntitlementOverrides(input): Promise<OverrideWriteResult>`
+- `createCheckoutSession(input): Promise<CheckoutResult>`
+  - Fails with structured domain error when target action is not `upgrade` self-serve.
 
-## 4) Data model and DB contract
+### 4.3 Policy checks
 
-### 4.1 Canonical entitlements shape
+- `assertWorkspaceLimit(input): Promise<void | DomainError>`
+- `assertWorkspaceFeature(input): Promise<void | DomainError>`
+- `assertInviteAllowed(input): Promise<void | DomainError>`
 
-- `Entitlements`
-  - `limits: Record<LimitKey, number>` (`-1` = unlimited)
-  - `features: Record<FeatureKey, boolean>`
-  - `quotas: Record<QuotaKey, number>` (`-1` = unlimited)
+All server enforcement paths call these policies; no ad-hoc plan checks are allowed.
+
+## 5. Domain model
+
+### 5.1 Entitlements
+
+- `limits: Record<LimitKey, number>` where `-1` means unlimited.
+- `features: Record<FeatureKey, boolean>`
+- `quotas: Record<QuotaKey, number>` where `-1` means unlimited.
+
+Keys:
+
 - `LimitKey`: `members | projects | workspaces | apiKeys`
 - `FeatureKey`: `sso | auditLogs | apiAccess | prioritySupport`
 - `QuotaKey`: `storageGb | apiCallsMonthly`
 
-### 4.2 Override table contract
+### 5.2 Overrides
 
-`workspace_entitlement_overrides` stores:
+- `EntitlementOverrides` is partial for each domain.
+- Missing key means inherit.
+- `features[key] = false` is explicit force-off, not inherit.
+- Numerics support explicit unlimited via `-1`.
 
-- `workspaceId`
-- `limits`
-- `features`
-- `quotas`
-- `notes`
-- timestamps
+### 5.3 Plan actions
 
-No plan metadata belongs here; plan identity remains in subscription records.  
-This lets enterprise rows mutate only actual capability overrides.
+`PlanAction = current | upgrade | downgrade | cancel | contact_sales | unavailable`
 
-## 5) Flow diagrams
+The action model is authoritative for:
 
-### 5.1 Billing page render
+- checkout eligibility,
+- billing CTA rendering,
+- and downgrade confirmation behavior.
 
-```mermaid
-sequenceDiagram
-  autonumber
-  participant WS as Workspace Route (loader)
-  participant B as billing.server.ts
-  participant A as @workspace/auth
-  participant D as DB
-  participant P as @workspace/billing
+## 6. Runtime flows
 
-  WS->>B: load workspace billing context
-  B->>A: resolve workspace plan id from subscription
-  B->>D: load overrides when plan is enterprise
-  B->>P: resolveEntitlements(planDefaults, overrides)
-  P-->>B: Entitlement result + metadata
-  B-->>WS: currentEntitlements + current plan + catalog
-  WS->>User: render cards and actions
-```
-
-### 5.2 Invite enforcement path
+### 6.1 Billing page render
 
 ```mermaid
 sequenceDiagram
   autonumber
-  participant H as invite hook (beforeCreateInvitation)
-  participant B as billing.server.ts
-  participant A as @workspace/auth
-  participant D as DB
-  participant P as @workspace/billing
+  participant UI as Billing route
+  participant WEB as web server function
+  participant BILL as @workspace/billing API
 
-  H->>B: checkInviteAllowed(workspaceId)
-  B->>A: get workspace plan id (subscription)
-  B->>D: if enterprise, load override row
-  B->>P: resolveEntitlements(planEntitlements, overrides)
-  P->>P: checkLimit(members, memberCount)
-  P-->>B: allowed/blocked + next action
-  B-->>H: throw forbidden or allow
+  UI->>WEB: load billing page data
+  WEB->>BILL: getWorkspaceBillingSnapshot(workspaceId)
+  BILL-->>WEB: resolved snapshot
+  WEB-->>UI: snapshot payload
+  UI->>UI: render current entitlements and actions
 ```
 
-### 5.3 Checkout vs contact-sales
+### 6.2 Invite enforcement
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant HOOK as invite hook
+  participant BILL as @workspace/billing API
+
+  HOOK->>BILL: assertInviteAllowed(workspaceId, pendingUsage)
+  alt allowed
+    BILL-->>HOOK: ok
+  else blocked
+    BILL-->>HOOK: domain error with actionable code
+  end
+```
+
+### 6.3 Enterprise checkout guard
 
 ```mermaid
 sequenceDiagram
   autonumber
   participant UI as Billing UI
-  participant S as @workspace/auth
-  participant P as Billing/Stripe endpoint
+  participant WEB as billing server function
+  participant BILL as @workspace/billing API
 
-  UI->>UI: user chooses next plan
-  UI->>P: if action=checkout -> call checkout
-  UI->>UI: if action=contact_sales -> show mailto
-  P->>S: verify plan action for target
-  alt self-serve
-    P->>Stripe: create session
-  else enterprise
-    P-->>UI: reject with contact-sales guidance
+  UI->>WEB: request checkout(targetPlan)
+  WEB->>BILL: createCheckoutSession(workspaceId, targetPlan)
+  alt self serve upgrade
+    BILL-->>WEB: checkout session info
+    WEB-->>UI: redirect data
+  else contact sales or unavailable
+    BILL-->>WEB: typed domain error
+    WEB-->>UI: contact sales action and message
   end
 ```
 
-## 6) Implementation strategy (clean migration path)
+## 7. Admin ownership model
 
-### Phase 1 — Stabilize core contracts
+Admin stays a client of domain contracts:
 
-- Create `@workspace/billing` with pure entitlement + action types.
-- Add tests for:
-  - plan defaults
-  - override merge semantics
-  - numeric + feature checks
-  - diff generation
-- Freeze contract before touching UI.
+- form state handles tri-state and unlimited semantics,
+- serialization sends partial patches only,
+- persistence is delegated to `setWorkspaceEntitlementOverrides` and `clearWorkspaceEntitlementOverrides`.
 
-### Phase 2 — Server wiring (authoritative checks)
+Admin never imports schema tables and never composes entitlement logic.
 
-- Migrate plan resolution/enforcement from ad-hoc `maxMembers` checks to `@workspace/billing`.
-- Replace invitation/member limit enforcement to use workspace entitlements.
-- Make self-serve/enterprise action model explicit in billing endpoints.
+## 8. Internal package structure
 
-### Phase 3 — Billing UI adaptation
+Inside `@workspace/billing`:
 
-- Billing page passes `currentEntitlements` from server result, not raw catalog defaults.
-- Upgrade/downgrade prompts use action model (`checkout`, `contact_sales`, `none`) and entitlement metadata for text.
-- Keep enterprise pricing UI copy to “Custom pricing” and no self-serve checkout.
+- `contracts/` public types and API interfaces.
+- `domain/` pure policy logic (`resolveEntitlements`, checks, diff).
+- `application/` use cases (`getWorkspaceBillingSnapshot`, `createCheckoutSession`).
+- `infrastructure/` adapters implementing ports (db, stripe, auth-context).
 
-### Phase 4 — Admin override UX and API
+Only `contracts` and approved application functions are exported from package root.
 
-- Admin workspace detail uses tri-state feature controls and explicit unlimited + blank semantics for numeric controls.
-- Save/clear operations only write partial override payloads.
-- Add coverage for override serialization contract.
+## 9. Migration strategy
 
-### Phase 5 — Hardening and regression lock
+### Phase 1: Contract gate
 
-- Add integration tests for contract mismatches (e.g., undefined entitlements in loader payload).
-- Add e2e checks for enterprise CTA and contact-sales paths.
-- Lock in accessibility warnings cleanup where links are rendered inside button primitives.
+- Finalize public APIs and domain error model.
+- Add lint/dep rule blocking `apps/*` imports of billing tables.
 
-## 7) Migration notes from current branch
+### Phase 2: Server cutover
 
-Because we are early in development and compatibility is not required, we can remove legacy paths instead of preserving two APIs:
+- Migrate invite checks, billing page loaders, and checkout handlers to billing APIs.
+- Remove plan-constant checks from app code.
 
-- remove old `maxMembers`-only plan APIs,
-- remove mixed return shapes,
-- update all callsites in one pass to consume contract fields.
+### Phase 3: Admin cutover
 
-## 8) Acceptance criteria for this architecture
+- Migrate admin override read/write flows to billing APIs.
+- Delete direct table imports and query code from admin server modules.
 
-1. Every server enforcement path uses `@workspace/billing` helpers.
-2. Enterprise and self-serve upgrades are mutually exclusive by action model.
-3. Current plan display uses resolved entitlements, not raw plan defaults.
-4. Admin overrides are serializable as partial patches and can express inherit / force false / force true correctly for feature keys.
-5. No test regressions from contract mismatches at billing boundaries.
+### Phase 4: Cleanup
+
+- Remove legacy helpers and duplicate entitlement logic.
+- Keep one resolver and one action engine.
+
+## 10. Non-goals
+
+- Workspace RBAC redesign and CASL integration.
+- Reworking identity provider responsibilities in `@workspace/auth`.
+- Introducing backward-compatibility facades for deprecated APIs.
+
+## 11. Definition of done
+
+1. `apps/web` and `apps/admin` contain zero imports of billing override/subscription tables.
+2. Every limit/feature enforcement path calls billing policy APIs.
+3. Enterprise targets never attempt checkout in server or client paths.
+4. Billing UI always renders from `WorkspaceBillingSnapshot.currentEntitlements`.
+5. Admin override UX round-trips inherit/true/false and numeric inherit/value/unlimited.
+6. Test suite includes boundary tests that fail if app-layer direct DB coupling is reintroduced.
+7. Drift-prevention fitness checks are enabled in CI and enforced as required checks.
+
+## Appendix A. Migration diff (priority order)
+
+This appendix lists the concrete files to migrate first, in execution order, to eliminate coupling with billing tables and stabilize the contract rollout.
+
+### A1. Priority 0 (foundation contract and guards)
+
+| Priority | File                                      | Current direct coupling                     | Target state                                                                            |
+| -------- | ----------------------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------- |
+| P0       | `@workspace/billing` package root exports | No centralized app-facing contract yet.     | Publish query, command, and policy APIs from one root surface.                          |
+| P0       | Repo lint/dependency rules                | App layers can still import billing tables. | Add forbidden-import rules so `apps/web` and `apps/admin` cannot import billing tables. |
+
+### A2. Priority 1 (highest-risk runtime paths)
+
+| Priority | File                                     | Current direct coupling                                                                                   | Replace with                                                                                                      |
+| -------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| P1       | `apps/web/src/billing/billing.server.ts` | Imports `workspaceEntitlementOverrides` and reads override rows directly.                                 | `getWorkspaceBillingSnapshot`, `getWorkspaceEntitlements`, and `createCheckoutSession` from `@workspace/billing`. |
+| P1       | `packages/auth/src/auth.server.ts`       | `beforeCreateInvitation` reads `workspaceEntitlementOverrides` directly and resolves entitlements inline. | `assertInviteAllowed` policy call from `@workspace/billing` with typed error handling.                            |
+
+### A3. Priority 2 (admin cutover to contract-only integration)
+
+| Priority | File                                        | Current direct coupling                                                                                                        | Replace with                                                                                                                        |
+| -------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| P2       | `apps/admin/src/admin/workspaces.server.ts` | Imports `workspaceEntitlementOverrides` and `subscription` tables; performs override CRUD and subscription reads in app layer. | Admin-oriented billing queries/commands from `@workspace/billing` (workspace detail snapshot, list summaries, set/clear overrides). |
+
+### A4. Priority 3 (test harness migration)
+
+| Priority | File                                                   | Change needed                                                                                       |
+| -------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| P3       | `apps/web/test/unit/billing/billing.server.test.ts`    | Stop mocking direct override-table queries; mock billing contract calls and typed domain results.   |
+| P3       | `apps/admin/test/unit/admin/workspaces.server.test.ts` | Replace DB-table expectations with billing API contract expectations.                               |
+| P3       | `packages/auth/test/unit/auth.server.test.ts`          | Replace inline override row mocking in invite hook tests with `assertInviteAllowed` behavior tests. |
+
+### A5. Priority 4 (deletion pass)
+
+After P1-P3 are green:
+
+1. Delete app-layer helper code that converts DB override rows to entitlement overrides.
+2. Delete direct table imports for overrides/subscriptions from `apps/web` and `apps/admin`.
+3. Keep storage ownership inside billing infrastructure adapters only.
+
+### A6. Exit checks for this appendix
+
+1. `rg -n "workspaceEntitlementOverrides|subscription as subscriptionTable" apps/web apps/admin` returns no billing-table imports from app layers.
+2. Invite enforcement code path does not perform inline entitlement resolution from DB rows.
+3. Billing and admin tests pass while mocking only billing contract APIs at application boundaries.

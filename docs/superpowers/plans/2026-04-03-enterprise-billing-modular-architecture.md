@@ -1,116 +1,89 @@
-# Plan: Modular Billing & Entitlement Rebuild
+# Plan: Enterprise Billing and Entitlement Modular Rebuild
 
 **Implementation reference:** [Design document](../../design/enterprise-billing-modular-architecture.md)  
 **Status:** In Progress  
-**State Tag:** `[ ] Planned [x] In Progress [ ] Completed`  
-**Next Action:** Align unit/integration test command matrix and begin task-by-task execution.
+**State tag:** `[ ] Planned [x] In Progress [ ] Completed`  
+**Date:** 2026-04-03
 
-> **For agentic workers:** use subagent delegation for parallel steps, then merge by checkpoint.
+## Goal
 
-**Date:** 2026-04-03  
-**Goal:** Rebuild the enterprise entitlements/checkout/override flow with explicit domain contracts.
+Implement a long-term modular system where application layers only call billing domain contracts and never access billing storage directly.
 
-**Revision Log:**
+## Workstream 1: Package structure and contracts
 
-- 2026-04-03 (owner: execution) — Added migration plan and task breakdown for modular rebuild.
-- 2026-04-03 (owner: execution) — Added workstream evidence and Definition of Done matrix.
-- 2026-04-03 (owner: execution) — Added status convention and execution alignment with linked spec/design docs.
+- [ ] Create `@workspace/billing` internal layers:
+  - `contracts/`
+  - `domain/`
+  - `application/`
+  - `infrastructure/`
+- [ ] Publish only approved public APIs from package root.
+- [ ] Add contract tests for all query, command, and policy APIs.
 
-## Scope
+**Exit criteria:** contract APIs compile, are tested, and are the only app-facing billing entry points.
 
-This is a clean-slate implementation focused on stabilization and modularity.
+## Workstream 2: Boundary enforcement
 
-- Create a dedicated entitlement domain package and contract-first API.
-- Make invitation and billing enforcement always use resolved entitlements.
-- Preserve current self-serve experience for Free/Starter/Pro flows.
-- Enforce explicit contact-sales behavior for enterprise targets.
-- Route admin override CRUD through the same domain contract and remove direct schema dependency from admin.
+- [ ] Add lint/dep boundary rule:
+  - `apps/web` cannot import billing tables.
+  - `apps/admin` cannot import billing tables.
+- [ ] Add forbidden-import rule for `@workspace/billing/infrastructure/*` from app layers.
+- [ ] Add dependency-direction checks (`billing -> apps` disallowed, `apps -> billing internals` disallowed).
+- [ ] Add CI check that fails on forbidden imports.
 
-## Task 1 — Domain package and type contracts
+**Exit criteria:** direct app-to-billing-table imports are impossible in CI.
 
-- [ ] Add `@workspace/billing` package (or equivalent location agreed by code owners).
-- [ ] Export:
-  - entitlement keys, sentinels, and metadata maps;
-  - `resolveEntitlements`, `checkLimit`, `hasFeature`, `computeEntitlementDiff`, `describeEntitlements`;
-  - plan-action matrix helper (`getWorkspacePlanAction`).
-- [ ] Add unit tests for:
-  - override merge behavior (inherit/force),
-  - feature checks,
-  - numeric checks,
-  - entitlement diff generation.
+## Workstream 3: Server cutover
 
-## Task 2 — Server-side plan/resolution migration
+- [ ] Migrate billing page loaders to `getWorkspaceBillingSnapshot`.
+- [ ] Migrate invite/member enforcement to `assertInviteAllowed` and `assertWorkspaceLimit`.
+- [ ] Migrate checkout endpoint to `createCheckoutSession`.
 
-- [ ] Replace all ad-hoc `getPlanLimitsForPlanId` / single-limit enforcement points with:
-  - plan resolution by workspace,
-  - `resolveWorkspaceEntitlements(workspaceId)`.
-- [ ] Refactor invite policy enforcement path to use resolved entitlements.
-- [ ] Gate enterprise checkout in billing functions:
-  - self-serve plans return checkout session,
-  - enterprise returns contact-sales error/message path.
+**Exit criteria:** no ad-hoc plan-limit checks remain in app server logic.
 
-## Task 3 — Billing payload contract and UI data flow
+## Workstream 4: Admin cutover
 
-- [ ] Ensure billing page passes `currentEntitlements` into plan-card components.
-- [ ] Remove all fallback behavior that substitutes raw catalog defaults for current workspace state.
-- [ ] Use action type (`upgrade`, `downgrade`, `cancel`, `contact_sales`, `current`) in UI prompts.
-- [ ] Update enterprise card and upgrade prompt copy.
+- [ ] Migrate admin override read flow to `getWorkspaceEntitlementOverrides`.
+- [ ] Migrate admin save flow to `setWorkspaceEntitlementOverrides`.
+- [ ] Migrate admin clear flow to `clearWorkspaceEntitlementOverrides`.
+- [ ] Remove admin-side table imports and raw override queries.
 
-## Task 4 — Admin override API and UI
+**Exit criteria:** admin is a strict client of billing contracts.
 
-- [ ] Ensure feature override form writes explicit booleans:
-  - inherit (`undefined`/omitted),
-  - `true`,
-  - `false`.
-- [ ] Ensure numeric form supports inherit / explicit value / unlimited.
-- [ ] Save only explicit override keys; avoid writing inherited keys.
-- [ ] Add tests that cover empty, explicit true, explicit false, and explicit unlimited updates.
-- [ ] Add `@workspace/billing` admin mutation/read APIs and switch `apps/admin` override CRUD to consume only those contracts.
+## Workstream 5: UI and action model alignment
 
-## Task 5 — Regression lock
+- [ ] Billing cards and dialogs consume plan action enum from snapshot payload.
+- [ ] Enterprise target action renders contact-sales CTA only.
+- [ ] Checkout CTA appears only when action is self-serve upgrade.
+- [ ] Current plan cards render `currentEntitlements` from snapshot payload.
 
-- [ ] Add/update failing-path tests for contract mismatch:
-  - missing workspace entitlements in billing fixture,
-  - enterprise action path should not call checkout,
-  - accessibility warnings when using `<a>` through button primitives.
-- [ ] Run:
-  - `pnpm run typecheck`
-  - `pnpm lint`
-  - `pnpm test`
-  - `pnpm web:test:e2e:chromium`
+**Exit criteria:** no UI code infers action behavior from plan ID directly.
 
-## Acceptance Criteria
+## Workstream 6: Regression lock
 
-- 1. Enterprise target in upgrade flow never starts checkout.
-- 2. Invite/member enforcement uses resolved workspace entitlements for both checks and current usage.
-- 3. Current-plan display uses effective entitlements, not static catalog values.
-- 4. Admin feature overrides represent tri-state semantics correctly.
-- 5. Contract is centralized and stable enough to prevent regressions from partial payloads.
+- [ ] Add tests for:
+  - missing `currentEntitlements` payload contract failures,
+  - enterprise checkout rejection,
+  - admin tri-state and numeric override round-trip,
+  - no `nativeButton` warning regressions on link CTAs.
+- [ ] Add runtime schema validation for `WorkspaceBillingSnapshot` server response.
+- [ ] Add contract-fixture builders for billing payloads to prevent partial fixture drift.
+- [ ] Remove legacy entitlement helpers and mixed return-shape paths.
 
-## Current milestone checkpointing
+**Exit criteria:** regression tests cover previous failure modes and pass.
 
-- [ ] Plan: modular contracts are defined and consumed by core callers.
-- [ ] Checkpoint: server enforcement and action model migration complete.
-- [ ] Checkpoint: billing UI now always renders from resolved entitlements.
-- [ ] Checkpoint: enterprise contact-sales path locked with no checkout fallback.
-- [ ] Checkpoint: admin override tri-state + serialization suite is complete and passing.
+## Verification matrix
 
-### Workstream Evidence
+1. `pnpm run typecheck`
+2. `pnpm run lint`
+3. `pnpm test`
+4. `pnpm web:test:e2e:chromium`
+5. boundary/dep-check command (CI-required) passes
 
-| Track             | What to complete                                   | How we know                                                                |
-| ----------------- | -------------------------------------------------- | -------------------------------------------------------------------------- |
-| Contract          | `@workspace/billing` package created               | Build passes with exported types/API and test coverage.                    |
-| Server migration  | Rewire `beforeCreateInvitation` and billing checks | Unit tests no longer stub raw plan IDs; assertions use entitlement limits. |
-| UI payload        | Billing loaders pass resolved entitlements         | Integration tests include missing-entitlements guard.                      |
-| Checkout behavior | enterprise path uses contact-sales                 | Contract test rejects checkout for enterprise and surfaces contact action. |
-| Admin overrides   | Tri-state and unlimited cases are supported        | Admin tests cover false/true/omit and unlimited numeric cases.             |
+## Completion criteria
 
-### Definition of Done
-
-| Track                        | Command                                                                                                           | Acceptance                                                                                                               |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Contract foundation          | `pnpm run typecheck`                                                                                              | Domain package compiles and exports entitlements/plans/plan-action contracts cleanly.                                    |
-| Server migration             | `pnpm --filter @workspace/web test test/unit/billing`                                                             | Self-serve and enterprise branches both use resolved workspace entitlements; enterprise no longer bypasses policy model. |
-| UI contract completion       | `pnpm --filter @workspace/web test test/integration/components/billing/billing-upgrade-flow.integration.test.tsx` | Billing context always renders from resolved entitlement payload and contract omissions are impossible.                  |
-| Checkout/contact-sales split | `pnpm --filter @workspace/web test test/unit/components/billing/upgrade-prompt-dialog.test.tsx`                   | Enterprise path is never wired to checkout and always presents contact-sales CTA/copy.                                   |
-| Admin overrides              | `pnpm --filter @workspace/admin test apps/admin/test/unit/admin/workspaces.schemas.test.ts`                       | Tests verify overwrite semantics and explicit serialization for feature/limit controls.                                  |
+1. Every enforcement path calls billing policy APIs.
+2. Enterprise plan transitions never trigger checkout.
+3. App layers have zero direct billing table imports.
+4. Billing page and dialogs render from resolved snapshot entitlements.
+5. Admin override serialization is contract-correct and test-covered.
+6. Drift-prevention checks are active in CI as required checks.
