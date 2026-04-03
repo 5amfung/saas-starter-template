@@ -89,6 +89,39 @@ export type EntitlementOverrides = {
   quotas?: Partial<Record<QuotaKey, number>> | null;
 };
 
+const sanitizeLimitOverrides = (
+  limits?: EntitlementOverrides['limits'] | null
+) =>
+  limits
+    ? {
+        members: limits.members,
+        projects: limits.projects,
+        apiKeys: limits.apiKeys,
+      }
+    : undefined;
+
+const sanitizeFeatureOverrides = (
+  features?: EntitlementOverrides['features'] | null
+) =>
+  features
+    ? {
+        sso: features.sso,
+        auditLogs: features.auditLogs,
+        apiAccess: features.apiAccess,
+        prioritySupport: features.prioritySupport,
+      }
+    : undefined;
+
+const sanitizeQuotaOverrides = (
+  quotas?: EntitlementOverrides['quotas'] | null
+) =>
+  quotas
+    ? {
+        storageGb: quotas.storageGb,
+        apiCallsMonthly: quotas.apiCallsMonthly,
+      }
+    : undefined;
+
 /**
  * Merges base plan entitlements with optional per-workspace overrides.
  * Pure function — no DB, no Stripe, no side effects.
@@ -99,9 +132,18 @@ export function resolveEntitlements(
 ): Entitlements {
   if (!overrides) return base;
   return {
-    limits: { ...base.limits, ...(overrides.limits ?? {}) },
-    features: { ...base.features, ...(overrides.features ?? {}) },
-    quotas: { ...base.quotas, ...(overrides.quotas ?? {}) },
+    limits: {
+      ...base.limits,
+      ...sanitizeLimitOverrides(overrides.limits),
+    },
+    features: {
+      ...base.features,
+      ...sanitizeFeatureOverrides(overrides.features),
+    },
+    quotas: {
+      ...base.quotas,
+      ...sanitizeQuotaOverrides(overrides.quotas),
+    },
   };
 }
 

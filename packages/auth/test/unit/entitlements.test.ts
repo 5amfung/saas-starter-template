@@ -8,7 +8,7 @@ import {
   hasFeature,
   resolveEntitlements,
 } from '../../src/entitlements';
-import type { Entitlements } from '../../src/entitlements';
+import type { EntitlementOverrides, Entitlements } from '../../src/entitlements';
 
 const BASE: Entitlements = {
   limits: { members: 5, projects: 10, apiKeys: 0 },
@@ -77,6 +77,19 @@ describe('resolveEntitlements', () => {
       quotas: null,
     });
     expect(result).toEqual(ENTERPRISE);
+  });
+
+  it('drops unknown override keys', () => {
+    const overrides = {
+      limits: { members: 50, workspaces: 10 },
+    } as unknown as EntitlementOverrides;
+
+    const result = resolveEntitlements(ENTERPRISE, overrides);
+
+    expect(result).toEqual({
+      ...ENTERPRISE,
+      limits: { ...ENTERPRISE.limits, members: 50 },
+    });
   });
 
   it('merges partial quota overrides', () => {

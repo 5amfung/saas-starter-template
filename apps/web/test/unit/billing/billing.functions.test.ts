@@ -56,7 +56,24 @@ vi.mock('@/init', () => ({
 }));
 
 vi.mock('@workspace/auth/plans', () => ({
-  PLANS: [{ id: 'starter' }, { id: 'pro' }],
+  getPlanById: (planId: string) =>
+    [
+      'starter',
+      'pro',
+      'enterprise',
+      'free',
+    ].includes(planId as string)
+      ? {
+          id: planId,
+          stripeEnabled: planId !== 'free',
+          isEnterprise: planId === 'enterprise',
+        }
+      : undefined,
+  PLANS: [
+    { id: 'starter', stripeEnabled: true, isEnterprise: false },
+    { id: 'pro', stripeEnabled: true, isEnterprise: false },
+    { id: 'enterprise', stripeEnabled: true, isEnterprise: true },
+  ],
 }));
 
 const TEST_WORKSPACE_ID = 'ws-1';
@@ -182,6 +199,22 @@ describe('createWorkspaceCheckoutSession', () => {
       },
     });
     expect(result).toEqual(checkout);
+  });
+
+  it('rejects checkout for enterprise plans', async () => {
+    mockOwnerSession();
+    await expect(
+      createWorkspaceCheckoutSession({
+        data: {
+          workspaceId: TEST_WORKSPACE_ID,
+          planId: 'enterprise',
+          annual: false,
+        },
+      })
+    ).rejects.toThrow(
+      'Checkout is not available for plan "enterprise". Contact sales for enterprise plans.'
+    );
+    expect(createCheckoutForWorkspaceMock).not.toHaveBeenCalled();
   });
 });
 

@@ -6,9 +6,9 @@ export const entitlementOverrideSchema = z.object({
     .object({
       members: z.number().int().min(-1).optional(),
       projects: z.number().int().min(-1).optional(),
-      workspaces: z.number().int().min(-1).optional(),
       apiKeys: z.number().int().min(-1).optional(),
     })
+    .strict()
     .optional(),
   features: z
     .object({
