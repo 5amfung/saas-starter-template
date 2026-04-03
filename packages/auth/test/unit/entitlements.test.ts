@@ -70,6 +70,15 @@ describe('resolveEntitlements', () => {
     expect(result.quotas.apiCallsMonthly).toBe(-1);
   });
 
+  it('handles all null override categories safely', () => {
+    const result = resolveEntitlements(ENTERPRISE, {
+      limits: null,
+      features: null,
+      quotas: null,
+    });
+    expect(result).toEqual(ENTERPRISE);
+  });
+
   it('merges partial quota overrides', () => {
     const result = resolveEntitlements(ENTERPRISE, {
       quotas: { storageGb: 1000 },

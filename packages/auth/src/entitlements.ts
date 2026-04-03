@@ -99,9 +99,9 @@ export function resolveEntitlements(
 ): Entitlements {
   if (!overrides) return base;
   return {
-    limits: { ...base.limits, ...overrides.limits },
-    features: { ...base.features, ...overrides.features },
-    quotas: { ...base.quotas, ...overrides.quotas },
+    limits: { ...base.limits, ...(overrides.limits ?? {}) },
+    features: { ...base.features, ...(overrides.features ?? {}) },
+    quotas: { ...base.quotas, ...(overrides.quotas ?? {}) },
   };
 }
 
