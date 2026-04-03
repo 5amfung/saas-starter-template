@@ -39,7 +39,7 @@ describe('listWorkspaces', () => {
     requireAdminMock.mockRejectedValueOnce(new Error('Forbidden'));
     await expect(
       listWorkspaces({ data: { limit: 10, offset: 0 } })
-    ).rejects.toThrow('Forbidden');
+    ).rejects.toMatchObject({ message: 'Forbidden' });
   });
 
   it('passes params to listWorkspacesWithPlan', async () => {
@@ -77,7 +77,7 @@ describe('getWorkspace', () => {
     requireAdminMock.mockRejectedValueOnce(new Error('Forbidden'));
     await expect(
       getWorkspace({ data: { workspaceId: 'ws-1' } })
-    ).rejects.toThrow('Forbidden');
+    ).rejects.toMatchObject({ message: 'Forbidden' });
   });
 
   it('passes workspaceId to getWorkspaceDetail', async () => {
@@ -107,7 +107,7 @@ describe('saveEntitlementOverrides', () => {
       saveEntitlementOverrides({
         data: { workspaceId: 'ws-1', limits: { members: 50 } },
       })
-    ).rejects.toThrow('Forbidden');
+    ).rejects.toMatchObject({ message: 'Forbidden' });
   });
 
   it('passes validated input to upsertEntitlementOverrides', async () => {
@@ -146,7 +146,7 @@ describe('clearEntitlementOverrides', () => {
     requireAdminMock.mockRejectedValueOnce(new Error('Forbidden'));
     await expect(
       clearEntitlementOverrides({ data: { workspaceId: 'ws-1' } })
-    ).rejects.toThrow('Forbidden');
+    ).rejects.toMatchObject({ message: 'Forbidden' });
   });
 
   it('passes workspaceId to deleteEntitlementOverrides', async () => {
