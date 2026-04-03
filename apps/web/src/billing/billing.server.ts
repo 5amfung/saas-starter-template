@@ -269,6 +269,13 @@ export async function createCheckoutForWorkspace(
   annual: boolean,
   subscriptionId?: string
 ) {
+  const plan = getPlanById(planId);
+  if (!plan || plan.isEnterprise || !plan.stripeEnabled) {
+    throw new Error(
+      `Checkout is not available for plan "${planId}". Contact sales for enterprise plans.`
+    );
+  }
+
   const result = await auth.api.upgradeSubscription({
     headers,
     body: {

@@ -561,6 +561,15 @@ describe('billing.server', () => {
         createCheckoutForWorkspace(TEST_HEADERS, TEST_WORKSPACE_ID, 'pro', true)
       ).rejects.toThrow('Stripe API error');
     });
+
+    it('rejects enterprise plans', async () => {
+      await expect(
+        createCheckoutForWorkspace(TEST_HEADERS, TEST_WORKSPACE_ID, 'enterprise', true)
+      ).rejects.toThrow(
+        'Checkout is not available for plan "enterprise". Contact sales for enterprise plans.'
+      );
+      expect(upgradeSubscriptionMock).not.toHaveBeenCalled();
+    });
   });
 
   // ── createWorkspaceBillingPortal ────────────────────────────────────────

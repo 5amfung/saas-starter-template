@@ -37,6 +37,15 @@ describe('entitlementOverrideSchema', () => {
     ).toBe(false);
   });
 
+  it('rejects unknown limit keys', () => {
+    expect(
+      entitlementOverrideSchema.safeParse({
+        workspaceId: 'ws-1',
+        limits: { members: 10, workspaces: 3 },
+      }).success
+    ).toBe(false);
+  });
+
   it('rejects values below -1 for quotas', () => {
     expect(
       entitlementOverrideSchema.safeParse({
