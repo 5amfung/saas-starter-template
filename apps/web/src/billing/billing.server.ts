@@ -50,6 +50,23 @@ export interface WorkspaceEntitlementsContext {
   upgradePlan: PlanDefinition | null;
 }
 
+function toEntitlementOverrides(
+  overrideRow:
+    | {
+        limits: EntitlementOverrides['limits'] | null;
+        features: EntitlementOverrides['features'] | null;
+        quotas: EntitlementOverrides['quotas'] | null;
+      }
+    | undefined
+): EntitlementOverrides | undefined {
+  if (!overrideRow) return undefined;
+  return {
+    limits: overrideRow.limits ?? undefined,
+    features: overrideRow.features ?? undefined,
+    quotas: overrideRow.quotas ?? undefined,
+  };
+}
+
 /**
  * Resolves a workspace's full entitlement context — plan, entitlements,
  * and upgrade path. Enterprise workspaces may have per-workspace overrides
@@ -71,13 +88,15 @@ export async function getWorkspaceEntitlements(
     : undefined;
 
   // Cast from Record<string, ...> (DB layer) to EntitlementOverrides (typed keys).
-  const overrides: EntitlementOverrides | undefined = overrideRow
-    ? {
-        limits: overrideRow.limits as EntitlementOverrides['limits'],
-        features: overrideRow.features as EntitlementOverrides['features'],
-        quotas: overrideRow.quotas as EntitlementOverrides['quotas'],
-      }
-    : undefined;
+  const overrides = toEntitlementOverrides(
+    overrideRow as
+      | {
+          limits: EntitlementOverrides['limits'] | null;
+          features: EntitlementOverrides['features'] | null;
+          quotas: EntitlementOverrides['quotas'] | null;
+        }
+      | undefined
+  );
 
   const entitlements = resolveEntitlements(plan.entitlements, overrides);
   return { planId, plan, entitlements, upgradePlan };
@@ -124,13 +143,15 @@ export async function getWorkspaceBillingData(
       })
     : undefined;
 
-  const overrides: EntitlementOverrides | undefined = overrideRow
-    ? {
-        limits: overrideRow.limits as EntitlementOverrides['limits'],
-        features: overrideRow.features as EntitlementOverrides['features'],
-        quotas: overrideRow.quotas as EntitlementOverrides['quotas'],
-      }
-    : undefined;
+  const overrides = toEntitlementOverrides(
+    overrideRow as
+      | {
+          limits: EntitlementOverrides['limits'] | null;
+          features: EntitlementOverrides['features'] | null;
+          quotas: EntitlementOverrides['quotas'] | null;
+        }
+      | undefined
+  );
 
   const entitlements = resolveEntitlements(plan.entitlements, overrides);
 
