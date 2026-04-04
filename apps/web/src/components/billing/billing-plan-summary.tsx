@@ -8,6 +8,8 @@ interface BillingPlanSummaryProps {
   annual?: boolean;
   entitlements?: Entitlements;
   showHeader?: boolean;
+  showName?: boolean;
+  showPrice?: boolean;
   showFeatures?: boolean;
   className?: string;
   headerClassName?: string;
@@ -23,6 +25,8 @@ export function BillingPlanSummary({
   annual = false,
   entitlements,
   showHeader = true,
+  showName = true,
+  showPrice = true,
   showFeatures = true,
   className,
   headerClassName,
@@ -38,16 +42,22 @@ export function BillingPlanSummary({
     <div className={cn('flex flex-col gap-3', className)}>
       {showHeader && (
         <div className={cn('flex flex-col gap-1', headerClassName)}>
-          <p className={cn('text-base font-semibold', nameClassName)}>
-            {plan.name}
-          </p>
-          <span className={cn('text-sm text-muted-foreground', priceClassName)}>
-            {plan.isEnterprise
-              ? 'Custom pricing'
-              : !plan.pricing
-                ? 'Free forever'
-                : formatPlanPrice(plan, annual)}
-          </span>
+          {showName && (
+            <p className={cn('text-base font-semibold', nameClassName)}>
+              {plan.name}
+            </p>
+          )}
+          {showPrice && (
+            <span
+              className={cn('text-sm text-muted-foreground', priceClassName)}
+            >
+              {plan.isEnterprise
+                ? 'Custom pricing'
+                : !plan.pricing
+                  ? 'Free forever'
+                  : formatPlanPrice(plan, annual)}
+            </span>
+          )}
         </div>
       )}
 

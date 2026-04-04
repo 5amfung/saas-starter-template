@@ -1,5 +1,3 @@
-import { IconCheck } from '@tabler/icons-react';
-import { describeEntitlements, formatPlanPrice } from '@workspace/billing';
 import { Button, buttonVariants } from '@workspace/ui/components/button';
 import {
   Card,
@@ -10,6 +8,7 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card';
 import type { Entitlements, PlanDefinition } from '@workspace/billing';
+import { BillingPlanSummary } from './billing-plan-summary';
 
 interface BillingPlanCardsProps {
   currentPlan: PlanDefinition;
@@ -49,26 +48,28 @@ export function BillingPlanCards({
           <CardTitle className="text-2xl">{currentPlan.name}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          <p className="text-sm text-muted-foreground">
-            {currentPlan.isEnterprise
-              ? 'Custom pricing'
-              : !currentPlan.pricing
-                ? 'Free forever'
-                : formatPlanPrice(currentPlan, false)}
-          </p>
+          <BillingPlanSummary
+            plan={currentPlan}
+            annual={false}
+            entitlements={currentEntitlements}
+            className="gap-0"
+            showName={false}
+            showFeatures={false}
+          />
           {nextBillingDate && (
             <p className="text-sm text-muted-foreground">
               Renews on {DATE_FORMAT.format(nextBillingDate)}
             </p>
           )}
-          <ul className="mt-1 flex flex-col gap-2">
-            {describeEntitlements(currentEntitlements).map((feature) => (
-              <li key={feature} className="flex items-center gap-2 text-sm">
-                <IconCheck className="size-3.5 shrink-0 text-muted-foreground" />
-                {feature}
-              </li>
-            ))}
-          </ul>
+          <BillingPlanSummary
+            plan={currentPlan}
+            annual={false}
+            entitlements={currentEntitlements}
+            className="gap-0"
+            showHeader={false}
+            featuresClassName="mt-1 gap-2"
+            featureIconClassName="text-muted-foreground"
+          />
         </CardContent>
         {currentPlan.isEnterprise ? (
           <CardFooter className="flex-col items-stretch">
