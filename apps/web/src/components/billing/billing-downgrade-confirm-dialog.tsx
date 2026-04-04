@@ -9,8 +9,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog';
-import type { PlanDefinition } from '@workspace/billing';
 import { BillingPlanSummary } from './billing-plan-summary';
+import type { PlanDefinition } from '@workspace/billing';
 
 const DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
   month: 'long',

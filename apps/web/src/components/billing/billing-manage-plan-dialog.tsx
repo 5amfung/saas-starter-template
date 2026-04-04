@@ -10,8 +10,8 @@ import {
 } from '@workspace/ui/components/alert-dialog';
 import { Button, buttonVariants } from '@workspace/ui/components/button';
 import { Toggle } from '@workspace/ui/components/toggle';
-import type { PlanDefinition, PlanId } from '@workspace/billing';
 import { BillingPlanSummary } from './billing-plan-summary';
+import type { PlanDefinition, PlanId } from '@workspace/billing';
 
 interface BillingManagePlanDialogProps {
   open: boolean;

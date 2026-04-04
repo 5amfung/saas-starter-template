@@ -8,8 +8,8 @@ import {
 } from '@workspace/ui/components/alert-dialog';
 import { Button, buttonVariants } from '@workspace/ui/components/button';
 import { Toggle } from '@workspace/ui/components/toggle';
-import type { UpgradePromptAction } from '@/hooks/use-upgrade-prompt';
 import { BillingPlanSummary } from './billing-plan-summary';
+import type { UpgradePromptAction } from '@/hooks/use-upgrade-prompt';
 
 interface UpgradePromptDialogProps {
   open: boolean;
