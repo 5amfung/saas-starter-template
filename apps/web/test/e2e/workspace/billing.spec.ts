@@ -75,11 +75,8 @@ async function clickUpgradeInManagePlanDialog(
     await dialog.getByRole('button', { name: 'Annual billing' }).click();
   }
 
-  const planHeading = dialog.getByRole('heading', {
-    name: planName,
-    exact: true,
-  });
-  const planColumn = planHeading
+  const planNameText = dialog.getByText(planName, { exact: true });
+  const planColumn = planNameText
     .locator('xpath=ancestor::div[contains(@class,"rounded-lg")]')
     .first();
   await expect(planColumn).toBeVisible();
@@ -301,7 +298,7 @@ test.describe('Workspace Billing', () => {
     await expect(dialog.getByText('$5/mo').first()).toBeVisible();
     await expect(dialog.getByText('Up to 5 members')).toBeVisible();
     const starterUpgradeButton = dialog
-      .getByRole('heading', { name: 'Starter', exact: true })
+      .getByText('Starter', { exact: true })
       .locator('xpath=ancestor::div[contains(@class,"rounded-lg")]')
       .first()
       .getByRole('button', { name: 'Upgrade' });
@@ -323,7 +320,7 @@ test.describe('Workspace Billing', () => {
     await expect(dialog.getByText('Up to 25 members')).toBeVisible();
     await expect(dialog.getByText('Priority Support').first()).toBeVisible();
     const proUpgradeButton = dialog
-      .getByRole('heading', { name: 'Pro', exact: true })
+      .getByText('Pro', { exact: true })
       .locator('xpath=ancestor::div[contains(@class,"rounded-lg")]')
       .first()
       .getByRole('button', { name: 'Upgrade' });
