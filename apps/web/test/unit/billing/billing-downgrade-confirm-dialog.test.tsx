@@ -2,7 +2,7 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import { getPlanById } from '@workspace/billing';
+import { formatPlanPrice, getPlanById } from '@workspace/billing';
 import { BillingDowngradeConfirmDialog } from '@/components/billing/billing-downgrade-confirm-dialog';
 
 const PRO = getPlanById('pro')!;
@@ -14,6 +14,7 @@ describe('BillingDowngradeConfirmDialog', () => {
     onOpenChange: vi.fn(),
     currentPlan: PRO,
     targetPlan: STARTER,
+    targetAnnual: false,
     periodEnd: new Date('2026-04-15'),
     currentMemberCount: 3,
     onConfirm: vi.fn(),
@@ -34,18 +35,32 @@ describe('BillingDowngradeConfirmDialog', () => {
     expect(screen.getByText(/april 15, 2026/i)).toBeInTheDocument();
   });
 
-  it('shows lost features from computePlanDiff', () => {
+  it('uses the updated downgrade copy', () => {
     renderWithProviders(<BillingDowngradeConfirmDialog {...defaultProps} />);
-    // Pro has Priority Support enabled; Starter does not.
-    expect(screen.getByText(/priority support/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/after that, you will downgrade to:/i)
+    ).toBeInTheDocument();
   });
 
-  it('shows limit changes from computePlanDiff', () => {
+  it('shows a target plan card summary', () => {
     renderWithProviders(<BillingDowngradeConfirmDialog {...defaultProps} />);
-    // LIMIT_METADATA.members.label is "Members".
-    expect(screen.getByText(/members/i)).toBeInTheDocument();
-    expect(screen.getByText(/25/)).toBeInTheDocument();
-    expect(screen.getByText(/5/)).toBeInTheDocument();
+    expect(screen.getByText('Starter')).toBeInTheDocument();
+    expect(screen.getByText(/up to 5 members/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(formatPlanPrice(STARTER, false), { exact: false })
+    ).toBeInTheDocument();
+    expect(
+      document.body.querySelectorAll('[role="alertdialog"] li svg')
+    ).not.toHaveLength(0);
+  });
+
+  it('shows annual target plan price when annual downgrade is selected', () => {
+    renderWithProviders(
+      <BillingDowngradeConfirmDialog {...defaultProps} targetAnnual={true} />
+    );
+    expect(
+      screen.getByText(formatPlanPrice(STARTER, true), { exact: false })
+    ).toBeInTheDocument();
   });
 
   it('shows member count warning when current members exceed target limit', () => {
@@ -55,15 +70,20 @@ describe('BillingDowngradeConfirmDialog', () => {
         currentMemberCount={12}
       />
     );
-    expect(screen.getByText(/12 members/i)).toBeInTheDocument();
-    expect(screen.getByText(/remove members/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /any areas exceeding the new plan limits will stop working after the downgrade takes effect/i
+      )
+    ).toBeInTheDocument();
   });
 
   it('does not show member warning when within limit', () => {
     renderWithProviders(
       <BillingDowngradeConfirmDialog {...defaultProps} currentMemberCount={3} />
     );
-    expect(screen.queryByText(/remove members/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/any areas exceeding the new plan limits/i)
+    ).not.toBeInTheDocument();
   });
 
   it('calls onConfirm when confirm button is clicked', async () => {

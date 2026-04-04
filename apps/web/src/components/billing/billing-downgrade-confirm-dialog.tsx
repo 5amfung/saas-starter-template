@@ -1,5 +1,5 @@
-import { IconAlertTriangle, IconLoader2 } from '@tabler/icons-react';
-import { computePlanDiff } from '@workspace/billing';
+import { IconAlertTriangle, IconCheck, IconLoader2 } from '@tabler/icons-react';
+import { describeEntitlements, formatPlanPrice } from '@workspace/billing';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,24 +24,11 @@ interface BillingDowngradeConfirmDialogProps {
   onOpenChange: (open: boolean) => void;
   currentPlan: PlanDefinition;
   targetPlan: PlanDefinition;
+  targetAnnual: boolean;
   periodEnd: Date | null;
   currentMemberCount: number;
   onConfirm: () => void;
   isProcessing: boolean;
-}
-
-/**
- * Filters out lost features that are already represented by limit changes.
- * Avoids redundant display when a numeric limit change captures the same information
- * (e.g., "Up to 25 members" when there is already a "Member limit: 25 → 5" entry).
- */
-function filterRedundantFeatures(
-  lostFeatures: Array<string>,
-  limitFromValues: Set<string>
-): Array<string> {
-  return lostFeatures.filter(
-    (feature) => !Array.from(limitFromValues).some((v) => feature.includes(v))
-  );
 }
 
 export function BillingDowngradeConfirmDialog({
@@ -49,46 +36,19 @@ export function BillingDowngradeConfirmDialog({
   onOpenChange,
   currentPlan,
   targetPlan,
+  targetAnnual,
   periodEnd,
   currentMemberCount,
   onConfirm,
   isProcessing,
 }: BillingDowngradeConfirmDialogProps) {
-  const { lostFeatures, limitChanges } = computePlanDiff(
-    currentPlan,
-    targetPlan
-  );
-
-  const limitFromValues = new Set(limitChanges.map((c) => String(c.from)));
-  const displayedFeatures = filterRedundantFeatures(
-    lostFeatures,
-    limitFromValues
-  );
-
   const exceedsMemberLimit =
     targetPlan.entitlements.limits.members !== -1 &&
     currentMemberCount > targetPlan.entitlements.limits.members;
 
-  // Build the full summary as a single string so all content is in one text
-  // node. This keeps test queries (getByText) unambiguous — each query finds
-  // exactly one element — while also serving as the accessible description for
-  // screen readers.
-  const limitSummary = limitChanges
-    .map((c) => `${c.label} drops from ${c.from} → ${c.to}`)
-    .join(', ');
-
-  const featureSummary =
-    displayedFeatures.length > 0
-      ? `${displayedFeatures.join(', ')} will no longer be available`
-      : '';
-
-  const afterChanges = [limitSummary, featureSummary]
-    .filter(Boolean)
-    .join('. ');
-
   const descriptionText = periodEnd
-    ? `Your ${currentPlan.name} plan will remain active until ${DATE_FORMAT.format(periodEnd)}. After that: ${afterChanges}.`
-    : `After downgrading to ${targetPlan.name}: ${afterChanges}.`;
+    ? `Your ${currentPlan.name} plan will remain active until ${DATE_FORMAT.format(periodEnd)}. After that, you will downgrade to:`
+    : `You will downgrade to:`;
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -98,15 +58,32 @@ export function BillingDowngradeConfirmDialog({
           <AlertDialogDescription>{descriptionText}</AlertDialogDescription>
         </AlertDialogHeader>
 
+        <div className="rounded-lg border bg-muted/20 p-4">
+          <p className="text-lg font-semibold">{targetPlan.name}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {targetPlan.isEnterprise
+              ? 'Custom pricing'
+              : !targetPlan.pricing
+                ? 'Free forever'
+                : formatPlanPrice(targetPlan, targetAnnual)}
+          </p>
+          <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
+            {describeEntitlements(targetPlan.entitlements).map((feature) => (
+              <li key={feature} className="flex items-center gap-2">
+                <IconCheck className="size-3.5 shrink-0 text-primary" />
+                {feature}
+              </li>
+            ))}
+          </ul>
+        </div>
+
         {/* Member count warning shown when workspace exceeds the target plan's member limit. */}
         {exceedsMemberLimit && (
           <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400">
             <IconAlertTriangle className="mt-0.5 size-4 shrink-0" />
             <p>
-              You currently have {currentMemberCount} members. The{' '}
-              {targetPlan.name} plan allows up to{' '}
-              {targetPlan.entitlements.limits.members}. You'll need to remove
-              members before the change takes effect.
+              Any areas exceeding the new plan limits will stop working after
+              the downgrade takes effect.
             </p>
           </div>
         )}
