@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { getFreePlan, getPlanById, getUpgradePlans } from '@workspace/billing';
+import { getFreePlan, getPlanById } from '@workspace/billing';
 import { Card, CardContent } from '@workspace/ui/components/card';
 import { SESSION_QUERY_KEY } from '@workspace/components/hooks';
 import { BillingDowngradeBanner } from './billing-downgrade-banner';
@@ -30,9 +30,6 @@ type BillingPageProps = { workspaceId: string; workspaceName: string };
 
 export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
   const queryClient = useQueryClient();
-  const [annualByPlan, setAnnualByPlan] = useState<
-    Partial<Record<PlanId, boolean>>
-  >({});
   const [upgradingPlanId, setUpgradingPlanId] = useState<PlanId | null>(null);
   const [managePlanOpen, setManagePlanOpen] = useState(false);
   const [downgradeTarget, setDowngradeTarget] = useState<PlanDefinition | null>(
@@ -178,7 +175,6 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
   if (billingQuery.isPending || !billingQuery.data) return null;
 
   const { plan: currentPlan, entitlements, subscription } = billingQuery.data;
-  const upgradePlans = getUpgradePlans(currentPlan);
 
   // Stripe Flexible Billing uses cancelAt instead of cancelAtPeriodEnd.
   // Check both to match Better Auth's isPendingCancel logic.
@@ -213,24 +209,10 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
       <BillingPlanCards
         currentPlan={currentPlan}
         currentEntitlements={entitlements}
-        upgradePlans={upgradePlans}
         nextBillingDate={periodEnd}
-        annualByPlan={annualByPlan}
-        onToggleInterval={(planId, annual) =>
-          setAnnualByPlan((prev) => ({ ...prev, [planId]: annual }))
-        }
         onManagePlan={() => setManagePlanOpen(true)}
-        onUpgrade={(planId, annual) =>
-          upgradeMutation.mutate({
-            planId,
-            annual,
-            subscriptionId: subscription?.stripeSubscriptionId ?? undefined,
-          })
-        }
         onBillingPortal={() => manageMutation.mutate()}
-        isManaging={manageMutation.isPending}
         isBillingPortalLoading={manageMutation.isPending}
-        upgradingPlanId={upgradingPlanId}
         workspaceName={workspaceName}
       />
 

@@ -45,33 +45,6 @@ vi.mock('@workspace/components/hooks', () => ({
 
 const TEST_WORKSPACE_ID = 'ws_integration_test';
 
-vi.mock('@workspace/billing', async (importOriginal) => {
-  const original = await importOriginal<Record<string, unknown>>();
-  return {
-    ...original,
-    getUpgradePlans: vi.fn().mockReturnValue([
-      {
-        id: 'pro',
-        name: 'Pro',
-        tier: 2,
-        pricing: { monthly: { price: 4900 }, annual: { price: 49000 } },
-        entitlements: {
-          limits: { members: 25, projects: 100, apiKeys: 5 },
-          features: {
-            sso: false,
-            auditLogs: true,
-            apiAccess: true,
-            prioritySupport: true,
-          },
-          quotas: { storageGb: 50, apiCallsMonthly: 1000 },
-        },
-        stripeEnabled: true,
-        isEnterprise: false,
-      },
-    ]),
-  };
-});
-
 function setupBillingData(overrides = {}) {
   getWorkspaceBillingDataMock.mockResolvedValue(
     buildWorkspaceBillingDataFixture({
@@ -107,7 +80,7 @@ describe('BillingPage integration', () => {
     expect(screen.getByText(/current plan/i)).toBeInTheDocument();
   });
 
-  it('calls createWorkspaceCheckoutSession when upgrade is clicked', async () => {
+  it('calls createWorkspaceCheckoutSession when upgrade is clicked in manage dialog', async () => {
     const user = userEvent.setup();
     setupBillingData();
     createWorkspaceCheckoutSessionMock.mockResolvedValueOnce({
@@ -124,16 +97,22 @@ describe('BillingPage integration', () => {
       expect(screen.getByText('Free')).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole('button', { name: /upgrade to pro/i }));
+    await user.click(screen.getByRole('button', { name: /manage plan/i }));
+    await user.click(screen.getAllByRole('button', { name: /^upgrade$/i })[1]);
 
     await waitFor(() => {
       expect(createWorkspaceCheckoutSessionMock).toHaveBeenCalledWith({
-        data: { workspaceId: TEST_WORKSPACE_ID, planId: 'pro', annual: false },
+        data: {
+          workspaceId: TEST_WORKSPACE_ID,
+          planId: 'pro',
+          annual: false,
+          subscriptionId: undefined,
+        },
       });
     });
   });
 
-  it('shows error toast when checkout fails', async () => {
+  it('shows error toast when checkout fails from manage dialog', async () => {
     const user = userEvent.setup();
     setupBillingData();
     createWorkspaceCheckoutSessionMock.mockRejectedValueOnce(
@@ -150,7 +129,8 @@ describe('BillingPage integration', () => {
       expect(screen.getByText('Free')).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole('button', { name: /upgrade to pro/i }));
+    await user.click(screen.getByRole('button', { name: /manage plan/i }));
+    await user.click(screen.getAllByRole('button', { name: /^upgrade$/i })[1]);
 
     await waitFor(() => {
       expect(mockToastError).toHaveBeenCalledWith('Checkout failed');
@@ -169,8 +149,6 @@ describe('BillingPage integration', () => {
       })
     );
     getWorkspaceInvoicesMock.mockResolvedValue([]);
-    const { getUpgradePlans } = await import('@workspace/billing');
-    (getUpgradePlans as ReturnType<typeof vi.fn>).mockReturnValue([]);
     createWorkspacePortalSessionMock.mockResolvedValueOnce({
       url: 'https://portal.stripe.com',
     });

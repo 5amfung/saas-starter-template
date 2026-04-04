@@ -57,6 +57,35 @@ async function navigateToWorkspaceBilling(
   await page.waitForURL(`**/ws/${workspaceId}/billing`, { timeout: 15000 });
 }
 
+async function openManagePlanDialog(page: Page) {
+  await page.getByRole('button', { name: 'Manage plan' }).click();
+  const dialog = page.locator('[role="alertdialog"]');
+  await expect(dialog).toBeVisible({ timeout: 10000 });
+  return dialog;
+}
+
+async function clickUpgradeInManagePlanDialog(
+  page: Page,
+  planName: 'Starter' | 'Pro',
+  options?: { annual?: boolean }
+) {
+  const dialog = await openManagePlanDialog(page);
+
+  if (options?.annual) {
+    await dialog.getByRole('button', { name: 'Annual billing' }).click();
+  }
+
+  const planHeading = dialog.getByRole('heading', {
+    name: planName,
+    exact: true,
+  });
+  const planColumn = planHeading
+    .locator('xpath=ancestor::div[contains(@class,"rounded-lg")]')
+    .first();
+  await expect(planColumn).toBeVisible();
+  await planColumn.getByRole('button', { name: 'Upgrade' }).click();
+}
+
 async function signInAndGoToWorkspacePage(
   page: Page,
   credentials: { email: string; password: string },
@@ -250,110 +279,118 @@ test.describe('Workspace Billing', () => {
     await expect(page.getByText('Free forever')).toBeVisible();
     await expect(page.getByText('1 member')).toBeVisible();
 
-    // Free plan should NOT show "Manage plan" or "Billing portal".
-    await expect(page.getByText('Manage plan')).not.toBeVisible();
-    await expect(page.getByText('Billing portal')).not.toBeVisible();
+    // Free plan should show "Manage plan" and hide "Billing portal".
+    await expect(
+      page.getByRole('button', { name: 'Manage plan' })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Billing portal' })
+    ).not.toBeVisible();
   });
 
-  // ── 2. Starter card: $5/mo + features ─────────────────────────────────
+  // ── 2. Manage plan dialog: Starter option ─────────────────────────────
 
-  test('starter plan card shows price and features', async ({
+  test('manage plan dialog shows starter option and features', async ({
     page,
     baseURL,
   }) => {
     await setupUserAndGoToBilling(page, baseURL!);
+    const dialog = await openManagePlanDialog(page);
 
-    await expect(page.getByText('Upgrade to').first()).toBeVisible();
-    await expect(page.getByText('Starter').first()).toBeVisible();
-    await expect(page.getByText('$5/mo').first()).toBeVisible();
-    await expect(page.getByText('Up to 5 members')).toBeVisible();
-
-    const starterUpgradeButton = page.getByRole('button', {
-      name: 'Upgrade to Starter',
-    });
+    await expect(dialog.getByText('Starter').first()).toBeVisible();
+    await expect(dialog.getByText('$5/mo').first()).toBeVisible();
+    await expect(dialog.getByText('Up to 5 members')).toBeVisible();
+    const starterUpgradeButton = dialog
+      .getByRole('heading', { name: 'Starter', exact: true })
+      .locator('xpath=ancestor::div[contains(@class,"rounded-lg")]')
+      .first()
+      .getByRole('button', { name: 'Upgrade' });
     await expect(starterUpgradeButton).toBeVisible();
     await expect(starterUpgradeButton).toBeEnabled();
   });
 
-  // ── 3. Pro card: $49/mo + features ────────────────────────────────────
+  // ── 3. Manage plan dialog: Pro option ─────────────────────────────────
 
-  test('pro plan card shows price and features', async ({ page, baseURL }) => {
+  test('manage plan dialog shows pro option and features', async ({
+    page,
+    baseURL,
+  }) => {
     await setupUserAndGoToBilling(page, baseURL!);
+    const dialog = await openManagePlanDialog(page);
 
-    await expect(page.getByText('Pro').first()).toBeVisible();
-    await expect(page.getByText('$49/mo')).toBeVisible();
-    await expect(page.getByText('Up to 25 members')).toBeVisible();
-    await expect(page.getByText('Priority Support').first()).toBeVisible();
-
-    const proUpgradeButton = page.getByRole('button', {
-      name: 'Upgrade to Pro',
-    });
+    await expect(dialog.getByText('Pro').first()).toBeVisible();
+    await expect(dialog.getByText('$49/mo')).toBeVisible();
+    await expect(dialog.getByText('Up to 25 members')).toBeVisible();
+    await expect(dialog.getByText('Priority Support').first()).toBeVisible();
+    const proUpgradeButton = dialog
+      .getByRole('heading', { name: 'Pro', exact: true })
+      .locator('xpath=ancestor::div[contains(@class,"rounded-lg")]')
+      .first()
+      .getByRole('button', { name: 'Upgrade' });
     await expect(proUpgradeButton).toBeVisible();
     await expect(proUpgradeButton).toBeEnabled();
   });
 
-  // ── 4. Starter Annual toggle ──────────────────────────────────────────
+  // ── 4. Starter Annual toggle (in manage dialog) ──────────────────────
 
   test('starter annual toggle changes price and shows bonus', async ({
     page,
     baseURL,
   }) => {
     await setupUserAndGoToBilling(page, baseURL!);
+    const dialog = await openManagePlanDialog(page);
 
-    // Find the Starter card's Annual toggle. Each upgrade card has its own toggle.
-    // The first "Annual billing" toggle belongs to the Starter card.
-    const starterAnnualToggle = page
+    const starterAnnualToggle = dialog
       .getByRole('button', { name: 'Annual billing' })
       .first();
     await starterAnnualToggle.click();
 
     // Price should change to annual equivalent (~$4.17/mo).
-    await expect(page.getByText('$4.17/mo')).toBeVisible();
+    await expect(dialog.getByText('$4.17/mo')).toBeVisible();
   });
 
-  // ── 5. Pro Annual toggle ──────────────────────────────────────────────
+  // ── 5. Pro Annual toggle (in manage dialog) ──────────────────────────
 
   test('pro annual toggle changes price and shows bonus', async ({
     page,
     baseURL,
   }) => {
     await setupUserAndGoToBilling(page, baseURL!);
+    const dialog = await openManagePlanDialog(page);
 
-    // The second "Annual billing" toggle belongs to the Pro card.
-    const proAnnualToggle = page
+    const proAnnualToggle = dialog
       .getByRole('button', { name: 'Annual billing' })
-      .nth(1);
+      .first();
     await proAnnualToggle.click();
 
     // Price should change to annual equivalent (~$40.83/mo).
-    await expect(page.getByText('$40.83/mo')).toBeVisible();
+    await expect(dialog.getByText('$40.83/mo')).toBeVisible();
   });
 
-  // ── 6. Starter Monthly toggle restores ────────────────────────────────
+  // ── 6. Starter Monthly toggle restores (in manage dialog) ────────────
 
   test('starter monthly toggle restores original price', async ({
     page,
     baseURL,
   }) => {
     await setupUserAndGoToBilling(page, baseURL!);
+    const dialog = await openManagePlanDialog(page);
 
-    // Switch to Annual.
-    const starterAnnualToggle = page
+    const starterAnnualToggle = dialog
       .getByRole('button', { name: 'Annual billing' })
       .first();
     await starterAnnualToggle.click();
-    await expect(page.getByText('$4.17/mo')).toBeVisible();
+    await expect(dialog.getByText('$4.17/mo')).toBeVisible();
 
-    // Switch back to Monthly.
-    const starterMonthlyToggle = page
+    const starterMonthlyToggle = dialog
       .getByRole('button', { name: 'Monthly billing' })
       .first();
     await starterMonthlyToggle.click();
 
     // Price should restore to $5/mo.
-    await expect(page.getByText('$5/mo').first()).toBeVisible();
+    await expect(dialog.getByText('$5/mo').first()).toBeVisible();
     // Annual price should disappear from the Starter card.
-    await expect(page.getByText('$4.17/mo')).not.toBeVisible();
+    await expect(dialog.getByText('$4.17/mo')).not.toBeVisible();
   });
 
   // ── 7. Invoices empty state ───────────────────────────────────────────
@@ -393,13 +430,7 @@ test.describe('Workspace Billing', () => {
   }) => {
     await setupUserAndGoToBilling(page, baseURL!);
 
-    const starterButton = page.getByRole('button', {
-      name: 'Upgrade to Starter',
-    });
-    await starterButton.click();
-
-    // Button text should change to "Redirecting...".
-    await expect(page.getByText('Redirecting...')).toBeVisible();
+    await clickUpgradeInManagePlanDialog(page, 'Starter');
 
     // Should navigate to Stripe Checkout.
     await page.waitForURL(/checkout\.stripe\.com/, { timeout: 30000 });
@@ -414,8 +445,8 @@ test.describe('Workspace Billing', () => {
   }) => {
     await setupUserAndGoToBilling(page, baseURL!);
 
-    // Click upgrade to Starter.
-    await page.getByRole('button', { name: 'Upgrade to Starter' }).click();
+    // Click upgrade to Starter from Manage plan.
+    await clickUpgradeInManagePlanDialog(page, 'Starter');
 
     // Complete Stripe Checkout.
     await completeStripeCheckout(page);
@@ -440,7 +471,7 @@ test.describe('Workspace Billing', () => {
     await setupUserAndGoToBilling(page, baseURL!);
 
     // Upgrade to Starter.
-    await page.getByRole('button', { name: 'Upgrade to Starter' }).click();
+    await clickUpgradeInManagePlanDialog(page, 'Starter');
     await completeStripeCheckout(page);
 
     // Wait for billing page to load after redirect.
@@ -461,7 +492,7 @@ test.describe('Workspace Billing', () => {
     await setupUserAndGoToBilling(page, baseURL!);
 
     // Upgrade to Starter.
-    await page.getByRole('button', { name: 'Upgrade to Starter' }).click();
+    await clickUpgradeInManagePlanDialog(page, 'Starter');
     await completeStripeCheckout(page);
 
     // Wait for billing page to load.
@@ -484,15 +515,8 @@ test.describe('Workspace Billing', () => {
   }) => {
     const { workspaceId } = await setupUserAndGoToBilling(page, baseURL!);
 
-    // Toggle Pro to Annual.
-    const proAnnualToggle = page
-      .getByRole('button', { name: 'Annual billing' })
-      .nth(1);
-    await proAnnualToggle.click();
-    await expect(page.getByText('$40.83/mo')).toBeVisible();
-
-    // Click upgrade to Pro.
-    await page.getByRole('button', { name: 'Upgrade to Pro' }).click();
+    // Toggle Pro to Annual and upgrade via Manage plan.
+    await clickUpgradeInManagePlanDialog(page, 'Pro', { annual: true });
     await completeStripeCheckout(page, {
       redirectPattern: new RegExp(`/ws/${workspaceId}/(?:billing|overview)`),
     });
@@ -515,14 +539,14 @@ test.describe('Workspace Billing', () => {
     await setupUserAndGoToBilling(page, baseURL!);
 
     // Upgrade to Starter first.
-    await page.getByRole('button', { name: 'Upgrade to Starter' }).click();
+    await clickUpgradeInManagePlanDialog(page, 'Starter');
     await completeStripeCheckout(page);
     await expect(page.getByText('Current plan')).toBeVisible({
       timeout: 15000,
     });
 
     // Open manage plan dialog.
-    await page.getByRole('button', { name: 'Manage plan' }).click();
+    const dialog = await openManagePlanDialog(page);
 
     // Dialog should show title and current plan description.
     await expect(
@@ -531,7 +555,6 @@ test.describe('Workspace Billing', () => {
     await expect(page.getByText('Current plan: Starter')).toBeVisible();
 
     // All three plan columns should be visible: Free, Starter, Pro.
-    const dialog = page.locator('[role="alertdialog"]');
     await expect(dialog.getByText('Free').first()).toBeVisible();
     await expect(dialog.getByText('Starter').first()).toBeVisible();
     await expect(dialog.getByText('Pro').first()).toBeVisible();
@@ -557,16 +580,14 @@ test.describe('Workspace Billing', () => {
     await setupUserAndGoToBilling(page, baseURL!);
 
     // Upgrade to Starter first.
-    await page.getByRole('button', { name: 'Upgrade to Starter' }).click();
+    await clickUpgradeInManagePlanDialog(page, 'Starter');
     await completeStripeCheckout(page);
     await expect(page.getByText('Current plan')).toBeVisible({
       timeout: 15000,
     });
 
     // Open manage plan dialog.
-    await page.getByRole('button', { name: 'Manage plan' }).click();
-
-    const dialog = page.locator('[role="alertdialog"]');
+    const dialog = await openManagePlanDialog(page);
 
     // Switch to Annual.
     await dialog.getByRole('button', { name: 'Annual billing' }).click();
@@ -585,20 +606,19 @@ test.describe('Workspace Billing', () => {
     await setupUserAndGoToBilling(page, baseURL!);
 
     // Upgrade to Starter first.
-    await page.getByRole('button', { name: 'Upgrade to Starter' }).click();
+    await clickUpgradeInManagePlanDialog(page, 'Starter');
     await completeStripeCheckout(page);
     await expect(page.getByText('Current plan')).toBeVisible({
       timeout: 15000,
     });
 
     // Open manage plan dialog.
-    await page.getByRole('button', { name: 'Manage plan' }).click();
+    const dialog = await openManagePlanDialog(page);
     await expect(
       page.getByRole('heading', { name: 'Manage your plan' }).nth(1)
     ).toBeVisible();
 
     // Close the dialog.
-    const dialog = page.locator('[role="alertdialog"]');
     await dialog.getByRole('button', { name: 'Close' }).click();
 
     // Dialog should be dismissed.
@@ -621,16 +641,14 @@ test.describe('Workspace Billing', () => {
     await setupUserAndGoToBilling(page, baseURL!);
 
     // Upgrade to Starter first.
-    await page.getByRole('button', { name: 'Upgrade to Starter' }).click();
+    await clickUpgradeInManagePlanDialog(page, 'Starter');
     await completeStripeCheckout(page);
     await expect(page.getByText('Current plan')).toBeVisible({
       timeout: 15000,
     });
 
     // Open manage plan dialog.
-    await page.getByRole('button', { name: 'Manage plan' }).click();
-
-    const manageDialog = page.locator('[role="alertdialog"]');
+    const manageDialog = await openManagePlanDialog(page);
 
     // Click Downgrade on the Free plan column.
     // Free plan uses the "cancel" action, which has label "Downgrade".
@@ -658,15 +676,14 @@ test.describe('Workspace Billing', () => {
     await setupUserAndGoToBilling(page, baseURL!);
 
     // Upgrade to Starter.
-    await page.getByRole('button', { name: 'Upgrade to Starter' }).click();
+    await clickUpgradeInManagePlanDialog(page, 'Starter');
     await completeStripeCheckout(page);
     await expect(page.getByText('Current plan')).toBeVisible({
       timeout: 15000,
     });
 
     // Open manage plan, downgrade to Free, confirm.
-    await page.getByRole('button', { name: 'Manage plan' }).click();
-    const manageDialog = page.locator('[role="alertdialog"]');
+    const manageDialog = await openManagePlanDialog(page);
     await manageDialog
       .getByRole('button', { name: 'Downgrade' })
       .first()
@@ -699,15 +716,14 @@ test.describe('Workspace Billing', () => {
     await setupUserAndGoToBilling(page, baseURL!);
 
     // Upgrade to Starter.
-    await page.getByRole('button', { name: 'Upgrade to Starter' }).click();
+    await clickUpgradeInManagePlanDialog(page, 'Starter');
     await completeStripeCheckout(page);
     await expect(page.getByText('Current plan')).toBeVisible({
       timeout: 15000,
     });
 
     // Cancel: open manage plan, downgrade to Free, confirm.
-    await page.getByRole('button', { name: 'Manage plan' }).click();
-    const manageDialog = page.locator('[role="alertdialog"]');
+    const manageDialog = await openManagePlanDialog(page);
     await manageDialog
       .getByRole('button', { name: 'Downgrade' })
       .first()
@@ -751,7 +767,7 @@ test.describe('Workspace Billing', () => {
     const { workspaceId } = await setupUserAndGoToBilling(page, baseURL!);
 
     // Upgrade to Pro.
-    await page.getByRole('button', { name: 'Upgrade to Pro' }).click();
+    await clickUpgradeInManagePlanDialog(page, 'Pro');
     await completeStripeCheckout(page, {
       redirectPattern: new RegExp(`/ws/${workspaceId}/(?:billing|overview)`),
     });
@@ -763,9 +779,7 @@ test.describe('Workspace Billing', () => {
     ).toBeVisible();
 
     // Open manage plan.
-    await page.getByRole('button', { name: 'Manage plan' }).click();
-
-    const manageDialog = page.locator('[role="alertdialog"]');
+    const manageDialog = await openManagePlanDialog(page);
 
     // Click Downgrade on the Starter column.
     // In the manage dialog with Pro as current: Free=Downgrade, Starter=Downgrade, Pro=Current plan.
@@ -802,15 +816,14 @@ test.describe('Workspace Billing', () => {
     await setupUserAndGoToBilling(page, baseURL!);
 
     // Upgrade to Starter.
-    await page.getByRole('button', { name: 'Upgrade to Starter' }).click();
+    await clickUpgradeInManagePlanDialog(page, 'Starter');
     await completeStripeCheckout(page);
     await expect(page.getByText('Current plan')).toBeVisible({
       timeout: 15000,
     });
 
     // Cancel: open manage plan, downgrade to Free, confirm.
-    await page.getByRole('button', { name: 'Manage plan' }).click();
-    let manageDialog = page.locator('[role="alertdialog"]');
+    let manageDialog = await openManagePlanDialog(page);
     await manageDialog
       .getByRole('button', { name: 'Downgrade' })
       .first()
@@ -821,9 +834,7 @@ test.describe('Workspace Billing', () => {
     ).toBeVisible({ timeout: 10000 });
 
     // Reopen manage plan dialog.
-    await page.getByRole('button', { name: 'Manage plan' }).click();
-
-    manageDialog = page.locator('[role="alertdialog"]');
+    manageDialog = await openManagePlanDialog(page);
 
     // Pending cancellation notice should be visible.
     await expect(manageDialog.getByText(/pending cancellation/)).toBeVisible({
@@ -876,7 +887,7 @@ test.describe('Workspace Billing', () => {
       timeout: 15000,
     });
 
-    await page.getByRole('button', { name: 'Upgrade to Pro' }).click();
+    await clickUpgradeInManagePlanDialog(page, 'Pro');
     await completeStripeCheckout(page, {
       redirectPattern: new RegExp(`/ws/${workspaceId}/(?:billing|overview)`),
     });
@@ -901,8 +912,7 @@ test.describe('Workspace Billing', () => {
       timeout: 15000,
     });
 
-    await page.getByRole('button', { name: 'Manage plan' }).click();
-    const manageDialog = page.locator('[role="alertdialog"]');
+    const manageDialog = await openManagePlanDialog(page);
     await manageDialog
       .getByRole('button', { name: 'Downgrade' })
       .nth(1)
@@ -922,7 +932,7 @@ test.describe('Workspace Billing', () => {
     await setupUserAndGoToBilling(page, baseURL!);
 
     // Upgrade to Starter.
-    await page.getByRole('button', { name: 'Upgrade to Starter' }).click();
+    await clickUpgradeInManagePlanDialog(page, 'Starter');
     await completeStripeCheckout(page);
     await expect(page.getByText('Current plan')).toBeVisible({
       timeout: 15000,
@@ -990,7 +1000,7 @@ test.describe('Workspace Billing', () => {
 
   // ── 26. Concurrent upgrade button lockout ─────────────────────────────
 
-  test('concurrent upgrade buttons are locked out during redirect', async ({
+  test('concurrent upgrade flow navigates to stripe checkout', async ({
     page,
     baseURL,
   }) => {
@@ -1008,14 +1018,11 @@ test.describe('Workspace Billing', () => {
       await route.continue();
     });
 
-    // Click "Upgrade to Starter" — should show "Redirecting..." and disable Pro button.
-    await page.getByRole('button', { name: 'Upgrade to Starter' }).click();
+    // Click Starter upgrade in modal.
+    await clickUpgradeInManagePlanDialog(page, 'Starter');
 
-    // The Starter button should show "Redirecting...".
-    await expect(page.getByText('Redirecting...')).toBeVisible();
-
-    // The Pro upgrade button should be disabled during the redirect.
-    const proButton = page.getByRole('button', { name: 'Upgrade to Pro' });
-    await expect(proButton).toBeDisabled();
+    // Should navigate to Stripe Checkout.
+    await page.waitForURL(/checkout\.stripe\.com/, { timeout: 30000 });
+    expect(page.url()).toContain('checkout.stripe.com');
   });
 });
