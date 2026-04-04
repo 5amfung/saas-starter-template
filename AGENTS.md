@@ -1,6 +1,72 @@
 # AGENTS.md
 
-This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working in this repository.
+
+## Instruction Priority (Read First)
+
+When instructions conflict, resolve them in this order:
+
+1. Direct user request in the current conversation.
+2. This repository `AGENTS.md`.
+3. Skills explicitly triggered by request or task mapping.
+4. Default agent behavior.
+
+If something goes sideways or requirements become unclear, stop and re-plan before continuing.
+
+## Execution Profile
+
+### Required
+
+- Use plan-first behavior for non-trivial tasks (roughly 3+ meaningful steps or architectural decisions).
+- Use `superpower:brainstorm` (or equivalent plan flow) before creative/non-trivial implementation.
+- Fix root causes over symptoms; avoid workaround-only patches.
+- Verify before marking complete (tests, checks, or other concrete proof).
+- Use pnpm only. Never use npm/yarn/bun/npx.
+- Use `rg` instead of `grep` when practical.
+- Anchor to project root with `git rev-parse --show-toplevel` before multi-step work.
+- Use Conventional Commits.
+- Subagents must follow this same policy set.
+
+### Preferred
+
+- Use subagents for independent research/analysis to keep main context clean.
+- Seek elegant, minimal-blast-radius solutions for non-trivial changes.
+- Capture lessons after user corrections to reduce repeated mistakes.
+
+## Workflow Checklists
+
+### 1) Start
+
+- Confirm root directory and branch state.
+- Identify required CLIs for the task and preflight each with a benign command (for permission/availability).
+- For non-trivial work, write/confirm a short implementation plan before editing.
+
+### 2) Implement
+
+- Follow existing architecture and naming patterns.
+- Keep file boundaries intact (`*.functions.ts` vs `*.server.ts` vs client-safe modules).
+- Minimize touched files; avoid unrelated refactors.
+
+### 3) Verify
+
+- Run the smallest meaningful verification first (targeted tests/checks), then broader checks when needed.
+- Compare expected behavior vs actual behavior, not just command exit status.
+- Do not mark done without evidence.
+
+### 4) Finish
+
+- Summarize what changed and why.
+- Note any residual risks or follow-up steps.
+- If requested, open a PR with clear scope and validation notes.
+
+## Definition of Done
+
+A task is complete only when all are true:
+
+- Requested behavior is implemented.
+- Relevant validations were run successfully (or any limitation is explicitly stated).
+- No instruction conflicts remain unresolved.
+- Changes are scoped, readable, and consistent with repository conventions.
 
 ## Project Overview
 
@@ -29,7 +95,7 @@ Turborepo monorepo for a SaaS starter template. Main web app built with TanStack
 
 ## Project Structure
 
-```
+```text
 apps/
 └── web/                        # Main web application (@workspace/web)
     ├── test/
@@ -45,7 +111,7 @@ apps/
         │   └── (account/, admin/, auth/, workspace/ sub-dirs)
         ├── hooks/              # Shared custom React hooks.
         ├── lib/                # Framework-agnostic utilities and shared helpers.
-        ├── middleware/          # Request middleware for auth and admin gating.
+        ├── middleware/         # Request middleware for auth and admin gating.
         ├── routes/             # TanStack Router file-based route modules.
         │   ├── _auth/          # Public authentication route segment files.
         │   ├── _protected/     # Protected route segment files behind auth middleware.
@@ -87,8 +153,11 @@ packages/
 | `pnpm run db:studio`         | Open Drizzle Studio                                                 |
 | `pnpm run gen-auth-schema`   | Regenerate `packages/db/src/auth.schema.ts` from Better Auth config |
 
-To run a single unit/integration test: `pnpm --filter @workspace/web test test/unit/workspace/workspace.test.ts`
-To run a single E2E test: `pnpm --filter @workspace/web test:e2e test/e2e/example.spec.ts`
+To run one unit/integration test:
+`pnpm --filter @workspace/web test test/unit/workspace/workspace.test.ts`
+
+To run one E2E test:
+`pnpm --filter @workspace/web test:e2e test/e2e/example.spec.ts`
 
 ## Architecture
 
@@ -96,8 +165,8 @@ To run a single E2E test: `pnpm --filter @workspace/web test:e2e test/e2e/exampl
 
 Workspaces are implemented as **Better Auth organizations** with two additional fields on the `organization` table:
 
-- `workspaceType`: `"personal"` | `"workspace"`
-- `personalOwnerUserId`: set only for personal workspaces
+- `workspaceType`: `"personal" | "workspace"`
+- `personalOwnerUserId`: set only for personal workspaces.
 
 Every user gets a personal workspace automatically created on sign-up (via `databaseHooks.user.create` in `packages/auth/src/auth.server.ts`). The active workspace is tracked via Better Auth's `activeOrganizationId` on the session. Workspace logic lives in `packages/auth/src/` (core) and `apps/web/src/workspace/` (UI/functions).
 
@@ -105,34 +174,34 @@ Every user gets a personal workspace automatically created on sign-up (via `data
 
 File-based routing in `apps/web/src/routes/`. Key segments:
 
-- `__root.tsx` — HTML shell, global providers
-- `_auth.tsx` / `_auth/` — Pathless layout for public auth pages (`/signin`, `/signup`)
-- `_protected.tsx` / `_protected/` — Pathless layout with `authMiddleware`; all children require auth
-  - `_protected/ws/index.tsx` — Redirects to `/ws/$workspaceId/overview` for the active workspace
-  - `_protected/ws/$workspaceId.tsx` — Loader calls `getWorkspaceById` (server fn), verifying membership and switching active workspace
-  - `_protected/ws/$workspaceId/` — Per-workspace pages (overview, members, settings, projects)
-  - `_protected/_account/` — Account settings pages
-  - `_protected/admin/` — Admin pages (gated by `adminMiddleware`)
-- `apps/web/src/routeTree.gen.ts` — **Auto-generated; never edit manually**
+- `__root.tsx` - HTML shell, global providers.
+- `_auth.tsx` / `_auth/` - Pathless layout for public auth pages (`/signin`, `/signup`).
+- `_protected.tsx` / `_protected/` - Pathless layout with `authMiddleware`; all children require auth.
+  - `_protected/ws/index.tsx` - Redirects to `/ws/$workspaceId/overview` for the active workspace.
+  - `_protected/ws/$workspaceId.tsx` - Loader calls `getWorkspaceById` (server fn), verifying membership and switching active workspace.
+  - `_protected/ws/$workspaceId/` - Per-workspace pages (overview, members, settings, projects).
+  - `_protected/_account/` - Account settings pages.
+  - `_protected/admin/` - Admin pages (gated by `adminMiddleware`).
+- `apps/web/src/routeTree.gen.ts` - **Auto-generated; never edit manually**.
 
 Route conventions:
 
-- Layout routes use `_` prefix (e.g., `_auth.tsx`).
+- Layout routes use `_` prefix (example: `_auth.tsx`).
 - Each route exports `Route` using `createFileRoute()`.
 
 ### Server Functions & File Boundaries
 
 Data fetching and mutations use `createServerFn()` from `@tanstack/react-start`. These run on the server and are called from route loaders or client components. See `apps/web/src/workspace/workspace.functions.ts` for examples.
 
-Split server-side code by responsibility using these file roles:
+Split server-side code by responsibility:
 
 | Suffix             | Role                                                                                         |
 | ------------------ | -------------------------------------------------------------------------------------------- |
-| `*.functions.ts`   | `createServerFn` wrappers — safe to import anywhere; only the handler runs on the server.    |
+| `*.functions.ts`   | `createServerFn` wrappers. Safe to import anywhere; only the handler runs on the server.     |
 | `*.server.ts`      | Server-only helpers (DB queries, internal logic, secrets). Import only from server contexts. |
 | `*.ts` (no suffix) | Client-safe shared code (types, schemas, constants, pure utilities).                         |
 
-**Import rules:**
+Import rules:
 
 - Never import `*.server.ts` from client-safe files or route components.
 - Only `*.functions.ts` (and other `*.server.ts` files) may import `*.server.ts`.
@@ -146,7 +215,7 @@ import { updateUserRole } from '@/utils/users.function';
 import { updateUserRoleInDb } from '@/utils/users.server';
 ```
 
-`packages/email/src/templates/` is server-only — never import from client code.
+`packages/email/src/templates/` is server-only. Never import it from client code.
 
 ### Auth
 
@@ -156,8 +225,8 @@ Plugins active: `organization` (workspaces), `admin`, `lastLoginMethod`, `tansta
 
 Middleware in `apps/web/src/middleware/auth.ts`:
 
-- `authMiddleware` — Checks session + email verification, ensures active workspace, used on `_protected.tsx`
-- `guestMiddleware` — Redirects authenticated users to `/ws`, used on `_auth.tsx`
+- `authMiddleware` - Checks session + email verification, ensures active workspace, used on `_protected.tsx`.
+- `guestMiddleware` - Redirects authenticated users to `/ws`, used on `_auth.tsx`.
 
 Admin user IDs are whitelisted directly in `packages/auth/src/auth.server.ts` (`admin({ adminUserIds: [...] })`).
 
@@ -175,7 +244,7 @@ Three test types, each in its own directory under `apps/web/test/` (or `packages
 | Integration | `test/integration/` | Vitest     | `*.integration.test.{ts,tsx}` |
 | E2E         | `test/e2e/`         | Playwright | `*.spec.ts`                   |
 
-- Unit tests mirror `src/` structure (e.g., `test/unit/components/auth/signin-form.test.tsx`).
+- Unit tests mirror `src/` structure (example: `test/unit/components/auth/signin-form.test.tsx`).
 - Shared mocks live in `test/mocks/` (auth, db, router).
 - Playwright config: `apps/web/playwright.config.ts`. Vitest config: `apps/web/vitest.config.ts`.
 
@@ -183,21 +252,21 @@ Three test types, each in its own directory under `apps/web/test/` (or `packages
 
 ### General
 
-- **Package manager**: pnpm only — never use npm, yarn, or bun.
+- **Package manager**: pnpm only. Never use npm, yarn, bun, or npx.
 - **Path alias**: `@/*` maps to `src/*` within each app/package.
 - **Workspace imports**: `@workspace/auth`, `@workspace/db`, `@workspace/email`, `@workspace/ui` for cross-package imports.
 - **Imports**: React first, then external packages, then `@workspace/*`, then `@/*` aliases.
 
 ### File Naming
 
-- Components: `kebab-case.tsx` (e.g., `login-form.tsx`, `app-sidebar.tsx`).
-- Exports: PascalCase for components (e.g., `LoginForm`, `AppSidebar`).
-- Hooks: `use-kebab-case.ts` (e.g., `use-mobile.ts`).
+- Components: `kebab-case.tsx` (example: `login-form.tsx`, `app-sidebar.tsx`).
+- Exports: PascalCase for components (example: `LoginForm`, `AppSidebar`).
+- Hooks: `use-kebab-case.ts` (example: `use-mobile.ts`).
 - Routes: filenames determine URL paths (file-based routing).
 
 ### Components
 
-- Functional components only — no class components.
+- Functional components only. No class components.
 - Use `cn()` from `@/lib/utils` for conditional class merging.
 - Use CVA (`class-variance-authority`) for component variants.
 - Use `React.ComponentProps<'element'>` for extending HTML element props.
@@ -205,68 +274,64 @@ Three test types, each in its own directory under `apps/web/test/` (or `packages
 
 ### Styling
 
-- Tailwind CSS utility classes — no CSS modules or styled-components.
-- CSS custom properties (OKLCH) for theming — defined in `packages/ui/src/styles/`.
-- Dark mode via `.dark` class; mobile-first responsive design.
+- Tailwind CSS utility classes. No CSS modules or styled-components.
+- CSS custom properties (OKLCH) for theming, defined in `packages/ui/src/styles/`.
+- Dark mode via `.dark` class. Mobile-first responsive design.
 
 ### TypeScript
 
 - Strict mode (`strict`, `strictNullChecks`, `noUnusedLocals`, `noUnusedParameters`).
-- No `any` types — prefer `unknown` and narrow with type guards.
+- No `any` types. Prefer `unknown` and narrow with type guards.
 - Use Zod v4 schemas for runtime validation.
 
 ### shadcn/ui
 
 - Style: `base-vega`; base color: `zinc`.
-- Add components via `pnpx shadcn@latest add <component>`.
+- Add components via `pnpm dlx shadcn@latest add <component>`.
 - Never manually edit files in `packages/ui/src/components/`.
 
 ## Code Quality
 
 ### Clean Code
 
-**Constants over magic numbers** — Replace hard-coded values with named constants. Keep constants at the top of the file or in a dedicated constants file.
-
-**Meaningful names** — Variables, functions, and classes should reveal purpose. Names should explain why something exists and how it is used. Avoid abbreviations unless universally understood.
-
-**Smart comments** — Comments explain _why_, not _what_. Make code self-documenting; use comments for complex algorithms, non-obvious side effects, and API documentation. Always end comments with a period.
-
-**Single responsibility** — Each function should do exactly one thing and be small and focused. If a function needs a comment to explain what it does, split it.
-
-**DRY** — Extract repeated code into reusable functions. Share common logic through proper abstraction. Maintain single sources of truth.
-
-**Encapsulation** — Hide implementation details, expose clear interfaces, and move nested conditionals into well-named functions.
+- **Constants over magic numbers**: Replace hard-coded values with named constants.
+- **Meaningful names**: Names should reveal intent and usage.
+- **Smart comments**: Explain why, not what.
+- **Single responsibility**: Functions should do one thing.
+- **DRY**: Extract repeated code and keep single sources of truth.
+- **Encapsulation**: Hide internals and expose clear interfaces.
 
 ### Proper Solutions Over Workarounds
 
-Fix root causes rather than papering over symptoms.
+Fix root causes rather than papering over symptoms:
 
 - **Fix at the source**: Address root causes, not symptoms.
-- **Use intended APIs**: Prefer library-recommended patterns (optimistic updates, proper cache invalidation) over compensating logic.
-- **Single source of truth**: Avoid parallel state (refs, local copies) that can drift from real data.
-- **TypeScript**: Validate or narrow types rather than casting with `as`.
-- **Error handling contracts**: Find and use concrete library error types/contracts instead of shape-probing unknown error objects.
+- **Use intended APIs**: Prefer library-recommended patterns over compensating logic.
+- **Single source of truth**: Avoid parallel state that can drift.
+- **TypeScript**: Validate or narrow types instead of broad casts.
+- **Error contracts**: Use concrete library error contracts rather than shape-probing unknown values.
 
-When unsure: research the recommended approach for the library, fix the architecture (queries, state flow) rather than adding compensating logic, and prefer a small correct refactor over a quick workaround.
+When unsure, favor a small correct refactor over a quick workaround.
 
 ## Do Not
 
-- Edit `apps/web/src/routeTree.gen.ts` — it is auto-generated by the router plugin.
-- Manually edit files in `packages/ui/src/components/` — use the shadcn CLI to update them.
-- Use `npm`, `yarn`, or `bun` — this project uses pnpm.
+- Edit `apps/web/src/routeTree.gen.ts` (auto-generated).
+- Manually edit files in `packages/ui/src/components/`.
+- Use `npm`, `yarn`, `bun`, or `npx`.
 - Commit `.env` files or secrets.
-- Use `any` type — prefer proper typing or `unknown` with guards.
-- Import `*.server.ts` modules from client-safe files or route components.
+- Use `any` type.
+- Import `*.server.ts` from client-safe files or route components.
 - Import from `packages/email/src/templates/` in client code.
 
 ## Command Execution Rules
 
 - **Always run from the project root.** Never `cd` into subdirectories.
-- **Be consistent.** Use the same CLI tool and invocation pattern every time. Never mix `npx`/`pnpm exec`/direct paths for the same tool.
-- **Use `pnpm` for package management.** Never use `npm`, `yarn`, `bun`, or `npx`.
-- **Pre-approve CLIs**: Before executing a multi-step task, identify **all** CLI tools needed (`pnpm`, `git`, `node`, `find`, `python3`, etc.) and run a benign command for each (e.g., `--version`) to trigger permission approval upfront. Avoids and minimizes interruptions mid-task.
+- **Be consistent.** Use the same CLI tool and invocation pattern every time.
+- **Use `pnpm` for package management.**
+- **Anchor project root** with `git rev-parse --show-toplevel` before multi-step tasks.
+- **Pre-approve CLIs** for multi-step tasks by running benign commands (example: `--version`).
 - **Subagents follow the same rules.** Include these rules in subagent prompts.
-- **Use rg (ripgrep) over grep command** for performance gain.
+- **Use `rg` over `grep`** where practical.
 
 <!-- intent-skills:start -->
 
@@ -292,4 +357,5 @@ skills:
   load:
   - "node_modules/.pnpm/@tanstack+start-client-core@\*/node_modules/@tanstack/start-client-core/skills/start-core/SKILL.md"
   - "node_modules/.pnpm/@tanstack+router-core@\*/node_modules/@tanstack/router-core/skills/router-core/ssr/SKILL.md"
-  <!-- intent-skills:end -->
+
+<!-- intent-skills:end -->
