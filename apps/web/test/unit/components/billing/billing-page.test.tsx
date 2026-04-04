@@ -179,9 +179,6 @@ describe('BillingPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Free')).toBeInTheDocument();
     });
-
-    // Upgrade plan card should also appear.
-    expect(screen.getByText('Starter')).toBeInTheDocument();
   });
 
   it('renders invoice table section', async () => {
@@ -282,12 +279,13 @@ describe('BillingPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/upgrade to starter/i)).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /manage plan/i })
+      ).toBeInTheDocument();
     });
 
-    await user.click(
-      screen.getByRole('button', { name: /upgrade to starter/i })
-    );
+    await user.click(screen.getByRole('button', { name: /manage plan/i }));
+    await user.click(screen.getAllByRole('button', { name: /^upgrade$/i })[0]);
 
     await waitFor(() => {
       expect(window.location.href).toBe('https://checkout.stripe.com/test123');
@@ -391,19 +389,20 @@ describe('BillingPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/upgrade to starter/i)).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /manage plan/i })
+      ).toBeInTheDocument();
     });
 
-    await user.click(
-      screen.getByRole('button', { name: /upgrade to starter/i })
-    );
+    await user.click(screen.getByRole('button', { name: /manage plan/i }));
+    await user.click(screen.getAllByRole('button', { name: /^upgrade$/i })[0]);
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Failed to start checkout.');
     });
   });
 
-  it('shows enterprise card with Contact Sales when user is on Pro plan', async () => {
+  it('shows pro current-plan card without enterprise upsell card', async () => {
     getWorkspaceBillingData.mockResolvedValue({
       planId: 'pro',
       plan: PRO_PLAN,
@@ -427,11 +426,15 @@ describe('BillingPage', () => {
       expect(screen.getByText('Pro')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Enterprise')).toBeInTheDocument();
-    expect(screen.getByText('Custom pricing')).toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: /contact sales/i })
+      screen.getByRole('button', { name: /manage plan/i })
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /billing portal/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /contact sales/i })
+    ).not.toBeInTheDocument();
   });
 
   it('shows current enterprise entitlements and custom pricing language', async () => {
