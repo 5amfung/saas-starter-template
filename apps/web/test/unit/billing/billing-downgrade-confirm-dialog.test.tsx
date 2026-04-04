@@ -45,6 +45,9 @@ describe('BillingDowngradeConfirmDialog', () => {
     renderWithProviders(<BillingDowngradeConfirmDialog {...defaultProps} />);
     expect(screen.getByText('Starter')).toBeInTheDocument();
     expect(screen.getByText(/up to 5 members/i)).toBeInTheDocument();
+    expect(
+      document.body.querySelectorAll('[role="alertdialog"] li svg')
+    ).not.toHaveLength(0);
   });
 
   it('shows member count warning when current members exceed target limit', () => {

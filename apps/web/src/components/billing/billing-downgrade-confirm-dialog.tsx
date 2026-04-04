@@ -1,4 +1,4 @@
-import { IconAlertTriangle, IconLoader2 } from '@tabler/icons-react';
+import { IconAlertTriangle, IconCheck, IconLoader2 } from '@tabler/icons-react';
 import { describeEntitlements, formatPlanPrice } from '@workspace/billing';
 import {
   AlertDialog,
@@ -67,7 +67,10 @@ export function BillingDowngradeConfirmDialog({
           </p>
           <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
             {describeEntitlements(targetPlan.entitlements).map((feature) => (
-              <li key={feature}>{feature}</li>
+              <li key={feature} className="flex items-center gap-2">
+                <IconCheck className="size-3.5 shrink-0 text-primary" />
+                {feature}
+              </li>
             ))}
           </ul>
         </div>
