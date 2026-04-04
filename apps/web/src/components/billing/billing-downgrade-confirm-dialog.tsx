@@ -24,6 +24,7 @@ interface BillingDowngradeConfirmDialogProps {
   onOpenChange: (open: boolean) => void;
   currentPlan: PlanDefinition;
   targetPlan: PlanDefinition;
+  targetAnnual: boolean;
   periodEnd: Date | null;
   currentMemberCount: number;
   onConfirm: () => void;
@@ -35,6 +36,7 @@ export function BillingDowngradeConfirmDialog({
   onOpenChange,
   currentPlan,
   targetPlan,
+  targetAnnual,
   periodEnd,
   currentMemberCount,
   onConfirm,
@@ -63,7 +65,7 @@ export function BillingDowngradeConfirmDialog({
               ? 'Custom pricing'
               : !targetPlan.pricing
                 ? 'Free forever'
-                : formatPlanPrice(targetPlan, false)}
+                : formatPlanPrice(targetPlan, targetAnnual)}
           </p>
           <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
             {describeEntitlements(targetPlan.entitlements).map((feature) => (

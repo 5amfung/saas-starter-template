@@ -2,7 +2,7 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import { getPlanById } from '@workspace/billing';
+import { formatPlanPrice, getPlanById } from '@workspace/billing';
 import { BillingDowngradeConfirmDialog } from '@/components/billing/billing-downgrade-confirm-dialog';
 
 const PRO = getPlanById('pro')!;
@@ -14,6 +14,7 @@ describe('BillingDowngradeConfirmDialog', () => {
     onOpenChange: vi.fn(),
     currentPlan: PRO,
     targetPlan: STARTER,
+    targetAnnual: false,
     periodEnd: new Date('2026-04-15'),
     currentMemberCount: 3,
     onConfirm: vi.fn(),
@@ -46,8 +47,20 @@ describe('BillingDowngradeConfirmDialog', () => {
     expect(screen.getByText('Starter')).toBeInTheDocument();
     expect(screen.getByText(/up to 5 members/i)).toBeInTheDocument();
     expect(
+      screen.getByText(formatPlanPrice(STARTER, false), { exact: false })
+    ).toBeInTheDocument();
+    expect(
       document.body.querySelectorAll('[role="alertdialog"] li svg')
     ).not.toHaveLength(0);
+  });
+
+  it('shows annual target plan price when annual downgrade is selected', () => {
+    renderWithProviders(
+      <BillingDowngradeConfirmDialog {...defaultProps} targetAnnual={true} />
+    );
+    expect(
+      screen.getByText(formatPlanPrice(STARTER, true), { exact: false })
+    ).toBeInTheDocument();
   });
 
   it('shows member count warning when current members exceed target limit', () => {
