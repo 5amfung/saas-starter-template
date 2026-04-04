@@ -59,6 +59,12 @@ If something goes sideways or requirements become unclear, stop and re-plan befo
 - Note any residual risks or follow-up steps.
 - If requested, open a PR with clear scope and validation notes.
 
+## Workflow Examples
+
+- Doc-only update: confirm root, edit file, run targeted formatting/checks for changed file types, commit with `docs:` scope.
+- Non-trivial code change: plan first, implement with minimal blast radius, run targeted tests then broader checks, summarize tradeoffs in PR.
+- Bugfix from failing CI: reproduce failure, fix root cause (not symptom), re-run the failing test plus nearby coverage, include proof in final notes.
+
 ## Definition of Done
 
 A task is complete only when all are true:
@@ -325,13 +331,9 @@ When unsure, favor a small correct refactor over a quick workaround.
 
 ## Command Execution Rules
 
-- **Always run from the project root.** Never `cd` into subdirectories.
-- **Be consistent.** Use the same CLI tool and invocation pattern every time.
-- **Use `pnpm` for package management.**
-- **Anchor project root** with `git rev-parse --show-toplevel` before multi-step tasks.
-- **Pre-approve CLIs** for multi-step tasks by running benign commands (example: `--version`).
-- **Subagents follow the same rules.** Include these rules in subagent prompts.
-- **Use `rg` over `grep`** where practical.
+- This section is a quick-reference summary of the canonical policy above (`Execution Profile` + `Workflow Checklists`).
+- Run commands from the project root and keep CLI invocation patterns consistent for the same tool.
+- Prefer fast discovery commands (`rg`, `rg --files`) and pnpm-native workflows.
 
 <!-- intent-skills:start -->
 
