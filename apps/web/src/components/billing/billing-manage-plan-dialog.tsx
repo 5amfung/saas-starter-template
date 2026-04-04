@@ -7,7 +7,7 @@ import {
   describeEntitlements,
   formatPlanPrice,
   getPlanAction,
-} from '@workspace/auth/plans';
+} from '@workspace/billing';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -17,7 +17,7 @@ import {
 } from '@workspace/ui/components/alert-dialog';
 import { Button, buttonVariants } from '@workspace/ui/components/button';
 import { Toggle } from '@workspace/ui/components/toggle';
-import type { PlanDefinition, PlanId } from '@workspace/auth/plans';
+import type { PlanDefinition, PlanId } from '@workspace/billing';
 
 interface BillingManagePlanDialogProps {
   open: boolean;

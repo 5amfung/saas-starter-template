@@ -1,6 +1,6 @@
 # Enterprise Billing and Entitlement Modular Architecture
 
-**Status:** `[ ] Planned [x] In Progress [ ] Completed`  
+**Status:** `[ ] Planned [ ] In Progress [x] Completed`  
 **Date:** 2026-04-03  
 **Goal:** Create a long-term, low-coupling billing and entitlement architecture where application layers depend only on domain contracts, never directly on billing tables or Stripe primitives.
 
@@ -132,7 +132,7 @@ All server enforcement paths call these policies; no ad-hoc plan checks are allo
 
 Keys:
 
-- `LimitKey`: `members | projects | workspaces | apiKeys`
+- `LimitKey`: `members | projects | apiKeys`
 - `FeatureKey`: `sso | auditLogs | apiAccess | prioritySupport`
 - `QuotaKey`: `storageGb | apiCallsMonthly`
 

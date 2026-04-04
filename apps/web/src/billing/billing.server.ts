@@ -1,22 +1,18 @@
 import { redirect } from '@tanstack/react-router';
 import { getRequestHeaders } from '@tanstack/react-start/server';
-import { resolveSubscriptionDetails } from '@workspace/auth/billing';
 import {
+  BillingDomainError,
   PLANS,
+  assertWorkspaceLimit,
+  createCheckoutSession,
   getFreePlan,
   getPlanById,
-  getUpgradePlan,
-  resolveEntitlements,
+  getWorkspaceBillingSnapshot,
+  getWorkspaceEntitlements as getWorkspaceEntitlementsQuery,
+  resolveSubscriptionDetails,
   resolveWorkspacePlanId,
-} from '@workspace/auth/plans';
-import { workspaceEntitlementOverrides } from '@workspace/db-schema';
-import { eq } from 'drizzle-orm';
-import type {
-  EntitlementOverrides,
-  Entitlements,
-  PlanDefinition,
-  PlanId,
-} from '@workspace/auth/plans';
+} from '@workspace/billing';
+import type { PlanDefinition, PlanId } from '@workspace/billing';
 import { auth, db } from '@/init';
 
 export async function requireVerifiedSession() {
@@ -46,25 +42,8 @@ export async function getWorkspaceActivePlanId(
 export interface WorkspaceEntitlementsContext {
   planId: PlanId;
   plan: PlanDefinition;
-  entitlements: Entitlements;
+  entitlements: Awaited<ReturnType<typeof getWorkspaceEntitlementsQuery>>;
   upgradePlan: PlanDefinition | null;
-}
-
-function toEntitlementOverrides(
-  overrideRow:
-    | {
-        limits: EntitlementOverrides['limits'] | null;
-        features: EntitlementOverrides['features'] | null;
-        quotas: EntitlementOverrides['quotas'] | null;
-      }
-    | undefined
-): EntitlementOverrides | undefined {
-  if (!overrideRow) return undefined;
-  return {
-    limits: overrideRow.limits ?? undefined,
-    features: overrideRow.features ?? undefined,
-    quotas: overrideRow.quotas ?? undefined,
-  };
 }
 
 /**
@@ -78,27 +57,8 @@ export async function getWorkspaceEntitlements(
 ): Promise<WorkspaceEntitlementsContext> {
   const planId = await getWorkspaceActivePlanId(headers, workspaceId);
   const plan = getPlanById(planId) ?? getFreePlan();
-  const upgradePlan = getUpgradePlan(plan);
-
-  // Project only entitlement fields from the DB row — never pass the full row.
-  const overrideRow = plan.isEnterprise
-    ? await db.query.workspaceEntitlementOverrides.findFirst({
-        where: eq(workspaceEntitlementOverrides.workspaceId, workspaceId),
-      })
-    : undefined;
-
-  // Cast from Record<string, ...> (DB layer) to EntitlementOverrides (typed keys).
-  const overrides = toEntitlementOverrides(
-    overrideRow as
-      | {
-          limits: EntitlementOverrides['limits'] | null;
-          features: EntitlementOverrides['features'] | null;
-          quotas: EntitlementOverrides['quotas'] | null;
-        }
-      | undefined
-  );
-
-  const entitlements = resolveEntitlements(plan.entitlements, overrides);
+  const entitlements = await getWorkspaceEntitlementsQuery({ db, workspaceId });
+  const upgradePlan = PLANS.find((p) => p.tier > plan.tier) ?? null;
   return { planId, plan, entitlements, upgradePlan };
 }
 
@@ -108,63 +68,26 @@ export async function getWorkspaceEntitlements(
  * subscription details from the same data.
  */
 export async function getWorkspaceBillingData(
-  headers: Headers,
+  _headers: Headers,
   workspaceId: string
 ) {
-  const subscriptions = await auth.api.listActiveSubscriptions({
-    headers,
-    query: { referenceId: workspaceId, customerType: 'organization' },
+  const snapshot = await getWorkspaceBillingSnapshot({
+    db,
+    workspaceId,
+    resolveScheduledTargetPlanId,
   });
-  const subArray = Array.from(subscriptions);
-
-  const planId = resolveWorkspacePlanId(subArray);
+  const planId = snapshot.currentPlanId;
   const plan = getPlanById(planId) ?? getFreePlan();
-  const subscription = resolveSubscriptionDetails(subArray, planId);
-
-  // Resolve scheduled target plan from Stripe Subscription Schedule.
-  const scheduledTargetPlanId = subscription?.stripeScheduleId
-    ? await resolveScheduledTargetPlanId(subscription.stripeScheduleId)
-    : null;
-
-  // Strip the stale stripeScheduleId when the schedule is no longer meaningful:
-  // either it resolved to null (completed/canceled) or the target plan matches
-  // the current plan (the downgrade already took effect).
-  const isScheduleStale =
-    !!subscription?.stripeScheduleId &&
-    (!scheduledTargetPlanId || scheduledTargetPlanId === planId);
-  const cleanedSubscription = isScheduleStale
-    ? { ...subscription, stripeScheduleId: null }
-    : subscription;
-
-  // Resolve entitlements (with enterprise overrides if applicable).
-  const overrideRow = plan.isEnterprise
-    ? await db.query.workspaceEntitlementOverrides.findFirst({
-        where: eq(workspaceEntitlementOverrides.workspaceId, workspaceId),
-      })
-    : undefined;
-
-  const overrides = toEntitlementOverrides(
-    overrideRow as
-      | {
-          limits: EntitlementOverrides['limits'] | null;
-          features: EntitlementOverrides['features'] | null;
-          quotas: EntitlementOverrides['quotas'] | null;
-        }
-      | undefined
-  );
-
-  const entitlements = resolveEntitlements(plan.entitlements, overrides);
-
-  // Count workspace members for UI display.
-  const memberCount = await auth.billing.countWorkspaceMembers(workspaceId);
-
+  const hasSubscription =
+    snapshot.subscriptionState.status !== null ||
+    snapshot.subscriptionState.stripeSubscriptionId !== null;
   return {
     planId,
     plan,
-    entitlements,
-    subscription: cleanedSubscription,
-    scheduledTargetPlanId: isScheduleStale ? null : scheduledTargetPlanId,
-    memberCount,
+    entitlements: snapshot.currentEntitlements,
+    subscription: hasSubscription ? snapshot.subscriptionState : null,
+    scheduledTargetPlanId: snapshot.scheduledTargetPlanId,
+    memberCount: snapshot.memberCount,
   };
 }
 
@@ -231,31 +154,40 @@ export interface CheckEntitlementResult {
  * Resolves the workspace's entitlements (including enterprise overrides).
  */
 export async function checkWorkspaceEntitlement(
-  headers: Headers,
+  _headers: Headers,
   workspaceId: string,
   key: 'members'
 ): Promise<CheckEntitlementResult> {
-  const ctx = await getWorkspaceEntitlements(headers, workspaceId);
-  const limit = ctx.entitlements.limits[key];
-
-  if (limit === -1) {
+  try {
+    const result = await assertWorkspaceLimit({
+      db,
+      workspaceId,
+      key,
+    });
     return {
       allowed: true,
-      current: 0,
-      limit: -1,
-      planName: ctx.plan.name,
-      upgradePlan: ctx.upgradePlan,
+      current: result.current,
+      limit: result.limit,
+      planName: result.planName,
+      upgradePlan: result.upgradePlan,
     };
+  } catch (error) {
+    if (
+      error instanceof BillingDomainError &&
+      error.code === 'LIMIT_EXCEEDED'
+    ) {
+      const metadata = error.metadata ?? {};
+      return {
+        allowed: false,
+        current: Number(metadata.current ?? 0),
+        limit: Number(metadata.limit ?? 0),
+        planName: String(metadata.planName ?? 'Current'),
+        upgradePlan:
+          getPlanById(String(metadata.upgradePlan ?? 'free') as PlanId) ?? null,
+      };
+    }
+    throw error;
   }
-
-  const current = await auth.billing.countWorkspaceMembers(workspaceId);
-  return {
-    allowed: current < limit,
-    current,
-    limit,
-    planName: ctx.plan.name,
-    upgradePlan: ctx.upgradePlan,
-  };
 }
 
 /**
@@ -269,27 +201,25 @@ export async function createCheckoutForWorkspace(
   annual: boolean,
   subscriptionId?: string
 ) {
-  const plan = getPlanById(planId);
-  if (!plan || plan.isEnterprise || !plan.stripeEnabled) {
-    throw new Error(
-      `Checkout is not available for plan "${planId}". Contact sales for enterprise plans.`
-    );
-  }
-
-  const result = await auth.api.upgradeSubscription({
-    headers,
-    body: {
-      plan: planId,
-      annual,
-      referenceId: workspaceId,
-      customerType: 'organization',
-      ...(subscriptionId ? { subscriptionId } : {}),
-      successUrl: `${process.env.BETTER_AUTH_URL}/ws/${workspaceId}/billing?success=true`,
-      cancelUrl: `${process.env.BETTER_AUTH_URL}/ws/${workspaceId}/billing`,
+  return createCheckoutSession({
+    db,
+    workspaceId,
+    targetPlanId: planId,
+    annual,
+    subscriptionId,
+    successUrl: `${process.env.BETTER_AUTH_URL}/ws/${workspaceId}/billing?success=true`,
+    cancelUrl: `${process.env.BETTER_AUTH_URL}/ws/${workspaceId}/billing`,
+    execute: async (body) => {
+      const result = await auth.api.upgradeSubscription({
+        headers,
+        body,
+      });
+      if (!result.url) {
+        throw new Error('Checkout session did not return a redirect URL.');
+      }
+      return { url: result.url, redirect: result.redirect };
     },
   });
-
-  return { url: result.url, redirect: result.redirect };
 }
 
 /**

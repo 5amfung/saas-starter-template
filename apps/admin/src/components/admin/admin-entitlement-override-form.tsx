@@ -21,13 +21,13 @@ import {
   LIMIT_METADATA,
   QUOTA_METADATA,
   UNLIMITED,
-} from '@workspace/auth/plans';
+} from '@workspace/billing';
 import type {
   EntitlementOverrides,
   FeatureKey,
   LimitKey,
   QuotaKey,
-} from '@workspace/auth/plans';
+} from '@workspace/billing';
 import {
   clearEntitlementOverrides,
   saveEntitlementOverrides,

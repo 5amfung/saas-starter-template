@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { getPlanById } from '@workspace/auth/plans';
+import { getPlanById } from '@workspace/billing';
 import { renderWithProviders } from '@workspace/test-utils';
-import type { PlanDefinition } from '@workspace/auth/plans';
+import type { PlanDefinition } from '@workspace/billing';
 
 import { BillingManagePlanDialog } from '@/components/billing/billing-manage-plan-dialog';
 

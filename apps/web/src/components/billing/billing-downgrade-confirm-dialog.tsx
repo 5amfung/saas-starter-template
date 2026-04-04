@@ -1,5 +1,5 @@
 import { IconAlertTriangle, IconLoader2 } from '@tabler/icons-react';
-import { computePlanDiff } from '@workspace/auth/plans';
+import { computePlanDiff } from '@workspace/billing';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,7 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog';
-import type { PlanDefinition } from '@workspace/auth/plans';
+import type { PlanDefinition } from '@workspace/billing';
 
 const DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
   month: 'long',

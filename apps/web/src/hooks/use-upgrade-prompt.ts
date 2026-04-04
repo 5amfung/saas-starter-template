@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import type { PlanDefinition, PlanId } from '@workspace/auth/plans';
+import type { PlanDefinition, PlanId } from '@workspace/billing';
 import { createWorkspaceCheckoutSession } from '@/billing/billing.functions';
 
 export type UpgradePromptAction =

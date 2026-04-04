@@ -1,148 +1,104 @@
 import {
   deleteEntitlementOverrides,
+  getWorkspaceDetail,
+  listWorkspacesWithPlan,
   upsertEntitlementOverrides,
 } from '@/admin/workspaces.server';
 
-const { dbDeleteMock, dbInsertMock, dbQueryMock } = vi.hoisted(() => ({
-  dbDeleteMock: vi.fn(),
-  dbInsertMock: vi.fn(),
-  dbQueryMock: {
-    workspaceEntitlementOverrides: { findFirst: vi.fn() },
-    organization: { findFirst: vi.fn() },
-  },
+const {
+  listAdminWorkspacesMock,
+  getAdminWorkspaceDetailMock,
+  setAdminWorkspaceEntitlementOverridesMock,
+  clearAdminWorkspaceEntitlementOverridesMock,
+} = vi.hoisted(() => ({
+  listAdminWorkspacesMock: vi.fn(),
+  getAdminWorkspaceDetailMock: vi.fn(),
+  setAdminWorkspaceEntitlementOverridesMock: vi.fn(),
+  clearAdminWorkspaceEntitlementOverridesMock: vi.fn(),
 }));
 
-// Mock modules that import server-only dependencies.
-vi.mock('@tanstack/react-start/server', () => ({
-  getRequestHeaders: vi.fn(),
+vi.mock('@workspace/billing', () => ({
+  listAdminWorkspaces: listAdminWorkspacesMock,
+  getAdminWorkspaceDetail: getAdminWorkspaceDetailMock,
+  setAdminWorkspaceEntitlementOverrides:
+    setAdminWorkspaceEntitlementOverridesMock,
+  clearAdminWorkspaceEntitlementOverrides:
+    clearAdminWorkspaceEntitlementOverridesMock,
 }));
-vi.mock('@tanstack/react-router', () => ({
-  redirect: vi.fn(),
-}));
-vi.mock('drizzle-orm', async (importOriginal) => {
-  const actual = await importOriginal<Record<string, unknown>>();
-  return {
-    ...actual,
-    and: vi.fn(),
-    count: vi.fn(() => 'count_expr'),
-    eq: vi.fn(),
-    ilike: vi.fn(),
-    or: vi.fn(),
-    sql: vi.fn(),
-  };
-});
-vi.mock('@workspace/auth/plans', () => ({
-  resolveWorkspacePlanId: vi.fn(() => 'free'),
-}));
+
 vi.mock('@/init', () => ({
   auth: { api: {} },
-  db: {
-    select: vi.fn(() => ({
-      from: vi.fn(() => ({
-        leftJoin: vi.fn(() => ({
-          leftJoin: vi.fn(() => ({
-            leftJoin: vi.fn(() => ({
-              leftJoin: vi.fn(() => ({
-                where: vi.fn(() => ({
-                  orderBy: vi.fn(() => ({
-                    limit: vi.fn(() => ({
-                      offset: vi.fn(() => Promise.resolve([])),
-                    })),
-                  })),
-                })),
-              })),
-            })),
-          })),
-        })),
-        innerJoin: vi.fn(() => ({
-          where: vi.fn(() => ({
-            limit: vi.fn(() => Promise.resolve([])),
-          })),
-        })),
-        where: vi.fn(() => ({
-          limit: vi.fn(() => Promise.resolve([])),
-        })),
-        groupBy: vi.fn(() => ({
-          as: vi.fn(),
-        })),
-        as: vi.fn(),
-      })),
-    })),
-    insert: dbInsertMock,
-    delete: dbDeleteMock,
-    query: dbQueryMock,
-  },
+  db: {},
 }));
-vi.mock('@workspace/db-schema', () => ({
-  organization: {
-    id: 'id',
-    name: 'name',
-    slug: 'slug',
-    createdAt: 'createdAt',
-    logo: 'logo',
-  },
-  member: {
-    id: 'id',
-    organizationId: 'organizationId',
-    userId: 'userId',
-    role: 'role',
-  },
-  subscription: {
-    id: 'id',
-    plan: 'plan',
-    referenceId: 'referenceId',
-    status: 'status',
-    stripeSubscriptionId: 'stripeSubscriptionId',
-    periodStart: 'periodStart',
-    periodEnd: 'periodEnd',
-    cancelAtPeriodEnd: 'cancelAtPeriodEnd',
-  },
-  user: {
-    id: 'id',
-    name: 'name',
-    email: 'email',
-  },
-  workspaceEntitlementOverrides: {
-    id: 'id',
-    workspaceId: 'workspaceId',
-    limits: 'limits',
-    features: 'features',
-    quotas: 'quotas',
-    notes: 'notes',
-  },
-}));
+
+describe('listWorkspacesWithPlan', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('delegates to listAdminWorkspaces', async () => {
+    listAdminWorkspacesMock.mockResolvedValueOnce({ workspaces: [], total: 0 });
+    const result = await listWorkspacesWithPlan({
+      limit: 10,
+      offset: 0,
+      filter: 'all',
+    });
+
+    expect(listAdminWorkspacesMock).toHaveBeenCalledWith({
+      db: {},
+      params: {
+        limit: 10,
+        offset: 0,
+        filter: 'all',
+      },
+    });
+    expect(result).toEqual({ workspaces: [], total: 0 });
+  });
+});
+
+describe('getWorkspaceDetail', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('delegates to getAdminWorkspaceDetail', async () => {
+    getAdminWorkspaceDetailMock.mockResolvedValueOnce(null);
+    const result = await getWorkspaceDetail('ws-1');
+
+    expect(getAdminWorkspaceDetailMock).toHaveBeenCalledWith({
+      db: {},
+      workspaceId: 'ws-1',
+    });
+    expect(result).toBeNull();
+  });
+});
 
 describe('upsertEntitlementOverrides', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('calls db.insert with correct values and onConflictDoUpdate', async () => {
-    const onConflictDoUpdateMock = vi.fn().mockResolvedValue(undefined);
-    const valuesMock = vi.fn().mockReturnValue({
-      onConflictDoUpdate: onConflictDoUpdateMock,
+  it('delegates to setAdminWorkspaceEntitlementOverrides', async () => {
+    setAdminWorkspaceEntitlementOverridesMock.mockResolvedValueOnce({
+      success: true,
     });
-    dbInsertMock.mockReturnValue({ values: valuesMock });
 
     await upsertEntitlementOverrides({
       workspaceId: 'ws-1',
       limits: { members: 50 },
       features: { sso: true },
       quotas: { storageGb: 100 },
-      notes: 'Test override',
+      notes: 'Test',
     });
 
-    expect(dbInsertMock).toHaveBeenCalled();
-    expect(valuesMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        workspaceId: 'ws-1',
-        limits: { members: 50 },
-        features: { sso: true },
-        quotas: { storageGb: 100 },
-        notes: 'Test override',
-      })
-    );
-    expect(onConflictDoUpdateMock).toHaveBeenCalled();
+    expect(setAdminWorkspaceEntitlementOverridesMock).toHaveBeenCalledWith({
+      db: {},
+      workspaceId: 'ws-1',
+      limits: { members: 50 },
+      features: { sso: true },
+      quotas: { storageGb: 100 },
+      notes: 'Test',
+    });
   });
 });
 
@@ -151,13 +107,16 @@ describe('deleteEntitlementOverrides', () => {
     vi.clearAllMocks();
   });
 
-  it('calls db.delete with correct where clause', async () => {
-    const whereMock = vi.fn().mockResolvedValue(undefined);
-    dbDeleteMock.mockReturnValue({ where: whereMock });
+  it('delegates to clearAdminWorkspaceEntitlementOverrides', async () => {
+    clearAdminWorkspaceEntitlementOverridesMock.mockResolvedValueOnce({
+      success: true,
+    });
 
     await deleteEntitlementOverrides('ws-1');
 
-    expect(dbDeleteMock).toHaveBeenCalled();
-    expect(whereMock).toHaveBeenCalled();
+    expect(clearAdminWorkspaceEntitlementOverridesMock).toHaveBeenCalledWith({
+      db: {},
+      workspaceId: 'ws-1',
+    });
   });
 });

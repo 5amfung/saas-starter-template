@@ -3,7 +3,7 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import type { Entitlements, PlanDefinition } from '@workspace/auth/plans';
+import type { Entitlements, PlanDefinition } from '@workspace/billing';
 import { BillingPlanCards } from '@/components/billing/billing-plan-cards';
 
 const FREE_PLAN: PlanDefinition = {

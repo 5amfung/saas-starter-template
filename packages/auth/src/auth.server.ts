@@ -13,13 +13,12 @@ import Stripe from 'stripe';
 import {
   subscription as subscriptionTable,
   user as userTable,
-  workspaceEntitlementOverrides,
 } from '@workspace/db-schema';
+import { assertInviteAllowed } from '@workspace/billing';
 import { createAuthEmails } from './auth-emails.server';
 import { isDuplicateOrganizationError, isSignInPath } from './auth-utils';
 import { createBillingHelpers } from './billing.server';
-import { PLANS, getFreePlan, getPlanById } from './plans';
-import { checkLimit, resolveEntitlements } from './entitlements';
+import { PLANS } from './plans';
 import type { PlanId } from './plans';
 import type { EmailClient } from '@workspace/email';
 import type { Database } from '@workspace/db';
@@ -306,40 +305,30 @@ export function createAuth(config: AuthConfig) {
             }
           },
           beforeCreateInvitation: async ({ organization }) => {
-            // Resolve the workspace's own plan directly.
-            const planId = await billing.resolveWorkspacePlanIdFromDb(
-              organization.id
-            );
-            const plan = getPlanById(planId) ?? getFreePlan();
-            const overrideRow = plan.isEnterprise
-              ? (
-                  await config.db
-                    .select({
-                      limits: workspaceEntitlementOverrides.limits,
-                      features: workspaceEntitlementOverrides.features,
-                      quotas: workspaceEntitlementOverrides.quotas,
-                    })
-                    .from(workspaceEntitlementOverrides)
-                    .where(
-                      eq(
-                        workspaceEntitlementOverrides.workspaceId,
-                        organization.id
-                      )
-                    )
-                )[0]
-              : undefined;
-            const entitlements = resolveEntitlements(plan.entitlements, {
-              limits: overrideRow?.limits ?? undefined,
-              features: overrideRow?.features ?? undefined,
-              quotas: overrideRow?.quotas ?? undefined,
-            });
-            const memberCount = await billing.countWorkspaceMembers(
-              organization.id
-            );
-            const result = checkLimit(entitlements, 'members', memberCount);
-            if (!result.allowed) {
+            try {
+              await assertInviteAllowed({
+                db: config.db,
+                workspaceId: organization.id,
+              });
+            } catch (error) {
+              if (
+                typeof error === 'object' &&
+                error !== null &&
+                'code' in error &&
+                (error as { code?: string }).code === 'LIMIT_EXCEEDED'
+              ) {
+                const metadata =
+                  'metadata' in error &&
+                  typeof (error as { metadata?: unknown }).metadata === 'object'
+                    ? (error as { metadata?: Record<string, unknown> }).metadata
+                    : undefined;
+                const limit = Number(metadata?.limit ?? 0);
+                throw new APIError('FORBIDDEN', {
+                  message: `This workspace has reached its member limit (${limit}). Upgrade the workspace plan to invite more members.`,
+                });
+              }
               throw new APIError('FORBIDDEN', {
-                message: `This workspace has reached its member limit (${result.limit}). Upgrade the workspace plan to invite more members.`,
+                message: 'Unable to validate invitation entitlements.',
               });
             }
           },

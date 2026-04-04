@@ -3,7 +3,7 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import type { PlanDefinition } from '@workspace/auth/plans';
+import type { PlanDefinition } from '@workspace/billing';
 import { UpgradePromptDialog } from '@/components/billing/upgrade-prompt-dialog';
 
 const STARTER_PLAN: PlanDefinition = {

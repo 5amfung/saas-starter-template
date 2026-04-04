@@ -158,4 +158,37 @@ describe('AdminEntitlementOverrideForm', () => {
       });
     });
   });
+
+  it('round-trips numeric overrides and omits inherited values', async () => {
+    const user = userEvent.setup();
+
+    renderForm({
+      limits: {
+        members: -1,
+        projects: 10,
+      },
+      features: null,
+      quotas: null,
+      notes: null,
+    });
+
+    // Turn "members" back to inherit by unchecking Unlimited and leaving input blank.
+    const unlimitedToggles = screen.getAllByRole('checkbox', {
+      name: /unlimited/i,
+    });
+    await user.click(unlimitedToggles[0]);
+
+    await user.click(screen.getByRole('button', { name: /save overrides/i }));
+
+    await waitFor(() => {
+      expect(saveEntitlementOverridesMock).toHaveBeenCalledWith({
+        data: {
+          workspaceId: 'ws_123',
+          limits: {
+            projects: 10,
+          },
+        },
+      });
+    });
+  });
 });

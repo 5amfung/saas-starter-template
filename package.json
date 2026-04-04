@@ -14,7 +14,7 @@
   "homepage": "https://github.com/5amfung/saas-starter-template#readme",
   "packageManager": "pnpm@10.33.0",
   "scripts": {
-    "dev": "turbo run dev dev:stripe-webhook --filter @workspace/web --filter @workspace/admin-web --filter @workspace/api-server",
+    "dev": "turbo run dev dev:stripe-webhook --filter @workspace/web --filter @workspace/admin-web",
     "admin:dev": "pnpm --filter @workspace/admin-web dev",
     "api:dev": "pnpm --filter @workspace/api-server dev",
     "web:dev": "turbo run dev dev:stripe-webhook --filter @workspace/web",

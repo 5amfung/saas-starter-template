@@ -1,7 +1,7 @@
 # Specification: Enterprise Billing and Entitlement Modular Rebuild
 
 **Implementation reference:** [Design document](../../design/enterprise-billing-modular-architecture.md)  
-**Status:** `[ ] Planned [x] In Progress [ ] Completed`  
+**Status:** `[ ] Planned [ ] In Progress [x] Completed`  
 **Date:** 2026-04-03
 
 ## 1. Context
@@ -45,7 +45,7 @@ Application layers (`apps/web`, `apps/admin`) consume that API and do not access
 
 ## 3.4 Domain types
 
-- `LimitKey = members | projects | workspaces | apiKeys`
+- `LimitKey = members | projects | apiKeys`
 - `FeatureKey = sso | auditLogs | apiAccess | prioritySupport`
 - `QuotaKey = storageGb | apiCallsMonthly`
 - `Entitlements = { limits, features, quotas }`

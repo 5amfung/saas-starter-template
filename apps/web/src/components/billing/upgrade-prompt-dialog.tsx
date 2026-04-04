@@ -1,5 +1,5 @@
 import { IconCheck, IconLoader2, IconSparkles } from '@tabler/icons-react';
-import { describeEntitlements, formatPlanPrice } from '@workspace/auth/plans';
+import { describeEntitlements, formatPlanPrice } from '@workspace/billing';
 import {
   AlertDialog,
   AlertDialogCancel,

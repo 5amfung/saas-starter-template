@@ -25,6 +25,7 @@
     "@better-auth/core": "1.5.5",
     "@better-auth/stripe": "^1.5.6",
     "@tanstack/react-router": "^1.168.10",
+    "@workspace/billing": "workspace:*",
     "@workspace/db": "workspace:*",
     "@workspace/db-schema": "workspace:*",
     "@workspace/email": "workspace:*",

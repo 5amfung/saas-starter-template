@@ -26,6 +26,7 @@ const {
   releaseSubscriptionScheduleMock,
   getRequestHeadersMock,
   findFirstMock,
+  dbSelectMock,
 } = vi.hoisted(() => ({
   listActiveSubscriptionsMock: vi.fn(),
   createBillingPortalMock: vi.fn(),
@@ -39,6 +40,32 @@ const {
   releaseSubscriptionScheduleMock: vi.fn(),
   getRequestHeadersMock: vi.fn().mockReturnValue(new Headers()),
   findFirstMock: vi.fn(),
+  dbSelectMock: vi.fn((fields?: Record<string, unknown>) => {
+    const isCountQuery = !!fields && 'count' in fields;
+    const builder = {
+      from: vi.fn(() => builder),
+      where: vi.fn(() => builder),
+      limit: vi.fn(async (limit: number) => {
+        const row = await findFirstMock();
+        const rows = row ? [row] : [];
+        return rows.slice(0, limit);
+      }),
+      then: (
+        onFulfilled?: (value: unknown) => unknown,
+        onRejected?: (reason: unknown) => unknown
+      ) => {
+        const rowsPromise = isCountQuery
+          ? Promise.resolve(countWorkspaceMembersMock()).then((count) => [
+              { count },
+            ])
+          : Promise.resolve(listActiveSubscriptionsMock()).then(
+              (rows) => rows ?? []
+            );
+        return rowsPromise.then(onFulfilled, onRejected);
+      },
+    };
+    return builder;
+  }),
 }));
 
 // ── Module mocks ───────────────────────────────────────────────────────────
@@ -61,6 +88,7 @@ vi.mock('@/init', () => ({
     },
   },
   db: {
+    select: dbSelectMock,
     query: {
       workspaceEntitlementOverrides: {
         findFirst: findFirstMock,
@@ -69,13 +97,19 @@ vi.mock('@/init', () => ({
   },
 }));
 
-vi.mock('@workspace/db-schema', () => ({
-  workspaceEntitlementOverrides: { workspaceId: 'workspace_id' },
-}));
+vi.mock('@workspace/db-schema', async (importOriginal) => {
+  const actual = await importOriginal();
+  return Object.assign({}, actual, {
+    workspaceEntitlementOverrides: { workspaceId: 'workspace_id' },
+  });
+});
 
-vi.mock('drizzle-orm', () => ({
-  eq: vi.fn((col: unknown, val: unknown) => ({ col, val })),
-}));
+vi.mock('drizzle-orm', async (importOriginal) => {
+  const actual = await importOriginal();
+  return Object.assign({}, actual, {
+    eq: vi.fn((col: unknown, val: unknown) => ({ col, val })),
+  });
+});
 
 vi.mock('@tanstack/react-start/server', () => ({
   getRequestHeaders: getRequestHeadersMock,
@@ -95,6 +129,8 @@ const TEST_WORKSPACE_ID = 'ws_123';
 describe('billing.server', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    listActiveSubscriptionsMock.mockResolvedValue([]);
+    countWorkspaceMembersMock.mockResolvedValue(0);
   });
 
   // ── getWorkspaceEntitlements ─────────────────────────────────────────────

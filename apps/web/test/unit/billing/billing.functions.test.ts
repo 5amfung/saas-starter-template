@@ -55,15 +55,7 @@ vi.mock('@/init', () => ({
   },
 }));
 
-vi.mock('@workspace/auth/plans', () => ({
-  getPlanById: (planId: string) =>
-    ['starter', 'pro', 'enterprise', 'free'].includes(planId)
-      ? {
-          id: planId,
-          stripeEnabled: planId !== 'free',
-          isEnterprise: planId === 'enterprise',
-        }
-      : undefined,
+vi.mock('@workspace/billing', () => ({
   PLANS: [
     { id: 'starter', stripeEnabled: true, isEnterprise: false },
     { id: 'pro', stripeEnabled: true, isEnterprise: false },
@@ -198,6 +190,12 @@ describe('createWorkspaceCheckoutSession', () => {
 
   it('rejects checkout for enterprise plans', async () => {
     mockOwnerSession();
+    createCheckoutForWorkspaceMock.mockRejectedValueOnce(
+      new Error(
+        'Checkout is not available for plan "enterprise". Contact sales for enterprise plans.'
+      )
+    );
+
     await expect(
       createWorkspaceCheckoutSession({
         data: {
@@ -210,7 +208,13 @@ describe('createWorkspaceCheckoutSession', () => {
       message:
         'Checkout is not available for plan "enterprise". Contact sales for enterprise plans.',
     });
-    expect(createCheckoutForWorkspaceMock).not.toHaveBeenCalled();
+    expect(createCheckoutForWorkspaceMock).toHaveBeenCalledWith(
+      expect.any(Headers),
+      TEST_WORKSPACE_ID,
+      'enterprise',
+      false,
+      undefined
+    );
   });
 });
 

@@ -1,8 +1,8 @@
 import { createServerFn } from '@tanstack/react-start';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import * as z from 'zod';
-import { PLANS, getPlanById } from '@workspace/auth/plans';
-import type { PlanId } from '@workspace/auth/plans';
+import { PLANS } from '@workspace/billing';
+import type { PlanId } from '@workspace/billing';
 import {
   cancelWorkspaceSubscription as cancelWorkspaceSubscriptionServer,
   checkWorkspaceEntitlement as checkWorkspaceEntitlementServer,
@@ -68,12 +68,6 @@ export const createWorkspaceCheckoutSession = createServerFn()
   .handler(async ({ data }) => {
     const session = await requireVerifiedSession();
     await requireWorkspaceOwner(session, data.workspaceId);
-    const plan = getPlanById(data.planId);
-    if (!plan || plan.isEnterprise || !plan.stripeEnabled) {
-      throw new Error(
-        `Checkout is not available for plan "${data.planId}". Contact sales for enterprise plans.`
-      );
-    }
     const headers = getRequestHeaders();
     return createCheckoutForWorkspace(
       headers,

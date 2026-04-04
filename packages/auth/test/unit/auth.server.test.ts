@@ -105,20 +105,26 @@ vi.mock('stripe', () => {
   return { default: StripeMock };
 });
 
-vi.mock('drizzle-orm', () => ({
-  eq: vi.fn((a, b) => ({ _eq: [a, b] })),
-}));
+vi.mock('drizzle-orm', async (importOriginal) => {
+  const actual = await importOriginal();
+  return Object.assign({}, actual, {
+    eq: vi.fn((a, b) => ({ _eq: [a, b] })),
+  });
+});
 
-vi.mock('@workspace/db-schema', () => ({
-  subscription: { status: 'status', referenceId: 'referenceId' },
-  user: { id: 'user_id' },
-  workspaceEntitlementOverrides: {
-    workspaceId: 'workspaceId',
-    limits: 'limits',
-    features: 'features',
-    quotas: 'quotas',
-  },
-}));
+vi.mock('@workspace/db-schema', async (importOriginal) => {
+  const actual = await importOriginal();
+  return Object.assign({}, actual, {
+    subscription: { status: 'status', referenceId: 'referenceId' },
+    user: { id: 'user_id' },
+    workspaceEntitlementOverrides: {
+      workspaceId: 'workspaceId',
+      limits: 'limits',
+      features: 'features',
+      quotas: 'quotas',
+    },
+  });
+});
 
 vi.mock('../../src/billing.server', () => ({
   createBillingHelpers: createBillingHelpersMock,
@@ -367,12 +373,28 @@ describe('createAuth', () => {
       createAuth(buildTestConfig());
       const opts = getOrganizationPluginOpts();
 
-      // Pro plan has maxMembers: 25, but we mock resolveWorkspacePlanIdFromDb.
-      // For unlimited, we'd need a plan with maxMembers === -1.
-      // Currently no plan has -1, but let's test the code path.
-      billingMock.resolveWorkspacePlanIdFromDb.mockResolvedValueOnce('pro');
-      // Pro has maxMembers: 25, so we need to test the under-limit case.
-      billingMock.countWorkspaceMembers.mockResolvedValueOnce(10);
+      // 1) Current workspace members.
+      dbSelectMock.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce([{ count: 10 }]),
+        }),
+      });
+      // 2) Active enterprise subscription.
+      dbSelectMock.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi
+            .fn()
+            .mockResolvedValueOnce([{ plan: 'enterprise', status: 'active' }]),
+        }),
+      });
+      // 3) Enterprise override lookup returns no override.
+      dbSelectMock.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValueOnce([]),
+          }),
+        }),
+      });
 
       await expect(
         opts.organizationHooks.beforeCreateInvitation({
@@ -386,8 +408,20 @@ describe('createAuth', () => {
       createAuth(buildTestConfig());
       const opts = getOrganizationPluginOpts();
 
-      billingMock.resolveWorkspacePlanIdFromDb.mockResolvedValueOnce('starter');
-      billingMock.countWorkspaceMembers.mockResolvedValueOnce(3); // Starter limit is 5.
+      // 1) Current workspace members (starter limit is 5).
+      dbSelectMock.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce([{ count: 3 }]),
+        }),
+      });
+      // 2) Active starter subscription.
+      dbSelectMock.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi
+            .fn()
+            .mockResolvedValueOnce([{ plan: 'starter', status: 'active' }]),
+        }),
+      });
 
       await expect(
         opts.organizationHooks.beforeCreateInvitation({
@@ -401,8 +435,18 @@ describe('createAuth', () => {
       createAuth(buildTestConfig());
       const opts = getOrganizationPluginOpts();
 
-      billingMock.resolveWorkspacePlanIdFromDb.mockResolvedValueOnce('free');
-      billingMock.countWorkspaceMembers.mockResolvedValueOnce(1); // Free limit is 1.
+      // 1) Current workspace members (free limit is 1).
+      dbSelectMock.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce([{ count: 1 }]),
+        }),
+      });
+      // 2) No active subscriptions -> free plan.
+      dbSelectMock.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce([]),
+        }),
+      });
 
       await expect(
         opts.organizationHooks.beforeCreateInvitation({
@@ -416,8 +460,20 @@ describe('createAuth', () => {
       createAuth(buildTestConfig());
       const opts = getOrganizationPluginOpts();
 
-      billingMock.resolveWorkspacePlanIdFromDb.mockResolvedValueOnce('starter');
-      billingMock.countWorkspaceMembers.mockResolvedValueOnce(5); // Starter limit is 5.
+      // 1) Current workspace members (starter limit is 5).
+      dbSelectMock.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce([{ count: 5 }]),
+        }),
+      });
+      // 2) Active starter subscription.
+      dbSelectMock.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi
+            .fn()
+            .mockResolvedValueOnce([{ plan: 'starter', status: 'active' }]),
+        }),
+      });
 
       await expect(
         opts.organizationHooks.beforeCreateInvitation({
@@ -431,19 +487,35 @@ describe('createAuth', () => {
       createAuth(buildTestConfig());
       const opts = getOrganizationPluginOpts();
 
-      billingMock.resolveWorkspacePlanIdFromDb.mockResolvedValueOnce(
-        'enterprise'
-      );
-      billingMock.countWorkspaceMembers.mockResolvedValueOnce(3);
+      // 1) Current workspace members.
+      dbSelectMock.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValueOnce([{ count: 3 }]),
+        }),
+      });
+      // 2) Active enterprise subscription.
       dbSelectMock.mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValueOnce([
             {
-              limits: { members: 3 },
-              features: null,
-              quotas: null,
+              plan: 'enterprise',
+              status: 'active',
             },
           ]),
+        }),
+      });
+      // 3) Enterprise override with members cap = 3.
+      dbSelectMock.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValueOnce([
+              {
+                limits: { members: 3 },
+                features: null,
+                quotas: null,
+              },
+            ]),
+          }),
         }),
       });
 

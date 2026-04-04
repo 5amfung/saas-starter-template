@@ -2,7 +2,7 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import { getPlanById } from '@workspace/auth/plans';
+import { getPlanById } from '@workspace/billing';
 import { BillingDowngradeConfirmDialog } from '@/components/billing/billing-downgrade-confirm-dialog';
 
 const PRO = getPlanById('pro')!;

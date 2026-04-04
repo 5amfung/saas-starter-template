@@ -53,7 +53,7 @@ import type {
   SortingState,
   VisibilityState,
 } from '@tanstack/react-table';
-import type { PlanId } from '@workspace/auth/plans';
+import type { PlanId } from '@workspace/billing';
 
 interface WorkspaceRow {
   id: string;
