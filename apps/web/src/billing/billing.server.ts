@@ -1,16 +1,19 @@
 import { redirect } from '@tanstack/react-router';
 import { getRequestHeaders } from '@tanstack/react-start/server';
-import { resolveSubscriptionDetails } from '@workspace/auth/billing';
 import {
+  BillingDomainError,
   PLANS,
+  assertWorkspaceLimit,
+  createCheckoutSession,
   getFreePlan,
   getPlanById,
-  getPlanLimitsForPlanId,
-  getUpgradePlan,
+  getWorkspaceBillingSnapshot,
+  getWorkspaceEntitlements as getWorkspaceEntitlementsQuery,
+  resolveSubscriptionDetails,
   resolveWorkspacePlanId,
-} from '@workspace/auth/plans';
-import type { Plan, PlanId, PlanLimits } from '@workspace/auth/plans';
-import { auth } from '@/init';
+} from '@workspace/billing';
+import type { PlanDefinition, PlanId } from '@workspace/billing';
+import { auth, db } from '@/init';
 
 export async function requireVerifiedSession() {
   const headers = getRequestHeaders();
@@ -36,35 +39,27 @@ export async function getWorkspaceActivePlanId(
   return resolveWorkspacePlanId(Array.from(subscriptions));
 }
 
-export interface WorkspacePlanContext {
+export interface WorkspaceEntitlementsContext {
   planId: PlanId;
-  plan: Plan;
-  planName: string;
-  limits: PlanLimits;
-  upgradePlan: Plan | null;
+  plan: PlanDefinition;
+  entitlements: Awaited<ReturnType<typeof getWorkspaceEntitlementsQuery>>;
+  upgradePlan: PlanDefinition | null;
 }
 
 /**
- * Resolves a workspace's full plan context — plan, limits, and upgrade path.
- * Consolidates the repeated plan resolution pattern used by billing data
- * and plan limit checks.
+ * Resolves a workspace's full entitlement context — plan, entitlements,
+ * and upgrade path. Enterprise workspaces may have per-workspace overrides
+ * stored in the database.
  */
-export async function getWorkspacePlanContext(
+export async function getWorkspaceEntitlements(
   headers: Headers,
   workspaceId: string
-): Promise<WorkspacePlanContext> {
+): Promise<WorkspaceEntitlementsContext> {
   const planId = await getWorkspaceActivePlanId(headers, workspaceId);
   const plan = getPlanById(planId) ?? getFreePlan();
-  const limits = getPlanLimitsForPlanId(planId);
-  const upgradePlan = getUpgradePlan(plan);
-
-  return {
-    planId,
-    plan,
-    planName: plan.name,
-    limits,
-    upgradePlan,
-  };
+  const entitlements = await getWorkspaceEntitlementsQuery({ db, workspaceId });
+  const upgradePlan = PLANS.find((p) => p.tier > plan.tier) ?? null;
+  return { planId, plan, entitlements, upgradePlan };
 }
 
 /**
@@ -73,43 +68,26 @@ export async function getWorkspacePlanContext(
  * subscription details from the same data.
  */
 export async function getWorkspaceBillingData(
-  headers: Headers,
+  _headers: Headers,
   workspaceId: string
 ) {
-  const subscriptions = await auth.api.listActiveSubscriptions({
-    headers,
-    query: { referenceId: workspaceId, customerType: 'organization' },
+  const snapshot = await getWorkspaceBillingSnapshot({
+    db,
+    workspaceId,
+    resolveScheduledTargetPlanId,
   });
-  const subArray = Array.from(subscriptions);
-
-  const planId = resolveWorkspacePlanId(subArray);
+  const planId = snapshot.currentPlanId;
   const plan = getPlanById(planId) ?? getFreePlan();
-  const subscription = resolveSubscriptionDetails(subArray, planId);
-
-  // Resolve scheduled target plan from Stripe Subscription Schedule.
-  const scheduledTargetPlanId = subscription?.stripeScheduleId
-    ? await resolveScheduledTargetPlanId(subscription.stripeScheduleId)
-    : null;
-
-  // Strip the stale stripeScheduleId when the schedule is no longer meaningful:
-  // either it resolved to null (completed/canceled) or the target plan matches
-  // the current plan (the downgrade already took effect).
-  const isScheduleStale =
-    !!subscription?.stripeScheduleId &&
-    (!scheduledTargetPlanId || scheduledTargetPlanId === planId);
-  const cleanedSubscription = isScheduleStale
-    ? { ...subscription, stripeScheduleId: null }
-    : subscription;
-
-  // Count workspace members for UI display.
-  const memberCount = await auth.billing.countWorkspaceMembers(workspaceId);
-
+  const hasSubscription =
+    snapshot.subscriptionState.status !== null ||
+    snapshot.subscriptionState.stripeSubscriptionId !== null;
   return {
     planId,
     plan,
-    subscription: cleanedSubscription,
-    scheduledTargetPlanId: isScheduleStale ? null : scheduledTargetPlanId,
-    memberCount,
+    entitlements: snapshot.currentEntitlements,
+    subscription: hasSubscription ? snapshot.subscriptionState : null,
+    scheduledTargetPlanId: snapshot.scheduledTargetPlanId,
+    memberCount: snapshot.memberCount,
   };
 }
 
@@ -163,45 +141,53 @@ export async function getOwnedWorkspacesBillingSummary(
   return summaries;
 }
 
-export interface CheckPlanLimitResult {
+export interface CheckEntitlementResult {
   allowed: boolean;
   current: number;
   limit: number;
   planName: string;
-  upgradePlan: Plan | null;
+  upgradePlan: PlanDefinition | null;
 }
 
 /**
- * Checks whether a workspace can perform a plan-limited action.
- * Resolves the workspace's own plan directly.
+ * Checks whether a workspace can perform an entitlement-limited action.
+ * Resolves the workspace's entitlements (including enterprise overrides).
  */
-export async function checkWorkspacePlanLimit(
-  headers: Headers,
+export async function checkWorkspaceEntitlement(
+  _headers: Headers,
   workspaceId: string,
-  // Currently only 'member' is supported. The parameter exists so callers
-  // document which limit they're checking and the signature is ready for
-  // additional feature types (e.g. 'storage', 'project') without a breaking change.
-  _feature: 'member'
-): Promise<CheckPlanLimitResult> {
-  const ctx = await getWorkspacePlanContext(headers, workspaceId);
-  const limit = ctx.limits.maxMembers;
-  if (limit === -1) {
+  key: 'members'
+): Promise<CheckEntitlementResult> {
+  try {
+    const result = await assertWorkspaceLimit({
+      db,
+      workspaceId,
+      key,
+    });
     return {
       allowed: true,
-      current: 0,
-      limit: -1,
-      planName: ctx.planName,
-      upgradePlan: ctx.upgradePlan,
+      current: result.current,
+      limit: result.limit,
+      planName: result.planName,
+      upgradePlan: result.upgradePlan,
     };
+  } catch (error) {
+    if (
+      error instanceof BillingDomainError &&
+      error.code === 'LIMIT_EXCEEDED'
+    ) {
+      const metadata = error.metadata ?? {};
+      return {
+        allowed: false,
+        current: Number(metadata.current ?? 0),
+        limit: Number(metadata.limit ?? 0),
+        planName: String(metadata.planName ?? 'Current'),
+        upgradePlan:
+          getPlanById(String(metadata.upgradePlan ?? 'free') as PlanId) ?? null,
+      };
+    }
+    throw error;
   }
-  const current = await auth.billing.countWorkspaceMembers(workspaceId);
-  return {
-    allowed: current < limit,
-    current,
-    limit,
-    planName: ctx.planName,
-    upgradePlan: ctx.upgradePlan,
-  };
 }
 
 /**
@@ -215,20 +201,25 @@ export async function createCheckoutForWorkspace(
   annual: boolean,
   subscriptionId?: string
 ) {
-  const result = await auth.api.upgradeSubscription({
-    headers,
-    body: {
-      plan: planId,
-      annual,
-      referenceId: workspaceId,
-      customerType: 'organization',
-      ...(subscriptionId ? { subscriptionId } : {}),
-      successUrl: `${process.env.BETTER_AUTH_URL}/ws/${workspaceId}/billing?success=true`,
-      cancelUrl: `${process.env.BETTER_AUTH_URL}/ws/${workspaceId}/billing`,
+  return createCheckoutSession({
+    db,
+    workspaceId,
+    targetPlanId: planId,
+    annual,
+    subscriptionId,
+    successUrl: `${process.env.BETTER_AUTH_URL}/ws/${workspaceId}/billing?success=true`,
+    cancelUrl: `${process.env.BETTER_AUTH_URL}/ws/${workspaceId}/billing`,
+    execute: async (body) => {
+      const result = await auth.api.upgradeSubscription({
+        headers,
+        body,
+      });
+      if (!result.url) {
+        throw new Error('Checkout session did not return a redirect URL.');
+      }
+      return { url: result.url, redirect: result.redirect };
     },
   });
-
-  return { url: result.url, redirect: result.redirect };
 }
 
 /**

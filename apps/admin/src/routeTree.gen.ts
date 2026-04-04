@@ -15,6 +15,7 @@ import { Route as ProtectedRouteImport } from './routes/_protected';
 import { Route as AuthRouteImport } from './routes/_auth';
 import { Route as IndexRouteImport } from './routes/index';
 import { Route as VerifyEmailChangeEmailTokenRouteImport } from './routes/verify-email-change.$emailToken';
+import { Route as ProtectedWorkspacesRouteImport } from './routes/_protected/workspaces';
 import { Route as ProtectedUsersRouteImport } from './routes/_protected/users';
 import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard';
 import { Route as AuthVerifyRouteImport } from './routes/_auth/verify';
@@ -22,9 +23,11 @@ import { Route as AuthSignupRouteImport } from './routes/_auth/signup';
 import { Route as AuthSigninRouteImport } from './routes/_auth/signin';
 import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-password';
 import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-password';
+import { Route as ProtectedWorkspacesIndexRouteImport } from './routes/_protected/workspaces/index';
 import { Route as ProtectedUsersIndexRouteImport } from './routes/_protected/users/index';
 import { Route as ApiTestEmailsRouteImport } from './routes/api/test/emails';
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$';
+import { Route as ProtectedWorkspacesWorkspaceIdRouteImport } from './routes/_protected/workspaces/$workspaceId';
 import { Route as ProtectedUsersUserIdRouteImport } from './routes/_protected/users/$userId';
 import { Route as ProtectedAccountAccountRouteImport } from './routes/_protected/_account/account';
 
@@ -57,6 +60,11 @@ const VerifyEmailChangeEmailTokenRoute =
     path: '/verify-email-change/$emailToken',
     getParentRoute: () => rootRouteImport,
   } as any);
+const ProtectedWorkspacesRoute = ProtectedWorkspacesRouteImport.update({
+  id: '/workspaces',
+  path: '/workspaces',
+  getParentRoute: () => ProtectedRoute,
+} as any);
 const ProtectedUsersRoute = ProtectedUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -92,6 +100,12 @@ const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => AuthRoute,
 } as any);
+const ProtectedWorkspacesIndexRoute =
+  ProtectedWorkspacesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProtectedWorkspacesRoute,
+  } as any);
 const ProtectedUsersIndexRoute = ProtectedUsersIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -107,6 +121,12 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any);
+const ProtectedWorkspacesWorkspaceIdRoute =
+  ProtectedWorkspacesWorkspaceIdRouteImport.update({
+    id: '/$workspaceId',
+    path: '/$workspaceId',
+    getParentRoute: () => ProtectedWorkspacesRoute,
+  } as any);
 const ProtectedUsersUserIdRoute = ProtectedUsersUserIdRouteImport.update({
   id: '/$userId',
   path: '/$userId',
@@ -129,12 +149,15 @@ export interface FileRoutesByFullPath {
   '/verify': typeof AuthVerifyRoute;
   '/dashboard': typeof ProtectedDashboardRoute;
   '/users': typeof ProtectedUsersRouteWithChildren;
+  '/workspaces': typeof ProtectedWorkspacesRouteWithChildren;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/account': typeof ProtectedAccountAccountRoute;
   '/users/$userId': typeof ProtectedUsersUserIdRoute;
+  '/workspaces/$workspaceId': typeof ProtectedWorkspacesWorkspaceIdRoute;
   '/api/auth/$': typeof ApiAuthSplatRoute;
   '/api/test/emails': typeof ApiTestEmailsRoute;
   '/users/': typeof ProtectedUsersIndexRoute;
+  '/workspaces/': typeof ProtectedWorkspacesIndexRoute;
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute;
@@ -149,9 +172,11 @@ export interface FileRoutesByTo {
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/account': typeof ProtectedAccountAccountRoute;
   '/users/$userId': typeof ProtectedUsersUserIdRoute;
+  '/workspaces/$workspaceId': typeof ProtectedWorkspacesWorkspaceIdRoute;
   '/api/auth/$': typeof ApiAuthSplatRoute;
   '/api/test/emails': typeof ApiTestEmailsRoute;
   '/users': typeof ProtectedUsersIndexRoute;
+  '/workspaces': typeof ProtectedWorkspacesIndexRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
@@ -167,12 +192,15 @@ export interface FileRoutesById {
   '/_auth/verify': typeof AuthVerifyRoute;
   '/_protected/dashboard': typeof ProtectedDashboardRoute;
   '/_protected/users': typeof ProtectedUsersRouteWithChildren;
+  '/_protected/workspaces': typeof ProtectedWorkspacesRouteWithChildren;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/_protected/_account/account': typeof ProtectedAccountAccountRoute;
   '/_protected/users/$userId': typeof ProtectedUsersUserIdRoute;
+  '/_protected/workspaces/$workspaceId': typeof ProtectedWorkspacesWorkspaceIdRoute;
   '/api/auth/$': typeof ApiAuthSplatRoute;
   '/api/test/emails': typeof ApiTestEmailsRoute;
   '/_protected/users/': typeof ProtectedUsersIndexRoute;
+  '/_protected/workspaces/': typeof ProtectedWorkspacesIndexRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
@@ -187,12 +215,15 @@ export interface FileRouteTypes {
     | '/verify'
     | '/dashboard'
     | '/users'
+    | '/workspaces'
     | '/verify-email-change/$emailToken'
     | '/account'
     | '/users/$userId'
+    | '/workspaces/$workspaceId'
     | '/api/auth/$'
     | '/api/test/emails'
-    | '/users/';
+    | '/users/'
+    | '/workspaces/';
   fileRoutesByTo: FileRoutesByTo;
   to:
     | '/'
@@ -207,9 +238,11 @@ export interface FileRouteTypes {
     | '/verify-email-change/$emailToken'
     | '/account'
     | '/users/$userId'
+    | '/workspaces/$workspaceId'
     | '/api/auth/$'
     | '/api/test/emails'
-    | '/users';
+    | '/users'
+    | '/workspaces';
   id:
     | '__root__'
     | '/'
@@ -224,12 +257,15 @@ export interface FileRouteTypes {
     | '/_auth/verify'
     | '/_protected/dashboard'
     | '/_protected/users'
+    | '/_protected/workspaces'
     | '/verify-email-change/$emailToken'
     | '/_protected/_account/account'
     | '/_protected/users/$userId'
+    | '/_protected/workspaces/$workspaceId'
     | '/api/auth/$'
     | '/api/test/emails'
-    | '/_protected/users/';
+    | '/_protected/users/'
+    | '/_protected/workspaces/';
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
@@ -287,6 +323,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VerifyEmailChangeEmailTokenRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    '/_protected/workspaces': {
+      id: '/_protected/workspaces';
+      path: '/workspaces';
+      fullPath: '/workspaces';
+      preLoaderRoute: typeof ProtectedWorkspacesRouteImport;
+      parentRoute: typeof ProtectedRoute;
+    };
     '/_protected/users': {
       id: '/_protected/users';
       path: '/users';
@@ -336,6 +379,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthForgotPasswordRouteImport;
       parentRoute: typeof AuthRoute;
     };
+    '/_protected/workspaces/': {
+      id: '/_protected/workspaces/';
+      path: '/';
+      fullPath: '/workspaces/';
+      preLoaderRoute: typeof ProtectedWorkspacesIndexRouteImport;
+      parentRoute: typeof ProtectedWorkspacesRoute;
+    };
     '/_protected/users/': {
       id: '/_protected/users/';
       path: '/';
@@ -356,6 +406,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/auth/$';
       preLoaderRoute: typeof ApiAuthSplatRouteImport;
       parentRoute: typeof rootRouteImport;
+    };
+    '/_protected/workspaces/$workspaceId': {
+      id: '/_protected/workspaces/$workspaceId';
+      path: '/$workspaceId';
+      fullPath: '/workspaces/$workspaceId';
+      preLoaderRoute: typeof ProtectedWorkspacesWorkspaceIdRouteImport;
+      parentRoute: typeof ProtectedWorkspacesRoute;
     };
     '/_protected/users/$userId': {
       id: '/_protected/users/$userId';
@@ -406,15 +463,30 @@ const ProtectedUsersRouteWithChildren = ProtectedUsersRoute._addFileChildren(
   ProtectedUsersRouteChildren,
 );
 
+interface ProtectedWorkspacesRouteChildren {
+  ProtectedWorkspacesWorkspaceIdRoute: typeof ProtectedWorkspacesWorkspaceIdRoute;
+  ProtectedWorkspacesIndexRoute: typeof ProtectedWorkspacesIndexRoute;
+}
+
+const ProtectedWorkspacesRouteChildren: ProtectedWorkspacesRouteChildren = {
+  ProtectedWorkspacesWorkspaceIdRoute: ProtectedWorkspacesWorkspaceIdRoute,
+  ProtectedWorkspacesIndexRoute: ProtectedWorkspacesIndexRoute,
+};
+
+const ProtectedWorkspacesRouteWithChildren =
+  ProtectedWorkspacesRoute._addFileChildren(ProtectedWorkspacesRouteChildren);
+
 interface ProtectedRouteChildren {
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute;
   ProtectedUsersRoute: typeof ProtectedUsersRouteWithChildren;
+  ProtectedWorkspacesRoute: typeof ProtectedWorkspacesRouteWithChildren;
   ProtectedAccountAccountRoute: typeof ProtectedAccountAccountRoute;
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedDashboardRoute: ProtectedDashboardRoute,
   ProtectedUsersRoute: ProtectedUsersRouteWithChildren,
+  ProtectedWorkspacesRoute: ProtectedWorkspacesRouteWithChildren,
   ProtectedAccountAccountRoute: ProtectedAccountAccountRoute,
 };
 

@@ -2,6 +2,11 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
+import {
+  FREE_PLAN_FIXTURE,
+  PRO_PLAN_FIXTURE,
+  buildWorkspaceBillingDataFixture,
+} from '../../../mocks/billing-fixtures';
 import { BillingPage } from '@/components/billing/billing-page';
 
 const {
@@ -40,27 +45,7 @@ vi.mock('@workspace/components/hooks', () => ({
 
 const TEST_WORKSPACE_ID = 'ws_integration_test';
 
-const freePlan = {
-  id: 'free',
-  name: 'Free',
-  tier: 0,
-  pricing: null,
-  limits: { maxMembers: 1 },
-  features: ['1 member'],
-  annualBonusFeatures: [],
-};
-
-const proPlan = {
-  id: 'pro',
-  name: 'Pro',
-  tier: 1,
-  pricing: { monthly: { price: 4900 }, annual: { price: 49000 } },
-  limits: { maxMembers: 25 },
-  features: ['Up to 25 members per workspace'],
-  annualBonusFeatures: ['2 months free'],
-};
-
-vi.mock('@workspace/auth/plans', async (importOriginal) => {
+vi.mock('@workspace/billing', async (importOriginal) => {
   const original = await importOriginal<Record<string, unknown>>();
   return {
     ...original,
@@ -68,22 +53,32 @@ vi.mock('@workspace/auth/plans', async (importOriginal) => {
       {
         id: 'pro',
         name: 'Pro',
-        tier: 1,
+        tier: 2,
         pricing: { monthly: { price: 4900 }, annual: { price: 49000 } },
-        limits: { maxMembers: 25 },
-        features: ['Up to 25 members per workspace'],
-        annualBonusFeatures: ['2 months free'],
+        entitlements: {
+          limits: { members: 25, projects: 100, apiKeys: 5 },
+          features: {
+            sso: false,
+            auditLogs: true,
+            apiAccess: true,
+            prioritySupport: true,
+          },
+          quotas: { storageGb: 50, apiCallsMonthly: 1000 },
+        },
+        stripeEnabled: true,
+        isEnterprise: false,
       },
     ]),
   };
 });
 
 function setupBillingData(overrides = {}) {
-  getWorkspaceBillingDataMock.mockResolvedValue({
-    plan: freePlan,
-    subscription: null,
-    ...overrides,
-  });
+  getWorkspaceBillingDataMock.mockResolvedValue(
+    buildWorkspaceBillingDataFixture({
+      plan: FREE_PLAN_FIXTURE,
+      ...overrides,
+    })
+  );
   getWorkspaceInvoicesMock.mockResolvedValue([]);
 }
 
@@ -98,7 +93,12 @@ describe('BillingPage integration', () => {
 
   it('renders current plan details after data loads', async () => {
     setupBillingData();
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Free')).toBeInTheDocument();
@@ -113,7 +113,12 @@ describe('BillingPage integration', () => {
     createWorkspaceCheckoutSessionMock.mockResolvedValueOnce({
       url: 'https://stripe.com/checkout',
     });
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Free')).toBeInTheDocument();
@@ -134,7 +139,12 @@ describe('BillingPage integration', () => {
     createWorkspaceCheckoutSessionMock.mockRejectedValueOnce(
       new Error('Checkout failed')
     );
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Free')).toBeInTheDocument();
@@ -149,18 +159,28 @@ describe('BillingPage integration', () => {
 
   it('calls createWorkspacePortalSession when billing portal link is clicked on paid plan', async () => {
     const user = userEvent.setup();
-    getWorkspaceBillingDataMock.mockResolvedValue({
-      plan: proPlan,
-      subscription: { periodEnd: new Date('2026-04-20').toISOString() },
-    });
+    getWorkspaceBillingDataMock.mockResolvedValue(
+      buildWorkspaceBillingDataFixture({
+        plan: PRO_PLAN_FIXTURE,
+        entitlements: PRO_PLAN_FIXTURE.entitlements,
+        planId: 'pro',
+        memberCount: 3,
+        subscription: { periodEnd: new Date('2026-04-20').toISOString() },
+      })
+    );
     getWorkspaceInvoicesMock.mockResolvedValue([]);
-    const { getUpgradePlans } = await import('@workspace/auth/plans');
+    const { getUpgradePlans } = await import('@workspace/billing');
     (getUpgradePlans as ReturnType<typeof vi.fn>).mockReturnValue([]);
     createWorkspacePortalSessionMock.mockResolvedValueOnce({
       url: 'https://portal.stripe.com',
     });
 
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Pro')).toBeInTheDocument();
@@ -175,17 +195,27 @@ describe('BillingPage integration', () => {
 
   it('reactivates canceled subscription on Keep subscription click', async () => {
     const user = userEvent.setup();
-    getWorkspaceBillingDataMock.mockResolvedValue({
-      plan: proPlan,
-      subscription: {
-        periodEnd: new Date('2026-04-20').toISOString(),
-        cancelAtPeriodEnd: true,
-      },
-    });
+    getWorkspaceBillingDataMock.mockResolvedValue(
+      buildWorkspaceBillingDataFixture({
+        plan: PRO_PLAN_FIXTURE,
+        entitlements: PRO_PLAN_FIXTURE.entitlements,
+        planId: 'pro',
+        memberCount: 3,
+        subscription: {
+          periodEnd: new Date('2026-04-20').toISOString(),
+          cancelAtPeriodEnd: true,
+        },
+      })
+    );
     getWorkspaceInvoicesMock.mockResolvedValue([]);
     reactivateWorkspaceSubscriptionMock.mockResolvedValueOnce({});
 
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/will downgrade/i)).toBeInTheDocument();
@@ -208,19 +238,29 @@ describe('BillingPage integration', () => {
 
   it('shows error toast when reactivation fails', async () => {
     const user = userEvent.setup();
-    getWorkspaceBillingDataMock.mockResolvedValue({
-      plan: proPlan,
-      subscription: {
-        periodEnd: new Date('2026-04-20').toISOString(),
-        cancelAtPeriodEnd: true,
-      },
-    });
+    getWorkspaceBillingDataMock.mockResolvedValue(
+      buildWorkspaceBillingDataFixture({
+        plan: PRO_PLAN_FIXTURE,
+        entitlements: PRO_PLAN_FIXTURE.entitlements,
+        planId: 'pro',
+        memberCount: 3,
+        subscription: {
+          periodEnd: new Date('2026-04-20').toISOString(),
+          cancelAtPeriodEnd: true,
+        },
+      })
+    );
     getWorkspaceInvoicesMock.mockResolvedValue([]);
     reactivateWorkspaceSubscriptionMock.mockRejectedValueOnce(
       new Error('Reactivation failed')
     );
 
-    renderWithProviders(<BillingPage workspaceId={TEST_WORKSPACE_ID} />);
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/will downgrade/i)).toBeInTheDocument();

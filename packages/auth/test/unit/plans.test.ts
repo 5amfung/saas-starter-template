@@ -6,16 +6,14 @@ import {
   getFreePlan,
   getHighestTierPlanId,
   getPlanById,
-  getPlanFeatures,
-  getPlanLimitsForPlanId,
   getUpgradePlan,
   getUpgradePlans,
   resolveWorkspacePlanId,
 } from '../../src/plans';
 
 describe('plans', () => {
-  it('exports exactly three plans', () => {
-    expect(PLANS).toHaveLength(3);
+  it('exports exactly four plans', () => {
+    expect(PLANS).toHaveLength(4);
   });
 
   it('has exactly one free-tier plan (tier 0)', () => {
@@ -41,25 +39,16 @@ describe('plans', () => {
     expect(free.pricing).toBeNull();
   });
 
-  it('getPlanLimitsForPlanId returns correct limits for starter', () => {
-    const limits = getPlanLimitsForPlanId('starter');
-    expect(limits.maxMembers).toBe(5);
-  });
-
-  it('getPlanLimitsForPlanId returns higher limits for pro', () => {
-    const limits = getPlanLimitsForPlanId('pro');
-    expect(limits.maxMembers).toBeGreaterThan(1);
-  });
-
-  it('getPlanLimitsForPlanId falls back to free plan for unknown plan', () => {
-    const limits = getPlanLimitsForPlanId('nonexistent' as never);
-    expect(limits.maxMembers).toBe(1);
-  });
-
   it('pro plan has a higher tier than starter', () => {
     const starter = getPlanById('starter')!;
     const pro = getPlanById('pro')!;
     expect(pro.tier).toBeGreaterThan(starter.tier);
+  });
+
+  it('enterprise plan has the highest tier', () => {
+    const enterprise = getPlanById('enterprise')!;
+    const pro = getPlanById('pro')!;
+    expect(enterprise.tier).toBeGreaterThan(pro.tier);
   });
 
   it('getHighestTierPlanId picks the highest tier', () => {
@@ -73,6 +62,71 @@ describe('plans', () => {
   it('getHighestTierPlanId falls back to free for unknown IDs', () => {
     expect(getHighestTierPlanId(['unknown'])).toBe(FREE_PLAN_ID);
   });
+
+  it('getHighestTierPlanId picks enterprise over pro', () => {
+    expect(getHighestTierPlanId(['pro', 'enterprise'])).toBe('enterprise');
+  });
+});
+
+describe('plan entitlements', () => {
+  it('free plan has correct member limit', () => {
+    const free = getFreePlan();
+    expect(free.entitlements.limits.members).toBe(1);
+  });
+
+  it('starter plan has correct member limit', () => {
+    const starter = getPlanById('starter')!;
+    expect(starter.entitlements.limits.members).toBe(5);
+  });
+
+  it('pro plan has correct member limit', () => {
+    const pro = getPlanById('pro')!;
+    expect(pro.entitlements.limits.members).toBe(25);
+  });
+
+  it('enterprise plan has unlimited members', () => {
+    const enterprise = getPlanById('enterprise')!;
+    expect(enterprise.entitlements.limits.members).toBe(-1);
+  });
+
+  it('only enterprise has SSO enabled', () => {
+    for (const plan of PLANS) {
+      if (plan.id === 'enterprise') {
+        expect(plan.entitlements.features.sso).toBe(true);
+      } else {
+        expect(plan.entitlements.features.sso).toBe(false);
+      }
+    }
+  });
+
+  it('pro and enterprise have audit logs enabled', () => {
+    expect(getPlanById('free')!.entitlements.features.auditLogs).toBe(false);
+    expect(getPlanById('starter')!.entitlements.features.auditLogs).toBe(false);
+    expect(getPlanById('pro')!.entitlements.features.auditLogs).toBe(true);
+    expect(getPlanById('enterprise')!.entitlements.features.auditLogs).toBe(
+      true
+    );
+  });
+});
+
+describe('plan flags', () => {
+  it('free plan is not stripe enabled and not enterprise', () => {
+    const free = getFreePlan();
+    expect(free.stripeEnabled).toBe(false);
+    expect(free.isEnterprise).toBe(false);
+  });
+
+  it('starter plan is stripe enabled and not enterprise', () => {
+    const starter = getPlanById('starter')!;
+    expect(starter.stripeEnabled).toBe(true);
+    expect(starter.isEnterprise).toBe(false);
+  });
+
+  it('enterprise plan is stripe enabled and is enterprise', () => {
+    const enterprise = getPlanById('enterprise')!;
+    expect(enterprise.stripeEnabled).toBe(true);
+    expect(enterprise.isEnterprise).toBe(true);
+  });
 });
 
 describe('getUpgradePlan', () => {
@@ -84,8 +138,8 @@ describe('getUpgradePlan', () => {
   });
 
   it('returns null for highest tier plan', () => {
-    const pro = getPlanById('pro')!;
-    const upgrade = getUpgradePlan(pro);
+    const enterprise = getPlanById('enterprise')!;
+    const upgrade = getUpgradePlan(enterprise);
     expect(upgrade).toBeNull();
   });
 });
@@ -94,21 +148,30 @@ describe('getUpgradePlans', () => {
   it('returns all higher-tier plans for free plan', () => {
     const free = getPlanById('free')!;
     const upgrades = getUpgradePlans(free);
-    expect(upgrades).toHaveLength(2);
+    expect(upgrades).toHaveLength(3);
     expect(upgrades[0].id).toBe('starter');
     expect(upgrades[1].id).toBe('pro');
+    expect(upgrades[2].id).toBe('enterprise');
   });
 
-  it('returns only pro for starter plan', () => {
+  it('returns pro and enterprise for starter plan', () => {
     const starter = getPlanById('starter')!;
     const upgrades = getUpgradePlans(starter);
-    expect(upgrades).toHaveLength(1);
+    expect(upgrades).toHaveLength(2);
     expect(upgrades[0].id).toBe('pro');
+    expect(upgrades[1].id).toBe('enterprise');
   });
 
-  it('returns empty array for highest tier plan', () => {
+  it('returns only enterprise for pro plan', () => {
     const pro = getPlanById('pro')!;
     const upgrades = getUpgradePlans(pro);
+    expect(upgrades).toHaveLength(1);
+    expect(upgrades[0].id).toBe('enterprise');
+  });
+
+  it('returns empty array for enterprise plan', () => {
+    const enterprise = getPlanById('enterprise')!;
+    const upgrades = getUpgradePlans(enterprise);
     expect(upgrades).toHaveLength(0);
   });
 });
@@ -162,6 +225,21 @@ describe('resolveWorkspacePlanId', () => {
       resolveWorkspacePlanId([{ plan: 'unknown-plan', status: 'active' }])
     ).toBe(FREE_PLAN_ID);
   });
+
+  it('resolves active enterprise subscription', () => {
+    expect(
+      resolveWorkspacePlanId([{ plan: 'enterprise', status: 'active' }])
+    ).toBe('enterprise');
+  });
+
+  it('picks enterprise over pro when both active', () => {
+    expect(
+      resolveWorkspacePlanId([
+        { plan: 'pro', status: 'active' },
+        { plan: 'enterprise', status: 'active' },
+      ])
+    ).toBe('enterprise');
+  });
 });
 
 describe('formatPlanPrice', () => {
@@ -182,20 +260,9 @@ describe('formatPlanPrice', () => {
     expect(price).toMatch(/\/mo$/);
     expect(price).toContain('$');
   });
-});
 
-describe('getPlanFeatures', () => {
-  it('returns base features for monthly', () => {
-    const pro = getPlanById('pro')!;
-    const features = getPlanFeatures(pro, false);
-    expect(features).toContain('Up to 25 members per workspace');
-    expect(features).not.toContain('2 months free');
-  });
-
-  it('returns base + bonus features for annual', () => {
-    const pro = getPlanById('pro')!;
-    const features = getPlanFeatures(pro, true);
-    expect(features).toContain('Up to 25 members per workspace');
-    expect(features).toContain('2 months free');
+  it('returns empty string for enterprise (no pricing)', () => {
+    const enterprise = getPlanById('enterprise')!;
+    expect(formatPlanPrice(enterprise, false)).toBe('');
   });
 });

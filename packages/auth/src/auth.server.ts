@@ -14,10 +14,11 @@ import {
   subscription as subscriptionTable,
   user as userTable,
 } from '@workspace/db-schema';
+import { assertInviteAllowed } from '@workspace/billing';
 import { createAuthEmails } from './auth-emails.server';
 import { isDuplicateOrganizationError, isSignInPath } from './auth-utils';
 import { createBillingHelpers } from './billing.server';
-import { PLANS, getPlanLimitsForPlanId } from './plans';
+import { PLANS } from './plans';
 import type { PlanId } from './plans';
 import type { EmailClient } from '@workspace/email';
 import type { Database } from '@workspace/db';
@@ -82,8 +83,16 @@ export function createAuth(config: AuthConfig) {
   const stripeClient = new Stripe(config.stripe.secretKey);
 
   // Build Stripe plan config from PLANS — reads price IDs from process.env.
-  const stripePlans = PLANS.filter((p) => p.pricing !== null).map((p) => {
+  const stripePlans = PLANS.filter((p) => p.stripeEnabled).map((p) => {
     const key = p.id.toUpperCase();
+    // Enterprise uses a single STRIPE_ENTERPRISE_PRICE_ID env var.
+    // Self-serve plans use STRIPE_{PLAN}_MONTHLY_PRICE_ID and STRIPE_{PLAN}_ANNUAL_PRICE_ID.
+    if (p.isEnterprise) {
+      return {
+        name: p.id,
+        priceId: process.env[`STRIPE_${key}_PRICE_ID`]!,
+      };
+    }
     return {
       name: p.id,
       priceId: process.env[`STRIPE_${key}_MONTHLY_PRICE_ID`]!,
@@ -296,18 +305,30 @@ export function createAuth(config: AuthConfig) {
             }
           },
           beforeCreateInvitation: async ({ organization }) => {
-            // Resolve the workspace's own plan directly.
-            const planId = await billing.resolveWorkspacePlanIdFromDb(
-              organization.id
-            );
-            const limits = getPlanLimitsForPlanId(planId);
-            if (limits.maxMembers === -1) return;
-            const memberCount = await billing.countWorkspaceMembers(
-              organization.id
-            );
-            if (memberCount >= limits.maxMembers) {
+            try {
+              await assertInviteAllowed({
+                db: config.db,
+                workspaceId: organization.id,
+              });
+            } catch (error) {
+              if (
+                typeof error === 'object' &&
+                error !== null &&
+                'code' in error &&
+                (error as { code?: string }).code === 'LIMIT_EXCEEDED'
+              ) {
+                const metadata =
+                  'metadata' in error &&
+                  typeof (error as { metadata?: unknown }).metadata === 'object'
+                    ? (error as { metadata?: Record<string, unknown> }).metadata
+                    : undefined;
+                const limit = Number(metadata?.limit ?? 0);
+                throw new APIError('FORBIDDEN', {
+                  message: `This workspace has reached its member limit (${limit}). Upgrade the workspace plan to invite more members.`,
+                });
+              }
               throw new APIError('FORBIDDEN', {
-                message: `This workspace has reached its member limit (${limits.maxMembers}). Upgrade the workspace plan to invite more members.`,
+                message: 'Unable to validate invitation entitlements.',
               });
             }
           },

@@ -4,10 +4,10 @@ import { IconCheck } from '@tabler/icons-react';
 import {
   PLANS,
   PLAN_ACTION_CONFIG,
+  describeEntitlements,
   formatPlanPrice,
   getPlanAction,
-  getPlanFeatures,
-} from '@workspace/auth/plans';
+} from '@workspace/billing';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -15,19 +15,21 @@ import {
   AlertDialogDescription,
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog';
-import { Button } from '@workspace/ui/components/button';
+import { Button, buttonVariants } from '@workspace/ui/components/button';
 import { Toggle } from '@workspace/ui/components/toggle';
-import type { Plan, PlanId } from '@workspace/auth/plans';
+import type { PlanDefinition, PlanId } from '@workspace/billing';
 
 interface BillingManagePlanDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  currentPlan: Plan;
+  currentPlan: PlanDefinition;
   isPendingCancel: boolean;
   isPendingDowngrade: boolean;
   onUpgrade: (planId: PlanId, annual: boolean) => void;
-  onDowngrade: (targetPlan: Plan, annual: boolean) => void;
+  onDowngrade: (targetPlan: PlanDefinition, annual: boolean) => void;
   isProcessing: boolean;
+  /** Workspace name for enterprise mailto link subject. */
+  workspaceName: string;
 }
 
 export function BillingManagePlanDialog({
@@ -39,12 +41,13 @@ export function BillingManagePlanDialog({
   onUpgrade,
   onDowngrade,
   isProcessing,
+  workspaceName,
 }: BillingManagePlanDialogProps) {
   const [isAnnual, setIsAnnual] = useState(false);
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="h-full! max-w-none! gap-0 overflow-y-auto rounded-none! p-0 sm:h-auto! sm:max-w-[56rem]! sm:rounded-xl!">
+      <AlertDialogContent className="h-full! max-w-none! gap-0 overflow-y-auto rounded-none! p-0 sm:h-auto! sm:max-w-4xl! sm:rounded-xl!">
         <AlertDialogTitle className="sr-only">
           Manage your plan
         </AlertDialogTitle>
@@ -122,15 +125,17 @@ export function BillingManagePlanDialog({
                 <div className="flex flex-col gap-1">
                   <h3 className="text-base font-semibold">{plan.name}</h3>
                   <span className="text-sm text-muted-foreground">
-                    {plan.pricing
-                      ? formatPlanPrice(plan, isAnnual)
-                      : 'Free forever'}
+                    {plan.isEnterprise
+                      ? 'Custom pricing'
+                      : plan.pricing
+                        ? formatPlanPrice(plan, isAnnual)
+                        : 'Free forever'}
                   </span>
                 </div>
 
                 {/* Features */}
                 <ul className="flex flex-1 flex-col gap-2">
-                  {getPlanFeatures(plan, isAnnual).map((feature) => (
+                  {describeEntitlements(plan.entitlements).map((feature) => (
                     <li
                       key={feature}
                       className="flex items-center gap-2 text-sm"
@@ -142,19 +147,31 @@ export function BillingManagePlanDialog({
                 </ul>
 
                 {/* Action button */}
-                <Button
-                  variant={config.variant}
-                  disabled={isDisabled}
-                  onClick={() => {
-                    if (action === 'upgrade') {
-                      onUpgrade(plan.id, isAnnual);
-                    } else if (action === 'downgrade' || action === 'cancel') {
-                      onDowngrade(plan, isAnnual);
-                    }
-                  }}
-                >
-                  {config.label}
-                </Button>
+                {action === 'contact_sales' ? (
+                  <a
+                    href={`mailto:sales@example.com?subject=${encodeURIComponent(`Enterprise inquiry — ${workspaceName}`)}`}
+                    className={buttonVariants({ variant: config.variant })}
+                  >
+                    {config.label}
+                  </a>
+                ) : (
+                  <Button
+                    variant={config.variant}
+                    disabled={isDisabled}
+                    onClick={() => {
+                      if (action === 'upgrade') {
+                        onUpgrade(plan.id, isAnnual);
+                      } else if (
+                        action === 'downgrade' ||
+                        action === 'cancel'
+                      ) {
+                        onDowngrade(plan, isAnnual);
+                      }
+                    }}
+                  >
+                    {config.label}
+                  </Button>
+                )}
               </div>
             );
           })}

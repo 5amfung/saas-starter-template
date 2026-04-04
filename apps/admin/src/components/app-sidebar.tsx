@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import {
+  IconBuilding,
   IconDashboard,
   IconHelp,
   IconHome,
@@ -30,6 +31,7 @@ import {
 const navItems = [
   { title: 'Dashboard', url: '/dashboard', icon: <IconDashboard /> },
   { title: 'Users', url: '/users', icon: <IconUsers /> },
+  { title: 'Workspaces', url: '/workspaces', icon: <IconBuilding /> },
 ];
 
 const navSecondary = [

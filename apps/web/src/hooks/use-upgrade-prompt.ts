@@ -1,22 +1,26 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import type { Plan, PlanId } from '@workspace/auth/plans';
+import type { PlanDefinition, PlanId } from '@workspace/billing';
 import { createWorkspaceCheckoutSession } from '@/billing/billing.functions';
+
+export type UpgradePromptAction =
+  | { type: 'checkout'; plan: PlanDefinition }
+  | { type: 'contact_sales'; plan: PlanDefinition };
 
 interface UpgradePromptState {
   open: boolean;
   title: string;
   description: string;
-  /** The plan to offer. null = highest tier, show limit-reached message. */
-  upgradePlan: Plan | null;
+  /** The next action to offer. null = highest tier, show limit-reached message. */
+  action: UpgradePromptAction | null;
 }
 
 const INITIAL_STATE: UpgradePromptState = {
   open: false,
   title: '',
   description: '',
-  upgradePlan: null,
+  action: null,
 };
 
 /**
@@ -24,7 +28,7 @@ const INITIAL_STATE: UpgradePromptState = {
  * and Stripe checkout mutation. Reusable across any component that
  * gates actions behind plan limits.
  *
- * When upgradePlan is null (highest tier), the dialog shows a
+ * When action is null (highest tier), the dialog shows a
  * "limit reached" message instead of a checkout offer.
  */
 export function useUpgradePrompt(workspaceId: string) {
@@ -47,9 +51,19 @@ export function useUpgradePrompt(workspaceId: string) {
   const show = (
     title: string,
     description: string,
-    upgradePlan: Plan | null
+    upgradePlan: PlanDefinition | null
   ) => {
-    setPrompt({ open: true, title, description, upgradePlan });
+    setPrompt({
+      open: true,
+      title,
+      description,
+      action: upgradePlan
+        ? {
+            type: upgradePlan.isEnterprise ? 'contact_sales' : 'checkout',
+            plan: upgradePlan,
+          }
+        : null,
+    });
   };
 
   const dialogProps = {
@@ -57,12 +71,12 @@ export function useUpgradePrompt(workspaceId: string) {
     onOpenChange: (open: boolean) => setPrompt((prev) => ({ ...prev, open })),
     title: prompt.title,
     description: prompt.description,
-    upgradePlan: prompt.upgradePlan,
+    action: prompt.action,
     isUpgrading: upgradeMutation.isPending,
-    onUpgrade: () => {
-      if (prompt.upgradePlan) {
+    onAction: () => {
+      if (prompt.action?.type === 'checkout') {
         upgradeMutation.mutate({
-          planId: prompt.upgradePlan.id,
+          planId: prompt.action.plan.id,
           annual: isAnnual,
         });
       }

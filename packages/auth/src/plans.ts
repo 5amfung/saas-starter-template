@@ -9,65 +9,138 @@
 //   2. Add an entry to the PLANS array.
 //   3. Create the corresponding product + prices in Stripe Dashboard.
 //   4. Set the stripe price IDs in stripe plugin in auth.server.ts.
-//   5. Run the app — limit enforcement and UI pick up the new plan automatically.
+//   5. Run the app — entitlement enforcement and UI pick up the new plan
+//      automatically.
 //
-// To add a new limit dimension:
-//   1. Add the field to PlanLimits.
-//   2. Populate it for every plan in the PLANS array.
-//   3. Add enforcement in the appropriate org hook (auth.server.ts).
+// To add a new entitlement dimension:
+//   1. Add the key to the appropriate union in entitlements.ts
+//      (LimitKey, FeatureKey, or QuotaKey).
+//   2. Add metadata in the corresponding METADATA record.
+//   3. Populate the new key for every plan in the PLANS array below.
+//   4. Add enforcement in the appropriate hook (auth.server.ts).
 // ────────────────────────────────────────────────────────────────────────────
 
-export type PlanId = 'free' | 'starter' | 'pro';
+import type { Entitlements } from './entitlements';
 
-export interface PlanLimits {
-  /** Maximum members per workspace. -1 = unlimited. */
-  maxMembers: number;
-}
+// ── Re-exports from entitlements.ts ──────────────────────────────────────
+
+export type {
+  Entitlements,
+  EntitlementOverrides,
+  LimitKey,
+  FeatureKey,
+  QuotaKey,
+  NumericEntitlementKey,
+  EntitlementMeta,
+  NumericEntitlementMeta,
+  CheckLimitResult,
+  NumericChange,
+  EntitlementDiff,
+} from './entitlements';
+
+export {
+  UNLIMITED,
+  FEATURE_METADATA,
+  LIMIT_METADATA,
+  QUOTA_METADATA,
+  resolveEntitlements,
+  checkLimit,
+  hasFeature,
+  computeEntitlementDiff,
+  formatEntitlementValue,
+  describeEntitlements,
+} from './entitlements';
+
+// ── Plan types ───────────────────────────────────────────────────────────
+
+export type PlanId = 'free' | 'starter' | 'pro' | 'enterprise';
 
 export interface PlanPricing {
   /** Price in cents. */
   price: number;
 }
 
-export interface Plan {
+export interface PlanDefinition {
   id: PlanId;
   /** Display name shown in UI (e.g. "Starter", "Pro"). */
   name: string;
   /** Explicit tier rank for comparing plans. Higher = more permissive. */
   tier: number;
-  /** Monthly and annual pricing. null for the free tier. */
+  /** Monthly and annual pricing. null for the free tier and enterprise (custom pricing). */
   pricing: { monthly: PlanPricing; annual: PlanPricing } | null;
-  limits: PlanLimits;
-  /** Feature bullets shown on the billing page. */
-  features: Array<string>;
-  /** Extra feature bullets shown only for the annual variant. */
-  annualBonusFeatures: Array<string>;
+  /** Full entitlement set for this plan. */
+  entitlements: Entitlements;
+  /** Whether this plan can be purchased via Stripe checkout. */
+  stripeEnabled: boolean;
+  /** Whether this plan requires a sales-driven enterprise agreement. */
+  isEnterprise: boolean;
 }
+
+/** @deprecated Use PlanDefinition instead. Alias kept for migration. */
+export type Plan = PlanDefinition;
+
+// ── Canonical constants ──────────────────────────────────────────────────
 
 /** Canonical plan ID for the free tier. */
 export const FREE_PLAN_ID: PlanId = 'free';
 
-const FREE_PLAN_LIMITS: PlanLimits = {
-  maxMembers: 1,
+// ── Entitlement defaults per plan ────────────────────────────────────────
+
+const FREE_ENTITLEMENTS: Entitlements = {
+  limits: { members: 1, projects: 1, apiKeys: 0 },
+  features: {
+    sso: false,
+    auditLogs: false,
+    apiAccess: false,
+    prioritySupport: false,
+  },
+  quotas: { storageGb: 1, apiCallsMonthly: 0 },
 };
 
-const STARTER_LIMITS: PlanLimits = {
-  maxMembers: 5,
+const STARTER_ENTITLEMENTS: Entitlements = {
+  limits: { members: 5, projects: 5, apiKeys: 0 },
+  features: {
+    sso: false,
+    auditLogs: false,
+    apiAccess: false,
+    prioritySupport: false,
+  },
+  quotas: { storageGb: 10, apiCallsMonthly: 0 },
 };
 
-const PRO_LIMITS: PlanLimits = {
-  maxMembers: 25,
+const PRO_ENTITLEMENTS: Entitlements = {
+  limits: { members: 25, projects: 100, apiKeys: 5 },
+  features: {
+    sso: false,
+    auditLogs: true,
+    apiAccess: true,
+    prioritySupport: true,
+  },
+  quotas: { storageGb: 50, apiCallsMonthly: 1000 },
 };
 
-export const PLANS: ReadonlyArray<Plan> = [
+const ENTERPRISE_ENTITLEMENTS: Entitlements = {
+  limits: { members: -1, projects: -1, apiKeys: -1 },
+  features: {
+    sso: true,
+    auditLogs: true,
+    apiAccess: true,
+    prioritySupport: true,
+  },
+  quotas: { storageGb: -1, apiCallsMonthly: -1 },
+};
+
+// ── Plan definitions ─────────────────────────────────────────────────────
+
+export const PLANS: ReadonlyArray<PlanDefinition> = [
   {
     id: 'free',
     name: 'Free',
     tier: 0,
     pricing: null,
-    limits: FREE_PLAN_LIMITS,
-    features: [`${FREE_PLAN_LIMITS.maxMembers} member`],
-    annualBonusFeatures: [],
+    entitlements: FREE_ENTITLEMENTS,
+    stripeEnabled: false,
+    isEnterprise: false,
   },
   {
     id: 'starter',
@@ -77,9 +150,9 @@ export const PLANS: ReadonlyArray<Plan> = [
       monthly: { price: 5_00 },
       annual: { price: 50_00 },
     },
-    limits: STARTER_LIMITS,
-    features: [`Up to ${STARTER_LIMITS.maxMembers} members per workspace`],
-    annualBonusFeatures: ['2 months free'],
+    entitlements: STARTER_ENTITLEMENTS,
+    stripeEnabled: true,
+    isEnterprise: false,
   },
   {
     id: 'pro',
@@ -89,34 +162,31 @@ export const PLANS: ReadonlyArray<Plan> = [
       monthly: { price: 49_00 },
       annual: { price: 490_00 },
     },
-    limits: PRO_LIMITS,
-    features: [
-      `Up to ${PRO_LIMITS.maxMembers} members per workspace`,
-      'Email customer support',
-    ],
-    annualBonusFeatures: ['2 months free'],
+    entitlements: PRO_ENTITLEMENTS,
+    stripeEnabled: true,
+    isEnterprise: false,
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    tier: 3,
+    pricing: null,
+    entitlements: ENTERPRISE_ENTITLEMENTS,
+    stripeEnabled: true,
+    isEnterprise: true,
   },
 ];
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────
 
-export function getPlanById(id: PlanId): Plan | undefined {
+export function getPlanById(id: PlanId): PlanDefinition | undefined {
   return PLANS.find((p) => p.id === id);
 }
 
-export function getFreePlan(): Plan {
+export function getFreePlan(): PlanDefinition {
   const plan = getPlanById(FREE_PLAN_ID);
   if (!plan) throw new Error('Free plan is not configured.');
   return plan;
-}
-
-/**
- * Returns the plan limits for a given plan ID.
- * Falls back to the free plan limits if the plan ID is unknown.
- */
-export function getPlanLimitsForPlanId(planId: PlanId): PlanLimits {
-  const plan = PLANS.find((p) => p.id === planId);
-  return plan?.limits ?? getFreePlan().limits;
 }
 
 // ── Pricing helpers ──────────────────────────────────────────────────────
@@ -133,20 +203,11 @@ const MONTHS_PER_YEAR = 12;
  * Returns a human-readable monthly price string for a plan.
  * For annual pricing, normalizes to the equivalent monthly price.
  */
-export function formatPlanPrice(plan: Plan, annual: boolean): string {
+export function formatPlanPrice(plan: PlanDefinition, annual: boolean): string {
   if (!plan.pricing) return '';
   const p = annual ? plan.pricing.annual : plan.pricing.monthly;
   const monthly = annual ? p.price / MONTHS_PER_YEAR / 100 : p.price / 100;
   return `${CURRENCY_FORMAT.format(monthly)}/mo`;
-}
-
-/**
- * Returns the feature list for a plan, including annual bonus features
- * when the annual flag is set.
- */
-export function getPlanFeatures(plan: Plan, annual: boolean): Array<string> {
-  if (!annual || plan.annualBonusFeatures.length === 0) return plan.features;
-  return [...plan.features, ...plan.annualBonusFeatures];
 }
 
 // ── Tier resolution ──────────────────────────────────────────────────────
@@ -157,7 +218,7 @@ export function getPlanFeatures(plan: Plan, annual: boolean): Array<string> {
  * Falls back to FREE_PLAN_ID if the list is empty or all IDs are unknown.
  */
 export function getHighestTierPlanId(planIds: Array<string>): PlanId {
-  let best: Plan | undefined;
+  let best: PlanDefinition | undefined;
   for (const id of planIds) {
     const plan = PLANS.find((p) => p.id === id);
     if (plan && (!best || plan.tier > best.tier)) {
@@ -170,17 +231,22 @@ export function getHighestTierPlanId(planIds: Array<string>): PlanId {
 /**
  * Returns all plans above the current plan's tier, sorted by tier ascending.
  */
-export function getUpgradePlans(currentPlan: Plan): Array<Plan> {
+export function getUpgradePlans(
+  currentPlan: PlanDefinition
+): Array<PlanDefinition> {
   return PLANS.filter((p) => p.tier > currentPlan.tier).sort(
     (a, b) => a.tier - b.tier
   );
 }
 
-export function getUpgradePlan(currentPlan: Plan): Plan | null {
+export function getUpgradePlan(
+  currentPlan: PlanDefinition
+): PlanDefinition | null {
   return getUpgradePlans(currentPlan)[0] ?? null;
 }
 
-// ── Plan action utilities ────────────────────────────────────────────
+// ── Plan action utilities ────────────────────────────────────────────────
+
 export {
   getPlanAction,
   getDowngradePlans,

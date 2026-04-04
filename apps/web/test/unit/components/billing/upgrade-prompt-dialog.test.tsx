@@ -3,10 +3,10 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import type { Plan } from '@workspace/auth/plans';
+import type { PlanDefinition } from '@workspace/billing';
 import { UpgradePromptDialog } from '@/components/billing/upgrade-prompt-dialog';
 
-const STARTER_PLAN: Plan = {
+const STARTER_PLAN: PlanDefinition = {
   id: 'starter',
   name: 'Starter',
   tier: 1,
@@ -14,9 +14,18 @@ const STARTER_PLAN: Plan = {
     monthly: { price: 500 },
     annual: { price: 5000 },
   },
-  limits: { maxMembers: 5 },
-  features: ['Up to 5 members per workspace'],
-  annualBonusFeatures: ['2 months free'],
+  entitlements: {
+    limits: { members: 5, projects: 5, apiKeys: 0 },
+    features: {
+      sso: false,
+      auditLogs: false,
+      apiAccess: false,
+      prioritySupport: false,
+    },
+    quotas: { storageGb: 10, apiCallsMonthly: 0 },
+  },
+  stripeEnabled: true,
+  isEnterprise: false,
 };
 
 describe('UpgradePromptDialog', () => {
@@ -25,18 +34,19 @@ describe('UpgradePromptDialog', () => {
     onOpenChange: vi.fn(),
     title: 'Upgrade Required',
     description: 'You have reached the limit of your current plan.',
-    upgradePlan: STARTER_PLAN,
+    action: { type: 'checkout' as const, plan: STARTER_PLAN },
     isUpgrading: false,
-    onUpgrade: vi.fn(),
+    onAction: vi.fn(),
     isAnnual: false,
     onToggleInterval: vi.fn(),
+    workspaceName: 'Test Workspace',
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('when upgradePlan is provided', () => {
+  describe('when checkout action is provided', () => {
     it('shows plan name and description', () => {
       renderWithProviders(<UpgradePromptDialog {...defaultProps} />);
       expect(screen.getByText('Starter')).toBeInTheDocument();
@@ -52,16 +62,16 @@ describe('UpgradePromptDialog', () => {
       ).toBeInTheDocument();
     });
 
-    it('shows upgrade button and calls onUpgrade when clicked', async () => {
+    it('shows upgrade button and calls onAction when clicked', async () => {
       const user = userEvent.setup();
-      const onUpgrade = vi.fn();
+      const onAction = vi.fn();
       renderWithProviders(
-        <UpgradePromptDialog {...defaultProps} onUpgrade={onUpgrade} />
+        <UpgradePromptDialog {...defaultProps} onAction={onAction} />
       );
       await user.click(
         screen.getByRole('button', { name: /upgrade to starter/i })
       );
-      expect(onUpgrade).toHaveBeenCalledTimes(1);
+      expect(onAction).toHaveBeenCalledTimes(1);
     });
 
     it('disables upgrade and cancel buttons when isUpgrading', () => {
@@ -107,10 +117,10 @@ describe('UpgradePromptDialog', () => {
     });
   });
 
-  describe('when upgradePlan is null', () => {
+  describe('when there is no action', () => {
     it('shows "Got it" button instead of "Maybe later"', () => {
       renderWithProviders(
-        <UpgradePromptDialog {...defaultProps} upgradePlan={null} />
+        <UpgradePromptDialog {...defaultProps} action={null} />
       );
       expect(
         screen.getByRole('button', { name: /got it/i })
@@ -122,7 +132,7 @@ describe('UpgradePromptDialog', () => {
 
     it('shows limit-reached message with no upgrade button', () => {
       renderWithProviders(
-        <UpgradePromptDialog {...defaultProps} upgradePlan={null} />
+        <UpgradePromptDialog {...defaultProps} action={null} />
       );
       expect(
         screen.getByText(/reached the limits of your current plan/i)
@@ -131,5 +141,30 @@ describe('UpgradePromptDialog', () => {
         screen.queryByRole('button', { name: /upgrade to/i })
       ).not.toBeInTheDocument();
     });
+  });
+
+  it('renders a contact-sales link for enterprise plans', () => {
+    renderWithProviders(
+      <UpgradePromptDialog
+        {...defaultProps}
+        action={{
+          type: 'contact_sales',
+          plan: {
+            ...STARTER_PLAN,
+            id: 'enterprise',
+            name: 'Enterprise',
+            pricing: null,
+            isEnterprise: true,
+          },
+        }}
+      />
+    );
+
+    expect(
+      screen.getByRole('link', { name: /contact sales/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /upgrade to/i })
+    ).not.toBeInTheDocument();
   });
 });

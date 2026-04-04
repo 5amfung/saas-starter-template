@@ -1,5 +1,5 @@
 import { IconCheck, IconLoader2, IconSparkles } from '@tabler/icons-react';
-import { formatPlanPrice, getPlanFeatures } from '@workspace/auth/plans';
+import { describeEntitlements, formatPlanPrice } from '@workspace/billing';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -7,21 +7,22 @@ import {
   AlertDialogDescription,
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog';
-import { Button } from '@workspace/ui/components/button';
+import { Button, buttonVariants } from '@workspace/ui/components/button';
 import { Toggle } from '@workspace/ui/components/toggle';
-import type { Plan } from '@workspace/auth/plans';
+import type { UpgradePromptAction } from '@/hooks/use-upgrade-prompt';
 
 interface UpgradePromptDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   description: string;
-  /** The plan to offer. null = show limit-reached message. */
-  upgradePlan: Plan | null;
+  /** The action to offer. null = show limit-reached message. */
+  action: UpgradePromptAction | null;
   isUpgrading: boolean;
-  onUpgrade: () => void;
+  onAction: () => void;
   isAnnual: boolean;
   onToggleInterval: (annual: boolean) => void;
+  workspaceName?: string;
 }
 
 export function UpgradePromptDialog({
@@ -29,12 +30,17 @@ export function UpgradePromptDialog({
   onOpenChange,
   title,
   description,
-  upgradePlan,
+  action,
   isUpgrading,
-  onUpgrade,
+  onAction,
   isAnnual,
   onToggleInterval,
+  workspaceName = 'Workspace',
 }: UpgradePromptDialogProps) {
+  const actionPlan = action?.plan ?? null;
+  const isCheckout = action?.type === 'checkout';
+  const isContactSales = action?.type === 'contact_sales';
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent size="sm" className="gap-0 p-0">
@@ -50,72 +56,89 @@ export function UpgradePromptDialog({
         </div>
 
         <div className="flex flex-col gap-6 p-7">
-          {upgradePlan ? (
+          {actionPlan ? (
             <>
               {/* Plan name + price + toggle */}
               <div className="flex flex-col gap-4">
                 <div className="flex items-baseline gap-2">
                   <h3 className="text-xl font-semibold tracking-tight">
-                    {upgradePlan.name}
+                    {actionPlan.name}
                   </h3>
-                  {upgradePlan.pricing && (
+                  {isContactSales ? (
                     <span className="text-sm text-muted-foreground">
-                      {formatPlanPrice(upgradePlan, isAnnual)}
+                      Custom pricing
                     </span>
-                  )}
+                  ) : actionPlan.pricing ? (
+                    <span className="text-sm text-muted-foreground">
+                      {formatPlanPrice(actionPlan, isAnnual)}
+                    </span>
+                  ) : null}
                 </div>
 
-                <div className="flex items-center gap-0.5 self-start rounded-full border p-0.5">
-                  <Toggle
-                    pressed={!isAnnual}
-                    onPressedChange={() => onToggleInterval(false)}
-                    size="sm"
-                    className="h-6 rounded-full px-2.5 text-xs aria-pressed:bg-foreground aria-pressed:text-background"
-                    aria-label="Monthly billing"
-                  >
-                    Monthly
-                  </Toggle>
-                  <Toggle
-                    pressed={isAnnual}
-                    onPressedChange={() => onToggleInterval(true)}
-                    size="sm"
-                    className="h-6 rounded-full px-2.5 text-xs aria-pressed:bg-foreground aria-pressed:text-background"
-                    aria-label="Annual billing"
-                  >
-                    Annual
-                  </Toggle>
-                </div>
+                {isCheckout ? (
+                  <div className="flex items-center gap-0.5 self-start rounded-full border p-0.5">
+                    <Toggle
+                      pressed={!isAnnual}
+                      onPressedChange={() => onToggleInterval(false)}
+                      size="sm"
+                      className="h-6 rounded-full px-2.5 text-xs aria-pressed:bg-foreground aria-pressed:text-background"
+                      aria-label="Monthly billing"
+                    >
+                      Monthly
+                    </Toggle>
+                    <Toggle
+                      pressed={isAnnual}
+                      onPressedChange={() => onToggleInterval(true)}
+                      size="sm"
+                      className="h-6 rounded-full px-2.5 text-xs aria-pressed:bg-foreground aria-pressed:text-background"
+                      aria-label="Annual billing"
+                    >
+                      Annual
+                    </Toggle>
+                  </div>
+                ) : null}
               </div>
 
               {/* Features */}
               <ul className="flex flex-col gap-2.5">
-                {getPlanFeatures(upgradePlan, isAnnual).map((feature) => (
-                  <li
-                    key={feature}
-                    className="flex items-center gap-2.5 text-sm"
-                  >
-                    <IconCheck className="size-3.5 shrink-0 text-primary" />
-                    {feature}
-                  </li>
-                ))}
+                {describeEntitlements(actionPlan.entitlements).map(
+                  (feature) => (
+                    <li
+                      key={feature}
+                      className="flex items-center gap-2.5 text-sm"
+                    >
+                      <IconCheck className="size-3.5 shrink-0 text-primary" />
+                      {feature}
+                    </li>
+                  )
+                )}
               </ul>
 
               {/* Actions */}
               <div className="flex flex-col items-center gap-3 pt-1">
-                <Button
-                  className="w-full"
-                  disabled={isUpgrading}
-                  onClick={onUpgrade}
-                >
-                  {isUpgrading && (
-                    <IconLoader2 className="size-4 animate-spin" />
-                  )}
-                  Upgrade to {upgradePlan.name}
-                </Button>
+                {isContactSales ? (
+                  <a
+                    href={`mailto:sales@example.com?subject=${encodeURIComponent(`Enterprise inquiry — ${workspaceName}`)}`}
+                    className={`${buttonVariants()} w-full`}
+                  >
+                    Contact Sales
+                  </a>
+                ) : (
+                  <Button
+                    className="w-full"
+                    disabled={isUpgrading}
+                    onClick={onAction}
+                  >
+                    {isUpgrading && (
+                      <IconLoader2 className="size-4 animate-spin" />
+                    )}
+                    Upgrade to {actionPlan.name}
+                  </Button>
+                )}
                 <AlertDialogCancel
                   variant="link"
                   size="sm"
-                  disabled={isUpgrading}
+                  disabled={isUpgrading && isCheckout}
                   className="h-auto border-0 px-0 py-1 text-xs text-muted-foreground shadow-none"
                 >
                   Maybe later

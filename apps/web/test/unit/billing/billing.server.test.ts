@@ -1,12 +1,12 @@
 import {
   cancelWorkspaceSubscription,
-  checkWorkspacePlanLimit,
+  checkWorkspaceEntitlement,
   createCheckoutForWorkspace,
   createWorkspaceBillingPortal,
   downgradeWorkspaceSubscription,
   getWorkspaceActivePlanId,
   getWorkspaceBillingData,
-  getWorkspacePlanContext,
+  getWorkspaceEntitlements,
   reactivateWorkspaceSubscription,
   requireVerifiedSession,
 } from '@/billing/billing.server';
@@ -25,6 +25,8 @@ const {
   getPlanIdByPriceIdMock,
   releaseSubscriptionScheduleMock,
   getRequestHeadersMock,
+  findFirstMock,
+  dbSelectMock,
 } = vi.hoisted(() => ({
   listActiveSubscriptionsMock: vi.fn(),
   createBillingPortalMock: vi.fn(),
@@ -37,6 +39,33 @@ const {
   getPlanIdByPriceIdMock: vi.fn(),
   releaseSubscriptionScheduleMock: vi.fn(),
   getRequestHeadersMock: vi.fn().mockReturnValue(new Headers()),
+  findFirstMock: vi.fn(),
+  dbSelectMock: vi.fn((fields?: Record<string, unknown>) => {
+    const isCountQuery = !!fields && 'count' in fields;
+    const builder = {
+      from: vi.fn(() => builder),
+      where: vi.fn(() => builder),
+      limit: vi.fn(async (limit: number) => {
+        const row = await findFirstMock();
+        const rows = row ? [row] : [];
+        return rows.slice(0, limit);
+      }),
+      then: (
+        onFulfilled?: (value: unknown) => unknown,
+        onRejected?: (reason: unknown) => unknown
+      ) => {
+        const rowsPromise = isCountQuery
+          ? Promise.resolve(countWorkspaceMembersMock()).then((count) => [
+              { count },
+            ])
+          : Promise.resolve(listActiveSubscriptionsMock()).then(
+              (rows) => rows ?? []
+            );
+        return rowsPromise.then(onFulfilled, onRejected);
+      },
+    };
+    return builder;
+  }),
 }));
 
 // ── Module mocks ───────────────────────────────────────────────────────────
@@ -58,7 +87,29 @@ vi.mock('@/init', () => ({
       releaseSubscriptionSchedule: releaseSubscriptionScheduleMock,
     },
   },
+  db: {
+    select: dbSelectMock,
+    query: {
+      workspaceEntitlementOverrides: {
+        findFirst: findFirstMock,
+      },
+    },
+  },
 }));
+
+vi.mock('@workspace/db-schema', async (importOriginal) => {
+  const actual = await importOriginal();
+  return Object.assign({}, actual, {
+    workspaceEntitlementOverrides: { workspaceId: 'workspace_id' },
+  });
+});
+
+vi.mock('drizzle-orm', async (importOriginal) => {
+  const actual = await importOriginal();
+  return Object.assign({}, actual, {
+    eq: vi.fn((col: unknown, val: unknown) => ({ col, val })),
+  });
+});
 
 vi.mock('@tanstack/react-start/server', () => ({
   getRequestHeaders: getRequestHeadersMock,
@@ -78,22 +129,24 @@ const TEST_WORKSPACE_ID = 'ws_123';
 describe('billing.server', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    listActiveSubscriptionsMock.mockResolvedValue([]);
+    countWorkspaceMembersMock.mockResolvedValue(0);
   });
 
-  // ── getWorkspacePlanContext ──────────────────────────────────────────────
+  // ── getWorkspaceEntitlements ─────────────────────────────────────────────
 
-  describe('getWorkspacePlanContext', () => {
+  describe('getWorkspaceEntitlements', () => {
     it('returns free context when no subscriptions exist', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([]);
 
-      const ctx = await getWorkspacePlanContext(
+      const ctx = await getWorkspaceEntitlements(
         TEST_HEADERS,
         TEST_WORKSPACE_ID
       );
 
       expect(ctx.planId).toBe('free');
-      expect(ctx.planName).toBe('Free');
-      expect(ctx.limits.maxMembers).toBe(1);
+      expect(ctx.plan.name).toBe('Free');
+      expect(ctx.entitlements.limits.members).toBe(1);
       expect(ctx.upgradePlan).not.toBeNull();
       expect(ctx.upgradePlan?.id).toBe('starter');
     });
@@ -103,15 +156,16 @@ describe('billing.server', () => {
         { plan: 'pro', status: 'active' },
       ]);
 
-      const ctx = await getWorkspacePlanContext(
+      const ctx = await getWorkspaceEntitlements(
         TEST_HEADERS,
         TEST_WORKSPACE_ID
       );
 
       expect(ctx.planId).toBe('pro');
-      expect(ctx.planName).toBe('Pro');
-      expect(ctx.limits.maxMembers).toBe(25);
-      expect(ctx.upgradePlan).toBeNull();
+      expect(ctx.plan.name).toBe('Pro');
+      expect(ctx.entitlements.limits.members).toBe(25);
+      expect(ctx.upgradePlan).not.toBeNull();
+      expect(ctx.upgradePlan?.id).toBe('enterprise');
     });
 
     it('returns pro context for trialing subscription', async () => {
@@ -119,13 +173,13 @@ describe('billing.server', () => {
         { plan: 'pro', status: 'trialing' },
       ]);
 
-      const ctx = await getWorkspacePlanContext(
+      const ctx = await getWorkspaceEntitlements(
         TEST_HEADERS,
         TEST_WORKSPACE_ID
       );
 
       expect(ctx.planId).toBe('pro');
-      expect(ctx.planName).toBe('Pro');
+      expect(ctx.plan.name).toBe('Pro');
     });
 
     it('falls back to free plan for unknown plan', async () => {
@@ -133,32 +187,61 @@ describe('billing.server', () => {
         { plan: 'unknown_plan', status: 'active' },
       ]);
 
-      const ctx = await getWorkspacePlanContext(
+      const ctx = await getWorkspaceEntitlements(
         TEST_HEADERS,
         TEST_WORKSPACE_ID
       );
 
       expect(ctx.planId).toBe('free');
-      expect(ctx.planName).toBe('Free');
+      expect(ctx.plan.name).toBe('Free');
     });
 
     it('passes headers to listActiveSubscriptions', async () => {
       const customHeaders = new Headers({ 'x-custom': 'test' });
       listActiveSubscriptionsMock.mockResolvedValue([]);
 
-      await getWorkspacePlanContext(customHeaders, TEST_WORKSPACE_ID);
+      await getWorkspaceEntitlements(customHeaders, TEST_WORKSPACE_ID);
 
       expect(listActiveSubscriptionsMock).toHaveBeenCalledWith({
         headers: customHeaders,
         query: { referenceId: TEST_WORKSPACE_ID, customerType: 'organization' },
       });
     });
+
+    it('queries overrides for enterprise plans', async () => {
+      listActiveSubscriptionsMock.mockResolvedValue([
+        { plan: 'enterprise', status: 'active' },
+      ]);
+      findFirstMock.mockResolvedValue({
+        limits: { members: 500 },
+        features: null,
+        quotas: null,
+      });
+
+      const ctx = await getWorkspaceEntitlements(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID
+      );
+
+      expect(ctx.entitlements.limits.members).toBe(500);
+      expect(findFirstMock).toHaveBeenCalled();
+    });
+
+    it('does not query overrides for non-enterprise plans', async () => {
+      listActiveSubscriptionsMock.mockResolvedValue([
+        { plan: 'pro', status: 'active' },
+      ]);
+
+      await getWorkspaceEntitlements(TEST_HEADERS, TEST_WORKSPACE_ID);
+
+      expect(findFirstMock).not.toHaveBeenCalled();
+    });
   });
 
   // ── getWorkspaceBillingData ─────────────────────────────────────────────
 
   describe('getWorkspaceBillingData', () => {
-    it('returns plan and null subscription for free workspace', async () => {
+    it('returns plan, entitlements, and null subscription for free workspace', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([]);
       countWorkspaceMembersMock.mockResolvedValue(1);
 
@@ -169,6 +252,7 @@ describe('billing.server', () => {
 
       expect(data.planId).toBe('free');
       expect(data.plan.id).toBe('free');
+      expect(data.entitlements.limits.members).toBe(1);
       expect(data.subscription).toBeNull();
       expect(data.scheduledTargetPlanId).toBeNull();
       expect(data.memberCount).toBe(1);
@@ -195,6 +279,7 @@ describe('billing.server', () => {
 
       expect(data.planId).toBe('pro');
       expect(data.plan.id).toBe('pro');
+      expect(data.entitlements.limits.members).toBe(25);
       expect(data.subscription).toEqual({
         status: 'active',
         stripeSubscriptionId: 'sub_pro_123',
@@ -273,19 +358,19 @@ describe('billing.server', () => {
     });
   });
 
-  // ── checkWorkspacePlanLimit - member ────────────────────────────────────
+  // ── checkWorkspaceEntitlement - members ─────────────────────────────────
 
-  describe('checkWorkspacePlanLimit - member', () => {
+  describe('checkWorkspaceEntitlement - members', () => {
     it('allows when under member limit on pro plan', async () => {
       listActiveSubscriptionsMock.mockResolvedValue([
         { plan: 'pro', status: 'active' },
       ]);
       countWorkspaceMembersMock.mockResolvedValue(10);
 
-      const result = await checkWorkspacePlanLimit(
+      const result = await checkWorkspaceEntitlement(
         TEST_HEADERS,
         TEST_WORKSPACE_ID,
-        'member'
+        'members'
       );
 
       expect(result.allowed).toBe(true);
@@ -299,10 +384,10 @@ describe('billing.server', () => {
       // Workspace has no subscription (free plan).
       listActiveSubscriptionsMock.mockResolvedValue([]);
 
-      const result = await checkWorkspacePlanLimit(
+      const result = await checkWorkspaceEntitlement(
         TEST_HEADERS,
         TEST_WORKSPACE_ID,
-        'member'
+        'members'
       );
 
       // Free plan limit is 1, current is 3, so should be blocked.
@@ -317,16 +402,33 @@ describe('billing.server', () => {
       ]);
       countWorkspaceMembersMock.mockResolvedValue(0);
 
-      const result = await checkWorkspacePlanLimit(
+      const result = await checkWorkspaceEntitlement(
         TEST_HEADERS,
         TEST_WORKSPACE_ID,
-        'member'
+        'members'
       );
 
       expect(result.allowed).toBe(true);
       expect(result.current).toBe(0);
       expect(result.limit).toBe(1);
       expect(result.planName).toBe('Free');
+    });
+
+    it('returns unlimited for enterprise plan', async () => {
+      listActiveSubscriptionsMock.mockResolvedValue([
+        { plan: 'enterprise', status: 'active' },
+      ]);
+      findFirstMock.mockResolvedValue(undefined);
+
+      const result = await checkWorkspaceEntitlement(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID,
+        'members'
+      );
+
+      expect(result.allowed).toBe(true);
+      expect(result.limit).toBe(-1);
+      expect(result.current).toBe(0);
     });
   });
 
@@ -494,6 +596,21 @@ describe('billing.server', () => {
       await expect(
         createCheckoutForWorkspace(TEST_HEADERS, TEST_WORKSPACE_ID, 'pro', true)
       ).rejects.toMatchObject({ message: 'Stripe API error' });
+    });
+
+    it('rejects enterprise plans', async () => {
+      await expect(
+        createCheckoutForWorkspace(
+          TEST_HEADERS,
+          TEST_WORKSPACE_ID,
+          'enterprise',
+          true
+        )
+      ).rejects.toMatchObject({
+        message:
+          'Checkout is not available for plan "enterprise". Contact sales for enterprise plans.',
+      });
+      expect(upgradeSubscriptionMock).not.toHaveBeenCalled();
     });
   });
 
