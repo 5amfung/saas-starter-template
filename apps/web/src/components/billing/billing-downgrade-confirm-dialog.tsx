@@ -1,5 +1,4 @@
-import { IconAlertTriangle, IconCheck, IconLoader2 } from '@tabler/icons-react';
-import { describeEntitlements, formatPlanPrice } from '@workspace/billing';
+import { IconAlertTriangle, IconLoader2 } from '@tabler/icons-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,6 +10,7 @@ import {
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog';
 import type { PlanDefinition } from '@workspace/billing';
+import { BillingPlanSummary } from './billing-plan-summary';
 
 const DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
   month: 'long',
@@ -59,22 +59,12 @@ export function BillingDowngradeConfirmDialog({
         </AlertDialogHeader>
 
         <div className="rounded-lg border bg-muted/20 p-4">
-          <p className="text-lg font-semibold">{targetPlan.name}</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {targetPlan.isEnterprise
-              ? 'Custom pricing'
-              : !targetPlan.pricing
-                ? 'Free forever'
-                : formatPlanPrice(targetPlan, targetAnnual)}
-          </p>
-          <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
-            {describeEntitlements(targetPlan.entitlements).map((feature) => (
-              <li key={feature} className="flex items-center gap-2">
-                <IconCheck className="size-3.5 shrink-0 text-primary" />
-                {feature}
-              </li>
-            ))}
-          </ul>
+          <BillingPlanSummary
+            plan={targetPlan}
+            annual={targetAnnual}
+            nameClassName="text-lg font-semibold"
+            featuresClassName="space-y-1 text-muted-foreground"
+          />
         </div>
 
         {/* Member count warning shown when workspace exceeds the target plan's member limit. */}
