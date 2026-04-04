@@ -47,7 +47,7 @@ export function BillingManagePlanDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="h-full! max-w-none! gap-0 overflow-y-auto rounded-none! p-0 sm:h-auto! sm:max-w-[56rem]! sm:rounded-xl!">
+      <AlertDialogContent className="h-full! max-w-none! gap-0 overflow-y-auto rounded-none! p-0 sm:h-auto! sm:max-w-4xl! sm:rounded-xl!">
         <AlertDialogTitle className="sr-only">
           Manage your plan
         </AlertDialogTitle>
