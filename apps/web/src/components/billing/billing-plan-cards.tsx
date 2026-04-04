@@ -7,8 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@workspace/ui/components/card';
-import type { Entitlements, PlanDefinition } from '@workspace/billing';
 import { BillingPlanSummary } from './billing-plan-summary';
+import type { Entitlements, PlanDefinition } from '@workspace/billing';
 
 interface BillingPlanCardsProps {
   currentPlan: PlanDefinition;
