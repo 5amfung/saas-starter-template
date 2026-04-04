@@ -1,5 +1,4 @@
-import { IconCheck, IconLoader2, IconSparkles } from '@tabler/icons-react';
-import { describeEntitlements, formatPlanPrice } from '@workspace/billing';
+import { IconLoader2, IconSparkles } from '@tabler/icons-react';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -9,6 +8,7 @@ import {
 } from '@workspace/ui/components/alert-dialog';
 import { Button, buttonVariants } from '@workspace/ui/components/button';
 import { Toggle } from '@workspace/ui/components/toggle';
+import { BillingPlanSummary } from './billing-plan-summary';
 import type { UpgradePromptAction } from '@/hooks/use-upgrade-prompt';
 
 interface UpgradePromptDialogProps {
@@ -60,20 +60,13 @@ export function UpgradePromptDialog({
             <>
               {/* Plan name + price + toggle */}
               <div className="flex flex-col gap-4">
-                <div className="flex items-baseline gap-2">
-                  <h3 className="text-xl font-semibold tracking-tight">
-                    {actionPlan.name}
-                  </h3>
-                  {isContactSales ? (
-                    <span className="text-sm text-muted-foreground">
-                      Custom pricing
-                    </span>
-                  ) : actionPlan.pricing ? (
-                    <span className="text-sm text-muted-foreground">
-                      {formatPlanPrice(actionPlan, isAnnual)}
-                    </span>
-                  ) : null}
-                </div>
+                <BillingPlanSummary
+                  plan={actionPlan}
+                  annual={isAnnual}
+                  headerClassName="flex items-baseline gap-2"
+                  nameClassName="text-xl font-semibold tracking-tight"
+                  showFeatures={false}
+                />
 
                 {isCheckout ? (
                   <div className="flex items-center gap-0.5 self-start rounded-full border p-0.5">
@@ -99,20 +92,13 @@ export function UpgradePromptDialog({
                 ) : null}
               </div>
 
-              {/* Features */}
-              <ul className="flex flex-col gap-2.5">
-                {describeEntitlements(actionPlan.entitlements).map(
-                  (feature) => (
-                    <li
-                      key={feature}
-                      className="flex items-center gap-2.5 text-sm"
-                    >
-                      <IconCheck className="size-3.5 shrink-0 text-primary" />
-                      {feature}
-                    </li>
-                  )
-                )}
-              </ul>
+              <BillingPlanSummary
+                plan={actionPlan}
+                annual={isAnnual}
+                showHeader={false}
+                featuresClassName="gap-2.5"
+                featureItemClassName="gap-2.5"
+              />
 
               {/* Actions */}
               <div className="flex flex-col items-center gap-3 pt-1">

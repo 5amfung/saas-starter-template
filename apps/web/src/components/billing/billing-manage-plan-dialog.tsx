@@ -1,13 +1,6 @@
 import { useState } from 'react';
 
-import { IconCheck } from '@tabler/icons-react';
-import {
-  PLANS,
-  PLAN_ACTION_CONFIG,
-  describeEntitlements,
-  formatPlanPrice,
-  getPlanAction,
-} from '@workspace/billing';
+import { PLANS, PLAN_ACTION_CONFIG, getPlanAction } from '@workspace/billing';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -17,6 +10,7 @@ import {
 } from '@workspace/ui/components/alert-dialog';
 import { Button, buttonVariants } from '@workspace/ui/components/button';
 import { Toggle } from '@workspace/ui/components/toggle';
+import { BillingPlanSummary } from './billing-plan-summary';
 import type { PlanDefinition, PlanId } from '@workspace/billing';
 
 interface BillingManagePlanDialogProps {
@@ -121,30 +115,11 @@ export function BillingManagePlanDialog({
                 key={plan.id}
                 className="flex flex-1 flex-col gap-4 rounded-lg border p-5"
               >
-                {/* Plan name + price */}
-                <div className="flex flex-col gap-1">
-                  <h3 className="text-base font-semibold">{plan.name}</h3>
-                  <span className="text-sm text-muted-foreground">
-                    {plan.isEnterprise
-                      ? 'Custom pricing'
-                      : plan.pricing
-                        ? formatPlanPrice(plan, isAnnual)
-                        : 'Free forever'}
-                  </span>
-                </div>
-
-                {/* Features */}
-                <ul className="flex flex-1 flex-col gap-2">
-                  {describeEntitlements(plan.entitlements).map((feature) => (
-                    <li
-                      key={feature}
-                      className="flex items-center gap-2 text-sm"
-                    >
-                      <IconCheck className="size-3.5 shrink-0 text-primary" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
+                <BillingPlanSummary
+                  plan={plan}
+                  annual={isAnnual}
+                  className="flex-1"
+                />
 
                 {/* Action button */}
                 {action === 'contact_sales' ? (
