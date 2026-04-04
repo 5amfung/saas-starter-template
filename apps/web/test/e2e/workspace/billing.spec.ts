@@ -659,8 +659,9 @@ test.describe('Workspace Billing', () => {
 
     // Confirm dialog should appear.
     await expect(page.getByText('Downgrade to Free?')).toBeVisible();
-    // Feature diff should show member limit change.
-    await expect(page.getByText(/Members drops from 5 → 1/)).toBeVisible();
+    await expect(
+      page.getByText(/after that, you will downgrade to:/i)
+    ).toBeVisible();
 
     // Cancel should dismiss the dialog.
     await page.getByRole('button', { name: 'Cancel' }).click();
@@ -791,7 +792,9 @@ test.describe('Workspace Billing', () => {
 
     // Confirm dialog should appear with correct details.
     await expect(page.getByText('Downgrade to Starter?')).toBeVisible();
-    await expect(page.getByText(/Members drops from 25 → 5/)).toBeVisible();
+    await expect(
+      page.getByText(/after that, you will downgrade to:/i)
+    ).toBeVisible();
 
     // Confirm the downgrade.
     await page.getByRole('button', { name: 'Confirm downgrade' }).click();
@@ -921,7 +924,7 @@ test.describe('Workspace Billing', () => {
     await expect(page.getByText('Downgrade to Starter?')).toBeVisible();
     await expect(
       page.getByText(
-        "You currently have 6 members. The Starter plan allows up to 5. You'll need to remove members before the change takes effect."
+        'Any areas exceeding the new plan limits will stop working after the downgrade takes effect.'
       )
     ).toBeVisible({ timeout: 10000 });
   });

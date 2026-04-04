@@ -246,6 +246,7 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
           }}
           currentPlan={currentPlan}
           targetPlan={downgradeTarget}
+          targetAnnual={downgradeAnnual}
           periodEnd={periodEnd}
           currentMemberCount={billingQuery.data.memberCount}
           onConfirm={() => {
