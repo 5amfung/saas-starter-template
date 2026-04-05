@@ -29,6 +29,21 @@ export function renameWorkspaceInList(
   );
 }
 
+export function addWorkspaceToList(
+  workspaces: Array<WorkspaceSummary> | undefined,
+  workspace: WorkspaceSummary
+) {
+  if (!workspaces) {
+    return [workspace];
+  }
+
+  if (workspaces.some((candidate) => candidate.id === workspace.id)) {
+    return workspaces;
+  }
+
+  return [workspace, ...workspaces];
+}
+
 export function useWorkspacesQuery() {
   return useQuery({
     queryKey: WORKSPACES_QUERY_KEY,
