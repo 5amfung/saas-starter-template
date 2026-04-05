@@ -24,6 +24,7 @@
       "@workspace/logging/server": [
         "../../packages/logging/src/request-logger.server.ts"
       ],
+      "@workspace/policy": ["../../packages/policy/src/index.ts"],
       "@workspace/test-utils": ["../../packages/test-utils/src/index.ts"]
     }
   }

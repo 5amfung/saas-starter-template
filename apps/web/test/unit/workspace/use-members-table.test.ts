@@ -5,25 +5,22 @@ import {
   createMockSessionResponse,
 } from '@workspace/test-utils';
 import { useMembersTable } from '@/workspace/use-members-table';
+import { removeWorkspaceMember } from '@/workspace/workspace-members.functions';
 
 const {
   listMembersMock,
   leaveMock,
-  removeMemberMock,
   navigateMock,
   mockToastSuccess,
   mockToastError,
   useSessionQueryMock,
-  useActiveMemberRoleQueryMock,
 } = vi.hoisted(() => ({
   listMembersMock: vi.fn(),
   leaveMock: vi.fn(),
-  removeMemberMock: vi.fn(),
   navigateMock: vi.fn(),
   mockToastSuccess: vi.fn(),
   mockToastError: vi.fn(),
   useSessionQueryMock: vi.fn(),
-  useActiveMemberRoleQueryMock: vi.fn(),
 }));
 
 vi.mock('@workspace/auth/client', () => ({
@@ -31,7 +28,6 @@ vi.mock('@workspace/auth/client', () => ({
     organization: {
       listMembers: listMembersMock,
       leave: leaveMock,
-      removeMember: removeMemberMock,
     },
   },
 }));
@@ -45,8 +41,8 @@ vi.mock('@workspace/components/hooks', () => ({
   useSessionQuery: useSessionQueryMock,
 }));
 
-vi.mock('@/hooks/use-active-member-role-query', () => ({
-  useActiveMemberRoleQuery: useActiveMemberRoleQueryMock,
+vi.mock('@/workspace/workspace-members.functions', () => ({
+  removeWorkspaceMember: vi.fn(),
 }));
 
 vi.mock('sonner', () => ({
@@ -55,6 +51,11 @@ vi.mock('sonner', () => ({
 
 const WORKSPACE_ID = 'ws-1';
 const mockSession = createMockSessionResponse();
+const removeWorkspaceMemberMock = vi.mocked(removeWorkspaceMember);
+type RemoveWorkspaceMemberResult = Awaited<
+  ReturnType<typeof removeWorkspaceMember>
+>;
+const mockRemoveWorkspaceMemberResult = {} as RemoveWorkspaceMemberResult;
 
 const mockMembersResponse = {
   data: {
@@ -80,7 +81,6 @@ const mockMembersResponse = {
 function setupDefaults() {
   useSessionQueryMock.mockReturnValue({ data: mockSession });
   listMembersMock.mockResolvedValue(mockMembersResponse);
-  useActiveMemberRoleQueryMock.mockReturnValue({ data: 'owner' });
 }
 
 describe('useMembersTable', () => {
@@ -91,9 +91,12 @@ describe('useMembersTable', () => {
 
   describe('query & data', () => {
     it('fetches members and maps to WorkspaceMemberRow shape', async () => {
-      const { result } = renderHook(() => useMembersTable(WORKSPACE_ID), {
-        wrapper: createHookWrapper(),
-      });
+      const { result } = renderHook(
+        () => useMembersTable(WORKSPACE_ID, 'owner'),
+        {
+          wrapper: createHookWrapper(),
+        }
+      );
 
       await waitFor(() => {
         expect(result.current.data.length).toBe(2);
@@ -108,17 +111,23 @@ describe('useMembersTable', () => {
     });
 
     it('returns currentUserId from session', () => {
-      const { result } = renderHook(() => useMembersTable(WORKSPACE_ID), {
-        wrapper: createHookWrapper(),
-      });
+      const { result } = renderHook(
+        () => useMembersTable(WORKSPACE_ID, 'owner'),
+        {
+          wrapper: createHookWrapper(),
+        }
+      );
 
       expect(result.current.currentUserId).toBe(mockSession.user.id);
     });
 
-    it('fetches current user role', async () => {
-      const { result } = renderHook(() => useMembersTable(WORKSPACE_ID), {
-        wrapper: createHookWrapper(),
-      });
+    it('returns the provided current user role', async () => {
+      const { result } = renderHook(
+        () => useMembersTable(WORKSPACE_ID, 'owner'),
+        {
+          wrapper: createHookWrapper(),
+        }
+      );
 
       await waitFor(() => {
         expect(result.current.currentUserRole).toBe('owner');
@@ -128,9 +137,12 @@ describe('useMembersTable', () => {
 
   describe('pagination', () => {
     it('resets page to 1 when pageSize changes', () => {
-      const { result } = renderHook(() => useMembersTable(WORKSPACE_ID), {
-        wrapper: createHookWrapper(),
-      });
+      const { result } = renderHook(
+        () => useMembersTable(WORKSPACE_ID, 'owner'),
+        {
+          wrapper: createHookWrapper(),
+        }
+      );
 
       act(() => {
         result.current.onPageChange(2);
@@ -144,9 +156,12 @@ describe('useMembersTable', () => {
     });
 
     it('resets page to 1 when sorting changes', () => {
-      const { result } = renderHook(() => useMembersTable(WORKSPACE_ID), {
-        wrapper: createHookWrapper(),
-      });
+      const { result } = renderHook(
+        () => useMembersTable(WORKSPACE_ID, 'owner'),
+        {
+          wrapper: createHookWrapper(),
+        }
+      );
 
       act(() => {
         result.current.onPageChange(3);
@@ -158,9 +173,12 @@ describe('useMembersTable', () => {
     });
 
     it('does not forward email sorting to the members API', async () => {
-      const { result } = renderHook(() => useMembersTable(WORKSPACE_ID), {
-        wrapper: createHookWrapper(),
-      });
+      const { result } = renderHook(
+        () => useMembersTable(WORKSPACE_ID, 'owner'),
+        {
+          wrapper: createHookWrapper(),
+        }
+      );
 
       await waitFor(() => {
         expect(listMembersMock).toHaveBeenCalledTimes(1);
@@ -207,9 +225,12 @@ describe('useMembersTable', () => {
         error: null,
       });
 
-      const { result } = renderHook(() => useMembersTable(WORKSPACE_ID), {
-        wrapper: createHookWrapper(),
-      });
+      const { result } = renderHook(
+        () => useMembersTable(WORKSPACE_ID, 'owner'),
+        {
+          wrapper: createHookWrapper(),
+        }
+      );
 
       await waitFor(() => {
         expect(result.current.data.length).toBe(2);
@@ -236,9 +257,12 @@ describe('useMembersTable', () => {
   describe('leave workspace', () => {
     it('calls organization.leave with organizationId', async () => {
       leaveMock.mockResolvedValueOnce({ error: null });
-      const { result } = renderHook(() => useMembersTable(WORKSPACE_ID), {
-        wrapper: createHookWrapper(),
-      });
+      const { result } = renderHook(
+        () => useMembersTable(WORKSPACE_ID, 'owner'),
+        {
+          wrapper: createHookWrapper(),
+        }
+      );
 
       await act(async () => {
         await result.current.onLeave();
@@ -249,9 +273,12 @@ describe('useMembersTable', () => {
 
     it('on success: shows toast and navigates to /ws', async () => {
       leaveMock.mockResolvedValueOnce({ error: null });
-      const { result } = renderHook(() => useMembersTable(WORKSPACE_ID), {
-        wrapper: createHookWrapper(),
-      });
+      const { result } = renderHook(
+        () => useMembersTable(WORKSPACE_ID, 'owner'),
+        {
+          wrapper: createHookWrapper(),
+        }
+      );
 
       await act(async () => {
         await result.current.onLeave();
@@ -265,9 +292,12 @@ describe('useMembersTable', () => {
 
     it('on error: shows error toast', async () => {
       leaveMock.mockResolvedValueOnce({ error: { message: 'Cannot leave' } });
-      const { result } = renderHook(() => useMembersTable(WORKSPACE_ID), {
-        wrapper: createHookWrapper(),
-      });
+      const { result } = renderHook(
+        () => useMembersTable(WORKSPACE_ID, 'owner'),
+        {
+          wrapper: createHookWrapper(),
+        }
+      );
 
       await act(async () => {
         try {
@@ -281,26 +311,38 @@ describe('useMembersTable', () => {
 
   describe('remove member', () => {
     it('calls removeMember with memberIdOrEmail and organizationId', async () => {
-      removeMemberMock.mockResolvedValueOnce({ error: null });
-      const { result } = renderHook(() => useMembersTable(WORKSPACE_ID), {
-        wrapper: createHookWrapper(),
-      });
+      removeWorkspaceMemberMock.mockResolvedValueOnce(
+        mockRemoveWorkspaceMemberResult
+      );
+      const { result } = renderHook(
+        () => useMembersTable(WORKSPACE_ID, 'owner'),
+        {
+          wrapper: createHookWrapper(),
+        }
+      );
 
       await act(async () => {
         await result.current.onRemoveMember('mem-2');
       });
 
-      expect(removeMemberMock).toHaveBeenCalledWith({
-        memberIdOrEmail: 'mem-2',
-        organizationId: WORKSPACE_ID,
+      expect(removeWorkspaceMemberMock).toHaveBeenCalledWith({
+        data: {
+          memberId: 'mem-2',
+          workspaceId: WORKSPACE_ID,
+        },
       });
     });
 
     it('on success: shows toast and refetches', async () => {
-      removeMemberMock.mockResolvedValueOnce({ error: null });
-      const { result } = renderHook(() => useMembersTable(WORKSPACE_ID), {
-        wrapper: createHookWrapper(),
-      });
+      removeWorkspaceMemberMock.mockResolvedValueOnce(
+        mockRemoveWorkspaceMemberResult
+      );
+      const { result } = renderHook(
+        () => useMembersTable(WORKSPACE_ID, 'owner'),
+        {
+          wrapper: createHookWrapper(),
+        }
+      );
 
       await act(async () => {
         await result.current.onRemoveMember('mem-2');
@@ -310,12 +352,13 @@ describe('useMembersTable', () => {
     });
 
     it('on error: shows error toast', async () => {
-      removeMemberMock.mockResolvedValueOnce({
-        error: { message: 'Forbidden' },
-      });
-      const { result } = renderHook(() => useMembersTable(WORKSPACE_ID), {
-        wrapper: createHookWrapper(),
-      });
+      removeWorkspaceMemberMock.mockRejectedValueOnce(new Error('Forbidden'));
+      const { result } = renderHook(
+        () => useMembersTable(WORKSPACE_ID, 'owner'),
+        {
+          wrapper: createHookWrapper(),
+        }
+      );
 
       await act(async () => {
         try {
@@ -323,20 +366,25 @@ describe('useMembersTable', () => {
         } catch {}
       });
 
-      expect(mockToastError).toHaveBeenCalled();
+      await waitFor(() => {
+        expect(mockToastError).toHaveBeenCalled();
+      });
     });
 
     it('tracks removingMemberId during mutation', async () => {
       // Create a deferred promise so we can inspect state mid-mutation.
       let resolve: () => void;
-      removeMemberMock.mockReturnValueOnce(
-        new Promise<{ error: null }>((r) => {
-          resolve = () => r({ error: null });
+      removeWorkspaceMemberMock.mockReturnValueOnce(
+        new Promise<RemoveWorkspaceMemberResult>((r) => {
+          resolve = () => r(mockRemoveWorkspaceMemberResult);
         })
       );
-      const { result } = renderHook(() => useMembersTable(WORKSPACE_ID), {
-        wrapper: createHookWrapper(),
-      });
+      const { result } = renderHook(
+        () => useMembersTable(WORKSPACE_ID, 'owner'),
+        {
+          wrapper: createHookWrapper(),
+        }
+      );
 
       expect(result.current.removingMemberId).toBeNull();
 

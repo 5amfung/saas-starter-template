@@ -2,29 +2,30 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createHookWrapper } from '@workspace/test-utils';
 import { useInvitationsTable } from '@/workspace/use-invitations-table';
+import {
+  cancelWorkspaceInvitation,
+  inviteWorkspaceMember,
+} from '@/workspace/workspace-members.functions';
 
-const {
-  listInvitationsMock,
-  inviteMemberMock,
-  cancelInvitationMock,
-  mockToastSuccess,
-  mockToastError,
-} = vi.hoisted(() => ({
-  listInvitationsMock: vi.fn(),
-  inviteMemberMock: vi.fn(),
-  cancelInvitationMock: vi.fn(),
-  mockToastSuccess: vi.fn(),
-  mockToastError: vi.fn(),
-}));
+const { listInvitationsMock, mockToastSuccess, mockToastError } = vi.hoisted(
+  () => ({
+    listInvitationsMock: vi.fn(),
+    mockToastSuccess: vi.fn(),
+    mockToastError: vi.fn(),
+  })
+);
 
 vi.mock('@workspace/auth/client', () => ({
   authClient: {
     organization: {
       listInvitations: listInvitationsMock,
-      inviteMember: inviteMemberMock,
-      cancelInvitation: cancelInvitationMock,
     },
   },
+}));
+
+vi.mock('@/workspace/workspace-members.functions', () => ({
+  inviteWorkspaceMember: vi.fn(),
+  cancelWorkspaceInvitation: vi.fn(),
 }));
 
 vi.mock('sonner', () => ({
@@ -32,6 +33,8 @@ vi.mock('sonner', () => ({
 }));
 
 const WORKSPACE_ID = 'ws-1';
+const inviteWorkspaceMemberMockFn = vi.mocked(inviteWorkspaceMember);
+const cancelWorkspaceInvitationMockFn = vi.mocked(cancelWorkspaceInvitation);
 
 const mockInvitations = [
   {
@@ -64,6 +67,8 @@ function setupQuery(data = mockInvitations) {
 describe('useInvitationsTable', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    inviteWorkspaceMemberMockFn.mockResolvedValue({} as never);
+    cancelWorkspaceInvitationMockFn.mockResolvedValue({} as never);
   });
 
   describe('query & data', () => {
@@ -278,7 +283,7 @@ describe('useInvitationsTable', () => {
 
     it('calls inviteMember with lowercase trimmed email', async () => {
       setupQuery();
-      inviteMemberMock.mockResolvedValueOnce({ error: null });
+      inviteWorkspaceMemberMockFn.mockResolvedValueOnce({} as never);
       const { result } = renderHook(() => useInvitationsTable(WORKSPACE_ID), {
         wrapper: createHookWrapper(),
       });
@@ -294,16 +299,18 @@ describe('useInvitationsTable', () => {
         await result.current.inviteDialog.onSubmit();
       });
 
-      expect(inviteMemberMock).toHaveBeenCalledWith({
-        email: 'test@example.com',
-        role: 'member',
-        organizationId: WORKSPACE_ID,
+      expect(inviteWorkspaceMemberMockFn).toHaveBeenCalledWith({
+        data: {
+          email: 'test@example.com',
+          role: 'member',
+          workspaceId: WORKSPACE_ID,
+        },
       });
     });
 
     it('on success: shows toast, closes dialog, resets draft', async () => {
       setupQuery();
-      inviteMemberMock.mockResolvedValueOnce({ error: null });
+      inviteWorkspaceMemberMockFn.mockResolvedValueOnce({} as never);
       const { result } = renderHook(() => useInvitationsTable(WORKSPACE_ID), {
         wrapper: createHookWrapper(),
       });
@@ -327,9 +334,9 @@ describe('useInvitationsTable', () => {
 
     it('on mutation error: shows error toast', async () => {
       setupQuery();
-      inviteMemberMock.mockResolvedValueOnce({
-        error: { message: 'Already invited' },
-      });
+      inviteWorkspaceMemberMockFn.mockRejectedValueOnce(
+        new Error('Already invited')
+      );
       const { result } = renderHook(() => useInvitationsTable(WORKSPACE_ID), {
         wrapper: createHookWrapper(),
       });
@@ -351,7 +358,7 @@ describe('useInvitationsTable', () => {
   describe('removeInvitation', () => {
     it('calls cancelInvitation and shows success toast', async () => {
       setupQuery();
-      cancelInvitationMock.mockResolvedValueOnce({ error: null });
+      cancelWorkspaceInvitationMockFn.mockResolvedValueOnce({} as never);
       const { result } = renderHook(() => useInvitationsTable(WORKSPACE_ID), {
         wrapper: createHookWrapper(),
       });
@@ -363,17 +370,20 @@ describe('useInvitationsTable', () => {
       await act(async () => {
         await result.current.onRemoveInvitation('inv-1');
       });
-      expect(cancelInvitationMock).toHaveBeenCalledWith({
-        invitationId: 'inv-1',
+      expect(cancelWorkspaceInvitationMockFn).toHaveBeenCalledWith({
+        data: {
+          workspaceId: WORKSPACE_ID,
+          invitationId: 'inv-1',
+        },
       });
       expect(mockToastSuccess).toHaveBeenCalledWith('Invitation removed.');
     });
 
     it('shows error toast on failure', async () => {
       setupQuery();
-      cancelInvitationMock.mockResolvedValueOnce({
-        error: { message: 'Not found' },
-      });
+      cancelWorkspaceInvitationMockFn.mockRejectedValueOnce(
+        new Error('Not found')
+      );
       const { result } = renderHook(() => useInvitationsTable(WORKSPACE_ID), {
         wrapper: createHookWrapper(),
       });
@@ -394,7 +404,7 @@ describe('useInvitationsTable', () => {
   describe('resendInvitation', () => {
     it('calls inviteMember with resend: true', async () => {
       setupQuery();
-      inviteMemberMock.mockResolvedValueOnce({ error: null });
+      inviteWorkspaceMemberMockFn.mockResolvedValueOnce({} as never);
       const { result } = renderHook(() => useInvitationsTable(WORKSPACE_ID), {
         wrapper: createHookWrapper(),
       });
@@ -411,17 +421,19 @@ describe('useInvitationsTable', () => {
         });
       });
 
-      expect(inviteMemberMock).toHaveBeenCalledWith({
-        email: 'a@example.com',
-        role: 'member',
-        organizationId: WORKSPACE_ID,
-        resend: true,
+      expect(inviteWorkspaceMemberMockFn).toHaveBeenCalledWith({
+        data: {
+          email: 'a@example.com',
+          role: 'member',
+          workspaceId: WORKSPACE_ID,
+          resend: true,
+        },
       });
     });
 
     it('falls back invalid role to member', async () => {
       setupQuery();
-      inviteMemberMock.mockResolvedValueOnce({ error: null });
+      inviteWorkspaceMemberMockFn.mockResolvedValueOnce({} as never);
       const { result } = renderHook(() => useInvitationsTable(WORKSPACE_ID), {
         wrapper: createHookWrapper(),
       });
@@ -438,14 +450,16 @@ describe('useInvitationsTable', () => {
         });
       });
 
-      expect(inviteMemberMock).toHaveBeenCalledWith(
-        expect.objectContaining({ role: 'member' })
+      expect(inviteWorkspaceMemberMockFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ role: 'member' }),
+        })
       );
     });
 
     it('shows success toast on resend', async () => {
       setupQuery();
-      inviteMemberMock.mockResolvedValueOnce({ error: null });
+      inviteWorkspaceMemberMockFn.mockResolvedValueOnce({} as never);
       const { result } = renderHook(() => useInvitationsTable(WORKSPACE_ID), {
         wrapper: createHookWrapper(),
       });
@@ -467,9 +481,9 @@ describe('useInvitationsTable', () => {
 
     it('shows error toast on resend failure', async () => {
       setupQuery();
-      inviteMemberMock.mockResolvedValueOnce({
-        error: { message: 'Rate limited' },
-      });
+      inviteWorkspaceMemberMockFn.mockRejectedValueOnce(
+        new Error('Rate limited')
+      );
       const { result } = renderHook(() => useInvitationsTable(WORKSPACE_ID), {
         wrapper: createHookWrapper(),
       });

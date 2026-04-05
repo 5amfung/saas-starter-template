@@ -8,12 +8,14 @@ const {
   useSessionMock,
   useListOrganizationsMock,
   useActiveOrganizationMock,
-  useActiveMemberRoleQueryMock,
+  useWorkspaceAccessCapabilitiesQueryMock,
+  useRouterStateMock,
 } = vi.hoisted(() => ({
   useSessionMock: vi.fn(),
   useListOrganizationsMock: vi.fn(),
   useActiveOrganizationMock: vi.fn(),
-  useActiveMemberRoleQueryMock: vi.fn(),
+  useWorkspaceAccessCapabilitiesQueryMock: vi.fn(),
+  useRouterStateMock: vi.fn(),
 }));
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
@@ -26,9 +28,17 @@ vi.mock('@workspace/auth/client', () => ({
   },
 }));
 
-vi.mock('@/hooks/use-active-member-role-query', () => ({
-  useActiveMemberRoleQuery: useActiveMemberRoleQueryMock,
+vi.mock('@/policy/workspace-capabilities', () => ({
+  useWorkspaceAccessCapabilitiesQuery: useWorkspaceAccessCapabilitiesQueryMock,
 }));
+
+vi.mock('@tanstack/react-router', async () => {
+  const actual = await import('@tanstack/react-router');
+  return {
+    ...actual,
+    useRouterState: useRouterStateMock,
+  };
+});
 
 vi.mock('@workspace/ui/components/sidebar', () => ({
   Sidebar: ({ children, ...props }: React.ComponentProps<'aside'>) => (
@@ -65,7 +75,13 @@ vi.mock('@/components/workspace-switcher', () => ({
 
 vi.mock('@/components/nav-main', () => ({
   NavMain: ({ items }: { items: Array<{ title: string; url: string }> }) => (
-    <nav data-testid="nav-main" data-item-count={items.length} />
+    <nav data-testid="nav-main" data-item-count={items.length}>
+      {items.map((item) => (
+        <a key={item.title} href={item.url}>
+          {item.title}
+        </a>
+      ))}
+    </nav>
   ),
 }));
 
@@ -102,7 +118,20 @@ const mockOrgs = [
 
 beforeEach(() => {
   vi.clearAllMocks();
-  useActiveMemberRoleQueryMock.mockReturnValue({ data: 'owner' });
+  useRouterStateMock.mockImplementation(
+    ({
+      select,
+    }: {
+      select: (state: { location: { pathname: string } }) => string;
+    }) => select({ location: { pathname: '/' } })
+  );
+  useWorkspaceAccessCapabilitiesQueryMock.mockReturnValue({
+    data: { canViewBilling: true, canViewSettings: true },
+  });
+  useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
+  useActiveOrganizationMock.mockReturnValue({
+    data: { id: 'ws-1', name: 'Workspace One' },
+  });
 });
 
 describe('AppSidebar', () => {
@@ -112,10 +141,6 @@ describe('AppSidebar', () => {
 
   it('renders all sidebar sections', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
-    useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
-    useActiveOrganizationMock.mockReturnValue({
-      data: { id: 'ws-1', name: 'Workspace One' },
-    });
 
     await renderSidebar();
 
@@ -126,10 +151,6 @@ describe('AppSidebar', () => {
 
   it('renders WorkspaceSwitcher with active workspace', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
-    useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
-    useActiveOrganizationMock.mockReturnValue({
-      data: { id: 'ws-1', name: 'Workspace One' },
-    });
 
     await renderSidebar();
 
@@ -138,12 +159,36 @@ describe('AppSidebar', () => {
     expect(switcher).toHaveAttribute('data-active-id', 'ws-1');
   });
 
-  it('renders NavMain with workspace nav items when workspace is active', async () => {
+  it('prefers the route workspace over stale active organization state', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
-    useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
     useActiveOrganizationMock.mockReturnValue({
-      data: { id: 'ws-1', name: 'Workspace One' },
+      data: { id: 'ws-2', name: 'Workspace Two' },
     });
+    useRouterStateMock.mockImplementation(
+      ({
+        select,
+      }: {
+        select: (state: { location: { pathname: string } }) => string;
+      }) =>
+        select({
+          location: { pathname: '/ws/ws-1/overview' },
+        })
+    );
+
+    await renderSidebar();
+
+    expect(screen.getByTestId('workspace-switcher')).toHaveAttribute(
+      'data-active-id',
+      'ws-1'
+    );
+    expect(screen.getByRole('link', { name: 'Overview' })).toHaveAttribute(
+      'href',
+      '/ws/ws-1/overview'
+    );
+  });
+
+  it('shows Billing nav item when workspace capabilities allow billing access', async () => {
+    useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
 
     await renderSidebar();
 
@@ -152,6 +197,23 @@ describe('AppSidebar', () => {
       'data-item-count',
       '5'
     );
+    expect(screen.getByRole('link', { name: 'Billing' })).toHaveAttribute(
+      'href',
+      '/ws/ws-1/billing'
+    );
+  });
+
+  it('hides Settings nav item when workspace capabilities deny settings access', async () => {
+    useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
+    useWorkspaceAccessCapabilitiesQueryMock.mockReturnValue({
+      data: { canViewBilling: true, canViewSettings: false },
+    });
+
+    await renderSidebar();
+
+    expect(
+      screen.queryByRole('link', { name: 'Settings' })
+    ).not.toBeInTheDocument();
   });
 
   it('renders NavMain with empty items when no workspace is active', async () => {
@@ -167,7 +229,6 @@ describe('AppSidebar', () => {
 
   it('renders NavSecondary', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
-    useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
     useActiveOrganizationMock.mockReturnValue({ data: null });
 
     await renderSidebar();
@@ -177,7 +238,6 @@ describe('AppSidebar', () => {
 
   it('renders NavUser when session is loaded', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
-    useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
     useActiveOrganizationMock.mockReturnValue({ data: null });
 
     await renderSidebar();
@@ -197,13 +257,11 @@ describe('AppSidebar', () => {
     expect(screen.queryByTestId('nav-user')).not.toBeInTheDocument();
   });
 
-  it('hides Billing nav item for non-owner workspace members', async () => {
+  it('hides Billing nav item when workspace capabilities deny billing access', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
-    useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
-    useActiveOrganizationMock.mockReturnValue({
-      data: { id: 'ws-1', name: 'Workspace One' },
+    useWorkspaceAccessCapabilitiesQueryMock.mockReturnValue({
+      data: { canViewBilling: false, canViewSettings: true },
     });
-    useActiveMemberRoleQueryMock.mockReturnValue({ data: 'member' });
 
     await renderSidebar();
 
@@ -212,5 +270,8 @@ describe('AppSidebar', () => {
       'data-item-count',
       '4'
     );
+    expect(
+      screen.queryByRole('link', { name: 'Billing' })
+    ).not.toBeInTheDocument();
   });
 });

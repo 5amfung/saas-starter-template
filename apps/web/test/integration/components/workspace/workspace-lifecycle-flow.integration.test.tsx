@@ -4,32 +4,22 @@ import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
 
-const {
-  deleteOrgMock,
-  setActiveMock,
-  navigateMock,
-  mockToastSuccess,
-  mockToastError,
-} = vi.hoisted(() => ({
-  deleteOrgMock: vi.fn(),
-  setActiveMock: vi.fn(),
-  navigateMock: vi.fn(),
+const { assignMock, mockToastSuccess, mockToastError } = vi.hoisted(() => ({
+  assignMock: vi.fn(),
   mockToastSuccess: vi.fn(),
   mockToastError: vi.fn(),
+}));
+
+const { setActiveMock } = vi.hoisted(() => ({
+  setActiveMock: vi.fn().mockResolvedValue({ error: null }),
 }));
 
 vi.mock('@workspace/auth/client', () => ({
   authClient: {
     organization: {
-      delete: deleteOrgMock,
       setActive: setActiveMock,
     },
   },
-}));
-
-vi.mock('@tanstack/react-router', async (importOriginal) => ({
-  ...(await importOriginal()),
-  useNavigate: () => navigateMock,
 }));
 
 vi.mock('sonner', () => ({
@@ -37,6 +27,16 @@ vi.mock('sonner', () => ({
 }));
 
 describe('Workspace lifecycle flow', () => {
+  beforeAll(() => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        ...window.location,
+        assign: assignMock,
+      },
+    });
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -46,13 +46,11 @@ describe('Workspace lifecycle flow', () => {
       workspaceId: 'ws-1',
       workspaceName: 'My Workspace',
       isDisabled: false,
-      getNextWorkspaceIdAfterDelete: vi.fn().mockResolvedValue('ws-2'),
+      onDelete: vi.fn().mockResolvedValue('ws-2'),
     };
 
     it('full delete flow: open dialog → type confirmation → delete → navigate', async () => {
       const user = userEvent.setup();
-      deleteOrgMock.mockResolvedValue({ error: null });
-      setActiveMock.mockResolvedValue({ error: null });
 
       renderWithProviders(<WorkspaceDeleteDialog {...defaultProps} />);
 
@@ -78,42 +76,30 @@ describe('Workspace lifecycle flow', () => {
       // Click confirm.
       await user.click(confirmButton);
 
-      // Verify API calls.
       await waitFor(() => {
-        expect(deleteOrgMock).toHaveBeenCalledWith({
-          organizationId: 'ws-1',
-        });
+        expect(defaultProps.onDelete).toHaveBeenCalledTimes(1);
       });
 
+      // Verify success toast and document navigation.
       await waitFor(() => {
-        expect(defaultProps.getNextWorkspaceIdAfterDelete).toHaveBeenCalled();
-      });
-
-      await waitFor(() => {
-        expect(setActiveMock).toHaveBeenCalledWith({
-          organizationId: 'ws-2',
-        });
-      });
-
-      // Verify success toast and navigation.
-      await waitFor(() => {
+        expect(setActiveMock).toHaveBeenCalledWith({ organizationId: 'ws-2' });
         expect(mockToastSuccess).toHaveBeenCalledWith(
           'Workspace deleted successfully.'
         );
-        expect(navigateMock).toHaveBeenCalledWith({
-          to: '/ws/$workspaceId/overview',
-          params: { workspaceId: 'ws-2' },
-        });
+        expect(assignMock).toHaveBeenCalledWith('/ws/ws-2/overview');
       });
     });
 
     it('shows error toast when deletion fails', async () => {
       const user = userEvent.setup();
-      deleteOrgMock.mockResolvedValue({
-        error: { message: 'Cannot delete personal workspace' },
-      });
+      const props = {
+        ...defaultProps,
+        onDelete: vi
+          .fn()
+          .mockRejectedValue(new Error('Cannot delete personal workspace')),
+      };
 
-      renderWithProviders(<WorkspaceDeleteDialog {...defaultProps} />);
+      renderWithProviders(<WorkspaceDeleteDialog {...props} />);
 
       await user.click(
         screen.getByRole('button', { name: /delete workspace/i })
@@ -167,10 +153,13 @@ describe('Workspace lifecycle flow', () => {
 
     it('shows error when no next workspace found after deletion', async () => {
       const user = userEvent.setup();
-      deleteOrgMock.mockResolvedValue({ error: null });
       const propsNoNext = {
         ...defaultProps,
-        getNextWorkspaceIdAfterDelete: vi.fn().mockResolvedValue(null),
+        onDelete: vi
+          .fn()
+          .mockRejectedValue(
+            new Error('Failed to find an active workspace after deletion.')
+          ),
       };
 
       renderWithProviders(<WorkspaceDeleteDialog {...propsNoNext} />);

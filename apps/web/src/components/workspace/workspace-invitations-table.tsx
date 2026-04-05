@@ -47,6 +47,7 @@ interface WorkspaceInvitationsTableProps {
   totalPages: number;
   sorting: SortingState;
   isLoading?: boolean;
+  canManageInvitations: boolean;
   removingInvitationId?: string | null;
   resendingInvitationId?: string | null;
   onSortingChange: (sorting: SortingState) => void;
@@ -68,6 +69,7 @@ export function WorkspaceInvitationsTable({
   totalPages,
   sorting,
   isLoading = false,
+  canManageInvitations,
   removingInvitationId = null,
   resendingInvitationId = null,
   onSortingChange,
@@ -105,6 +107,8 @@ export function WorkspaceInvitationsTable({
         header: '',
         enableSorting: false,
         cell: ({ row }) => {
+          if (!canManageInvitations) return null;
+
           const { id, email, role } = row.original;
           const isRowPending =
             removingInvitationId === id || resendingInvitationId === id;
@@ -145,6 +149,7 @@ export function WorkspaceInvitationsTable({
       },
     ],
     [
+      canManageInvitations,
       isLoading,
       onRemoveInvitation,
       onResendInvitation,

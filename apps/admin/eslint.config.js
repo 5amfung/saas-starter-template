@@ -34,5 +34,42 @@ export default [
       ],
     },
   },
+  {
+    files: ['src/components/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@/policy/*.server', '@/policy/**/*.server'],
+              message:
+                'Routes and components must consume app policy functions/hooks, not server-only policy modules.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['src/routes/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "BinaryExpression[operator='==='][right.value='admin'][left.property.name='role']",
+          message:
+            'Do not authorize admin routes from raw platform roles; consume admin app capabilities instead.',
+        },
+        {
+          selector:
+            "BinaryExpression[operator='==='][right.value='admin'][left.name='role']",
+          message:
+            'Do not authorize admin routes from raw platform roles; consume admin app capabilities instead.',
+        },
+      ],
+    },
+  },
   ...config,
 ];

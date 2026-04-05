@@ -36,6 +36,30 @@ module.exports = {
       },
       to: { path: '^packages/db-schema/src/' },
     },
+    {
+      name: 'no-routes-or-components-import-policy-server-web',
+      comment:
+        'Web components should consume policy functions/hooks, not server-only policy modules.',
+      severity: 'error',
+      from: { path: '^apps/web/src/components/' },
+      to: { path: '^apps/web/src/policy/.*\\.server\\.ts$' },
+    },
+    {
+      name: 'no-routes-or-components-import-policy-server-admin',
+      comment:
+        'Admin components should consume policy functions/hooks, not server-only policy modules.',
+      severity: 'error',
+      from: { path: '^apps/admin/src/components/' },
+      to: { path: '^apps/admin/src/policy/.*\\.server\\.ts$' },
+    },
+    {
+      name: 'no-app-imports-policy-internals',
+      comment:
+        'Applications may depend on @workspace/policy through its public entry only.',
+      severity: 'error',
+      from: { path: '^apps/(web|admin)/src/' },
+      to: { path: '^packages/policy/src/(?!index\\.ts$)' },
+    },
   ],
   options: {
     tsConfig: {

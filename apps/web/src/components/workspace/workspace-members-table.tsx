@@ -49,7 +49,8 @@ interface WorkspaceMembersTableProps {
   removingMemberId?: string | null;
   leavingWorkspace?: boolean;
   currentUserId: string | null;
-  currentUserRole: string | null;
+  workspaceRole: string | null;
+  canManageMembers: boolean;
   onSortingChange: (sorting: SortingState) => void;
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
@@ -68,7 +69,8 @@ export function WorkspaceMembersTable({
   removingMemberId = null,
   leavingWorkspace = false,
   currentUserId,
-  currentUserRole,
+  workspaceRole,
+  canManageMembers,
   onSortingChange,
   onPageChange,
   onPageSizeChange,
@@ -99,8 +101,10 @@ export function WorkspaceMembersTable({
           const { id, userId, role } = row.original;
           const isOwnerRow = role === 'owner';
           const isCurrentUserRow = userId === currentUserId;
+          const isMemberViewer = workspaceRole === 'member';
           const showDisabledRemove =
-            !isCurrentUserRow && (isOwnerRow || currentUserRole === 'member');
+            !isCurrentUserRow &&
+            (isOwnerRow || isMemberViewer || !canManageMembers);
 
           return (
             <DropdownMenu>
@@ -150,13 +154,14 @@ export function WorkspaceMembersTable({
       },
     ],
     [
+      canManageMembers,
       currentUserId,
-      currentUserRole,
       isLoading,
       leavingWorkspace,
       onLeave,
       onRemoveMember,
       removingMemberId,
+      workspaceRole,
     ]
   );
 

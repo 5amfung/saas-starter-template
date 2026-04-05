@@ -10,15 +10,15 @@ import {
 } from './workspace-members.types';
 import type { SortingState } from '@tanstack/react-table';
 import type { WorkspaceMemberRow } from '@/components/workspace/workspace-members-table';
-import { useActiveMemberRoleQuery } from '@/hooks/use-active-member-role-query';
+import { removeWorkspaceMember } from '@/workspace/workspace-members.functions';
 
-export function useMembersTable(workspaceId: string) {
+export function useMembersTable(
+  workspaceId: string,
+  currentUserRole: string | null
+) {
   const navigate = useNavigate();
   const { data: session } = useSessionQuery();
   const currentUserId = session?.user.id ?? null;
-
-  const { data: currentUserRole = null } =
-    useActiveMemberRoleQuery(workspaceId);
 
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(MEMBER_PAGE_SIZE_DEFAULT);
@@ -100,18 +100,16 @@ export function useMembersTable(workspaceId: string) {
 
   const removeMemberMutation = useMutation({
     mutationFn: async (memberId: string) => {
-      const { error } = await authClient.organization.removeMember({
-        memberIdOrEmail: memberId,
-        organizationId: workspaceId,
+      await removeWorkspaceMember({
+        data: {
+          workspaceId,
+          memberId,
+        },
       });
-      if (error) throw new Error(error.message);
     },
     onSuccess: async () => {
       toast.success('Membership removed.');
       await membersQuery.refetch();
-    },
-    onError: (error) => {
-      toast.error(error.message || 'Failed to remove membership.');
     },
   });
 
@@ -135,9 +133,17 @@ export function useMembersTable(workspaceId: string) {
     onPageChange: setPage,
     onPageSizeChange: setPageSize,
     onRemoveMember: async (memberId: string) => {
-      await withPendingId(setRemovingMemberId, memberId, async () => {
-        await removeMemberMutation.mutateAsync(memberId);
-      });
+      try {
+        await withPendingId(setRemovingMemberId, memberId, async () => {
+          await removeMemberMutation.mutateAsync(memberId);
+        });
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : 'Failed to remove membership.'
+        );
+      }
     },
     onLeave: async () => {
       await leaveMutation.mutateAsync();

@@ -14,6 +14,7 @@ import {
   IconUserCircle,
   IconUsers,
 } from '@tabler/icons-react';
+import { useRouterState } from '@tanstack/react-router';
 import { authClient } from '@workspace/auth/client';
 import {
   Sidebar,
@@ -26,8 +27,8 @@ import {
   NavUser,
   NavUserSkeleton,
 } from '@workspace/components/layout';
-import { useActiveMemberRoleQuery } from '@/hooks/use-active-member-role-query';
 import { NavMain } from '@/components/nav-main';
+import { useWorkspaceAccessCapabilitiesQuery } from '@/policy/workspace-capabilities';
 import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 
 const data = {
@@ -53,14 +54,25 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
   const { data: session, isPending } = authClient.useSession();
-  const { data: organizations } = authClient.useListOrganizations();
-  const { data: activeOrganization } = authClient.useActiveOrganization();
-  const activeWorkspaceId =
-    activeOrganization?.id ?? organizations?.at(0)?.id ?? null;
+  const organizationsQuery = authClient.useListOrganizations();
+  const activeOrganizationQuery = authClient.useActiveOrganization();
+  const organizations = organizationsQuery.data;
+  const activeOrganization = activeOrganizationQuery.data;
+  const routeWorkspaceId =
+    pathname.match(/^\/ws\/([^/]+)(?:\/|$)/)?.[1] ?? null;
 
-  const { data: activeRole } = useActiveMemberRoleQuery(activeWorkspaceId);
-  const isWorkspaceOwner = activeRole === 'owner';
+  const activeWorkspaceId =
+    routeWorkspaceId ??
+    activeOrganization?.id ??
+    organizations?.at(0)?.id ??
+    null;
+
+  const { data: activeWorkspaceCapabilities } =
+    useWorkspaceAccessCapabilitiesQuery(activeWorkspaceId);
 
   const navMain = activeWorkspaceId
     ? [
@@ -79,7 +91,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: `/ws/${activeWorkspaceId}/members`,
           icon: <IconUsers />,
         },
-        ...(isWorkspaceOwner
+        ...(activeWorkspaceCapabilities?.canViewBilling
           ? [
               {
                 title: 'Billing',
@@ -88,11 +100,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               },
             ]
           : []),
-        {
-          title: 'Settings',
-          url: `/ws/${activeWorkspaceId}/settings`,
-          icon: <IconSettings />,
-        },
+        ...(activeWorkspaceCapabilities?.canViewSettings
+          ? [
+              {
+                title: 'Settings',
+                url: `/ws/${activeWorkspaceId}/settings`,
+                icon: <IconSettings />,
+              },
+            ]
+          : []),
       ]
     : [];
 

@@ -147,7 +147,8 @@ async function setupInvitedMember(
   page: Page,
   baseURL: string,
   workspaceId: string,
-  emailPrefix: string
+  emailPrefix: string,
+  role: 'member' | 'admin' = 'member'
 ): Promise<{ email: string; password: string }> {
   const inviteeEmail = uniqueEmail(emailPrefix);
   const inviteePassword = VALID_PASSWORD;
@@ -159,7 +160,7 @@ async function setupInvitedMember(
   });
 
   // Send invitation from the members page (owner should already be on the page).
-  await page.getByRole('button', { name: 'Invite' }).click();
+  await page.getByRole('button', { name: 'Invite', exact: true }).click();
 
   // Wait for a dialog to appear — either the upgrade prompt or the invite dialog.
   const alertdialog = page.getByRole('alertdialog');
@@ -170,14 +171,21 @@ async function setupInvitedMember(
   if (await upgradeBtn.isVisible()) {
     await upgradeBtn.click();
     await completeStripeCheckout(page);
-    await page.goto(`/ws/${workspaceId}/members`);
+    await page.waitForURL(new RegExp(`/ws/${workspaceId}/(overview|billing)`), {
+      timeout: 15000,
+    });
+    await page.getByRole('link', { name: 'Members' }).click();
     await page.waitForURL(`**/ws/${workspaceId}/members`);
-    await page.getByRole('button', { name: 'Invite' }).click();
+    await page.getByRole('button', { name: 'Invite', exact: true }).click();
   }
 
   // Fill invite dialog.
   await expect(page.getByText('Invite Member')).toBeVisible({ timeout: 5000 });
   await page.getByLabel('Email').fill(inviteeEmail);
+  if (role === 'admin') {
+    await page.getByRole('combobox').click();
+    await page.getByRole('option', { name: 'admin' }).click();
+  }
   await page.getByRole('button', { name: 'Send Invitation' }).click();
 
   // Wait for toast confirming invitation sent.
@@ -209,14 +217,17 @@ async function upgradeViaInvitePrompt(
   page: Page,
   workspaceId: string
 ): Promise<void> {
-  await page.getByRole('button', { name: 'Invite' }).click();
+  await page.getByRole('button', { name: 'Invite', exact: true }).click();
   const upgradeDialog = page.getByRole('alertdialog');
   await expect(
     upgradeDialog.getByRole('button', { name: /upgrade to/i })
   ).toBeVisible({ timeout: 10000 });
   await upgradeDialog.getByRole('button', { name: /upgrade to/i }).click();
   await completeStripeCheckout(page);
-  await page.goto(`/ws/${workspaceId}/members`);
+  await page.waitForURL(new RegExp(`/ws/${workspaceId}/(overview|billing)`), {
+    timeout: 15000,
+  });
+  await page.getByRole('link', { name: 'Members' }).click();
   await page.waitForURL(`**/ws/${workspaceId}/members`);
 }
 
@@ -284,7 +295,7 @@ test.describe('Workspace Members Page', () => {
     });
 
     // Click Invite.
-    await page.getByRole('button', { name: 'Invite' }).click();
+    await page.getByRole('button', { name: 'Invite', exact: true }).click();
 
     // Upgrade prompt dialog should open (alertdialog role).
     const dialog = page.getByRole('alertdialog');
@@ -314,7 +325,7 @@ test.describe('Workspace Members Page', () => {
 
     await signInAndGoToMembers(page, { email, password: VALID_PASSWORD });
 
-    await page.getByRole('button', { name: 'Invite' }).click();
+    await page.getByRole('button', { name: 'Invite', exact: true }).click();
 
     const dialog = page.getByRole('alertdialog');
     await expect(dialog).toBeVisible({ timeout: 5000 });
@@ -345,7 +356,7 @@ test.describe('Workspace Members Page', () => {
     });
 
     // Click Invite — should show upgrade prompt.
-    await page.getByRole('button', { name: 'Invite' }).click();
+    await page.getByRole('button', { name: 'Invite', exact: true }).click();
     const upgradeDialog = page.getByRole('alertdialog');
     await expect(upgradeDialog).toBeVisible({ timeout: 5000 });
 
@@ -362,7 +373,7 @@ test.describe('Workspace Members Page', () => {
     await page.waitForURL(`**/ws/${workspaceId}/members`);
 
     // Click Invite again — should now show invite dialog, not upgrade prompt.
-    await page.getByRole('button', { name: 'Invite' }).click();
+    await page.getByRole('button', { name: 'Invite', exact: true }).click();
 
     const inviteDialog = page.getByRole('alertdialog');
     await expect(inviteDialog).toBeVisible({ timeout: 5000 });
@@ -398,7 +409,7 @@ test.describe('Workspace Members Page', () => {
     });
 
     // Upgrade plan first (free plan has 1/1 limit).
-    await page.getByRole('button', { name: 'Invite' }).click();
+    await page.getByRole('button', { name: 'Invite', exact: true }).click();
     const upgradeDialog = page.getByRole('alertdialog');
     await expect(
       upgradeDialog.getByRole('button', { name: /upgrade to/i })
@@ -409,7 +420,7 @@ test.describe('Workspace Members Page', () => {
     await page.waitForURL(`**/ws/${workspaceId}/members`);
 
     // Send invitation.
-    await page.getByRole('button', { name: 'Invite' }).click();
+    await page.getByRole('button', { name: 'Invite', exact: true }).click();
     const inviteDialog = page.getByRole('alertdialog');
     await expect(inviteDialog.getByText('Invite Member')).toBeVisible({
       timeout: 5000,
@@ -457,7 +468,7 @@ test.describe('Workspace Members Page', () => {
 
     // Upgrade from free plan (1/1 member limit) then open invite dialog.
     await upgradeViaInvitePrompt(page, workspaceId);
-    await page.getByRole('button', { name: 'Invite' }).click();
+    await page.getByRole('button', { name: 'Invite', exact: true }).click();
 
     const inviteDialog = page.getByRole('alertdialog');
     await expect(inviteDialog.getByText('Invite Member')).toBeVisible({
@@ -505,7 +516,7 @@ test.describe('Workspace Members Page', () => {
 
     // Upgrade from free plan (1/1 member limit) then open invite dialog.
     await upgradeViaInvitePrompt(page, workspaceId);
-    await page.getByRole('button', { name: 'Invite' }).click();
+    await page.getByRole('button', { name: 'Invite', exact: true }).click();
 
     const inviteDialog = page.getByRole('alertdialog');
     await expect(inviteDialog.getByText('Invite Member')).toBeVisible({
@@ -645,7 +656,7 @@ test.describe('Workspace Members Page', () => {
     const zzzEmail = `zzz-sort-${Date.now()}@example.com`;
 
     for (const inviteeEmail of [aaaEmail, zzzEmail]) {
-      await page.getByRole('button', { name: 'Invite' }).click();
+      await page.getByRole('button', { name: 'Invite', exact: true }).click();
       const dialog = page.getByRole('alertdialog');
       await expect(dialog.getByText('Invite Member')).toBeVisible({
         timeout: 5000,
@@ -761,7 +772,7 @@ test.describe('Workspace Members Page', () => {
     await upgradeViaInvitePrompt(page, workspaceId);
 
     for (let index = 0; index < 11; index++) {
-      await page.getByRole('button', { name: 'Invite' }).click();
+      await page.getByRole('button', { name: 'Invite', exact: true }).click();
 
       const inviteDialog = page.getByRole('alertdialog');
       await expect(inviteDialog.getByText('Invite Member')).toBeVisible({
@@ -828,7 +839,7 @@ test.describe('Workspace Members Page', () => {
 
     // Upgrade from free plan (1/1 member limit) then open invite dialog.
     await upgradeViaInvitePrompt(page, workspaceId);
-    await page.getByRole('button', { name: 'Invite' }).click();
+    await page.getByRole('button', { name: 'Invite', exact: true }).click();
 
     const dialog = page.getByRole('alertdialog');
     await expect(dialog.getByText('Invite Member')).toBeVisible({
@@ -864,7 +875,7 @@ test.describe('Workspace Members Page', () => {
 
     // Upgrade from free plan (1/1 member limit) then open invite dialog.
     await upgradeViaInvitePrompt(page, workspaceId);
-    await page.getByRole('button', { name: 'Invite' }).click();
+    await page.getByRole('button', { name: 'Invite', exact: true }).click();
 
     const dialog = page.getByRole('alertdialog');
     await expect(dialog.getByText('Invite Member')).toBeVisible({
@@ -910,7 +921,7 @@ test.describe('Workspace Members Page', () => {
 
     // Invite button should NOT be visible.
     await expect(
-      page.getByRole('button', { name: 'Invite' })
+      page.getByRole('button', { name: 'Invite', exact: true })
     ).not.toBeVisible();
   });
 
@@ -991,6 +1002,40 @@ test.describe('Workspace Members Page', () => {
     await expect(
       page.getByRole('menuitem', { name: 'Remove' })
     ).not.toBeVisible();
+  });
+
+  test('workspace admin can invite a new member', async ({ page, baseURL }) => {
+    const ownerEmail = uniqueEmail('admin-invite-owner');
+    const ownerCredentials = {
+      email: ownerEmail,
+      password: VALID_PASSWORD,
+    };
+
+    await createVerifiedUser(baseURL!, ownerCredentials);
+    const workspaceId = await signInAndGoToMembers(page, ownerCredentials);
+    const adminCredentials = await setupInvitedMember(
+      page,
+      baseURL!,
+      workspaceId,
+      'admin-invite-admin',
+      'admin'
+    );
+
+    await resetToSignedOutState(page);
+    await signInAndGoToMembers(page, adminCredentials);
+    await page.goto(`/ws/${workspaceId}/members`);
+    await page.waitForURL(`**/ws/${workspaceId}/members`);
+
+    await page.getByRole('button', { name: 'Invite', exact: true }).click();
+    await expect(page.getByText('Invite Member')).toBeVisible({
+      timeout: 5000,
+    });
+    await page.getByLabel('Email').fill(uniqueEmail('admin-invite-member'));
+    await page.getByRole('button', { name: 'Send Invitation' }).click();
+
+    await expect(page.getByText('Invitation sent.').last()).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   // ── 20. Member's own row shows "Leave" ─────────────────────────────────
@@ -1149,7 +1194,7 @@ test.describe('Workspace Members Page', () => {
     await upgradeViaInvitePrompt(page, workspaceId);
 
     // Send invitation.
-    await page.getByRole('button', { name: 'Invite' }).click();
+    await page.getByRole('button', { name: 'Invite', exact: true }).click();
     const dialog = page.getByRole('alertdialog');
     await expect(dialog.getByText('Invite Member')).toBeVisible({
       timeout: 5000,

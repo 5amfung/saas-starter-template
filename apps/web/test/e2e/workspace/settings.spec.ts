@@ -3,8 +3,10 @@ import {
   VALID_PASSWORD,
   createVerifiedUser,
   uniqueEmail,
+  waitForTestEmail,
 } from '@workspace/test-utils';
-import { parseCookieHeader } from '../lib/parse-cookie-header';
+import { parseCookieHeader, toCookieHeader } from '../lib/parse-cookie-header';
+import { completeStripeCheckout } from '../lib/complete-stripe-checkout';
 import type { Page } from '@playwright/test';
 
 /**
@@ -15,14 +17,14 @@ async function signUpAndLogin(
   page: Page,
   baseURL: string,
   email: string = uniqueEmail()
-): Promise<{ email: string }> {
+): Promise<{ email: string; cookieHeader: string }> {
   const { cookie } = await createVerifiedUser(baseURL, {
     email,
     password: VALID_PASSWORD,
   });
 
   await page.context().addCookies(parseCookieHeader(cookie));
-  return { email };
+  return { email, cookieHeader: toCookieHeader(cookie) };
 }
 
 /** Navigate to /ws, wait for redirect, extract workspaceId from URL. */
@@ -44,7 +46,9 @@ async function goToSettings(page: Page): Promise<string> {
 
 /** Open the workspace switcher dropdown in the sidebar. */
 async function openWorkspaceSwitcher(page: Page): Promise<void> {
-  await page.locator('[data-sidebar="menu-button"]').first().click();
+  const trigger = page.locator('[data-sidebar="menu-button"]').first();
+  await expect(trigger).toBeVisible({ timeout: 15000 });
+  await trigger.click();
 }
 
 /** Create a new workspace via the switcher "Add workspace" dialog. */
@@ -73,6 +77,156 @@ async function createWorkspaceViaSwitcher(
       url.toString() !== urlBeforeCreate,
     { timeout: 15000 }
   );
+}
+
+async function getInvitationUrl(
+  baseURL: string,
+  to: string,
+  maxRetries = 10
+): Promise<string> {
+  const email = await waitForTestEmail(
+    baseURL,
+    to,
+    (candidate) =>
+      candidate.subject.toLowerCase().includes('join') &&
+      Boolean(candidate.invitationUrl),
+    maxRetries
+  );
+
+  if (!email?.invitationUrl) {
+    throw new Error(`No invitation URL captured for ${to}.`);
+  }
+
+  return email.invitationUrl;
+}
+
+function getInvitationId(invitationUrl: string): string {
+  const id = new URL(invitationUrl).searchParams.get('id');
+  if (!id) {
+    throw new Error(`Invitation URL did not include an id: ${invitationUrl}`);
+  }
+  return id;
+}
+
+async function acceptInvitationViaApi(
+  page: Page,
+  baseURL: string,
+  inviteeCredentials: { email: string; password: string },
+  invitationId: string
+): Promise<void> {
+  const signinResponse = await page.request.post(
+    `${baseURL}/api/auth/sign-in/email`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: baseURL,
+      },
+      data: inviteeCredentials,
+    }
+  );
+
+  if (!signinResponse.ok()) {
+    throw new Error(`Invitee sign-in failed (${signinResponse.status()}).`);
+  }
+
+  const inviteeCookie = signinResponse
+    .headers()
+    ['set-cookie'].split(';')[0]
+    .trim();
+
+  const acceptResponse = await page.request.post(
+    `${baseURL}/api/auth/organization/accept-invitation`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: inviteeCookie,
+        Origin: baseURL,
+      },
+      data: { invitationId },
+    }
+  );
+
+  if (!acceptResponse.ok()) {
+    throw new Error(
+      `Invitation acceptance failed (${acceptResponse.status()}).`
+    );
+  }
+}
+
+async function signIn(
+  page: Page,
+  credentials: {
+    email: string;
+    password: string;
+  }
+) {
+  await page.goto('/signin');
+  await page.getByLabel('Email').fill(credentials.email);
+  await page.getByLabel('Password', { exact: true }).fill(credentials.password);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await page.waitForURL(/\/ws\/.*\/overview/, { timeout: 15000 });
+}
+
+async function resetToSignedOutState(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
+  await page.context().clearCookies();
+  await page.goto('/signin');
+  await page.waitForURL(/\/signin(?:\?|$)/, { timeout: 15000 });
+}
+
+async function inviteWorkspaceUser(
+  page: Page,
+  baseURL: string,
+  workspaceId: string,
+  role: 'admin' | 'member'
+): Promise<{ email: string; password: string }> {
+  const inviteeEmail = uniqueEmail(`settings-${role}`);
+  const inviteePassword = VALID_PASSWORD;
+
+  await createVerifiedUser(baseURL, {
+    email: inviteeEmail,
+    password: inviteePassword,
+  });
+
+  await page.goto(`/ws/${workspaceId}/members`);
+  await page.waitForURL(`**/ws/${workspaceId}/members`, { timeout: 15000 });
+  await page.getByRole('button', { name: 'Invite', exact: true }).click();
+  const alertdialog = page.getByRole('alertdialog');
+  await expect(alertdialog).toBeVisible({ timeout: 10000 });
+
+  const upgradeBtn = alertdialog.getByRole('button', { name: /upgrade to/i });
+  if (await upgradeBtn.isVisible()) {
+    await upgradeBtn.click();
+    await completeStripeCheckout(page, { redirectPattern: /localhost/ });
+    await page.waitForURL(new RegExp(`/ws/${workspaceId}/(overview|billing)`), {
+      timeout: 15000,
+    });
+    await page.getByRole('link', { name: 'Members' }).click();
+    await page.waitForURL(`**/ws/${workspaceId}/members`, { timeout: 15000 });
+    await page.getByRole('button', { name: 'Invite', exact: true }).click();
+  }
+
+  await expect(page.getByText('Invite Member')).toBeVisible({ timeout: 5000 });
+  await page.getByLabel('Email').fill(inviteeEmail);
+  await page.getByRole('combobox').click();
+  await page.getByRole('option', { name: role }).click();
+  await page.getByRole('button', { name: 'Send Invitation' }).click();
+  await expect(page.getByText('Invitation sent.').last()).toBeVisible({
+    timeout: 10000,
+  });
+
+  const invitationUrl = await getInvitationUrl(baseURL, inviteeEmail);
+  await acceptInvitationViaApi(
+    page,
+    baseURL,
+    { email: inviteeEmail, password: inviteePassword },
+    getInvitationId(invitationUrl)
+  );
+
+  return { email: inviteeEmail, password: inviteePassword };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -183,6 +337,69 @@ test.describe('Workspace Settings', () => {
       )
     ).toBeVisible();
   });
+
+  test('workspace admin can view and update settings', async ({
+    page,
+    baseURL,
+  }) => {
+    const owner = {
+      email: uniqueEmail('settings-owner'),
+      password: VALID_PASSWORD,
+    };
+    await createVerifiedUser(baseURL!, owner);
+    await signIn(page, owner);
+    const workspaceId = await getActiveWorkspaceId(page);
+    const admin = await inviteWorkspaceUser(
+      page,
+      baseURL!,
+      workspaceId,
+      'admin'
+    );
+
+    await resetToSignedOutState(page);
+    await signIn(page, admin);
+
+    await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
+    await page.goto(`/ws/${workspaceId}/settings`);
+    await page.waitForURL(`**/ws/${workspaceId}/settings`, { timeout: 10000 });
+
+    const newName = `Admin Renamed ${Date.now()}`;
+    await page.getByLabel('Workspace Name').fill(newName);
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Workspace updated.')).toBeVisible({
+      timeout: 8000,
+    });
+    await expect(page.getByLabel('Workspace Name')).toHaveValue(newName);
+  });
+
+  test('workspace member cannot access settings by URL', async ({
+    page,
+    baseURL,
+  }) => {
+    const owner = {
+      email: uniqueEmail('settings-member-owner'),
+      password: VALID_PASSWORD,
+    };
+    await createVerifiedUser(baseURL!, owner);
+    await signIn(page, owner);
+    const workspaceId = await getActiveWorkspaceId(page);
+    const member = await inviteWorkspaceUser(
+      page,
+      baseURL!,
+      workspaceId,
+      'member'
+    );
+
+    await resetToSignedOutState(page);
+    await signIn(page, member);
+
+    await expect(
+      page.getByRole('link', { name: 'Settings' })
+    ).not.toBeVisible();
+    await page.goto(`/ws/${workspaceId}/settings`);
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('heading', { name: '404' })).toBeVisible();
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -248,7 +465,7 @@ test.describe('Workspace Switching & Creation', () => {
 
   test('delete non-last workspace', async ({ page, baseURL }) => {
     await signUpAndLogin(page, baseURL!);
-    await getActiveWorkspaceId(page);
+    const firstId = await getActiveWorkspaceId(page);
 
     // Create a second workspace to delete.
     const deleteName = `To Delete ${Date.now()}`;
@@ -279,10 +496,17 @@ test.describe('Workspace Switching & Creation', () => {
     // Redirected to remaining workspace.
     await page.waitForURL(/\/ws\/.+\/overview/, { timeout: 15000 });
     expect(page.url()).not.toContain(secondId);
+    expect(page.url()).toContain(firstId);
 
-    await expect(page.getByText('Workspace deleted successfully.')).toBeVisible(
-      { timeout: 8000 }
-    );
+    const workspaceTrigger = page
+      .locator('[data-sidebar="menu-button"]')
+      .first();
+    await expect(workspaceTrigger).not.toContainText(deleteName);
+
+    await openWorkspaceSwitcher(page);
+    await expect(
+      page.getByRole('menuitem', { name: deleteName })
+    ).not.toBeVisible();
   });
 
   test('cancel delete dialog leaves workspace intact', async ({
