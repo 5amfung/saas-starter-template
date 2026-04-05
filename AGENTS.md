@@ -244,6 +244,18 @@ Use `packages/logging` for:
 
 ## 7. Routing, Middleware, and Server Functions
 
+### Authorization and Capability Rules
+
+- UI does not authorize actions; UI renders capabilities derived from server-evaluated policy.
+- Routes and middleware guard page-level access.
+- Server functions guard action-level access.
+- Roles are inputs to policy evaluation, not business decisions by themselves.
+- Policy evaluation should be centralized, typed, and reusable across apps.
+- Shared packages own authorization contracts, capability definitions, and policy evaluators.
+- Apps own loading the contextual facts required for policy evaluation.
+- New protected features should define required capabilities before UI implementation begins.
+- Do not duplicate business semantics across packages; extend the existing owning package instead.
+
 ### File-Based Routing
 
 Both `apps/web` and `apps/admin` use file-based routing under `src/routes/`.
