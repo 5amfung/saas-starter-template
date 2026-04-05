@@ -282,6 +282,40 @@ test.describe('Workspace Settings', () => {
     await expect(page.getByLabel('Workspace Name')).toHaveValue(newName);
   });
 
+  test('renaming a workspace updates the workspace switcher immediately', async ({
+    page,
+    baseURL,
+  }) => {
+    await signUpAndLogin(page, baseURL!);
+    await goToSettings(page);
+
+    const nameInput = page.getByLabel('Workspace Name');
+    const originalName = await nameInput.inputValue();
+    const newName = `Renamed WS ${Date.now()}`;
+
+    await nameInput.fill(newName);
+    await page.getByRole('button', { name: 'Save' }).click();
+
+    await expect(page.getByText('Workspace updated.')).toBeVisible({
+      timeout: 8000,
+    });
+
+    await expect(
+      page.locator('[data-sidebar="menu-button"]').first()
+    ).toContainText(newName);
+
+    await openWorkspaceSwitcher(page);
+    await expect(page.getByRole('menuitem', { name: newName })).toBeVisible();
+
+    await page.getByRole('menuitem', { name: newName }).click();
+
+    await page.goto('/ws');
+    await openWorkspaceSwitcher(page);
+    await expect(
+      page.getByRole('menuitem', { name: originalName })
+    ).not.toBeVisible();
+  });
+
   test('Cancel resets name to saved value', async ({ page, baseURL }) => {
     await signUpAndLogin(page, baseURL!);
     await goToSettings(page);

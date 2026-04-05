@@ -6,16 +6,16 @@ import { AppSidebar } from '@/components/app-sidebar';
 
 const {
   useSessionMock,
-  useListOrganizationsMock,
   useActiveOrganizationMock,
   useWorkspaceAccessCapabilitiesQueryMock,
   useRouterStateMock,
+  useWorkspacesQueryMock,
 } = vi.hoisted(() => ({
   useSessionMock: vi.fn(),
-  useListOrganizationsMock: vi.fn(),
   useActiveOrganizationMock: vi.fn(),
   useWorkspaceAccessCapabilitiesQueryMock: vi.fn(),
   useRouterStateMock: vi.fn(),
+  useWorkspacesQueryMock: vi.fn(),
 }));
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
@@ -23,7 +23,6 @@ const {
 vi.mock('@workspace/auth/client', () => ({
   authClient: {
     useSession: useSessionMock,
-    useListOrganizations: useListOrganizationsMock,
     useActiveOrganization: useActiveOrganizationMock,
   },
 }));
@@ -39,6 +38,10 @@ vi.mock('@tanstack/react-router', async () => {
     useRouterState: useRouterStateMock,
   };
 });
+
+vi.mock('@/hooks/use-workspaces-query', () => ({
+  useWorkspacesQuery: useWorkspacesQueryMock,
+}));
 
 vi.mock('@workspace/ui/components/sidebar', () => ({
   Sidebar: ({ children, ...props }: React.ComponentProps<'aside'>) => (
@@ -128,7 +131,7 @@ beforeEach(() => {
   useWorkspaceAccessCapabilitiesQueryMock.mockReturnValue({
     data: { canViewBilling: true, canViewSettings: true },
   });
-  useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
+  useWorkspacesQueryMock.mockReturnValue({ data: mockOrgs });
   useActiveOrganizationMock.mockReturnValue({
     data: { id: 'ws-1', name: 'Workspace One' },
   });
@@ -192,7 +195,6 @@ describe('AppSidebar', () => {
 
     await renderSidebar();
 
-    // Overview, Projects, Members, Billing, Settings = 5 items.
     expect(screen.getByTestId('nav-main')).toHaveAttribute(
       'data-item-count',
       '5'
@@ -218,7 +220,7 @@ describe('AppSidebar', () => {
 
   it('renders NavMain with empty items when no workspace is active', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
-    useListOrganizationsMock.mockReturnValue({ data: [] });
+    useWorkspacesQueryMock.mockReturnValue({ data: [] });
     useActiveOrganizationMock.mockReturnValue({ data: null });
 
     await renderSidebar();
@@ -248,7 +250,7 @@ describe('AppSidebar', () => {
 
   it('renders NavUserSkeleton while session is pending', async () => {
     useSessionMock.mockReturnValue({ data: null, isPending: true });
-    useListOrganizationsMock.mockReturnValue({ data: null });
+    useWorkspacesQueryMock.mockReturnValue({ data: null });
     useActiveOrganizationMock.mockReturnValue({ data: null });
 
     await renderSidebar();
@@ -265,7 +267,6 @@ describe('AppSidebar', () => {
 
     await renderSidebar();
 
-    // Overview, Projects, Members, Settings = 4 items (no Billing).
     expect(screen.getByTestId('nav-main')).toHaveAttribute(
       'data-item-count',
       '4'
