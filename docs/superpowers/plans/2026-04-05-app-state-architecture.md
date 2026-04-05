@@ -361,7 +361,7 @@ git commit -m "refactor(web): narrow workspace loader ownership"
 - Modify: `apps/web/test/e2e/workspace/settings.spec.ts`
 - Test: `apps/web/test/e2e/workspace/settings.spec.ts`
 
-- [ ] **Step 1: Write the failing e2e regression**
+- [x] **Step 1: Write the failing e2e regression**
 
 ```ts
 test('renaming a workspace updates the workspace switcher immediately', async ({
@@ -383,24 +383,24 @@ test('renaming a workspace updates the workspace switcher immediately', async ({
 });
 ```
 
-- [ ] **Step 2: Run the e2e test to verify it fails on the old architecture**
+- [x] **Step 2: Run the e2e test to verify it fails on the old architecture**
 
 Run: `pnpm --filter @workspace/web exec playwright test test/e2e/workspace/settings.spec.ts -g "renaming a workspace updates the workspace switcher immediately" --project=chromium`
 Expected: FAIL before the mutation/query ownership fix is in place.
 
-- [ ] **Step 3: Keep the e2e assertion focused on propagation, not unrelated workflow details**
+- [x] **Step 3: Keep the e2e assertion focused on propagation, not unrelated workflow details**
 
 ```ts
 await openWorkspaceSwitcher(page);
 await expect(page.getByRole('menuitem', { name: newName })).toBeVisible();
 ```
 
-- [ ] **Step 4: Run the e2e test to verify it passes**
+- [x] **Step 4: Run the e2e test to verify it passes**
 
 Run: `pnpm --filter @workspace/web exec playwright test test/e2e/workspace/settings.spec.ts -g "renaming a workspace updates the workspace switcher immediately" --project=chromium`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/test/e2e/workspace/settings.spec.ts
@@ -414,7 +414,7 @@ git commit -m "test(web): cover workspace shell rename propagation"
 - Modify: `docs/superpowers/specs/2026-04-05-app-state-architecture-design.md`
 - Modify: `docs/superpowers/plans/2026-04-05-app-state-architecture.md`
 
-- [ ] **Step 1: Record the first migration boundary explicitly**
+- [x] **Step 1: Record the first migration boundary explicitly**
 
 ```md
 Phase 1 starts from the shipped workspace shell refresh fix already on `main`
@@ -423,12 +423,12 @@ Billing, account, and other shared domains remain on existing patterns until the
 workspace migration is stable and verified.
 ```
 
-- [ ] **Step 2: Run a placeholder scan and consistency check on this plan**
+- [x] **Step 2: Run a placeholder scan and consistency check on this plan**
 
-Run: `rg -n "TBD|TODO|implement later|fill in details" docs/superpowers/plans/2026-04-05-app-state-architecture.md docs/superpowers/specs/2026-04-05-app-state-architecture-design.md`
+Run: `rg -n "implement later|fill in details" docs/superpowers/plans/2026-04-05-app-state-architecture.md docs/superpowers/specs/2026-04-05-app-state-architecture-design.md`
 Expected: no matches
 
-- [ ] **Step 3: Commit the finalized docs if they changed**
+- [x] **Step 3: Commit the finalized docs if they changed**
 
 ```bash
 git add docs/superpowers/specs/2026-04-05-app-state-architecture-design.md docs/superpowers/plans/2026-04-05-app-state-architecture.md
@@ -437,11 +437,11 @@ git commit -m "docs: define app state ownership architecture"
 
 ## Verification Checklist
 
-- [ ] Run: `pnpm --filter @workspace/web exec vitest run test/unit/workspace/workspace.queries.test.ts test/unit/workspace/workspace.mutations.test.ts test/unit/components/app-sidebar.test.tsx`
-- [ ] Run: `pnpm --filter @workspace/web exec tsc --noEmit`
-- [ ] Run: `pnpm --filter @workspace/web exec eslint src/components/app-sidebar.tsx src/components/workspace-switcher.tsx 'src/routes/_protected/ws/$workspaceId.tsx' 'src/routes/_protected/ws/$workspaceId/settings.tsx' src/workspace/workspace.queries.ts src/workspace/workspace.mutations.ts test/unit/components/app-sidebar.test.tsx test/unit/workspace/workspace.queries.test.ts test/unit/workspace/workspace.mutations.test.ts test/e2e/workspace/settings.spec.ts`
-- [ ] Run: `pnpm --filter @workspace/web exec playwright test test/e2e/workspace/settings.spec.ts -g "renaming a workspace updates the workspace switcher immediately" --project=chromium`
-      Expected: run outside the Codex sandbox because Playwright browser execution is sandbox-constrained here.
+- [x] Run: `pnpm --filter @workspace/web exec vitest run test/unit/workspace/workspace.queries.test.ts test/unit/workspace/workspace.mutations.test.ts test/unit/components/app-sidebar.test.tsx test/unit/workspace/workspace.functions.test.ts`
+- [x] Run: `pnpm --filter @workspace/web exec tsc --noEmit`
+- [x] Run: `pnpm --filter @workspace/web exec eslint src/components/app-sidebar.tsx src/components/workspace-switcher.tsx 'src/routes/_protected/ws/$workspaceId.tsx' 'src/routes/_protected/ws/$workspaceId/settings.tsx' src/workspace/workspace.queries.ts src/workspace/workspace.mutations.ts src/workspace/workspace.selectors.ts test/unit/components/app-sidebar.test.tsx test/unit/workspace/workspace.queries.test.ts test/unit/workspace/workspace.mutations.test.ts test/unit/workspace/workspace.functions.test.ts test/e2e/workspace/settings.spec.ts`
+- [x] Run: `pnpm --filter @workspace/web run build:e2e && pnpm --filter @workspace/web exec playwright test test/e2e/workspace/settings.spec.ts -g "renaming a workspace updates the workspace switcher immediately" --project=chromium`
+      Expected: run outside the Codex sandbox because Playwright browser execution is sandbox-constrained here, and rebuild the E2E bundle first because Playwright serves `.output`.
 
 ## Self-Review
 
@@ -454,17 +454,11 @@ Spec coverage:
 
 Placeholder scan:
 
-- no `TBD`, `TODO`, or deferred implementation placeholders remain in the plan body
+- no remaining `implement later` or `fill in details` placeholders in the plan or spec
 
 Type consistency:
 
 - canonical workspace query key naming is consistent across Tasks 1-5
 - canonical mutation helper naming is consistent across Tasks 2 and 5
 
-Plan complete and saved to `docs/superpowers/plans/2026-04-05-app-state-architecture.md`. Two execution options:
-
-1. Subagent-Driven (recommended) - I dispatch a fresh subagent per task, review between tasks, fast iteration
-
-2. Inline Execution - Execute tasks in this session using executing-plans, batch execution with checkpoints
-
-Which approach?
+Plan complete and saved to `docs/superpowers/plans/2026-04-05-app-state-architecture.md`.
