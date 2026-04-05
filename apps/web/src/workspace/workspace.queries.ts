@@ -1,6 +1,5 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { authClient } from '@workspace/auth/client';
-import { getWorkspaceById } from '@/workspace/workspace.functions';
 
 type WorkspaceSummary = {
   id: string;
@@ -18,7 +17,11 @@ export const WORKSPACE_DETAIL_QUERY_KEY = (workspaceId: string) =>
 export function workspaceDetailQueryOptions(workspaceId: string) {
   return queryOptions({
     queryKey: WORKSPACE_DETAIL_QUERY_KEY(workspaceId),
-    queryFn: async () => getWorkspaceById({ data: { workspaceId } }),
+    queryFn: async () => {
+      const { getWorkspaceById } =
+        await import('@/workspace/workspace.functions');
+      return getWorkspaceById({ data: { workspaceId } });
+    },
   });
 }
 
@@ -33,6 +36,9 @@ export function useWorkspaceListQuery() {
   });
 }
 
-export function useWorkspaceDetailQuery(workspaceId: string) {
-  return useQuery(workspaceDetailQueryOptions(workspaceId));
+export function useWorkspaceDetailQuery(workspaceId: string | null) {
+  return useQuery({
+    ...workspaceDetailQueryOptions(workspaceId ?? ''),
+    enabled: workspaceId !== null,
+  });
 }

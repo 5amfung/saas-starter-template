@@ -10,12 +10,14 @@ const {
   useWorkspaceAccessCapabilitiesQueryMock,
   useRouterStateMock,
   useWorkspaceListQueryMock,
+  useWorkspaceDetailQueryMock,
 } = vi.hoisted(() => ({
   useSessionMock: vi.fn(),
   useActiveOrganizationMock: vi.fn(),
   useWorkspaceAccessCapabilitiesQueryMock: vi.fn(),
   useRouterStateMock: vi.fn(),
   useWorkspaceListQueryMock: vi.fn(),
+  useWorkspaceDetailQueryMock: vi.fn(),
 }));
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
@@ -41,6 +43,7 @@ vi.mock('@tanstack/react-router', async () => {
 
 vi.mock('@/workspace/workspace.queries', () => ({
   useWorkspaceListQuery: useWorkspaceListQueryMock,
+  useWorkspaceDetailQuery: useWorkspaceDetailQueryMock,
 }));
 
 vi.mock('@workspace/ui/components/sidebar', () => ({
@@ -71,6 +74,10 @@ vi.mock('@/components/workspace-switcher', () => ({
     <div
       data-testid="workspace-switcher"
       data-active-id={activeWorkspaceId ?? ''}
+      data-active-name={
+        workspaces.find((workspace) => workspace.id === activeWorkspaceId)
+          ?.name ?? ''
+      }
       data-workspace-count={workspaces.length}
     />
   ),
@@ -132,6 +139,7 @@ beforeEach(() => {
     data: { canViewBilling: true, canViewSettings: true },
   });
   useWorkspaceListQueryMock.mockReturnValue({ data: mockOrgs });
+  useWorkspaceDetailQueryMock.mockReturnValue({ data: null });
   useActiveOrganizationMock.mockReturnValue({
     data: { id: 'ws-1', name: 'Workspace One' },
   });
@@ -187,6 +195,23 @@ describe('AppSidebar', () => {
     expect(screen.getByRole('link', { name: 'Overview' })).toHaveAttribute(
       'href',
       '/ws/ws-1/overview'
+    );
+  });
+
+  it('overlays the active workspace detail onto the canonical workspace list', async () => {
+    useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
+    useWorkspaceListQueryMock.mockReturnValue({
+      data: [{ id: 'ws-1', name: 'Workspace One' }],
+    });
+    useWorkspaceDetailQueryMock.mockReturnValue({
+      data: { id: 'ws-1', name: 'Workspace One Renamed' },
+    });
+
+    await renderSidebar();
+
+    expect(screen.getByTestId('workspace-switcher')).toHaveAttribute(
+      'data-active-name',
+      'Workspace One Renamed'
     );
   });
 

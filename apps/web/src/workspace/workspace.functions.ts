@@ -13,19 +13,23 @@ const workspaceRouteInput = z.object({
   workspaceId: z.string().min(1),
 });
 
+type VerifiedSession = NonNullable<
+  Awaited<ReturnType<typeof auth.api.getSession>>
+>;
+
 const requireVerifiedSession = async (headers: Headers) => {
   const session = await auth.api.getSession({ headers });
   if (!session || !session.user.emailVerified) {
     throw redirect({ to: '/signin' });
   }
 
-  return session;
+  return session as VerifiedSession;
 };
 
 const resolveWorkspaceRouteAccess = async (
   headers: Headers,
   workspaceId: string,
-  session: Awaited<ReturnType<typeof auth.api.getSession>>
+  session: VerifiedSession
 ) => {
   const workspace = await ensureWorkspaceMembership(headers, workspaceId);
 

@@ -1,12 +1,8 @@
 import * as React from 'react';
 import { IconLoader2 } from '@tabler/icons-react';
 import { useForm } from '@tanstack/react-form';
-import {
-  useMutation,
-  useQueryClient,
-  type QueryClient,
-} from '@tanstack/react-query';
-import { createFileRoute, notFound, useRouter } from '@tanstack/react-router';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { createFileRoute, notFound } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { Button } from '@workspace/ui/components/button';
@@ -69,18 +65,6 @@ function renameWorkspaceDetail(
   };
 }
 
-function invalidateWorkspaceIdentityQueries(
-  queryClient: QueryClient,
-  workspaceId: string
-) {
-  return Promise.all([
-    queryClient.invalidateQueries({ queryKey: WORKSPACE_LIST_QUERY_KEY }),
-    queryClient.invalidateQueries({
-      queryKey: WORKSPACE_DETAIL_QUERY_KEY(workspaceId),
-    }),
-  ]);
-}
-
 export const Route = createFileRoute('/_protected/ws/$workspaceId/settings')({
   loader: async ({ params }) => {
     const capabilities = await getWorkspaceCapabilities({
@@ -101,7 +85,6 @@ function WorkspaceSettingsPage() {
   const { workspaceId } = Route.useParams();
   const capabilities = Route.useLoaderData();
   const queryClient = useQueryClient();
-  const router = useRouter();
   const { data: workspace } = useWorkspaceDetailQuery(workspaceId);
 
   useWorkspacesQuery();
@@ -134,7 +117,7 @@ function WorkspaceSettingsPage() {
         },
       });
     },
-    onSuccess: async (_data, nextName) => {
+    onSuccess: (_data, nextName) => {
       queryClient.setQueryData(
         WORKSPACE_LIST_QUERY_KEY,
         (
@@ -154,10 +137,6 @@ function WorkspaceSettingsPage() {
         WORKSPACE_DETAIL_QUERY_KEY(workspaceId),
         (previous) => renameWorkspaceDetail(previous, nextName)
       );
-      await Promise.all([
-        invalidateWorkspaceIdentityQueries(queryClient, workspaceId),
-        router.invalidate({ sync: true }),
-      ]);
       toast.success('Workspace updated.');
     },
     onError: (error) => {

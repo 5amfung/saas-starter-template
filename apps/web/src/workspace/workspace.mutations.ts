@@ -7,8 +7,10 @@ type WorkspaceSummary = {
   metadata?: unknown;
 };
 
-export function renameWorkspaceInList(
-  workspaces: Array<WorkspaceSummary> | undefined,
+type WorkspaceIdentity = Pick<WorkspaceSummary, 'id' | 'name'>;
+
+export function renameWorkspaceInList<T extends WorkspaceIdentity>(
+  workspaces: Array<T> | undefined,
   workspaceId: string,
   nextName: string
 ) {
