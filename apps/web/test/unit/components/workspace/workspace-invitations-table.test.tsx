@@ -13,6 +13,7 @@ const defaultProps = {
   totalPages: 1,
   sorting: [] as SortingState,
   isLoading: false,
+  canManageInvitations: true,
   onSortingChange: vi.fn(),
   onPageChange: vi.fn(),
   onPageSizeChange: vi.fn(),
@@ -160,6 +161,25 @@ describe('WorkspaceInvitationsTable', () => {
     // Skeleton elements are rendered — the empty state text should not appear.
     expect(
       screen.queryByText('No pending invitations found.')
+    ).not.toBeInTheDocument();
+  });
+
+  it('hides row actions for users without invitation management capability', () => {
+    const invitations = [
+      createMockInvitationRow({ id: 'inv-1', email: 'alice@example.com' }),
+    ];
+
+    render(
+      <WorkspaceInvitationsTable
+        {...defaultProps}
+        data={invitations}
+        total={1}
+        canManageInvitations={false}
+      />
+    );
+
+    expect(
+      screen.queryByRole('button', { name: /row actions/i })
     ).not.toBeInTheDocument();
   });
 });

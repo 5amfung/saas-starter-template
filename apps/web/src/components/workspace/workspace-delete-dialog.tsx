@@ -3,7 +3,6 @@ import { IconAlertTriangle, IconLoader2 } from '@tabler/icons-react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
-import { authClient } from '@workspace/auth/client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,14 +24,13 @@ type WorkspaceDeleteDialogProps = {
   workspaceId: string;
   workspaceName: string;
   isDisabled: boolean;
-  getNextWorkspaceIdAfterDelete: () => Promise<string | null>;
+  onDelete: () => Promise<string>;
 };
 
 export function WorkspaceDeleteDialog({
-  workspaceId,
   workspaceName,
   isDisabled,
-  getNextWorkspaceIdAfterDelete,
+  onDelete,
 }: WorkspaceDeleteDialogProps) {
   const navigate = useNavigate();
   const [open, setOpen] = React.useState(false);
@@ -40,26 +38,7 @@ export function WorkspaceDeleteDialog({
   const isConfirmed = confirmation === CONFIRMATION_TEXT;
 
   const deleteMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await authClient.organization.delete({
-        organizationId: workspaceId,
-      });
-      if (error) throw new Error(error.message);
-
-      const nextWorkspaceId = await getNextWorkspaceIdAfterDelete();
-      if (!nextWorkspaceId) {
-        throw new Error('Failed to find an active workspace after deletion.');
-      }
-
-      const { error: setActiveError } = await authClient.organization.setActive(
-        {
-          organizationId: nextWorkspaceId,
-        }
-      );
-      if (setActiveError) throw new Error(setActiveError.message);
-
-      return nextWorkspaceId;
-    },
+    mutationFn: onDelete,
     onSuccess: (nextWorkspaceId) => {
       toast.success('Workspace deleted successfully.');
       navigate({

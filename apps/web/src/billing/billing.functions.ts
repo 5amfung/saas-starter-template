@@ -14,20 +14,24 @@ import {
   reactivateWorkspaceSubscription as reactivateWorkspaceSubscriptionServer,
   requireVerifiedSession,
 } from '@/billing/billing.server';
+import { requireWorkspaceCapabilityForUser } from '@/policy/workspace-capabilities.server';
 import { auth } from '@/init';
 
-/**
- * Verifies the current user is the owner of the given workspace.
- * Throws if the user is not the owner.
- */
-async function requireWorkspaceOwner(
-  session: { user: { id: string } },
-  workspaceId: string
+type BillingCapability = 'canViewBilling' | 'canManageBilling';
+
+async function requireWorkspaceBillingCapability(
+  workspaceId: string,
+  capability: BillingCapability
 ) {
-  const ownerId = await auth.billing.getWorkspaceOwnerUserId(workspaceId);
-  if (!ownerId || ownerId !== session.user.id) {
-    throw new Error('Only the workspace owner can manage billing.');
-  }
+  const session = await requireVerifiedSession();
+  const headers = getRequestHeaders();
+  await requireWorkspaceCapabilityForUser(
+    headers,
+    workspaceId,
+    session.user.id,
+    capability
+  );
+  return headers;
 }
 
 /**
@@ -45,8 +49,7 @@ export const getBillingSummary = createServerFn().handler(async () => {
 export const getWorkspaceInvoices = createServerFn()
   .inputValidator(z.object({ workspaceId: z.string() }))
   .handler(async ({ data }) => {
-    const session = await requireVerifiedSession();
-    await requireWorkspaceOwner(session, data.workspaceId);
+    await requireWorkspaceBillingCapability(data.workspaceId, 'canViewBilling');
     return auth.billing.getInvoicesForWorkspace(data.workspaceId);
   });
 
@@ -66,9 +69,10 @@ const upgradeInput = z.object({
 export const createWorkspaceCheckoutSession = createServerFn()
   .inputValidator(upgradeInput)
   .handler(async ({ data }) => {
-    const session = await requireVerifiedSession();
-    await requireWorkspaceOwner(session, data.workspaceId);
-    const headers = getRequestHeaders();
+    const headers = await requireWorkspaceBillingCapability(
+      data.workspaceId,
+      'canManageBilling'
+    );
     return createCheckoutForWorkspace(
       headers,
       data.workspaceId,
@@ -84,9 +88,10 @@ export const createWorkspaceCheckoutSession = createServerFn()
 export const createWorkspacePortalSession = createServerFn()
   .inputValidator(z.object({ workspaceId: z.string() }))
   .handler(async ({ data }) => {
-    const session = await requireVerifiedSession();
-    await requireWorkspaceOwner(session, data.workspaceId);
-    const headers = getRequestHeaders();
+    const headers = await requireWorkspaceBillingCapability(
+      data.workspaceId,
+      'canManageBilling'
+    );
     return createWorkspaceBillingPortal(headers, data.workspaceId);
   });
 
@@ -96,9 +101,10 @@ export const createWorkspacePortalSession = createServerFn()
 export const getWorkspaceBillingData = createServerFn()
   .inputValidator(z.object({ workspaceId: z.string() }))
   .handler(async ({ data }) => {
-    const session = await requireVerifiedSession();
-    await requireWorkspaceOwner(session, data.workspaceId);
-    const headers = getRequestHeaders();
+    const headers = await requireWorkspaceBillingCapability(
+      data.workspaceId,
+      'canViewBilling'
+    );
     return getWorkspaceBillingDataServer(headers, data.workspaceId);
   });
 
@@ -108,9 +114,10 @@ export const getWorkspaceBillingData = createServerFn()
 export const reactivateWorkspaceSubscription = createServerFn()
   .inputValidator(z.object({ workspaceId: z.string() }))
   .handler(async ({ data }) => {
-    const session = await requireVerifiedSession();
-    await requireWorkspaceOwner(session, data.workspaceId);
-    const headers = getRequestHeaders();
+    const headers = await requireWorkspaceBillingCapability(
+      data.workspaceId,
+      'canManageBilling'
+    );
     return reactivateWorkspaceSubscriptionServer(headers, data.workspaceId);
   });
 
@@ -127,9 +134,10 @@ const downgradeInput = z.object({
 export const downgradeWorkspaceSubscription = createServerFn()
   .inputValidator(downgradeInput)
   .handler(async ({ data }) => {
-    const session = await requireVerifiedSession();
-    await requireWorkspaceOwner(session, data.workspaceId);
-    const headers = getRequestHeaders();
+    const headers = await requireWorkspaceBillingCapability(
+      data.workspaceId,
+      'canManageBilling'
+    );
     return downgradeWorkspaceSubscriptionServer(
       headers,
       data.workspaceId,
@@ -145,9 +153,10 @@ export const downgradeWorkspaceSubscription = createServerFn()
 export const cancelWorkspaceSubscription = createServerFn()
   .inputValidator(z.object({ workspaceId: z.string() }))
   .handler(async ({ data }) => {
-    const session = await requireVerifiedSession();
-    await requireWorkspaceOwner(session, data.workspaceId);
-    const headers = getRequestHeaders();
+    const headers = await requireWorkspaceBillingCapability(
+      data.workspaceId,
+      'canManageBilling'
+    );
     return cancelWorkspaceSubscriptionServer(headers, data.workspaceId);
   });
 
@@ -162,8 +171,9 @@ const checkEntitlementInput = z.object({
 export const checkWorkspaceEntitlement = createServerFn()
   .inputValidator(checkEntitlementInput)
   .handler(async ({ data }) => {
-    const session = await requireVerifiedSession();
-    await requireWorkspaceOwner(session, data.workspaceId);
-    const headers = getRequestHeaders();
+    const headers = await requireWorkspaceBillingCapability(
+      data.workspaceId,
+      'canManageBilling'
+    );
     return checkWorkspaceEntitlementServer(headers, data.workspaceId, data.key);
   });

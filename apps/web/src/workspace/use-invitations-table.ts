@@ -12,6 +12,10 @@ import {
 import type { WorkspaceInvitationRow } from '@/components/workspace/workspace-invitations-table';
 import type { SortingState } from '@tanstack/react-table';
 import type { InviteDraft, InviteRole } from './workspace-members.types';
+import {
+  cancelWorkspaceInvitation,
+  inviteWorkspaceMember,
+} from '@/workspace/workspace-members.functions';
 
 export function useInvitationsTable(workspaceId: string) {
   const [page, setPage] = React.useState(1);
@@ -55,21 +59,24 @@ export function useInvitationsTable(workspaceId: string) {
 
   const inviteMutation = useMutation({
     mutationFn: async (payload: { email: string; role: InviteRole }) => {
-      const { error } = await authClient.organization.inviteMember({
-        email: payload.email,
-        role: payload.role,
-        organizationId: workspaceId,
+      await inviteWorkspaceMember({
+        data: {
+          email: payload.email,
+          role: payload.role,
+          workspaceId,
+        },
       });
-      if (error) throw new Error(error.message);
     },
   });
 
   const removeInvitationMutation = useMutation({
     mutationFn: async (invitationId: string) => {
-      const { error } = await authClient.organization.cancelInvitation({
-        invitationId,
+      await cancelWorkspaceInvitation({
+        data: {
+          workspaceId,
+          invitationId,
+        },
       });
-      if (error) throw new Error(error.message);
     },
     onSuccess: async () => {
       toast.success('Invitation removed.');
@@ -91,13 +98,14 @@ export function useInvitationsTable(workspaceId: string) {
       )
         ? (payload.role as (typeof VALID_ORG_ROLES)[number])
         : 'member';
-      const { error } = await authClient.organization.inviteMember({
-        email: payload.email,
-        role,
-        organizationId: workspaceId,
-        resend: true,
+      await inviteWorkspaceMember({
+        data: {
+          email: payload.email,
+          role: role === 'owner' ? 'admin' : role,
+          workspaceId,
+          resend: true,
+        },
       });
-      if (error) throw new Error(error.message);
     },
     onSuccess: async () => {
       toast.success('Invitation resent.');

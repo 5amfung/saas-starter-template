@@ -4,10 +4,10 @@ import {
   SidebarInset,
   SidebarProvider,
 } from '@workspace/ui/components/sidebar';
-import { authClient } from '@workspace/auth/client';
 import { SiteHeader } from '@workspace/components/layout';
 import { AppSidebar } from '@/components/app-sidebar';
 import { authMiddleware } from '@/middleware/auth';
+import { useAdminAppCapabilities } from '@/policy/admin-app-capabilities';
 
 export const Route = createFileRoute('/_protected')({
   component: ProtectedLayout,
@@ -18,10 +18,8 @@ export const Route = createFileRoute('/_protected')({
 
 function ProtectedLayout() {
   const navigate = useNavigate();
-  const { data: session, isPending } = authClient.useSession();
-
-  const isAuthenticated =
-    session && session.user.emailVerified && session.user.role === 'admin';
+  const { capabilities, isPending } = useAdminAppCapabilities();
+  const isAuthenticated = capabilities.canAccessAdminApp;
 
   useEffect(() => {
     if (!isPending && !isAuthenticated) {

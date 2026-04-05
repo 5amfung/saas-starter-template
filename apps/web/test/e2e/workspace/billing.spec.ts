@@ -35,26 +35,92 @@ async function setupUserAndGoToBilling(
   const workspaceId = page.url().match(/\/ws\/([^/]+)\//)?.[1];
   if (!workspaceId) throw new Error('Could not extract workspaceId from URL');
 
-  await navigateToWorkspaceBilling(page, workspaceId);
+  await waitForWorkspacePageReady(page, workspaceId, 'overview');
+  await openWorkspacePageFromSidebar(page, workspaceId, 'Billing', 'billing');
   await expect(page.getByText('Current plan')).toBeVisible({ timeout: 15000 });
 
   return { workspaceId };
+}
+
+async function waitForWorkspacePageReady(
+  page: Page,
+  workspaceId: string,
+  pagePath: 'overview' | 'members' | 'billing'
+): Promise<void> {
+  await page.waitForURL(`**/ws/${workspaceId}/${pagePath}`, {
+    timeout: 15000,
+  });
+
+  if (pagePath === 'overview') {
+    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible({
+      timeout: 15000,
+    });
+    return;
+  }
+
+  if (pagePath === 'members') {
+    await expect(page.getByRole('tab', { name: 'Team Members' })).toBeVisible({
+      timeout: 15000,
+    });
+    return;
+  }
+
+  await expect(page.getByText('Current plan')).toBeVisible({
+    timeout: 15000,
+  });
+}
+
+async function openWorkspacePageFromSidebar(
+  page: Page,
+  workspaceId: string,
+  linkName: 'Billing' | 'Members',
+  pagePath: 'billing' | 'members'
+): Promise<void> {
+  await page
+    .locator('a[data-slot="sidebar-menu-button"]')
+    .filter({ hasText: linkName })
+    .click();
+  await waitForWorkspacePageReady(page, workspaceId, pagePath);
+}
+
+async function waitForWorkspaceShellReady(
+  page: Page,
+  workspaceId: string
+): Promise<void> {
+  await page.waitForURL(
+    new RegExp(`/ws/${workspaceId}/(overview|billing|members)`),
+    {
+      timeout: 15000,
+    }
+  );
 }
 
 async function navigateToWorkspaceBilling(
   page: Page,
   workspaceId: string
 ): Promise<void> {
+  const billingLink = page
+    .locator('a[data-slot="sidebar-menu-button"]')
+    .filter({ hasText: 'Billing' });
+
+  if (await billingLink.isVisible()) {
+    await billingLink.click();
+    await waitForWorkspacePageReady(page, workspaceId, 'billing');
+    return;
+  }
+
   try {
     await page.goto(`/ws/${workspaceId}/billing`);
+    await waitForWorkspacePageReady(page, workspaceId, 'billing');
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (!message.includes('interrupted by another navigation')) {
       throw error;
     }
-  }
 
-  await page.waitForURL(`**/ws/${workspaceId}/billing`, { timeout: 15000 });
+    await waitForWorkspaceShellReady(page, workspaceId);
+    await openWorkspacePageFromSidebar(page, workspaceId, 'Billing', 'billing');
+  }
 }
 
 async function openManagePlanDialog(page: Page) {
@@ -100,12 +166,11 @@ async function signInAndGoToWorkspacePage(
   }
 
   if (pagePath === 'billing') {
-    await navigateToWorkspaceBilling(page, workspaceId);
+    await waitForWorkspacePageReady(page, workspaceId, 'overview');
+    await openWorkspacePageFromSidebar(page, workspaceId, 'Billing', 'billing');
   } else if (pagePath !== 'overview') {
-    await page.goto(`/ws/${workspaceId}/${pagePath}`);
-    await page.waitForURL(`**/ws/${workspaceId}/${pagePath}`, {
-      timeout: 15000,
-    });
+    await waitForWorkspacePageReady(page, workspaceId, 'overview');
+    await openWorkspacePageFromSidebar(page, workspaceId, 'Members', 'members');
   }
 
   return workspaceId;
@@ -225,8 +290,8 @@ async function setupInvitedMember(
   if (await upgradeBtn.isVisible()) {
     await upgradeBtn.click();
     await completeStripeCheckout(page, { redirectPattern: /localhost/ });
-    await page.goto(`/ws/${workspaceId}/members`);
-    await page.waitForURL(`**/ws/${workspaceId}/members`, { timeout: 15000 });
+    await waitForWorkspaceShellReady(page, workspaceId);
+    await openWorkspacePageFromSidebar(page, workspaceId, 'Members', 'members');
     await page.getByRole('button', { name: 'Invite' }).click();
   }
 
@@ -896,8 +961,7 @@ test.describe('Workspace Billing', () => {
       timeout: 15000,
     });
 
-    await page.goto(`/ws/${workspaceId}/members`);
-    await page.waitForURL(`**/ws/${workspaceId}/members`, { timeout: 15000 });
+    await openWorkspacePageFromSidebar(page, workspaceId, 'Members', 'members');
     await setupInvitedMember(
       page,
       baseURL!,
@@ -957,9 +1021,9 @@ test.describe('Workspace Billing', () => {
     expect(page.url()).toMatch(/\/signin/);
   });
 
-  // ── 25. Non-owner cannot access billing ───────────────────────────────
+  // ── 25. Members without billing capability are denied at the route ───
 
-  test('non-owner member cannot access billing page', async ({
+  test('member without billing capability gets workspace billing 404', async ({
     page,
     baseURL,
   }) => {
@@ -992,10 +1056,11 @@ test.describe('Workspace Billing', () => {
     await page.goto(`/ws/${workspaceId}/billing`);
     await page.waitForLoadState('networkidle');
 
-    await expect(page.getByText('Current plan')).not.toBeVisible();
+    await expect(page.getByRole('heading', { name: '404' })).toBeVisible();
     await expect(
-      page.getByText('Only the workspace owner can manage billing.')
-    ).not.toBeVisible();
+      page.getByText("The page you're looking for doesn't exist.")
+    ).toBeVisible();
+    await expect(page.getByText('Current plan')).not.toBeVisible();
   });
 
   // ── 26. Concurrent upgrade button lockout ─────────────────────────────

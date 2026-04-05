@@ -8,12 +8,12 @@ const {
   useSessionMock,
   useListOrganizationsMock,
   useActiveOrganizationMock,
-  useActiveMemberRoleQueryMock,
+  useWorkspaceAccessCapabilitiesQueryMock,
 } = vi.hoisted(() => ({
   useSessionMock: vi.fn(),
   useListOrganizationsMock: vi.fn(),
   useActiveOrganizationMock: vi.fn(),
-  useActiveMemberRoleQueryMock: vi.fn(),
+  useWorkspaceAccessCapabilitiesQueryMock: vi.fn(),
 }));
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
@@ -26,8 +26,8 @@ vi.mock('@workspace/auth/client', () => ({
   },
 }));
 
-vi.mock('@/hooks/use-active-member-role-query', () => ({
-  useActiveMemberRoleQuery: useActiveMemberRoleQueryMock,
+vi.mock('@/policy/workspace-capabilities', () => ({
+  useWorkspaceAccessCapabilitiesQuery: useWorkspaceAccessCapabilitiesQueryMock,
 }));
 
 vi.mock('@workspace/ui/components/sidebar', () => ({
@@ -65,7 +65,13 @@ vi.mock('@/components/workspace-switcher', () => ({
 
 vi.mock('@/components/nav-main', () => ({
   NavMain: ({ items }: { items: Array<{ title: string; url: string }> }) => (
-    <nav data-testid="nav-main" data-item-count={items.length} />
+    <nav data-testid="nav-main" data-item-count={items.length}>
+      {items.map((item) => (
+        <a key={item.title} href={item.url}>
+          {item.title}
+        </a>
+      ))}
+    </nav>
   ),
 }));
 
@@ -102,7 +108,9 @@ const mockOrgs = [
 
 beforeEach(() => {
   vi.clearAllMocks();
-  useActiveMemberRoleQueryMock.mockReturnValue({ data: 'owner' });
+  useWorkspaceAccessCapabilitiesQueryMock.mockReturnValue({
+    data: { canViewBilling: true, canViewSettings: true },
+  });
 });
 
 describe('AppSidebar', () => {
@@ -138,7 +146,7 @@ describe('AppSidebar', () => {
     expect(switcher).toHaveAttribute('data-active-id', 'ws-1');
   });
 
-  it('renders NavMain with workspace nav items when workspace is active', async () => {
+  it('shows Billing nav item when workspace capabilities allow billing access', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
     useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
     useActiveOrganizationMock.mockReturnValue({
@@ -152,6 +160,27 @@ describe('AppSidebar', () => {
       'data-item-count',
       '5'
     );
+    expect(screen.getByRole('link', { name: 'Billing' })).toHaveAttribute(
+      'href',
+      '/ws/ws-1/billing'
+    );
+  });
+
+  it('hides Settings nav item when workspace capabilities deny settings access', async () => {
+    useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
+    useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
+    useActiveOrganizationMock.mockReturnValue({
+      data: { id: 'ws-1', name: 'Workspace One' },
+    });
+    useWorkspaceAccessCapabilitiesQueryMock.mockReturnValue({
+      data: { canViewBilling: true, canViewSettings: false },
+    });
+
+    await renderSidebar();
+
+    expect(
+      screen.queryByRole('link', { name: 'Settings' })
+    ).not.toBeInTheDocument();
   });
 
   it('renders NavMain with empty items when no workspace is active', async () => {
@@ -197,13 +226,15 @@ describe('AppSidebar', () => {
     expect(screen.queryByTestId('nav-user')).not.toBeInTheDocument();
   });
 
-  it('hides Billing nav item for non-owner workspace members', async () => {
+  it('hides Billing nav item when workspace capabilities deny billing access', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
     useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
     useActiveOrganizationMock.mockReturnValue({
       data: { id: 'ws-1', name: 'Workspace One' },
     });
-    useActiveMemberRoleQueryMock.mockReturnValue({ data: 'member' });
+    useWorkspaceAccessCapabilitiesQueryMock.mockReturnValue({
+      data: { canViewBilling: false, canViewSettings: true },
+    });
 
     await renderSidebar();
 
@@ -212,5 +243,8 @@ describe('AppSidebar', () => {
       'data-item-count',
       '4'
     );
+    expect(
+      screen.queryByRole('link', { name: 'Billing' })
+    ).not.toBeInTheDocument();
   });
 });

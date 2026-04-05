@@ -14,7 +14,8 @@ const defaultProps = {
   sorting: [] as SortingState,
   isLoading: false,
   currentUserId: 'user-1',
-  currentUserRole: 'owner',
+  workspaceRole: 'owner',
+  canManageMembers: true,
   onSortingChange: vi.fn(),
   onPageChange: vi.fn(),
   onPageSizeChange: vi.fn(),
@@ -132,7 +133,8 @@ describe('WorkspaceMembersTable', () => {
         data={members}
         total={1}
         currentUserId="user-1"
-        currentUserRole="owner"
+        workspaceRole="owner"
+        canManageMembers={true}
         onRemoveMember={onRemoveMember}
       />
     );
@@ -165,7 +167,8 @@ describe('WorkspaceMembersTable', () => {
         data={members}
         total={1}
         currentUserId="user-1"
-        currentUserRole="member"
+        workspaceRole="member"
+        canManageMembers={false}
         onLeave={onLeave}
       />
     );
@@ -201,5 +204,33 @@ describe('WorkspaceMembersTable', () => {
 
     expect(prevButton).toBeDisabled();
     expect(nextButton).toBeDisabled();
+  });
+
+  it('shows disabled remove for non-managers viewing another member', async () => {
+    const user = userEvent.setup();
+    const members = [
+      createMockMemberRow({
+        id: 'member-2',
+        userId: 'user-2',
+        email: 'bob@example.com',
+        role: 'member',
+      }),
+    ];
+
+    render(
+      <WorkspaceMembersTable
+        {...defaultProps}
+        data={members}
+        total={1}
+        currentUserId="user-1"
+        workspaceRole="member"
+        canManageMembers={false}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /row actions/i }));
+
+    const removeItem = await screen.findByRole('menuitem', { name: /remove/i });
+    expect(removeItem).toHaveAttribute('aria-disabled', 'true');
   });
 });

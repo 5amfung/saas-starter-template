@@ -26,8 +26,8 @@ import {
   NavUser,
   NavUserSkeleton,
 } from '@workspace/components/layout';
-import { useActiveMemberRoleQuery } from '@/hooks/use-active-member-role-query';
 import { NavMain } from '@/components/nav-main';
+import { useWorkspaceAccessCapabilitiesQuery } from '@/policy/workspace-capabilities';
 import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 
 const data = {
@@ -59,8 +59,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const activeWorkspaceId =
     activeOrganization?.id ?? organizations?.at(0)?.id ?? null;
 
-  const { data: activeRole } = useActiveMemberRoleQuery(activeWorkspaceId);
-  const isWorkspaceOwner = activeRole === 'owner';
+  const { data: activeWorkspaceCapabilities } =
+    useWorkspaceAccessCapabilitiesQuery(activeWorkspaceId);
 
   const navMain = activeWorkspaceId
     ? [
@@ -79,7 +79,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: `/ws/${activeWorkspaceId}/members`,
           icon: <IconUsers />,
         },
-        ...(isWorkspaceOwner
+        ...(activeWorkspaceCapabilities?.canViewBilling
           ? [
               {
                 title: 'Billing',
@@ -88,11 +88,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               },
             ]
           : []),
-        {
-          title: 'Settings',
-          url: `/ws/${activeWorkspaceId}/settings`,
-          icon: <IconSettings />,
-        },
+        ...(activeWorkspaceCapabilities?.canViewSettings
+          ? [
+              {
+                title: 'Settings',
+                url: `/ws/${activeWorkspaceId}/settings`,
+                icon: <IconSettings />,
+              },
+            ]
+          : []),
       ]
     : [];
 

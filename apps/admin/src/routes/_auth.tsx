@@ -3,6 +3,7 @@ import { Outlet, createFileRoute, useNavigate } from '@tanstack/react-router';
 import { authClient } from '@workspace/auth/client';
 import { AuthLayout } from '@workspace/components/auth';
 import { guestMiddleware } from '@/middleware/auth';
+import { getAdminAppCapabilitiesForSession } from '@/policy/admin-app-capabilities.shared';
 
 export const Route = createFileRoute('/_auth')({
   component: AuthPage,
@@ -14,9 +15,8 @@ export const Route = createFileRoute('/_auth')({
 function AuthPage() {
   const navigate = useNavigate();
   const { data: session, isPending } = authClient.useSession();
-
   const isAuthenticated =
-    session && session.user.emailVerified && session.user.role === 'admin';
+    getAdminAppCapabilitiesForSession(session).canAccessAdminApp;
 
   useEffect(() => {
     if (!isPending && isAuthenticated) {

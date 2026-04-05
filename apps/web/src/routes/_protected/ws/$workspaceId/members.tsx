@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, notFound } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { Button } from '@workspace/ui/components/button';
 import {
@@ -14,11 +14,23 @@ import { WorkspaceInvitationsTable } from '@/components/workspace/workspace-invi
 import { WorkspaceInviteDialog } from '@/components/workspace/workspace-invite-dialog';
 import { WorkspaceMembersTable } from '@/components/workspace/workspace-members-table';
 import { useUpgradePrompt } from '@/hooks/use-upgrade-prompt';
+import { getWorkspaceCapabilities } from '@/policy/workspace-capabilities.functions';
 import { useInvitationsTable } from '@/workspace/use-invitations-table';
 import { useMembersTable } from '@/workspace/use-members-table';
 import { DEFAULT_INVITE_ROLES } from '@/workspace/workspace-members.types';
 
 export const Route = createFileRoute('/_protected/ws/$workspaceId/members')({
+  loader: async ({ params }) => {
+    const capabilities = await getWorkspaceCapabilities({
+      data: { workspaceId: params.workspaceId },
+    });
+
+    if (!capabilities.canViewMembers) {
+      throw notFound({ routeId: '__root__' });
+    }
+
+    return capabilities;
+  },
   component: WorkspaceMembersPage,
   staticData: { title: 'Members' },
 });
@@ -28,15 +40,22 @@ function WorkspaceMembersPage() {
   const [activeTab, setActiveTab] = React.useState<'members' | 'invitations'>(
     'members'
   );
+  const capabilities = Route.useLoaderData();
 
-  const { currentUserRole, ...membersTableProps } =
-    useMembersTable(workspaceId);
+  const { ...membersTableProps } = useMembersTable(
+    workspaceId,
+    capabilities.workspaceRole
+  );
 
   const { inviteDialog, ...invitationsTableProps } =
     useInvitationsTable(workspaceId);
 
-  const canInvite = currentUserRole === 'owner' || currentUserRole === 'admin';
-  const membersTablePropsWithRole = { ...membersTableProps, currentUserRole };
+  const canInvite = capabilities.canInviteMembers;
+  const membersTablePropsWithRole = {
+    ...membersTableProps,
+    workspaceRole: capabilities.workspaceRole,
+    canManageMembers: capabilities.canManageMembers,
+  };
 
   const upgradePrompt = useUpgradePrompt(workspaceId);
 
@@ -105,7 +124,10 @@ function WorkspaceMembersPage() {
           </TabsContent>
 
           <TabsContent value="invitations" className="mt-4">
-            <WorkspaceInvitationsTable {...invitationsTableProps} />
+            <WorkspaceInvitationsTable
+              {...invitationsTableProps}
+              canManageInvitations={capabilities.canInviteMembers}
+            />
           </TabsContent>
         </Tabs>
       </div>

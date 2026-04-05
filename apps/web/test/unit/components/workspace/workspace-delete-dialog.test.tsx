@@ -4,20 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
 
-const { organizationDeleteMock, organizationSetActiveMock, navigateMock } =
-  vi.hoisted(() => ({
-    organizationDeleteMock: vi.fn(),
-    organizationSetActiveMock: vi.fn(),
-    navigateMock: vi.fn(),
-  }));
-
-vi.mock('@workspace/auth/client', () => ({
-  authClient: {
-    organization: {
-      delete: organizationDeleteMock,
-      setActive: organizationSetActiveMock,
-    },
-  },
+const { navigateMock } = vi.hoisted(() => ({
+  navigateMock: vi.fn(),
 }));
 
 vi.mock('@tanstack/react-router', async () => {
@@ -36,15 +24,13 @@ const defaultProps = {
   workspaceId: 'ws-123',
   workspaceName: 'My Workspace',
   isDisabled: false,
-  getNextWorkspaceIdAfterDelete: vi.fn().mockResolvedValue('ws-456'),
+  onDelete: vi.fn().mockResolvedValue('ws-456'),
 };
 
 describe('WorkspaceDeleteDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    defaultProps.getNextWorkspaceIdAfterDelete = vi
-      .fn()
-      .mockResolvedValue('ws-456');
+    defaultProps.onDelete = vi.fn().mockResolvedValue('ws-456');
   });
 
   it('renders delete button', () => {
@@ -101,9 +87,6 @@ describe('WorkspaceDeleteDialog', () => {
     const { toast } = await import('sonner');
     const user = userEvent.setup();
 
-    organizationDeleteMock.mockResolvedValue({ error: null });
-    organizationSetActiveMock.mockResolvedValue({ error: null });
-
     renderWithProviders(<WorkspaceDeleteDialog {...defaultProps} />);
 
     await user.click(screen.getByRole('button', { name: /delete workspace/i }));
@@ -111,21 +94,7 @@ describe('WorkspaceDeleteDialog', () => {
     await user.click(screen.getByRole('button', { name: /confirm delete/i }));
 
     await waitFor(() => {
-      expect(organizationDeleteMock).toHaveBeenCalledWith({
-        organizationId: 'ws-123',
-      });
-    });
-
-    await waitFor(() => {
-      expect(defaultProps.getNextWorkspaceIdAfterDelete).toHaveBeenCalledTimes(
-        1
-      );
-    });
-
-    await waitFor(() => {
-      expect(organizationSetActiveMock).toHaveBeenCalledWith({
-        organizationId: 'ws-456',
-      });
+      expect(defaultProps.onDelete).toHaveBeenCalledTimes(1);
     });
 
     await waitFor(() => {
@@ -146,9 +115,9 @@ describe('WorkspaceDeleteDialog', () => {
     const { toast } = await import('sonner');
     const user = userEvent.setup();
 
-    organizationDeleteMock.mockResolvedValue({
-      error: { message: 'Permission denied' },
-    });
+    defaultProps.onDelete = vi
+      .fn()
+      .mockRejectedValue(new Error('Permission denied'));
 
     renderWithProviders(<WorkspaceDeleteDialog {...defaultProps} />);
 

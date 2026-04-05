@@ -1,20 +1,10 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
-import { createServerFn } from '@tanstack/react-start';
-import { getRequestHeaders } from '@tanstack/react-start/server';
-import { auth } from '@/init';
-
-const getSessionStatus = createServerFn().handler(async () => {
-  const headers = getRequestHeaders();
-  const session = await auth.api.getSession({ headers });
-  return {
-    isAdmin: !!session?.user.emailVerified && session.user.role === 'admin',
-  };
-});
+import { getAdminAppCapabilities } from '@/policy/admin-app-capabilities.functions';
 
 export const Route = createFileRoute('/')({
   beforeLoad: async () => {
-    const { isAdmin } = await getSessionStatus();
-    if (isAdmin) {
+    const capabilities = await getAdminAppCapabilities();
+    if (capabilities.canAccessAdminApp) {
       throw redirect({ to: '/dashboard' });
     }
     throw redirect({ to: '/signin' });

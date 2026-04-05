@@ -2,10 +2,9 @@ import * as React from 'react';
 import { IconLoader2 } from '@tabler/icons-react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { createFileRoute, getRouteApi } from '@tanstack/react-router';
+import { createFileRoute, getRouteApi, notFound } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { authClient } from '@workspace/auth/client';
 import { Button } from '@workspace/ui/components/button';
 import {
   Card,
@@ -23,10 +22,13 @@ import {
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
 import { Separator } from '@workspace/ui/components/separator';
-import { FREE_PLAN_ID } from '@workspace/billing';
 import { toFieldErrorItem } from '@workspace/components/lib';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
-import { useBillingDataQuery } from '@/billing/use-billing-data-query';
+import { getWorkspaceCapabilities } from '@/policy/workspace-capabilities.functions';
+import {
+  deleteWorkspace,
+  updateWorkspaceSettings,
+} from '@/workspace/workspace-settings.functions';
 
 const workspaceSettingsSchema = z.object({
   name: z.string().trim().min(1, 'Workspace name is required.'),
@@ -35,16 +37,18 @@ const workspaceSettingsSchema = z.object({
 const PAGE_LAYOUT_CLASS =
   'mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6';
 
-const sortByCreatedAtAscending = (
-  left: { createdAt?: string | Date },
-  right: { createdAt?: string | Date }
-): number => {
-  const leftDate = left.createdAt ? new Date(left.createdAt).getTime() : 0;
-  const rightDate = right.createdAt ? new Date(right.createdAt).getTime() : 0;
-  return leftDate - rightDate;
-};
-
 export const Route = createFileRoute('/_protected/ws/$workspaceId/settings')({
+  loader: async ({ params }) => {
+    const capabilities = await getWorkspaceCapabilities({
+      data: { workspaceId: params.workspaceId },
+    });
+
+    if (!capabilities.canViewSettings) {
+      throw notFound({ routeId: '__root__' });
+    }
+
+    return capabilities;
+  },
   component: WorkspaceSettingsPage,
   staticData: { title: 'Workspace Settings' },
 });
@@ -53,28 +57,17 @@ const workspaceRouteApi = getRouteApi('/_protected/ws/$workspaceId');
 
 function WorkspaceSettingsPage() {
   const { workspaceId } = Route.useParams();
-  const { workspace, role } = workspaceRouteApi.useLoaderData();
-  const { data: activeOrganization } = authClient.useActiveOrganization();
+  const { workspace } = workspaceRouteApi.useLoaderData();
+  const capabilities = Route.useLoaderData();
 
-  const isOwner = role === 'owner';
-
-  const billingQuery = useBillingDataQuery(workspaceId, isOwner);
-
-  const hasActiveSubscription =
-    billingQuery.data?.planId !== undefined &&
-    billingQuery.data.planId !== FREE_PLAN_ID &&
-    billingQuery.data.subscription?.status === 'active';
-
-  const { data: organizationList } = authClient.useListOrganizations();
-  const isLastWorkspace = (organizationList?.length ?? 0) <= 1;
-  const canDelete = isOwner && !isLastWorkspace && !hasActiveSubscription;
-  const deleteDisabledMessage = !isOwner
-    ? 'Only the owner can delete this workspace.'
-    : hasActiveSubscription
-      ? 'This workspace can only be deleted after the subscription has ended.'
-      : isLastWorkspace
-        ? 'Cannot delete your last workspace.'
-        : null;
+  const deleteDisabledMessage =
+    capabilities.deleteWorkspaceBlockedReason === 'not-owner'
+      ? 'Only the owner can delete this workspace.'
+      : capabilities.deleteWorkspaceBlockedReason === 'active-subscription'
+        ? 'This workspace can only be deleted after the subscription has ended.'
+        : capabilities.deleteWorkspaceBlockedReason === 'last-workspace'
+          ? 'Cannot delete your last workspace.'
+          : null;
 
   // This keeps the input stable during save and avoids the brief revert.
   const [initialWorkspaceName, setInitialWorkspaceName] = React.useState(
@@ -86,20 +79,12 @@ function WorkspaceSettingsPage() {
 
   const updateMutation = useMutation({
     mutationFn: async (name: string) => {
-      if (activeOrganization?.id !== workspaceId) {
-        const { error: setActiveError } =
-          await authClient.organization.setActive({
-            organizationId: workspaceId,
-          });
-        if (setActiveError) throw new Error(setActiveError.message);
-      }
-
-      const { error } = await authClient.organization.update({
+      await updateWorkspaceSettings({
         data: {
+          workspaceId,
           name,
         },
       });
-      if (error) throw new Error(error.message);
     },
     onSuccess: () => {
       toast.success('Workspace updated.');
@@ -124,16 +109,6 @@ function WorkspaceSettingsPage() {
       form.reset({ name: nextName });
     },
   });
-
-  const getNextWorkspaceIdAfterDelete = React.useCallback(async () => {
-    const { data } = await authClient.organization.list();
-    if (!data) return null;
-
-    const remaining = data
-      .filter((candidate) => candidate.id !== workspaceId)
-      .sort(sortByCreatedAtAscending);
-    return remaining.at(0)?.id ?? null;
-  }, [workspaceId]);
 
   return (
     <div className={PAGE_LAYOUT_CLASS}>
@@ -168,6 +143,7 @@ function WorkspaceSettingsPage() {
                         data-1p-ignore
                         value={field.state.value}
                         onBlur={field.handleBlur}
+                        disabled={!capabilities.canManageSettings}
                         onChange={(event) =>
                           field.handleChange(event.target.value)
                         }
@@ -197,13 +173,22 @@ function WorkspaceSettingsPage() {
                     type="button"
                     variant="outline"
                     onClick={() => form.reset()}
-                    disabled={!isDirty || isSubmitting}
+                    disabled={
+                      !capabilities.canManageSettings ||
+                      !isDirty ||
+                      isSubmitting
+                    }
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
-                    disabled={!isDirty || !canSubmit || isSubmitting}
+                    disabled={
+                      !capabilities.canManageSettings ||
+                      !isDirty ||
+                      !canSubmit ||
+                      isSubmitting
+                    }
                   >
                     {isSubmitting && (
                       <IconLoader2 className="size-4 animate-spin" />
@@ -228,8 +213,14 @@ function WorkspaceSettingsPage() {
           <WorkspaceDeleteDialog
             workspaceId={workspace.id}
             workspaceName={workspace.name}
-            isDisabled={!canDelete}
-            getNextWorkspaceIdAfterDelete={getNextWorkspaceIdAfterDelete}
+            isDisabled={!capabilities.canDeleteWorkspace}
+            onDelete={async () => {
+              const result = await deleteWorkspace({
+                data: { workspaceId: workspace.id },
+              });
+
+              return result.nextWorkspaceId;
+            }}
           />
           {deleteDisabledMessage ? (
             <p className="text-xs text-muted-foreground">

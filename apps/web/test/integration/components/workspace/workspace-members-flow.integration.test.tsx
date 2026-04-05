@@ -31,7 +31,8 @@ const defaultProps = {
   removingMemberId: null,
   leavingWorkspace: false,
   currentUserId: 'user-1',
-  currentUserRole: 'owner',
+  workspaceRole: 'owner',
+  canManageMembers: true,
   onSortingChange: vi.fn(),
   onPageChange: vi.fn(),
   onPageSizeChange: vi.fn(),
@@ -87,7 +88,8 @@ describe('WorkspaceMembersTable integration', () => {
       <WorkspaceMembersTable
         {...defaultProps}
         currentUserId="user-2"
-        currentUserRole="member"
+        workspaceRole="member"
+        canManageMembers={false}
       />
     );
 
@@ -108,7 +110,8 @@ describe('WorkspaceMembersTable integration', () => {
       <WorkspaceMembersTable
         {...defaultProps}
         currentUserId="user-2"
-        currentUserRole="member"
+        workspaceRole="member"
+        canManageMembers={false}
       />
     );
 
@@ -157,7 +160,8 @@ describe('WorkspaceMembersTable integration', () => {
       <WorkspaceMembersTable
         {...defaultProps}
         currentUserId="user-2"
-        currentUserRole="member"
+        workspaceRole="member"
+        canManageMembers={false}
         leavingWorkspace={true}
       />
     );
