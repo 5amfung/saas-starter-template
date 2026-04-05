@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { IconLoader2, IconPlus, IconSelector } from '@tabler/icons-react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -31,6 +31,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@workspace/ui/components/sidebar';
+import {
+  WORKSPACES_QUERY_KEY,
+  addWorkspaceToList,
+} from '@/hooks/use-workspaces-query';
 import { buildWorkspaceSlug } from '@/workspace/workspace';
 
 const workspaceNameSchema = z
@@ -54,6 +58,7 @@ export function WorkspaceSwitcher({
 }) {
   const { isMobile } = useSidebar();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
   const [workspaceName, setWorkspaceName] = React.useState('');
   const [validationError, setValidationError] = React.useState<string | null>(
@@ -104,11 +109,15 @@ export function WorkspaceSwitcher({
       });
       if (error) throw new Error(error.message);
       if (!data.id) throw new Error('Failed to create workspace.');
-      return data.id;
+      return {
+        ...data,
+        name,
+        slug: data.slug,
+      };
     },
-    onSuccess: async (workspaceId) => {
+    onSuccess: async (workspace) => {
       const { error } = await authClient.organization.setActive({
-        organizationId: workspaceId,
+        organizationId: workspace.id,
       });
       if (error) {
         toast.error(
@@ -116,13 +125,29 @@ export function WorkspaceSwitcher({
         );
         return;
       }
+      queryClient.setQueryData(
+        WORKSPACES_QUERY_KEY,
+        (
+          current:
+            | Array<{
+                id: string;
+                name: string;
+                slug: string;
+                createdAt: Date;
+                logo?: string | null;
+                metadata?: unknown;
+              }>
+            | undefined
+        ) => addWorkspaceToList(current, workspace)
+      );
+      void queryClient.invalidateQueries({ queryKey: WORKSPACES_QUERY_KEY });
       setWorkspaceName('');
       setValidationError(null);
       setIsCreateDialogOpen(false);
       toast.success('Workspace created.');
       navigate({
         to: '/ws/$workspaceId/overview',
-        params: { workspaceId },
+        params: { workspaceId: workspace.id },
       });
     },
     onError: (error) => {

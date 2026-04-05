@@ -134,17 +134,37 @@ describe('workspace.server', () => {
       expect(workspace).toEqual({ id: 'org_target', name: 'Target WS' });
     });
 
-    it('throws NOT_FOUND for empty workspace list', async () => {
-      const consoleSpy = vi
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
+    it('falls back to full organization lookup when the workspace list is stale', async () => {
       listOrganizationsMock.mockResolvedValueOnce([]);
+      getFullOrganizationMock.mockResolvedValueOnce({
+        id: 'org_target',
+        name: 'Target WS',
+        members: [{ userId: 'user_1', role: 'owner' }],
+      });
+
+      const workspace = await ensureWorkspaceMembership(
+        new Headers(),
+        'org_target'
+      );
+
+      expect(workspace).toEqual({
+        id: 'org_target',
+        name: 'Target WS',
+        members: [{ userId: 'user_1', role: 'owner' }],
+      });
+      expect(getFullOrganizationMock).toHaveBeenCalledWith({
+        headers: expect.any(Headers),
+        query: { organizationId: 'org_target' },
+      });
+    });
+
+    it('throws NOT_FOUND for empty workspace list', async () => {
+      listOrganizationsMock.mockResolvedValueOnce([]);
+      getFullOrganizationMock.mockResolvedValueOnce(null);
 
       await expect(
         ensureWorkspaceMembership(new Headers(), 'org_missing')
       ).rejects.toBeInstanceOf(APIError);
-
-      consoleSpy.mockRestore();
     });
   });
 

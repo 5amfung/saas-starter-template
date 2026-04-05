@@ -1,8 +1,13 @@
 import * as React from 'react';
 import { IconLoader2 } from '@tabler/icons-react';
 import { useForm } from '@tanstack/react-form';
-import { useMutation } from '@tanstack/react-query';
-import { createFileRoute, getRouteApi, notFound } from '@tanstack/react-router';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  createFileRoute,
+  getRouteApi,
+  notFound,
+  useRouter,
+} from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { Button } from '@workspace/ui/components/button';
@@ -25,6 +30,11 @@ import { Separator } from '@workspace/ui/components/separator';
 import { toFieldErrorItem } from '@workspace/components/lib';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
 import { getWorkspaceCapabilities } from '@/policy/workspace-capabilities.functions';
+import {
+  WORKSPACES_QUERY_KEY,
+  renameWorkspaceInList,
+  useWorkspacesQuery,
+} from '@/hooks/use-workspaces-query';
 import {
   deleteWorkspace,
   updateWorkspaceSettings,
@@ -59,6 +69,10 @@ function WorkspaceSettingsPage() {
   const { workspaceId } = Route.useParams();
   const { workspace } = workspaceRouteApi.useLoaderData();
   const capabilities = Route.useLoaderData();
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  useWorkspacesQuery();
 
   const deleteDisabledMessage =
     capabilities.deleteWorkspaceBlockedReason === 'not-owner'
@@ -75,7 +89,7 @@ function WorkspaceSettingsPage() {
   );
   React.useEffect(() => {
     setInitialWorkspaceName(workspace.name);
-  }, [workspaceId]);
+  }, [workspaceId, workspace.name]);
 
   const updateMutation = useMutation({
     mutationFn: async (name: string) => {
@@ -86,7 +100,26 @@ function WorkspaceSettingsPage() {
         },
       });
     },
-    onSuccess: () => {
+    onSuccess: async (_data, nextName) => {
+      queryClient.setQueryData(
+        WORKSPACES_QUERY_KEY,
+        (
+          previous:
+            | Array<{
+                id: string;
+                name: string;
+                slug: string;
+                createdAt: Date;
+                logo?: string | null;
+                metadata?: unknown;
+              }>
+            | undefined
+        ) => renameWorkspaceInList(previous, workspaceId, nextName)
+      );
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: WORKSPACES_QUERY_KEY }),
+        router.invalidate({ sync: true }),
+      ]);
       toast.success('Workspace updated.');
     },
     onError: (error) => {

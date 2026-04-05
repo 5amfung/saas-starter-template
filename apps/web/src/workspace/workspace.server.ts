@@ -63,6 +63,14 @@ export async function ensureWorkspaceMembership(
     (candidate) => candidate.id === workspaceId
   );
   if (!workspace) {
+    const organization = await auth.api.getFullOrganization({
+      headers,
+      query: { organizationId: workspaceId },
+    });
+    if (organization) {
+      return organization;
+    }
+
     throw new APIError('NOT_FOUND', {
       message: 'Workspace not found.',
     });
