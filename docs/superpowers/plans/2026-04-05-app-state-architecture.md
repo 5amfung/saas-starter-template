@@ -122,7 +122,7 @@ export {
 Run: `pnpm --filter @workspace/web exec vitest run test/unit/workspace/workspace.queries.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/workspace/workspace.queries.ts apps/web/test/unit/workspace/workspace.queries.test.ts
@@ -138,7 +138,7 @@ git commit -m "refactor(web): add canonical workspace query module"
 - Modify: `apps/web/src/routes/_protected/ws/$workspaceId/settings.tsx`
 - Test: `apps/web/test/unit/workspace/workspace.mutations.test.ts`
 
-- [ ] **Step 1: Write the failing mutation invalidation test**
+- [x] **Step 1: Write the failing mutation invalidation test**
 
 ```ts
 // apps/web/test/unit/workspace/workspace.mutations.test.ts
@@ -164,12 +164,12 @@ describe('workspace mutation cache helpers', () => {
 });
 ```
 
-- [ ] **Step 2: Run the unit test to verify it fails**
+- [x] **Step 2: Run the unit test to verify it fails**
 
 Run: `pnpm --filter @workspace/web exec vitest run test/unit/workspace/workspace.mutations.test.ts`
 Expected: FAIL because `workspace.mutations.ts` does not exist yet.
 
-- [ ] **Step 3: Implement the minimal mutation helper module**
+- [x] **Step 3: Implement the minimal mutation helper module**
 
 ```ts
 // apps/web/src/workspace/workspace.mutations.ts
@@ -191,7 +191,7 @@ export function renameWorkspaceInList<T extends { id: string; name: string }>(
 export { renameWorkspaceInList } from '@/workspace/workspace.mutations';
 ```
 
-- [ ] **Step 4: Update the settings route to use the canonical mutation/query contract**
+- [x] **Step 4: Update the settings route to use the canonical mutation/query contract**
 
 ```ts
 // apps/web/src/routes/_protected/ws/$workspaceId/settings.tsx
@@ -217,12 +217,12 @@ const updateMutation = useMutation({
 });
 ```
 
-- [ ] **Step 5: Run the unit test to verify it passes**
+- [x] **Step 5: Run the unit test to verify it passes**
 
 Run: `pnpm --filter @workspace/web exec vitest run test/unit/workspace/workspace.mutations.test.ts`
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/web/src/workspace/workspace.mutations.ts apps/web/src/routes/_protected/ws/$workspaceId/settings.tsx apps/web/test/unit/workspace/workspace.mutations.test.ts

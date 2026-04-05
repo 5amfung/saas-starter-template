@@ -30,11 +30,9 @@ import { Separator } from '@workspace/ui/components/separator';
 import { toFieldErrorItem } from '@workspace/components/lib';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
 import { getWorkspaceCapabilities } from '@/policy/workspace-capabilities.functions';
-import {
-  WORKSPACES_QUERY_KEY,
-  renameWorkspaceInList,
-  useWorkspacesQuery,
-} from '@/hooks/use-workspaces-query';
+import { useWorkspacesQuery } from '@/hooks/use-workspaces-query';
+import { renameWorkspaceInList } from '@/workspace/workspace.mutations';
+import { WORKSPACE_LIST_QUERY_KEY } from '@/workspace/workspace.queries';
 import {
   deleteWorkspace,
   updateWorkspaceSettings,
@@ -102,7 +100,7 @@ function WorkspaceSettingsPage() {
     },
     onSuccess: async (_data, nextName) => {
       queryClient.setQueryData(
-        WORKSPACES_QUERY_KEY,
+        WORKSPACE_LIST_QUERY_KEY,
         (
           previous:
             | Array<{
@@ -117,7 +115,7 @@ function WorkspaceSettingsPage() {
         ) => renameWorkspaceInList(previous, workspaceId, nextName)
       );
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: WORKSPACES_QUERY_KEY }),
+        queryClient.invalidateQueries({ queryKey: WORKSPACE_LIST_QUERY_KEY }),
         router.invalidate({ sync: true }),
       ]);
       toast.success('Workspace updated.');
