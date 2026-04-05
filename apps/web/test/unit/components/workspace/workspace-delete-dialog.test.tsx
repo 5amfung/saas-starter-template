@@ -4,14 +4,18 @@ import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
 
-const { navigateMock } = vi.hoisted(() => ({
-  navigateMock: vi.fn(),
+const { setActiveMock, assignMock } = vi.hoisted(() => ({
+  setActiveMock: vi.fn(),
+  assignMock: vi.fn(),
 }));
 
-vi.mock('@tanstack/react-router', async () => {
-  const actual = await import('@tanstack/react-router');
-  return { ...actual, useNavigate: () => navigateMock };
-});
+vi.mock('@workspace/auth/client', () => ({
+  authClient: {
+    organization: {
+      setActive: setActiveMock,
+    },
+  },
+}));
 
 vi.mock('sonner', () => ({
   toast: {
@@ -31,6 +35,14 @@ describe('WorkspaceDeleteDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     defaultProps.onDelete = vi.fn().mockResolvedValue('ws-456');
+    setActiveMock.mockResolvedValue({ error: null });
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        ...window.location,
+        assign: assignMock,
+      },
+    });
   });
 
   it('renders delete button', () => {
@@ -57,9 +69,7 @@ describe('WorkspaceDeleteDialog', () => {
 
     await user.click(screen.getByRole('button', { name: /delete workspace/i }));
 
-    // Workspace name appears in the description.
     expect(screen.getByText(/my workspace/i)).toBeInTheDocument();
-    // Dialog title is rendered as a heading.
     expect(
       screen.getByRole('heading', { name: /delete workspace/i })
     ).toBeInTheDocument();
@@ -83,7 +93,7 @@ describe('WorkspaceDeleteDialog', () => {
     expect(confirmButton).not.toBeDisabled();
   });
 
-  it('deletes workspace and navigates on success', async () => {
+  it('deletes workspace and redirects on success', async () => {
     const { toast } = await import('sonner');
     const user = userEvent.setup();
 
@@ -98,10 +108,8 @@ describe('WorkspaceDeleteDialog', () => {
     });
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith({
-        to: '/ws/$workspaceId/overview',
-        params: { workspaceId: 'ws-456' },
-      });
+      expect(setActiveMock).toHaveBeenCalledWith({ organizationId: 'ws-456' });
+      expect(assignMock).toHaveBeenCalledWith('/ws/ws-456/overview');
     });
 
     await waitFor(() => {
@@ -129,7 +137,6 @@ describe('WorkspaceDeleteDialog', () => {
       expect(toast.error).toHaveBeenCalledWith('Permission denied');
     });
 
-    // Dialog stays in DOM on error.
     expect(
       screen.getByRole('button', { name: /confirm delete/i })
     ).toBeInTheDocument();

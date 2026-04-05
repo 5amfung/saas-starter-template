@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { IconAlertTriangle, IconLoader2 } from '@tabler/icons-react';
 import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
+import { authClient } from '@workspace/auth/client';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -32,19 +32,22 @@ export function WorkspaceDeleteDialog({
   isDisabled,
   onDelete,
 }: WorkspaceDeleteDialogProps) {
-  const navigate = useNavigate();
   const [open, setOpen] = React.useState(false);
   const [confirmation, setConfirmation] = React.useState('');
   const isConfirmed = confirmation === CONFIRMATION_TEXT;
 
   const deleteMutation = useMutation({
     mutationFn: onDelete,
-    onSuccess: (nextWorkspaceId) => {
-      toast.success('Workspace deleted successfully.');
-      navigate({
-        to: '/ws/$workspaceId/overview',
-        params: { workspaceId: nextWorkspaceId },
+    onSuccess: async (nextWorkspaceId) => {
+      const { error } = await authClient.organization.setActive({
+        organizationId: nextWorkspaceId,
       });
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      toast.success('Workspace deleted successfully.');
+      window.location.assign(`/ws/${nextWorkspaceId}/overview`);
     },
     onError: (error) => {
       toast.error(error.message || 'Failed to delete workspace.');

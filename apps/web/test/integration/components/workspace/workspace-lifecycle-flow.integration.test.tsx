@@ -4,15 +4,22 @@ import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
 
-const { navigateMock, mockToastSuccess, mockToastError } = vi.hoisted(() => ({
-  navigateMock: vi.fn(),
+const { assignMock, mockToastSuccess, mockToastError } = vi.hoisted(() => ({
+  assignMock: vi.fn(),
   mockToastSuccess: vi.fn(),
   mockToastError: vi.fn(),
 }));
 
-vi.mock('@tanstack/react-router', async (importOriginal) => ({
-  ...(await importOriginal()),
-  useNavigate: () => navigateMock,
+const { setActiveMock } = vi.hoisted(() => ({
+  setActiveMock: vi.fn().mockResolvedValue({ error: null }),
+}));
+
+vi.mock('@workspace/auth/client', () => ({
+  authClient: {
+    organization: {
+      setActive: setActiveMock,
+    },
+  },
 }));
 
 vi.mock('sonner', () => ({
@@ -20,6 +27,16 @@ vi.mock('sonner', () => ({
 }));
 
 describe('Workspace lifecycle flow', () => {
+  beforeAll(() => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        ...window.location,
+        assign: assignMock,
+      },
+    });
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -63,15 +80,13 @@ describe('Workspace lifecycle flow', () => {
         expect(defaultProps.onDelete).toHaveBeenCalledTimes(1);
       });
 
-      // Verify success toast and navigation.
+      // Verify success toast and document navigation.
       await waitFor(() => {
+        expect(setActiveMock).toHaveBeenCalledWith({ organizationId: 'ws-2' });
         expect(mockToastSuccess).toHaveBeenCalledWith(
           'Workspace deleted successfully.'
         );
-        expect(navigateMock).toHaveBeenCalledWith({
-          to: '/ws/$workspaceId/overview',
-          params: { workspaceId: 'ws-2' },
-        });
+        expect(assignMock).toHaveBeenCalledWith('/ws/ws-2/overview');
       });
     });
 

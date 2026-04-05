@@ -183,14 +183,24 @@ describe('WorkspaceSwitcher', () => {
     expect(screen.getAllByText('Workspace One').length).toBeGreaterThan(0);
   });
 
-  it('falls back to first workspace when activeWorkspaceId does not match', () => {
+  it('does not fall back to the first workspace when activeWorkspaceId does not match', () => {
     renderWithProviders(
       <WorkspaceSwitcher
         workspaces={defaultWorkspaces}
         activeWorkspaceId="unknown-id"
       />
     );
-    // First workspace is used as fallback.
+    expect(screen.getAllByText('Workspace One')).toHaveLength(1);
+  });
+
+  it('falls back to the first workspace when there is no active workspace id', () => {
+    renderWithProviders(
+      <WorkspaceSwitcher
+        workspaces={defaultWorkspaces}
+        activeWorkspaceId={null}
+      />
+    );
+
     expect(screen.getAllByText('Workspace One').length).toBeGreaterThan(0);
   });
 

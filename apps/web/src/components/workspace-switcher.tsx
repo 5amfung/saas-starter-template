@@ -70,8 +70,9 @@ export function WorkspaceSwitcher({
   const matchedWorkspace = workspaces.find(
     (workspace) => workspace.id === activeWorkspaceId
   );
-  const activeWorkspace = matchedWorkspace ||
-    workspaces[0] || {
+  const fallbackWorkspace = activeWorkspaceId ? null : workspaces[0];
+  const activeWorkspace = matchedWorkspace ??
+    fallbackWorkspace ?? {
       id: 'placeholder-workspace',
       name: '',
       logo: <IconPlus className="size-4" />,

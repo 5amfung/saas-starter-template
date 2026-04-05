@@ -5,7 +5,7 @@ import {
   uniqueEmail,
   waitForTestEmail,
 } from '@workspace/test-utils';
-import { parseCookieHeader } from '../lib/parse-cookie-header';
+import { parseCookieHeader, toCookieHeader } from '../lib/parse-cookie-header';
 import { completeStripeCheckout } from '../lib/complete-stripe-checkout';
 import type { Page } from '@playwright/test';
 
@@ -17,14 +17,14 @@ async function signUpAndLogin(
   page: Page,
   baseURL: string,
   email: string = uniqueEmail()
-): Promise<{ email: string }> {
+): Promise<{ email: string; cookieHeader: string }> {
   const { cookie } = await createVerifiedUser(baseURL, {
     email,
     password: VALID_PASSWORD,
   });
 
   await page.context().addCookies(parseCookieHeader(cookie));
-  return { email };
+  return { email, cookieHeader: toCookieHeader(cookie) };
 }
 
 /** Navigate to /ws, wait for redirect, extract workspaceId from URL. */
@@ -46,7 +46,9 @@ async function goToSettings(page: Page): Promise<string> {
 
 /** Open the workspace switcher dropdown in the sidebar. */
 async function openWorkspaceSwitcher(page: Page): Promise<void> {
-  await page.locator('[data-sidebar="menu-button"]').first().click();
+  const trigger = page.locator('[data-sidebar="menu-button"]').first();
+  await expect(trigger).toBeVisible({ timeout: 15000 });
+  await trigger.click();
 }
 
 /** Create a new workspace via the switcher "Add workspace" dialog. */
@@ -463,7 +465,7 @@ test.describe('Workspace Switching & Creation', () => {
 
   test('delete non-last workspace', async ({ page, baseURL }) => {
     await signUpAndLogin(page, baseURL!);
-    await getActiveWorkspaceId(page);
+    const firstId = await getActiveWorkspaceId(page);
 
     // Create a second workspace to delete.
     const deleteName = `To Delete ${Date.now()}`;
@@ -494,10 +496,17 @@ test.describe('Workspace Switching & Creation', () => {
     // Redirected to remaining workspace.
     await page.waitForURL(/\/ws\/.+\/overview/, { timeout: 15000 });
     expect(page.url()).not.toContain(secondId);
+    expect(page.url()).toContain(firstId);
 
-    await expect(page.getByText('Workspace deleted successfully.')).toBeVisible(
-      { timeout: 8000 }
-    );
+    const workspaceTrigger = page
+      .locator('[data-sidebar="menu-button"]')
+      .first();
+    await expect(workspaceTrigger).not.toContainText(deleteName);
+
+    await openWorkspaceSwitcher(page);
+    await expect(
+      page.getByRole('menuitem', { name: deleteName })
+    ).not.toBeVisible();
   });
 
   test('cancel delete dialog leaves workspace intact', async ({

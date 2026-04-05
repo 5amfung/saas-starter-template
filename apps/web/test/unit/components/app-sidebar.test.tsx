@@ -9,11 +9,13 @@ const {
   useListOrganizationsMock,
   useActiveOrganizationMock,
   useWorkspaceAccessCapabilitiesQueryMock,
+  useRouterStateMock,
 } = vi.hoisted(() => ({
   useSessionMock: vi.fn(),
   useListOrganizationsMock: vi.fn(),
   useActiveOrganizationMock: vi.fn(),
   useWorkspaceAccessCapabilitiesQueryMock: vi.fn(),
+  useRouterStateMock: vi.fn(),
 }));
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
@@ -29,6 +31,14 @@ vi.mock('@workspace/auth/client', () => ({
 vi.mock('@/policy/workspace-capabilities', () => ({
   useWorkspaceAccessCapabilitiesQuery: useWorkspaceAccessCapabilitiesQueryMock,
 }));
+
+vi.mock('@tanstack/react-router', async () => {
+  const actual = await import('@tanstack/react-router');
+  return {
+    ...actual,
+    useRouterState: useRouterStateMock,
+  };
+});
 
 vi.mock('@workspace/ui/components/sidebar', () => ({
   Sidebar: ({ children, ...props }: React.ComponentProps<'aside'>) => (
@@ -108,8 +118,19 @@ const mockOrgs = [
 
 beforeEach(() => {
   vi.clearAllMocks();
+  useRouterStateMock.mockImplementation(
+    ({
+      select,
+    }: {
+      select: (state: { location: { pathname: string } }) => string;
+    }) => select({ location: { pathname: '/' } })
+  );
   useWorkspaceAccessCapabilitiesQueryMock.mockReturnValue({
     data: { canViewBilling: true, canViewSettings: true },
+  });
+  useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
+  useActiveOrganizationMock.mockReturnValue({
+    data: { id: 'ws-1', name: 'Workspace One' },
   });
 });
 
@@ -120,10 +141,6 @@ describe('AppSidebar', () => {
 
   it('renders all sidebar sections', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
-    useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
-    useActiveOrganizationMock.mockReturnValue({
-      data: { id: 'ws-1', name: 'Workspace One' },
-    });
 
     await renderSidebar();
 
@@ -134,10 +151,6 @@ describe('AppSidebar', () => {
 
   it('renders WorkspaceSwitcher with active workspace', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
-    useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
-    useActiveOrganizationMock.mockReturnValue({
-      data: { id: 'ws-1', name: 'Workspace One' },
-    });
 
     await renderSidebar();
 
@@ -146,12 +159,36 @@ describe('AppSidebar', () => {
     expect(switcher).toHaveAttribute('data-active-id', 'ws-1');
   });
 
+  it('prefers the route workspace over stale active organization state', async () => {
+    useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
+    useActiveOrganizationMock.mockReturnValue({
+      data: { id: 'ws-2', name: 'Workspace Two' },
+    });
+    useRouterStateMock.mockImplementation(
+      ({
+        select,
+      }: {
+        select: (state: { location: { pathname: string } }) => string;
+      }) =>
+        select({
+          location: { pathname: '/ws/ws-1/overview' },
+        })
+    );
+
+    await renderSidebar();
+
+    expect(screen.getByTestId('workspace-switcher')).toHaveAttribute(
+      'data-active-id',
+      'ws-1'
+    );
+    expect(screen.getByRole('link', { name: 'Overview' })).toHaveAttribute(
+      'href',
+      '/ws/ws-1/overview'
+    );
+  });
+
   it('shows Billing nav item when workspace capabilities allow billing access', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
-    useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
-    useActiveOrganizationMock.mockReturnValue({
-      data: { id: 'ws-1', name: 'Workspace One' },
-    });
 
     await renderSidebar();
 
@@ -168,10 +205,6 @@ describe('AppSidebar', () => {
 
   it('hides Settings nav item when workspace capabilities deny settings access', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
-    useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
-    useActiveOrganizationMock.mockReturnValue({
-      data: { id: 'ws-1', name: 'Workspace One' },
-    });
     useWorkspaceAccessCapabilitiesQueryMock.mockReturnValue({
       data: { canViewBilling: true, canViewSettings: false },
     });
@@ -196,7 +229,6 @@ describe('AppSidebar', () => {
 
   it('renders NavSecondary', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
-    useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
     useActiveOrganizationMock.mockReturnValue({ data: null });
 
     await renderSidebar();
@@ -206,7 +238,6 @@ describe('AppSidebar', () => {
 
   it('renders NavUser when session is loaded', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
-    useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
     useActiveOrganizationMock.mockReturnValue({ data: null });
 
     await renderSidebar();
@@ -228,10 +259,6 @@ describe('AppSidebar', () => {
 
   it('hides Billing nav item when workspace capabilities deny billing access', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
-    useListOrganizationsMock.mockReturnValue({ data: mockOrgs });
-    useActiveOrganizationMock.mockReturnValue({
-      data: { id: 'ws-1', name: 'Workspace One' },
-    });
     useWorkspaceAccessCapabilitiesQueryMock.mockReturnValue({
       data: { canViewBilling: false, canViewSettings: true },
     });
