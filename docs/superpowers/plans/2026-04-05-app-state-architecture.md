@@ -237,7 +237,7 @@ git commit -m "fix(web): standardize workspace mutation invalidation"
 - Modify: `apps/web/src/components/workspace-switcher.tsx`
 - Test: `apps/web/test/unit/components/app-sidebar.test.tsx`
 
-- [ ] **Step 1: Write the failing shell-consumer test**
+- [x] **Step 1: Write the failing shell-consumer test**
 
 ```ts
 it('prefers the route workspace and canonical workspace list for shell state', async () => {
@@ -265,12 +265,12 @@ it('prefers the route workspace and canonical workspace list for shell state', a
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `pnpm --filter @workspace/web exec vitest run test/unit/components/app-sidebar.test.tsx`
 Expected: FAIL if shell consumers still depend on non-canonical workspace reads.
 
-- [ ] **Step 3: Update shell consumers to use canonical workspace queries**
+- [x] **Step 3: Update shell consumers to use canonical workspace queries**
 
 ```ts
 // apps/web/src/components/app-sidebar.tsx
@@ -284,12 +284,12 @@ const { data: activeOrganization } = authClient.useActiveOrganization();
 await queryClient.invalidateQueries({ queryKey: WORKSPACE_LIST_QUERY_KEY });
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `pnpm --filter @workspace/web exec vitest run test/unit/components/app-sidebar.test.tsx`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/components/app-sidebar.tsx apps/web/src/components/workspace-switcher.tsx apps/web/test/unit/components/app-sidebar.test.tsx

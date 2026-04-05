@@ -27,9 +27,9 @@ import {
   NavUser,
   NavUserSkeleton,
 } from '@workspace/components/layout';
-import { useWorkspacesQuery } from '@/hooks/use-workspaces-query';
 import { NavMain } from '@/components/nav-main';
 import { useWorkspaceAccessCapabilitiesQuery } from '@/policy/workspace-capabilities';
+import { useWorkspaceListQuery } from '@/workspace/workspace.queries';
 import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 
 const data = {
@@ -59,7 +59,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     select: (state) => state.location.pathname,
   });
   const { data: session, isPending } = authClient.useSession();
-  const { data: organizations } = useWorkspacesQuery();
+  const { data: organizations } = useWorkspaceListQuery();
   const { data: activeOrganization } = authClient.useActiveOrganization();
   const routeWorkspaceId =
     pathname.match(/^\/ws\/([^/]+)(?:\/|$)/)?.[1] ?? null;
