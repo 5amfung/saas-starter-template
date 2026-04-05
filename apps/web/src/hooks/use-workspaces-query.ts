@@ -1,5 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { authClient } from '@workspace/auth/client';
+import {
+  WORKSPACE_LIST_QUERY_KEY,
+  useWorkspaceListQuery,
+} from '@/workspace/workspace.queries';
 
 type WorkspaceSummary = {
   id: string;
@@ -9,8 +11,6 @@ type WorkspaceSummary = {
   logo?: string | null;
   metadata?: unknown;
 };
-
-export const WORKSPACES_QUERY_KEY = ['workspace', 'list'] as const;
 
 export function renameWorkspaceInList(
   workspaces: Array<WorkspaceSummary> | undefined,
@@ -44,13 +44,6 @@ export function addWorkspaceToList(
   return [workspace, ...workspaces];
 }
 
-export function useWorkspacesQuery() {
-  return useQuery({
-    queryKey: WORKSPACES_QUERY_KEY,
-    queryFn: async () => {
-      const { data, error } = await authClient.organization.list();
-      if (error) throw new Error(error.message);
-      return data as Array<WorkspaceSummary>;
-    },
-  });
-}
+export const WORKSPACES_QUERY_KEY = WORKSPACE_LIST_QUERY_KEY;
+
+export const useWorkspacesQuery = useWorkspaceListQuery;

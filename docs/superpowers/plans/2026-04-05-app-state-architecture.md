@@ -56,7 +56,7 @@ These follow-on files are deferred until the workspace migration is stable.
 - Create: `apps/web/src/workspace/workspace.queries.ts`
 - Test: `apps/web/test/unit/workspace/workspace.queries.test.ts`
 
-- [ ] **Step 1: Write the failing unit tests for canonical workspace query keys and data normalization**
+- [x] **Step 1: Write the failing unit tests for canonical workspace query keys and data normalization**
 
 ```ts
 // apps/web/test/unit/workspace/workspace.queries.test.ts
@@ -80,12 +80,12 @@ describe('workspace query keys', () => {
 });
 ```
 
-- [ ] **Step 2: Run the unit test to verify it fails**
+- [x] **Step 2: Run the unit test to verify it fails**
 
 Run: `pnpm --filter @workspace/web exec vitest run test/unit/workspace/workspace.queries.test.ts`
 Expected: FAIL because `workspace.queries.ts` does not exist yet.
 
-- [ ] **Step 3: Implement the minimal workspace query module**
+- [x] **Step 3: Implement the minimal workspace query module**
 
 ```ts
 // apps/web/src/workspace/workspace.queries.ts
@@ -117,7 +117,7 @@ export {
 } from '@/workspace/workspace.queries';
 ```
 
-- [ ] **Step 4: Run the unit test to verify it passes**
+- [x] **Step 4: Run the unit test to verify it passes**
 
 Run: `pnpm --filter @workspace/web exec vitest run test/unit/workspace/workspace.queries.test.ts`
 Expected: PASS
@@ -441,6 +441,7 @@ git commit -m "docs: define app state ownership architecture"
 - [ ] Run: `pnpm --filter @workspace/web exec tsc --noEmit`
 - [ ] Run: `pnpm --filter @workspace/web exec eslint src/components/app-sidebar.tsx src/components/workspace-switcher.tsx 'src/routes/_protected/ws/$workspaceId.tsx' 'src/routes/_protected/ws/$workspaceId/settings.tsx' src/workspace/workspace.queries.ts src/workspace/workspace.mutations.ts test/unit/components/app-sidebar.test.tsx test/unit/workspace/workspace.queries.test.ts test/unit/workspace/workspace.mutations.test.ts test/e2e/workspace/settings.spec.ts`
 - [ ] Run: `pnpm --filter @workspace/web exec playwright test test/e2e/workspace/settings.spec.ts -g "renaming a workspace updates the workspace switcher immediately" --project=chromium`
+      Expected: run outside the Codex sandbox because Playwright browser execution is sandbox-constrained here.
 
 ## Self-Review
 
