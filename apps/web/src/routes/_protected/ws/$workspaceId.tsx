@@ -1,5 +1,6 @@
 import { Outlet, createFileRoute, notFound } from '@tanstack/react-router';
-import { getWorkspaceWithRole } from '@/workspace/workspace.functions';
+import { getWorkspaceRouteAccess } from '@/workspace/workspace.functions';
+import { workspaceDetailQueryOptions } from '@/workspace/workspace.queries';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -21,9 +22,13 @@ const isWorkspaceNotFoundError = (error: unknown): boolean => {
 export const Route = createFileRoute('/_protected/ws/$workspaceId')({
   component: WorkspaceLayout,
   staleTime: 30_000,
-  loader: async ({ params }) => {
+  loader: async ({ context, params }) => {
     try {
-      return await getWorkspaceWithRole({
+      await context.queryClient.ensureQueryData(
+        workspaceDetailQueryOptions(params.workspaceId)
+      );
+
+      return await getWorkspaceRouteAccess({
         data: { workspaceId: params.workspaceId },
       });
     } catch (error) {

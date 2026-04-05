@@ -305,7 +305,7 @@ git commit -m "refactor(web): move workspace shell onto canonical queries"
 - Modify: `apps/web/src/workspace/workspace.server.ts`
 - Test: `apps/web/test/unit/workspace/workspace.functions.test.ts`
 
-- [ ] **Step 1: Write a failing test for query-first loader coordination**
+- [x] **Step 1: Write a failing test for query-first loader coordination**
 
 ```ts
 it('returns route access facts without becoming the long-lived workspace entity store', async () => {
@@ -322,12 +322,12 @@ it('returns route access facts without becoming the long-lived workspace entity 
 });
 ```
 
-- [ ] **Step 2: Run the unit test to verify current assumptions**
+- [x] **Step 2: Run the unit test to verify current assumptions**
 
 Run: `pnpm --filter @workspace/web exec vitest run test/unit/workspace/workspace.functions.test.ts`
 Expected: Use this run to capture the current loader contract before narrowing it.
 
-- [ ] **Step 3: Refactor loader usage toward query preloading**
+- [x] **Step 3: Refactor loader usage toward query preloading**
 
 ```ts
 // apps/web/src/routes/_protected/ws/$workspaceId.tsx
@@ -342,12 +342,12 @@ loader: async ({ context, params }) => {
 };
 ```
 
-- [ ] **Step 4: Run targeted route-function tests**
+- [x] **Step 4: Run targeted route-function tests**
 
 Run: `pnpm --filter @workspace/web exec vitest run test/unit/workspace/workspace.functions.test.ts`
 Expected: PASS with the new narrowed loader role.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/routes/_protected/ws/$workspaceId.tsx apps/web/src/workspace/workspace.functions.ts apps/web/src/workspace/workspace.server.ts apps/web/test/unit/workspace/workspace.functions.test.ts

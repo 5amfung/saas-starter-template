@@ -8,6 +8,7 @@ import {
   ensureWorkspaceRouteAccess,
   getActiveWorkspaceId,
   getWorkspaceById,
+  getWorkspaceRouteAccess,
 } from '@/workspace/workspace.functions';
 
 const {
@@ -16,12 +17,14 @@ const {
   ensureWorkspaceMembershipMock,
   setActiveOrganizationMock,
   ensureActiveWorkspaceForSessionMock,
+  getActiveMemberRoleMock,
 } = vi.hoisted(() => ({
   getSessionMock: vi.fn(),
   getRequestHeadersMock: vi.fn().mockReturnValue(new Headers()),
   ensureWorkspaceMembershipMock: vi.fn(),
   setActiveOrganizationMock: vi.fn(),
   ensureActiveWorkspaceForSessionMock: vi.fn(),
+  getActiveMemberRoleMock: vi.fn(),
 }));
 
 vi.mock('@tanstack/react-start', () => createServerFnMock());
@@ -42,6 +45,7 @@ vi.mock('@tanstack/react-start/server', () => ({
 vi.mock('@/workspace/workspace.server', () => ({
   ensureWorkspaceMembership: ensureWorkspaceMembershipMock,
   ensureActiveWorkspaceForSession: ensureActiveWorkspaceForSessionMock,
+  getActiveMemberRole: getActiveMemberRoleMock,
 }));
 
 vi.mock('@tanstack/react-router', () => ({
@@ -205,5 +209,30 @@ describe('ensureWorkspaceRouteAccess', () => {
     });
 
     expect(result).toEqual({ workspaceId: 'ws-1' });
+  });
+});
+
+describe('getWorkspaceRouteAccess', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getRequestHeadersMock.mockReturnValue(new Headers());
+  });
+
+  it('returns route access facts without becoming the long-lived workspace entity store', async () => {
+    const session = createMockSessionResponse(
+      {},
+      { activeOrganizationId: 'ws-1' }
+    );
+    const workspace = createMockWorkspace({ id: 'ws-1' });
+    getSessionMock.mockResolvedValueOnce(session);
+    ensureWorkspaceMembershipMock.mockResolvedValueOnce(workspace);
+    getActiveMemberRoleMock.mockResolvedValueOnce('owner');
+
+    const result = await getWorkspaceRouteAccess({
+      data: { workspaceId: 'ws-1' },
+    });
+
+    expect(result).toEqual({ workspaceId: 'ws-1', role: 'owner' });
+    expect(result).not.toHaveProperty('workspace');
   });
 });
