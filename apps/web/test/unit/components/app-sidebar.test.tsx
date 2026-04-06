@@ -9,13 +9,15 @@ const {
   useActiveOrganizationMock,
   useWorkspaceAccessCapabilitiesQueryMock,
   useRouterStateMock,
-  useWorkspacesQueryMock,
+  useWorkspaceListQueryMock,
+  useWorkspaceDetailQueryMock,
 } = vi.hoisted(() => ({
   useSessionMock: vi.fn(),
   useActiveOrganizationMock: vi.fn(),
   useWorkspaceAccessCapabilitiesQueryMock: vi.fn(),
   useRouterStateMock: vi.fn(),
-  useWorkspacesQueryMock: vi.fn(),
+  useWorkspaceListQueryMock: vi.fn(),
+  useWorkspaceDetailQueryMock: vi.fn(),
 }));
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
@@ -39,8 +41,9 @@ vi.mock('@tanstack/react-router', async () => {
   };
 });
 
-vi.mock('@/hooks/use-workspaces-query', () => ({
-  useWorkspacesQuery: useWorkspacesQueryMock,
+vi.mock('@/workspace/workspace.queries', () => ({
+  useWorkspaceListQuery: useWorkspaceListQueryMock,
+  useWorkspaceDetailQuery: useWorkspaceDetailQueryMock,
 }));
 
 vi.mock('@workspace/ui/components/sidebar', () => ({
@@ -71,6 +74,10 @@ vi.mock('@/components/workspace-switcher', () => ({
     <div
       data-testid="workspace-switcher"
       data-active-id={activeWorkspaceId ?? ''}
+      data-active-name={
+        workspaces.find((workspace) => workspace.id === activeWorkspaceId)
+          ?.name ?? ''
+      }
       data-workspace-count={workspaces.length}
     />
   ),
@@ -131,7 +138,8 @@ beforeEach(() => {
   useWorkspaceAccessCapabilitiesQueryMock.mockReturnValue({
     data: { canViewBilling: true, canViewSettings: true },
   });
-  useWorkspacesQueryMock.mockReturnValue({ data: mockOrgs });
+  useWorkspaceListQueryMock.mockReturnValue({ data: mockOrgs });
+  useWorkspaceDetailQueryMock.mockReturnValue({ data: null });
   useActiveOrganizationMock.mockReturnValue({
     data: { id: 'ws-1', name: 'Workspace One' },
   });
@@ -190,6 +198,23 @@ describe('AppSidebar', () => {
     );
   });
 
+  it('overlays the active workspace detail onto the canonical workspace list', async () => {
+    useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
+    useWorkspaceListQueryMock.mockReturnValue({
+      data: [{ id: 'ws-1', name: 'Workspace One' }],
+    });
+    useWorkspaceDetailQueryMock.mockReturnValue({
+      data: { id: 'ws-1', name: 'Workspace One Renamed' },
+    });
+
+    await renderSidebar();
+
+    expect(screen.getByTestId('workspace-switcher')).toHaveAttribute(
+      'data-active-name',
+      'Workspace One Renamed'
+    );
+  });
+
   it('shows Billing nav item when workspace capabilities allow billing access', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
 
@@ -220,7 +245,7 @@ describe('AppSidebar', () => {
 
   it('renders NavMain with empty items when no workspace is active', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
-    useWorkspacesQueryMock.mockReturnValue({ data: [] });
+    useWorkspaceListQueryMock.mockReturnValue({ data: [] });
     useActiveOrganizationMock.mockReturnValue({ data: null });
 
     await renderSidebar();
@@ -250,7 +275,7 @@ describe('AppSidebar', () => {
 
   it('renders NavUserSkeleton while session is pending', async () => {
     useSessionMock.mockReturnValue({ data: null, isPending: true });
-    useWorkspacesQueryMock.mockReturnValue({ data: null });
+    useWorkspaceListQueryMock.mockReturnValue({ data: null });
     useActiveOrganizationMock.mockReturnValue({ data: null });
 
     await renderSidebar();

@@ -2,12 +2,7 @@ import * as React from 'react';
 import { IconLoader2 } from '@tabler/icons-react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  createFileRoute,
-  getRouteApi,
-  notFound,
-  useRouter,
-} from '@tanstack/react-router';
+import { createFileRoute, notFound } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { Button } from '@workspace/ui/components/button';
@@ -30,11 +25,13 @@ import { Separator } from '@workspace/ui/components/separator';
 import { toFieldErrorItem } from '@workspace/components/lib';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
 import { getWorkspaceCapabilities } from '@/policy/workspace-capabilities.functions';
+import { useWorkspacesQuery } from '@/hooks/use-workspaces-query';
+import { renameWorkspaceInList } from '@/workspace/workspace.mutations';
 import {
-  WORKSPACES_QUERY_KEY,
-  renameWorkspaceInList,
-  useWorkspacesQuery,
-} from '@/hooks/use-workspaces-query';
+  WORKSPACE_DETAIL_QUERY_KEY,
+  WORKSPACE_LIST_QUERY_KEY,
+  useWorkspaceDetailQuery,
+} from '@/workspace/workspace.queries';
 import {
   deleteWorkspace,
   updateWorkspaceSettings,
@@ -46,6 +43,27 @@ const workspaceSettingsSchema = z.object({
 
 const PAGE_LAYOUT_CLASS =
   'mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6';
+
+type WorkspaceDetail = {
+  id: string;
+  name: string;
+  slug: string;
+  createdAt: Date;
+  logo?: string | null;
+  metadata?: unknown;
+};
+
+function renameWorkspaceDetail(
+  workspace: WorkspaceDetail | undefined,
+  nextName: string
+) {
+  if (!workspace) return workspace;
+
+  return {
+    ...workspace,
+    name: nextName,
+  };
+}
 
 export const Route = createFileRoute('/_protected/ws/$workspaceId/settings')({
   loader: async ({ params }) => {
@@ -63,16 +81,15 @@ export const Route = createFileRoute('/_protected/ws/$workspaceId/settings')({
   staticData: { title: 'Workspace Settings' },
 });
 
-const workspaceRouteApi = getRouteApi('/_protected/ws/$workspaceId');
-
 function WorkspaceSettingsPage() {
   const { workspaceId } = Route.useParams();
-  const { workspace } = workspaceRouteApi.useLoaderData();
   const capabilities = Route.useLoaderData();
   const queryClient = useQueryClient();
-  const router = useRouter();
+  const { data: workspace } = useWorkspaceDetailQuery(workspaceId);
 
   useWorkspacesQuery();
+
+  if (!workspace) return null;
 
   const deleteDisabledMessage =
     capabilities.deleteWorkspaceBlockedReason === 'not-owner'
@@ -100,9 +117,9 @@ function WorkspaceSettingsPage() {
         },
       });
     },
-    onSuccess: async (_data, nextName) => {
+    onSuccess: (_data, nextName) => {
       queryClient.setQueryData(
-        WORKSPACES_QUERY_KEY,
+        WORKSPACE_LIST_QUERY_KEY,
         (
           previous:
             | Array<{
@@ -116,10 +133,10 @@ function WorkspaceSettingsPage() {
             | undefined
         ) => renameWorkspaceInList(previous, workspaceId, nextName)
       );
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: WORKSPACES_QUERY_KEY }),
-        router.invalidate({ sync: true }),
-      ]);
+      queryClient.setQueryData<WorkspaceDetail | undefined>(
+        WORKSPACE_DETAIL_QUERY_KEY(workspaceId),
+        (previous) => renameWorkspaceDetail(previous, nextName)
+      );
       toast.success('Workspace updated.');
     },
     onError: (error) => {
