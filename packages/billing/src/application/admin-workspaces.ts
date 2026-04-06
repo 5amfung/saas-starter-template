@@ -2,16 +2,26 @@ import {
   getAdminWorkspaceDetailFromDb,
   listAdminWorkspacesFromDb,
 } from '../infrastructure/workspace-repository';
-import { resolveWorkspacePlanId } from '../domain/plans';
+import {
+  getFreePlan,
+  getPlanById,
+  resolveEntitlements,
+  resolveWorkspacePlanId,
+} from '../domain/plans';
 import {
   clearWorkspaceEntitlementOverrides,
   getWorkspaceEntitlementOverrides,
   setWorkspaceEntitlementOverrides,
 } from './workspace-billing';
+import { evaluateWorkspaceProductPolicy } from './workspace-product-policy';
 import type { PlanId } from '../domain/plans';
 import type { AdminWorkspaceListParams } from '../infrastructure/workspace-repository';
 import type { Database } from '@workspace/db';
-import type { EntitlementOverrides } from '../domain/entitlements';
+import type {
+  EntitlementOverrides,
+  Entitlements,
+} from '../domain/entitlements';
+import type { WorkspaceProductPolicy } from '../contracts/product-policy';
 
 export type { AdminWorkspaceListParams } from '../infrastructure/workspace-repository';
 
@@ -34,6 +44,8 @@ export interface AdminWorkspaceDetail {
     periodEnd: Date | null;
     cancelAtPeriodEnd: boolean | null;
   } | null;
+  entitlements: Entitlements;
+  productPolicy: WorkspaceProductPolicy;
   overrides: {
     id: string;
     limits: EntitlementOverrides['limits'];
@@ -63,6 +75,12 @@ export async function getAdminWorkspaceDetail(input: {
   const planId = resolveWorkspacePlanId(
     detail.subscriptions.map((s) => ({ plan: s.plan, status: s.status ?? '' }))
   );
+  const plan = getPlanById(planId) ?? getFreePlan();
+  const overrides = await getWorkspaceEntitlementOverrides({
+    db: input.db,
+    workspaceId: input.workspaceId,
+  });
+  const entitlements = resolveEntitlements(plan.entitlements, overrides);
 
   return {
     id: detail.org.id,
@@ -75,6 +93,20 @@ export async function getAdminWorkspaceDetail(input: {
     ownerUserId: detail.owner?.userId ?? null,
     memberCount: detail.memberCount,
     planId,
+    entitlements,
+    productPolicy: evaluateWorkspaceProductPolicy({
+      currentPlan: plan,
+      resolvedEntitlements: entitlements,
+      subscriptionState: {
+        status: detail.subscription?.status ?? null,
+        stripeSubscriptionId: detail.subscription?.stripeSubscriptionId ?? null,
+        stripeScheduleId: null,
+        periodEnd: detail.subscription?.periodEnd ?? null,
+        cancelAtPeriodEnd: detail.subscription?.cancelAtPeriodEnd ?? false,
+        cancelAt: null,
+      },
+      scheduledTargetPlanId: null,
+    }),
     subscription: detail.subscription
       ? {
           id: detail.subscription.id,
@@ -85,10 +117,7 @@ export async function getAdminWorkspaceDetail(input: {
           cancelAtPeriodEnd: detail.subscription.cancelAtPeriodEnd,
         }
       : null,
-    overrides: await getWorkspaceEntitlementOverrides({
-      db: input.db,
-      workspaceId: input.workspaceId,
-    }),
+    overrides,
   };
 }
 

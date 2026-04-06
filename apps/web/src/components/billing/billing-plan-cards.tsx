@@ -8,11 +8,16 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card';
 import { BillingPlanSummary } from './billing-plan-summary';
-import type { Entitlements, PlanDefinition } from '@workspace/billing';
+import type {
+  Entitlements,
+  PlanDefinition,
+  WorkspaceProductPolicy,
+} from '@workspace/billing';
 
 interface BillingPlanCardsProps {
   currentPlan: PlanDefinition;
   currentEntitlements: Entitlements;
+  productPolicy: WorkspaceProductPolicy;
   /** Next billing date for paid plans. null for free tier. */
   nextBillingDate: Date | null;
   onManagePlan: () => void;
@@ -31,15 +36,13 @@ const DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
 export function BillingPlanCards({
   currentPlan,
   currentEntitlements,
+  productPolicy,
   nextBillingDate,
   onManagePlan,
   onBillingPortal,
   isBillingPortalLoading,
   workspaceName,
 }: BillingPlanCardsProps) {
-  const shouldShowBillingPortal =
-    currentPlan.pricing !== null && !currentPlan.isEnterprise;
-
   return (
     <div className="flex flex-col gap-4">
       <Card>
@@ -71,7 +74,7 @@ export function BillingPlanCards({
             featureIconClassName="text-muted-foreground"
           />
         </CardContent>
-        {currentPlan.isEnterprise ? (
+        {productPolicy.currentPlanCta.type === 'contact_sales' ? (
           <CardFooter className="flex-col items-stretch">
             <a
               href={`mailto:sales@example.com?subject=${encodeURIComponent(`Enterprise inquiry — ${workspaceName}`)}`}
@@ -85,11 +88,13 @@ export function BillingPlanCards({
             <Button variant="outline" className="w-full" onClick={onManagePlan}>
               Manage plan
             </Button>
-            {shouldShowBillingPortal && (
+            {productPolicy.billingPortal.visible && (
               <button
                 type="button"
                 onClick={onBillingPortal}
-                disabled={isBillingPortalLoading}
+                disabled={
+                  isBillingPortalLoading || !productPolicy.billingPortal.allowed
+                }
                 className="mt-1 text-center text-xs text-muted-foreground underline hover:text-foreground disabled:opacity-50"
               >
                 Billing portal

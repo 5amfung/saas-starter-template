@@ -7,10 +7,16 @@ export interface AdminAppPolicyContext {
 export interface AdminAppCapabilities {
   platformRole: PlatformRole | null;
   canAccessAdminApp: boolean;
+  canViewDashboard: boolean;
   canViewAdminDashboard: boolean;
+  canViewAnalytics: boolean;
   canViewUsers: boolean;
+  canManageUsers: boolean;
+  canDeleteUsers: boolean;
   canViewWorkspaces: boolean;
+  canViewWorkspaceBilling: boolean;
   canManageEntitlementOverrides: boolean;
+  canPerformSupportActions: boolean;
 }
 
 export type AdminAppCapability = keyof Omit<
@@ -25,10 +31,16 @@ export function evaluateAdminAppCapabilities(
   return {
     platformRole: context.platformRole,
     canAccessAdminApp: isPlatformAdmin,
+    canViewDashboard: isPlatformAdmin,
     canViewAdminDashboard: isPlatformAdmin,
+    canViewAnalytics: isPlatformAdmin,
     canViewUsers: isPlatformAdmin,
+    canManageUsers: isPlatformAdmin,
+    canDeleteUsers: isPlatformAdmin,
     canViewWorkspaces: isPlatformAdmin,
+    canViewWorkspaceBilling: isPlatformAdmin,
     canManageEntitlementOverrides: isPlatformAdmin,
+    canPerformSupportActions: isPlatformAdmin,
   };
 }
 

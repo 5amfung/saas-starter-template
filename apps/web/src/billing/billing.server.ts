@@ -5,8 +5,10 @@ import {
   PLANS,
   assertWorkspaceLimit,
   createCheckoutSession,
+  evaluateWorkspaceProductPolicy,
   getFreePlan,
   getPlanById,
+  getProductUpgradeActionForPlan,
   getWorkspaceBillingSnapshot,
   getWorkspaceEntitlements as getWorkspaceEntitlementsQuery,
   resolveSubscriptionDetails,
@@ -84,6 +86,12 @@ export async function getWorkspaceBillingData(
   const hasSubscription =
     snapshot.subscriptionState.status !== null ||
     snapshot.subscriptionState.stripeSubscriptionId !== null;
+  const productPolicy = evaluateWorkspaceProductPolicy({
+    currentPlan: plan,
+    resolvedEntitlements: snapshot.currentEntitlements,
+    subscriptionState: snapshot.subscriptionState,
+    scheduledTargetPlanId: snapshot.scheduledTargetPlanId,
+  });
   return {
     planId,
     plan,
@@ -91,6 +99,7 @@ export async function getWorkspaceBillingData(
     subscription: hasSubscription ? snapshot.subscriptionState : null,
     scheduledTargetPlanId: snapshot.scheduledTargetPlanId,
     memberCount: snapshot.memberCount,
+    productPolicy,
   };
 }
 
@@ -151,6 +160,7 @@ export interface CheckEntitlementResult {
   limit: number;
   planName: string;
   upgradePlan: PlanDefinition | null;
+  upgradeAction: 'checkout' | 'contact_sales' | 'none';
 }
 
 /**
@@ -174,6 +184,7 @@ export async function checkWorkspaceEntitlement(
       limit: result.limit,
       planName: result.planName,
       upgradePlan: result.upgradePlan,
+      upgradeAction: getProductUpgradeActionForPlan(result.upgradePlan),
     };
   } catch (error) {
     if (
@@ -188,6 +199,9 @@ export async function checkWorkspaceEntitlement(
         planName: String(metadata.planName ?? 'Current'),
         upgradePlan:
           getPlanById(String(metadata.upgradePlan ?? 'free') as PlanId) ?? null,
+        upgradeAction: getProductUpgradeActionForPlan(
+          getPlanById(String(metadata.upgradePlan ?? 'free') as PlanId) ?? null
+        ),
       };
     }
     throw error;

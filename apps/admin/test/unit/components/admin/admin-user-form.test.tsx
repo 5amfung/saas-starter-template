@@ -8,12 +8,8 @@ const { updateUserMock } = vi.hoisted(() => ({
   updateUserMock: vi.fn(),
 }));
 
-vi.mock('@workspace/auth/client', () => ({
-  authClient: {
-    admin: {
-      updateUser: updateUserMock,
-    },
-  },
+vi.mock('@/admin/users.functions', () => ({
+  updateUser: updateUserMock,
 }));
 
 const mockUser = {
@@ -88,10 +84,26 @@ describe('AdminUserForm', () => {
     await waitFor(() => {
       expect(updateUserMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          userId: 'user-1',
+          data: expect.objectContaining({
+            userId: 'user-1',
+          }),
         })
       );
     });
+  });
+
+  it('renders the form in read-only mode without edit capability', () => {
+    renderWithProviders(
+      <AdminUserForm user={mockUser} canManageUsers={false} />
+    );
+
+    expect(
+      screen.getByText(/can view this profile but cannot edit it/i)
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/full name/i)).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: /save changes/i })
+    ).toBeDisabled();
   });
 
   it('reverts changes on cancel', async () => {

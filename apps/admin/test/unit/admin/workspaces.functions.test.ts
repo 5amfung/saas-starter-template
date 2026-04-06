@@ -7,13 +7,13 @@ import {
 } from '@/admin/workspaces.functions';
 
 const {
-  requireAdminMock,
+  requireCurrentAdminAppCapabilityMock,
   listWorkspacesWithPlanMock,
   getWorkspaceDetailMock,
   upsertEntitlementOverridesMock,
   deleteEntitlementOverridesMock,
 } = vi.hoisted(() => ({
-  requireAdminMock: vi.fn(),
+  requireCurrentAdminAppCapabilityMock: vi.fn(),
   listWorkspacesWithPlanMock: vi.fn(),
   getWorkspaceDetailMock: vi.fn(),
   upsertEntitlementOverridesMock: vi.fn(),
@@ -22,8 +22,11 @@ const {
 
 vi.mock('@tanstack/react-start', () => createServerFnMock());
 
+vi.mock('@/policy/admin-app-capabilities.server', () => ({
+  requireCurrentAdminAppCapability: requireCurrentAdminAppCapabilityMock,
+}));
+
 vi.mock('@/admin/workspaces.server', () => ({
-  requireAdmin: requireAdminMock,
   listWorkspacesWithPlan: listWorkspacesWithPlanMock,
   getWorkspaceDetail: getWorkspaceDetailMock,
   upsertEntitlementOverrides: upsertEntitlementOverridesMock,
@@ -35,15 +38,17 @@ describe('listWorkspaces', () => {
     vi.clearAllMocks();
   });
 
-  it('rejects when requireAdmin throws', async () => {
-    requireAdminMock.mockRejectedValueOnce(new Error('Forbidden'));
+  it('rejects when workspace-read capability guard throws', async () => {
+    requireCurrentAdminAppCapabilityMock.mockRejectedValueOnce(
+      new Error('Forbidden')
+    );
     await expect(
       listWorkspaces({ data: { limit: 10, offset: 0 } })
     ).rejects.toMatchObject({ message: 'Forbidden' });
   });
 
   it('passes params to listWorkspacesWithPlan', async () => {
-    requireAdminMock.mockResolvedValueOnce({});
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
     listWorkspacesWithPlanMock.mockResolvedValueOnce({
       workspaces: [],
       total: 0,
@@ -51,6 +56,9 @@ describe('listWorkspaces', () => {
     await listWorkspaces({
       data: { search: 'test', filter: 'enterprise', limit: 20, offset: 0 },
     });
+    expect(requireCurrentAdminAppCapabilityMock).toHaveBeenCalledWith(
+      'canViewWorkspaces'
+    );
     expect(listWorkspacesWithPlanMock).toHaveBeenCalledWith({
       search: 'test',
       filter: 'enterprise',
@@ -61,7 +69,7 @@ describe('listWorkspaces', () => {
 
   it('returns the query result', async () => {
     const result = { workspaces: [{ id: 'ws-1' }], total: 1 };
-    requireAdminMock.mockResolvedValueOnce({});
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
     listWorkspacesWithPlanMock.mockResolvedValueOnce(result);
     const data = await listWorkspaces({ data: { limit: 10, offset: 0 } });
     expect(data).toEqual(result);
@@ -73,23 +81,28 @@ describe('getWorkspace', () => {
     vi.clearAllMocks();
   });
 
-  it('rejects when requireAdmin throws', async () => {
-    requireAdminMock.mockRejectedValueOnce(new Error('Forbidden'));
+  it('rejects when workspace-billing capability guard throws', async () => {
+    requireCurrentAdminAppCapabilityMock.mockRejectedValueOnce(
+      new Error('Forbidden')
+    );
     await expect(
       getWorkspace({ data: { workspaceId: 'ws-1' } })
     ).rejects.toMatchObject({ message: 'Forbidden' });
   });
 
   it('passes workspaceId to getWorkspaceDetail', async () => {
-    requireAdminMock.mockResolvedValueOnce({});
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
     getWorkspaceDetailMock.mockResolvedValueOnce({ id: 'ws-1' });
     await getWorkspace({ data: { workspaceId: 'ws-1' } });
+    expect(requireCurrentAdminAppCapabilityMock).toHaveBeenCalledWith(
+      'canViewWorkspaceBilling'
+    );
     expect(getWorkspaceDetailMock).toHaveBeenCalledWith('ws-1');
   });
 
   it('returns the query result', async () => {
     const workspace = { id: 'ws-1', name: 'Test Workspace' };
-    requireAdminMock.mockResolvedValueOnce({});
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
     getWorkspaceDetailMock.mockResolvedValueOnce(workspace);
     const result = await getWorkspace({ data: { workspaceId: 'ws-1' } });
     expect(result).toEqual(workspace);
@@ -101,8 +114,10 @@ describe('saveEntitlementOverrides', () => {
     vi.clearAllMocks();
   });
 
-  it('rejects when requireAdmin throws', async () => {
-    requireAdminMock.mockRejectedValueOnce(new Error('Forbidden'));
+  it('rejects when override capability guard throws', async () => {
+    requireCurrentAdminAppCapabilityMock.mockRejectedValueOnce(
+      new Error('Forbidden')
+    );
     await expect(
       saveEntitlementOverrides({
         data: { workspaceId: 'ws-1', limits: { members: 50 } },
@@ -111,7 +126,7 @@ describe('saveEntitlementOverrides', () => {
   });
 
   it('passes validated input to upsertEntitlementOverrides', async () => {
-    requireAdminMock.mockResolvedValueOnce({});
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
     upsertEntitlementOverridesMock.mockResolvedValueOnce(undefined);
     await saveEntitlementOverrides({
       data: {
@@ -120,6 +135,9 @@ describe('saveEntitlementOverrides', () => {
         features: { sso: true },
       },
     });
+    expect(requireCurrentAdminAppCapabilityMock).toHaveBeenCalledWith(
+      'canManageEntitlementOverrides'
+    );
     expect(upsertEntitlementOverridesMock).toHaveBeenCalledWith({
       workspaceId: 'ws-1',
       limits: { members: 50 },
@@ -128,7 +146,7 @@ describe('saveEntitlementOverrides', () => {
   });
 
   it('returns success', async () => {
-    requireAdminMock.mockResolvedValueOnce({});
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
     upsertEntitlementOverridesMock.mockResolvedValueOnce(undefined);
     const result = await saveEntitlementOverrides({
       data: { workspaceId: 'ws-1' },
@@ -142,22 +160,27 @@ describe('clearEntitlementOverrides', () => {
     vi.clearAllMocks();
   });
 
-  it('rejects when requireAdmin throws', async () => {
-    requireAdminMock.mockRejectedValueOnce(new Error('Forbidden'));
+  it('rejects when override capability guard throws', async () => {
+    requireCurrentAdminAppCapabilityMock.mockRejectedValueOnce(
+      new Error('Forbidden')
+    );
     await expect(
       clearEntitlementOverrides({ data: { workspaceId: 'ws-1' } })
     ).rejects.toMatchObject({ message: 'Forbidden' });
   });
 
   it('passes workspaceId to deleteEntitlementOverrides', async () => {
-    requireAdminMock.mockResolvedValueOnce({});
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
     deleteEntitlementOverridesMock.mockResolvedValueOnce(undefined);
     await clearEntitlementOverrides({ data: { workspaceId: 'ws-1' } });
+    expect(requireCurrentAdminAppCapabilityMock).toHaveBeenCalledWith(
+      'canManageEntitlementOverrides'
+    );
     expect(deleteEntitlementOverridesMock).toHaveBeenCalledWith('ws-1');
   });
 
   it('returns success', async () => {
-    requireAdminMock.mockResolvedValueOnce({});
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
     deleteEntitlementOverridesMock.mockResolvedValueOnce(undefined);
     const result = await clearEntitlementOverrides({
       data: { workspaceId: 'ws-1' },

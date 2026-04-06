@@ -12,7 +12,7 @@ describe('evaluateAdminAppCapabilities', () => {
     } satisfies AdminAppPolicyContext);
 
     expect(capabilities.canAccessAdminApp).toBe(false);
-    expect(capabilities.canViewAdminDashboard).toBe(false);
+    expect(capabilities.canViewDashboard).toBe(false);
     expect(capabilities.canViewUsers).toBe(false);
     expect(capabilities.canViewWorkspaces).toBe(false);
     expect(capabilities.canManageEntitlementOverrides).toBe(false);
@@ -24,7 +24,7 @@ describe('evaluateAdminAppCapabilities', () => {
     } satisfies AdminAppPolicyContext);
 
     expect(capabilities.canAccessAdminApp).toBe(true);
-    expect(capabilities.canViewAdminDashboard).toBe(true);
+    expect(capabilities.canViewDashboard).toBe(true);
     expect(capabilities.canViewUsers).toBe(true);
     expect(capabilities.canViewWorkspaces).toBe(true);
     expect(capabilities.canManageEntitlementOverrides).toBe(true);

@@ -80,6 +80,7 @@ function WorkspaceMembersPage() {
         upgradePrompt.show(
           'Member limit reached',
           `This workspace has ${result.current}/${result.limit} members on the ${result.planName} plan. Upgrade to invite more.`,
+          result.upgradeAction,
           result.upgradePlan
         );
       }

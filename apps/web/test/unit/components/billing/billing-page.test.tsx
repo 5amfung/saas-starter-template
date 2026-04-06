@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { evaluateWorkspaceProductPolicy } from '@workspace/billing';
 import { renderWithProviders } from '@workspace/test-utils';
 import { BillingPage } from '@/components/billing/billing-page';
 
@@ -123,6 +124,53 @@ const ENTERPRISE_PLAN = {
   isEnterprise: true,
 };
 
+function buildBillingData({
+  plan,
+  entitlements = plan.entitlements,
+  subscription = null,
+  scheduledTargetPlanId = null,
+  memberCount = 0,
+}: {
+  plan:
+    | typeof FREE_PLAN
+    | typeof STARTER_PLAN
+    | typeof PRO_PLAN
+    | typeof ENTERPRISE_PLAN;
+  entitlements?: typeof FREE_PLAN.entitlements;
+  subscription?: {
+    status: string | null;
+    periodEnd: Date | null;
+    cancelAtPeriodEnd: boolean;
+    cancelAt: Date | null;
+    stripeSubscriptionId?: string | null;
+    stripeScheduleId?: string | null;
+  } | null;
+  scheduledTargetPlanId?: 'free' | 'starter' | 'pro' | 'enterprise' | null;
+  memberCount?: number;
+}) {
+  return {
+    planId: plan.id,
+    plan,
+    entitlements,
+    subscription,
+    scheduledTargetPlanId,
+    memberCount,
+    productPolicy: evaluateWorkspaceProductPolicy({
+      currentPlan: plan,
+      resolvedEntitlements: entitlements,
+      subscriptionState: {
+        status: subscription?.status ?? null,
+        stripeSubscriptionId: subscription?.stripeSubscriptionId ?? null,
+        stripeScheduleId: subscription?.stripeScheduleId ?? null,
+        periodEnd: subscription?.periodEnd ?? null,
+        cancelAtPeriodEnd: subscription?.cancelAtPeriodEnd ?? false,
+        cancelAt: subscription?.cancelAt ?? null,
+      },
+      scheduledTargetPlanId,
+    }),
+  };
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('BillingPage', () => {
@@ -162,12 +210,9 @@ describe('BillingPage', () => {
   });
 
   it('renders plan cards once billing data loads', async () => {
-    getWorkspaceBillingData.mockResolvedValue({
-      planId: 'free',
-      plan: FREE_PLAN,
-      entitlements: FREE_PLAN.entitlements,
-      subscription: null,
-    });
+    getWorkspaceBillingData.mockResolvedValue(
+      buildBillingData({ plan: FREE_PLAN })
+    );
 
     renderWithProviders(
       <BillingPage
@@ -182,12 +227,9 @@ describe('BillingPage', () => {
   });
 
   it('renders invoice table section', async () => {
-    getWorkspaceBillingData.mockResolvedValue({
-      planId: 'free',
-      plan: FREE_PLAN,
-      entitlements: FREE_PLAN.entitlements,
-      subscription: null,
-    });
+    getWorkspaceBillingData.mockResolvedValue(
+      buildBillingData({ plan: FREE_PLAN })
+    );
     getWorkspaceInvoices.mockResolvedValue([]);
 
     renderWithProviders(
@@ -206,17 +248,17 @@ describe('BillingPage', () => {
   });
 
   it('does not show downgrade banner when subscription is not pending cancel', async () => {
-    getWorkspaceBillingData.mockResolvedValue({
-      planId: 'starter',
-      plan: STARTER_PLAN,
-      entitlements: STARTER_PLAN.entitlements,
-      subscription: {
-        status: 'active',
-        periodEnd: new Date('2026-04-01'),
-        cancelAtPeriodEnd: false,
-        cancelAt: null,
-      },
-    });
+    getWorkspaceBillingData.mockResolvedValue(
+      buildBillingData({
+        plan: STARTER_PLAN,
+        subscription: {
+          status: 'active',
+          periodEnd: new Date('2026-04-01'),
+          cancelAtPeriodEnd: false,
+          cancelAt: null,
+        },
+      })
+    );
 
     renderWithProviders(
       <BillingPage
@@ -235,17 +277,17 @@ describe('BillingPage', () => {
   });
 
   it('shows downgrade banner when subscription is pending cancel', async () => {
-    getWorkspaceBillingData.mockResolvedValue({
-      planId: 'starter',
-      plan: STARTER_PLAN,
-      entitlements: STARTER_PLAN.entitlements,
-      subscription: {
-        status: 'active',
-        periodEnd: new Date('2026-04-15'),
-        cancelAtPeriodEnd: true,
-        cancelAt: null,
-      },
-    });
+    getWorkspaceBillingData.mockResolvedValue(
+      buildBillingData({
+        plan: STARTER_PLAN,
+        subscription: {
+          status: 'active',
+          periodEnd: new Date('2026-04-15'),
+          cancelAtPeriodEnd: true,
+          cancelAt: null,
+        },
+      })
+    );
 
     renderWithProviders(
       <BillingPage
@@ -260,12 +302,9 @@ describe('BillingPage', () => {
   });
 
   it('redirects via window.location.href on upgrade success', async () => {
-    getWorkspaceBillingData.mockResolvedValue({
-      planId: 'free',
-      plan: FREE_PLAN,
-      entitlements: FREE_PLAN.entitlements,
-      subscription: null,
-    });
+    getWorkspaceBillingData.mockResolvedValue(
+      buildBillingData({ plan: FREE_PLAN })
+    );
     createWorkspaceCheckoutSession.mockResolvedValue({
       url: 'https://checkout.stripe.com/test123',
     });
@@ -293,17 +332,17 @@ describe('BillingPage', () => {
   });
 
   it('redirects via window.location.href on billing portal click', async () => {
-    getWorkspaceBillingData.mockResolvedValue({
-      planId: 'starter',
-      plan: STARTER_PLAN,
-      entitlements: STARTER_PLAN.entitlements,
-      subscription: {
-        status: 'active',
-        periodEnd: new Date('2026-04-01'),
-        cancelAtPeriodEnd: false,
-        cancelAt: null,
-      },
-    });
+    getWorkspaceBillingData.mockResolvedValue(
+      buildBillingData({
+        plan: STARTER_PLAN,
+        subscription: {
+          status: 'active',
+          periodEnd: new Date('2026-04-01'),
+          cancelAtPeriodEnd: false,
+          cancelAt: null,
+        },
+      })
+    );
     createWorkspacePortalSession.mockResolvedValue({
       url: 'https://billing.stripe.com/portal123',
     });
@@ -330,17 +369,17 @@ describe('BillingPage', () => {
   });
 
   it('shows success toast and does not redirect on reactivate success', async () => {
-    getWorkspaceBillingData.mockResolvedValue({
-      planId: 'starter',
-      plan: STARTER_PLAN,
-      entitlements: STARTER_PLAN.entitlements,
-      subscription: {
-        status: 'active',
-        periodEnd: new Date('2026-04-15'),
-        cancelAtPeriodEnd: true,
-        cancelAt: null,
-      },
-    });
+    getWorkspaceBillingData.mockResolvedValue(
+      buildBillingData({
+        plan: STARTER_PLAN,
+        subscription: {
+          status: 'active',
+          periodEnd: new Date('2026-04-15'),
+          cancelAtPeriodEnd: true,
+          cancelAt: null,
+        },
+      })
+    );
     reactivateWorkspaceSubscription.mockResolvedValue({ success: true });
 
     const user = userEvent.setup();
@@ -370,12 +409,9 @@ describe('BillingPage', () => {
   });
 
   it('shows error toast when upgrade fails', async () => {
-    getWorkspaceBillingData.mockResolvedValue({
-      planId: 'free',
-      plan: FREE_PLAN,
-      entitlements: FREE_PLAN.entitlements,
-      subscription: null,
-    });
+    getWorkspaceBillingData.mockResolvedValue(
+      buildBillingData({ plan: FREE_PLAN })
+    );
     createWorkspaceCheckoutSession.mockRejectedValue(
       new Error('Failed to start checkout.')
     );
@@ -403,17 +439,17 @@ describe('BillingPage', () => {
   });
 
   it('shows pro current-plan card without enterprise upsell card', async () => {
-    getWorkspaceBillingData.mockResolvedValue({
-      planId: 'pro',
-      plan: PRO_PLAN,
-      entitlements: PRO_PLAN.entitlements,
-      subscription: {
-        status: 'active',
-        periodEnd: new Date('2026-04-01'),
-        cancelAtPeriodEnd: false,
-        cancelAt: null,
-      },
-    });
+    getWorkspaceBillingData.mockResolvedValue(
+      buildBillingData({
+        plan: PRO_PLAN,
+        subscription: {
+          status: 'active',
+          periodEnd: new Date('2026-04-01'),
+          cancelAtPeriodEnd: false,
+          cancelAt: null,
+        },
+      })
+    );
 
     renderWithProviders(
       <BillingPage
@@ -438,26 +474,27 @@ describe('BillingPage', () => {
   });
 
   it('shows current enterprise entitlements and custom pricing language', async () => {
-    getWorkspaceBillingData.mockResolvedValue({
-      planId: 'enterprise',
-      plan: ENTERPRISE_PLAN,
-      entitlements: {
-        limits: { members: 42, projects: -1, apiKeys: 2 },
-        features: {
-          sso: true,
-          auditLogs: false,
-          apiAccess: true,
-          prioritySupport: true,
+    getWorkspaceBillingData.mockResolvedValue(
+      buildBillingData({
+        plan: ENTERPRISE_PLAN,
+        entitlements: {
+          limits: { members: 42, projects: -1, apiKeys: 2 },
+          features: {
+            sso: true,
+            auditLogs: false,
+            apiAccess: true,
+            prioritySupport: true,
+          },
+          quotas: { storageGb: 500, apiCallsMonthly: -1 },
         },
-        quotas: { storageGb: 500, apiCallsMonthly: -1 },
-      },
-      subscription: {
-        status: 'active',
-        periodEnd: new Date('2026-04-01'),
-        cancelAtPeriodEnd: false,
-        cancelAt: null,
-      },
-    });
+        subscription: {
+          status: 'active',
+          periodEnd: new Date('2026-04-01'),
+          cancelAtPeriodEnd: false,
+          cancelAt: null,
+        },
+      })
+    );
 
     renderWithProviders(
       <BillingPage

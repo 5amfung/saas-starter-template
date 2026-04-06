@@ -20,12 +20,12 @@ const {
 }));
 
 vi.mock('@workspace/auth/client', () => ({
-  authClient: {
-    admin: {
-      updateUser: adminUpdateUserMock,
-      removeUser: adminRemoveUserMock,
-    },
-  },
+  authClient: {},
+}));
+
+vi.mock('@/admin/users.functions', () => ({
+  updateUser: adminUpdateUserMock,
+  deleteUser: adminRemoveUserMock,
 }));
 
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
@@ -76,7 +76,9 @@ describe('Admin user management flow', () => {
       await waitFor(() => {
         expect(adminUpdateUserMock).toHaveBeenCalledWith(
           expect.objectContaining({
-            userId: 'user-1',
+            data: expect.objectContaining({
+              userId: 'user-1',
+            }),
           })
         );
       });
@@ -125,7 +127,7 @@ describe('Admin user management flow', () => {
 
       await waitFor(() => {
         expect(adminRemoveUserMock).toHaveBeenCalledWith({
-          userId: 'user-1',
+          data: { userId: 'user-1' },
         });
       });
 

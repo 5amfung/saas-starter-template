@@ -19,8 +19,15 @@ import { Separator } from '@workspace/ui/components/separator';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { AdminEntitlementOverrideForm } from '@/components/admin/admin-entitlement-override-form';
 import { useAdminWorkspaceDetailQuery } from '@/admin/workspaces.queries';
+import { getAdminAppCapabilities } from '@/policy/admin-app-capabilities.functions';
+import { useAdminAppCapabilities } from '@/policy/admin-app-capabilities';
+import { requireAdminRouteCapability } from '@/policy/admin-app-route-access';
 
 export const Route = createFileRoute('/_protected/workspaces/$workspaceId')({
+  beforeLoad: async () => {
+    const capabilities = await getAdminAppCapabilities();
+    requireAdminRouteCapability(capabilities, 'canViewWorkspaces');
+  },
   component: AdminWorkspaceDetailPage,
   staticData: { title: 'Workspace Details' },
 });
@@ -49,6 +56,7 @@ function BackToWorkspaceListButton({ disabled }: { disabled?: boolean }) {
 
 function AdminWorkspaceDetailPage() {
   const { workspaceId } = Route.useParams();
+  const { capabilities } = useAdminAppCapabilities();
 
   const workspaceQuery = useAdminWorkspaceDetailQuery(workspaceId);
 
@@ -122,70 +130,72 @@ function AdminWorkspaceDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Subscription Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Subscription</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className={TWO_COLUMN_GRID}>
-              <div className="space-y-2">
-                <Label>Plan</Label>
-                <div>
-                  <Badge variant="default" className="capitalize">
-                    {workspace.planId}
-                  </Badge>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <div>
-                  <Badge
-                    variant={
-                      workspace.subscription?.status === 'active'
-                        ? 'outline'
-                        : 'secondary'
-                    }
-                    className="capitalize"
-                  >
-                    {workspace.subscription?.status ?? 'Free'}
-                  </Badge>
-                  {workspace.subscription?.cancelAtPeriodEnd ? (
-                    <Badge variant="destructive" className="ml-2">
-                      Canceling
-                    </Badge>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-            {workspace.subscription ? (
+        {capabilities.canViewWorkspaceBilling ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Subscription</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className={TWO_COLUMN_GRID}>
-                <ReadOnlyField
-                  label="Stripe Subscription ID"
-                  value={workspace.subscription.stripeSubscriptionId ?? 'N/A'}
-                  mono
-                />
-                <ReadOnlyField
-                  label="Period End"
-                  value={
-                    workspace.subscription.periodEnd
-                      ? new Date(
-                          workspace.subscription.periodEnd
-                        ).toLocaleString()
-                      : 'N/A'
-                  }
-                />
+                <div className="space-y-2">
+                  <Label>Plan</Label>
+                  <div>
+                    <Badge variant="default" className="capitalize">
+                      {workspace.planId}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <div>
+                    <Badge
+                      variant={
+                        workspace.subscription?.status === 'active'
+                          ? 'outline'
+                          : 'secondary'
+                      }
+                      className="capitalize"
+                    >
+                      {workspace.subscription?.status ?? 'Free'}
+                    </Badge>
+                    {workspace.subscription?.cancelAtPeriodEnd ? (
+                      <Badge variant="destructive" className="ml-2">
+                        Canceling
+                      </Badge>
+                    ) : null}
+                  </div>
+                </div>
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No active subscription.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+              {workspace.subscription ? (
+                <div className={TWO_COLUMN_GRID}>
+                  <ReadOnlyField
+                    label="Stripe Subscription ID"
+                    value={workspace.subscription.stripeSubscriptionId ?? 'N/A'}
+                    mono
+                  />
+                  <ReadOnlyField
+                    label="Period End"
+                    value={
+                      workspace.subscription.periodEnd
+                        ? new Date(
+                            workspace.subscription.periodEnd
+                          ).toLocaleString()
+                        : 'N/A'
+                    }
+                  />
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No active subscription.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        ) : null}
 
         {/* Entitlement Overrides — enterprise only */}
-        {workspace.planId === 'enterprise' ? (
+        {workspace.planId === 'enterprise' &&
+        capabilities.canManageEntitlementOverrides ? (
           <>
             <Separator />
             <AdminEntitlementOverrideForm

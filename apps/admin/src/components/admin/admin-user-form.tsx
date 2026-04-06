@@ -35,9 +35,9 @@ import { Separator } from '@workspace/ui/components/separator';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { Textarea } from '@workspace/ui/components/textarea';
 import { cn } from '@workspace/ui/lib/utils';
-import { authClient } from '@workspace/auth/client';
 import { getInitials, toFieldErrorItem } from '@workspace/components/lib';
 import { adminUserFormSchema } from '@/admin/schemas';
+import { updateUser } from '@/admin/users.functions';
 
 interface UserData {
   id: string;
@@ -57,6 +57,7 @@ interface UserData {
 
 interface AdminUserFormProps {
   user: UserData;
+  canManageUsers?: boolean;
 }
 
 const ROLE_OPTIONS = ['user', 'admin'];
@@ -71,11 +72,11 @@ type AdminUserUpdatePayload = {
   name: string;
   email: string;
   emailVerified: boolean;
-  image: string | null;
-  role: string | null;
+  image: string;
+  role: string;
   banned: boolean;
-  banReason: string | null;
-  banExpires: string | null;
+  banReason: string;
+  banExpires: string;
 };
 
 function FormSection({
@@ -103,7 +104,10 @@ function SkeletonField({ labelWidth = 'w-20' }: { labelWidth?: string }) {
   );
 }
 
-export function AdminUserForm({ user }: AdminUserFormProps) {
+export function AdminUserForm({
+  user,
+  canManageUsers = true,
+}: AdminUserFormProps) {
   const queryClient = useQueryClient();
 
   const form = useForm({
@@ -124,15 +128,19 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
       onSubmit: adminUserFormSchema,
     },
     onSubmit: async ({ value }) => {
+      if (!canManageUsers) {
+        return;
+      }
+
       await mutation.mutateAsync({
         name: value.name,
         email: value.email,
         emailVerified: value.emailVerified,
-        image: value.image || null,
-        role: value.role || null,
+        image: value.image,
+        role: value.role,
         banned: value.banned,
-        banReason: value.banReason || null,
-        banExpires: value.banExpires || null,
+        banReason: value.banReason,
+        banExpires: value.banExpires,
       });
 
       form.reset(value);
@@ -141,25 +149,12 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
 
   const mutation = useMutation({
     mutationFn: async (values: AdminUserUpdatePayload) => {
-      const { error } = await authClient.admin.updateUser({
-        userId: user.id,
+      await updateUser({
         data: {
+          userId: user.id,
           ...values,
-          banExpires: values.banExpires ? new Date(values.banExpires) : null,
         },
       });
-      if (error) {
-        // Better Auth may return a generic HTTP status text (e.g. "Internal Server
-        // Error") when the database throws a constraint violation. Only surface the
-        // API message when it is more descriptive than the status text.
-        const hasDescriptiveMessage =
-          error.message && error.message !== error.statusText;
-        throw new Error(
-          hasDescriptiveMessage
-            ? error.message
-            : 'Failed to update user. The email address may already be in use.'
-        );
-      }
     },
     onSuccess: (_data, variables) => {
       queryClient.setQueryData(
@@ -171,10 +166,10 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
                 name: variables.name,
                 email: variables.email,
                 emailVerified: variables.emailVerified,
-                image: variables.image,
-                role: variables.role,
+                image: variables.image || null,
+                role: variables.role || null,
                 banned: variables.banned,
-                banReason: variables.banReason,
+                banReason: variables.banReason || null,
                 banExpires: variables.banExpires
                   ? new Date(variables.banExpires)
                   : null,
@@ -194,6 +189,7 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
 
   const initials = getInitials(user.name, user.email);
   const avatarSrc = user.image ?? undefined;
+  const isReadOnly = !canManageUsers;
 
   return (
     <form
@@ -246,6 +242,7 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(e) => field.handleChange(e.target.value)}
+                        disabled={isReadOnly}
                       />
                       {isInvalid && (
                         <FieldError
@@ -283,6 +280,7 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(e) => field.handleChange(e.target.value)}
+                        disabled={isReadOnly}
                       />
                       {isInvalid && (
                         <FieldError
@@ -302,6 +300,7 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
                       <Checkbox
                         id={field.name}
                         checked={field.state.value}
+                        disabled={isReadOnly}
                         onCheckedChange={(checked) =>
                           field.handleChange(checked === true)
                         }
@@ -321,6 +320,7 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
                     <FieldLabel htmlFor={field.name}>Role</FieldLabel>
                     <Select
                       value={field.state.value}
+                      disabled={isReadOnly}
                       onValueChange={(v) => {
                         if (v) field.handleChange(v);
                       }}
@@ -355,6 +355,7 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
                       <Checkbox
                         id={field.name}
                         checked={field.state.value}
+                        disabled={isReadOnly}
                         onCheckedChange={(checked) =>
                           field.handleChange(checked === true)
                         }
@@ -374,6 +375,7 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
                         onBlur={field.handleBlur}
                         onChange={(e) => field.handleChange(e.target.value)}
                         rows={2}
+                        disabled={isReadOnly}
                       />
                     </Field>
                   )}
@@ -389,6 +391,7 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
                         value={field.state.value}
                         onBlur={field.handleBlur}
                         onChange={(e) => field.handleChange(e.target.value)}
+                        disabled={isReadOnly}
                       />
                     </Field>
                   )}
@@ -437,17 +440,24 @@ export function AdminUserForm({ user }: AdminUserFormProps) {
             ]}
             children={([isDirty, isSubmitting, canSubmit]) => (
               <>
+                {isReadOnly ? (
+                  <p className="mr-auto text-sm text-muted-foreground">
+                    Your admin role can view this profile but cannot edit it.
+                  </p>
+                ) : null}
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => form.reset()}
-                  disabled={!isDirty || isSubmitting}
+                  disabled={isReadOnly || !isDirty || isSubmitting}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  disabled={!isDirty || !canSubmit || isSubmitting}
+                  disabled={
+                    isReadOnly || !isDirty || !canSubmit || isSubmitting
+                  }
                 >
                   {isSubmitting && (
                     <IconLoader2 className="size-4 animate-spin" />

@@ -1,10 +1,10 @@
 import { createServerFn } from '@tanstack/react-start';
 import * as z from 'zod';
+import { requireCurrentAdminAppCapability } from '@/policy/admin-app-capabilities.server';
 import {
   deleteEntitlementOverrides,
   getWorkspaceDetail,
   listWorkspacesWithPlan,
-  requireAdmin,
   upsertEntitlementOverrides,
 } from '@/admin/workspaces.server';
 import { entitlementOverrideSchema } from '@/admin/workspaces.schemas';
@@ -23,7 +23,7 @@ export const listWorkspaces = createServerFn()
     })
   )
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireCurrentAdminAppCapability('canViewWorkspaces');
     return listWorkspacesWithPlan(data);
   });
 
@@ -32,7 +32,7 @@ export const listWorkspaces = createServerFn()
 export const getWorkspace = createServerFn()
   .inputValidator(z.object({ workspaceId: z.string() }))
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireCurrentAdminAppCapability('canViewWorkspaceBilling');
     return getWorkspaceDetail(data.workspaceId);
   });
 
@@ -41,7 +41,7 @@ export const getWorkspace = createServerFn()
 export const saveEntitlementOverrides = createServerFn()
   .inputValidator(entitlementOverrideSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireCurrentAdminAppCapability('canManageEntitlementOverrides');
     await upsertEntitlementOverrides(data);
     return { success: true };
   });
@@ -51,7 +51,7 @@ export const saveEntitlementOverrides = createServerFn()
 export const clearEntitlementOverrides = createServerFn()
   .inputValidator(z.object({ workspaceId: z.string() }))
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireCurrentAdminAppCapability('canManageEntitlementOverrides');
     await deleteEntitlementOverrides(data.workspaceId);
     return { success: true };
   });

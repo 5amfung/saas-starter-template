@@ -9,12 +9,8 @@ const { removeUserMock, navigateMock } = vi.hoisted(() => ({
   navigateMock: vi.fn(),
 }));
 
-vi.mock('@workspace/auth/client', () => ({
-  authClient: {
-    admin: {
-      removeUser: removeUserMock,
-    },
-  },
+vi.mock('@/admin/users.functions', () => ({
+  deleteUser: removeUserMock,
 }));
 
 vi.mock('@tanstack/react-router', async () => {
@@ -84,7 +80,9 @@ describe('AdminDeleteUserDialog', () => {
     await user.click(screen.getByRole('button', { name: /confirm delete/i }));
 
     await waitFor(() => {
-      expect(removeUserMock).toHaveBeenCalledWith({ userId: 'user-1' });
+      expect(removeUserMock).toHaveBeenCalledWith({
+        data: { userId: 'user-1' },
+      });
     });
 
     await waitFor(() => {

@@ -17,7 +17,7 @@ import {
 } from '@workspace/ui/components/alert-dialog';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
-import { authClient } from '@workspace/auth/client';
+import { deleteUser } from '@/admin/users.functions';
 
 const CONFIRMATION_TEXT = 'DELETE';
 
@@ -41,8 +41,7 @@ export function AdminDeleteUserDialog({
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const { error } = await authClient.admin.removeUser({ userId });
-      if (error) throw new Error(error.message);
+      await deleteUser({ data: { userId } });
     },
     onSuccess: () => {
       toast.success('User deleted successfully.');

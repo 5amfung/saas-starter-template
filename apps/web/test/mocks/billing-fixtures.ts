@@ -1,3 +1,4 @@
+import { evaluateWorkspaceProductPolicy } from '@workspace/billing';
 import type { Entitlements, PlanDefinition, PlanId } from '@workspace/billing';
 
 export const FREE_PLAN_FIXTURE: PlanDefinition = {
@@ -42,6 +43,7 @@ export interface WorkspaceBillingDataFixture {
   planId: PlanId;
   plan: PlanDefinition;
   entitlements: Entitlements;
+  productPolicy?: ReturnType<typeof evaluateWorkspaceProductPolicy>;
   subscription: {
     status?: string | null;
     stripeSubscriptionId?: string | null;
@@ -65,5 +67,31 @@ export function buildWorkspaceBillingDataFixture(
     subscription: overrides.subscription ?? null,
     scheduledTargetPlanId: overrides.scheduledTargetPlanId ?? null,
     memberCount: overrides.memberCount ?? 0,
+    productPolicy:
+      overrides.productPolicy ??
+      evaluateWorkspaceProductPolicy({
+        currentPlan: overrides.plan ?? plan,
+        resolvedEntitlements: overrides.entitlements ?? plan.entitlements,
+        subscriptionState: {
+          status: overrides.subscription?.status ?? null,
+          stripeSubscriptionId:
+            overrides.subscription?.stripeSubscriptionId ?? null,
+          stripeScheduleId: overrides.subscription?.stripeScheduleId ?? null,
+          periodEnd:
+            overrides.subscription?.periodEnd instanceof Date
+              ? overrides.subscription.periodEnd
+              : overrides.subscription?.periodEnd
+                ? new Date(overrides.subscription.periodEnd)
+                : null,
+          cancelAtPeriodEnd: overrides.subscription?.cancelAtPeriodEnd ?? false,
+          cancelAt:
+            overrides.subscription?.cancelAt instanceof Date
+              ? overrides.subscription.cancelAt
+              : overrides.subscription?.cancelAt
+                ? new Date(overrides.subscription.cancelAt)
+                : null,
+        },
+        scheduledTargetPlanId: overrides.scheduledTargetPlanId ?? null,
+      }),
   };
 }

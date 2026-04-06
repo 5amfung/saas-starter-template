@@ -1,10 +1,10 @@
 import { createServerFn } from '@tanstack/react-start';
 import * as z from 'zod';
+import { requireCurrentAdminAppCapability } from '@/policy/admin-app-capabilities.server';
 import {
   queryDashboardMetrics,
   queryMauChartData,
   querySignupChartData,
-  requireAdmin,
 } from '@/admin/admin.server';
 
 // --- Dashboard Metrics ---
@@ -12,7 +12,7 @@ import {
 export const getAdminDashboardMetrics = createServerFn()
   .inputValidator(z.object({ timezoneOffset: z.number() }))
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireCurrentAdminAppCapability('canViewDashboard');
     return queryDashboardMetrics(data.timezoneOffset);
   });
 
@@ -23,7 +23,7 @@ export const getSignupChartData = createServerFn()
     z.object({ days: z.number().int().min(1), timezoneOffset: z.number() })
   )
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireCurrentAdminAppCapability('canViewAnalytics');
     return querySignupChartData(data.days, data.timezoneOffset);
   });
 
@@ -34,6 +34,6 @@ export const getMauChartData = createServerFn()
     z.object({ days: z.number().int().min(1), timezoneOffset: z.number() })
   )
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireCurrentAdminAppCapability('canViewAnalytics');
     return queryMauChartData(data.days, data.timezoneOffset);
   });

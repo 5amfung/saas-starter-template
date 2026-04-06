@@ -6,12 +6,12 @@ import {
 } from '@/admin/admin.functions';
 
 const {
-  requireAdminMock,
+  requireCurrentAdminAppCapabilityMock,
   queryDashboardMetricsMock,
   querySignupChartDataMock,
   queryMauChartDataMock,
 } = vi.hoisted(() => ({
-  requireAdminMock: vi.fn(),
+  requireCurrentAdminAppCapabilityMock: vi.fn(),
   queryDashboardMetricsMock: vi.fn(),
   querySignupChartDataMock: vi.fn(),
   queryMauChartDataMock: vi.fn(),
@@ -20,10 +20,13 @@ const {
 vi.mock('@tanstack/react-start', () => createServerFnMock());
 
 vi.mock('@/admin/admin.server', () => ({
-  requireAdmin: requireAdminMock,
   queryDashboardMetrics: queryDashboardMetricsMock,
   querySignupChartData: querySignupChartDataMock,
   queryMauChartData: queryMauChartDataMock,
+}));
+
+vi.mock('@/policy/admin-app-capabilities.server', () => ({
+  requireCurrentAdminAppCapability: requireCurrentAdminAppCapabilityMock,
 }));
 
 describe('getAdminDashboardMetrics', () => {
@@ -31,23 +34,28 @@ describe('getAdminDashboardMetrics', () => {
     vi.clearAllMocks();
   });
 
-  it('rejects when requireAdmin throws', async () => {
-    requireAdminMock.mockRejectedValueOnce(new Error('Forbidden'));
+  it('rejects when dashboard capability guard throws', async () => {
+    requireCurrentAdminAppCapabilityMock.mockRejectedValueOnce(
+      new Error('Forbidden')
+    );
     await expect(
       getAdminDashboardMetrics({ data: { timezoneOffset: -300 } })
     ).rejects.toMatchObject({ message: 'Forbidden' });
   });
 
   it('passes timezoneOffset to queryDashboardMetrics', async () => {
-    requireAdminMock.mockResolvedValueOnce({});
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
     queryDashboardMetricsMock.mockResolvedValueOnce({ users: 10 });
     await getAdminDashboardMetrics({ data: { timezoneOffset: -300 } });
+    expect(requireCurrentAdminAppCapabilityMock).toHaveBeenCalledWith(
+      'canViewDashboard'
+    );
     expect(queryDashboardMetricsMock).toHaveBeenCalledWith(-300);
   });
 
   it('returns the query result', async () => {
     const metrics = { users: 42, signups: 5 };
-    requireAdminMock.mockResolvedValueOnce({});
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
     queryDashboardMetricsMock.mockResolvedValueOnce(metrics);
     const result = await getAdminDashboardMetrics({
       data: { timezoneOffset: 0 },
@@ -61,23 +69,28 @@ describe('getSignupChartData', () => {
     vi.clearAllMocks();
   });
 
-  it('rejects when requireAdmin throws', async () => {
-    requireAdminMock.mockRejectedValueOnce(new Error('Forbidden'));
+  it('rejects when analytics capability guard throws', async () => {
+    requireCurrentAdminAppCapabilityMock.mockRejectedValueOnce(
+      new Error('Forbidden')
+    );
     await expect(
       getSignupChartData({ data: { days: 7, timezoneOffset: -300 } })
     ).rejects.toMatchObject({ message: 'Forbidden' });
   });
 
   it('passes days and timezoneOffset to querySignupChartData', async () => {
-    requireAdminMock.mockResolvedValueOnce({});
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
     querySignupChartDataMock.mockResolvedValueOnce([]);
     await getSignupChartData({ data: { days: 30, timezoneOffset: -300 } });
+    expect(requireCurrentAdminAppCapabilityMock).toHaveBeenCalledWith(
+      'canViewAnalytics'
+    );
     expect(querySignupChartDataMock).toHaveBeenCalledWith(30, -300);
   });
 
   it('returns the query result', async () => {
     const chartData = [{ date: '2026-03-01', count: 3 }];
-    requireAdminMock.mockResolvedValueOnce({});
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
     querySignupChartDataMock.mockResolvedValueOnce(chartData);
     const result = await getSignupChartData({
       data: { days: 7, timezoneOffset: 0 },
@@ -91,23 +104,28 @@ describe('getMauChartData', () => {
     vi.clearAllMocks();
   });
 
-  it('rejects when requireAdmin throws', async () => {
-    requireAdminMock.mockRejectedValueOnce(new Error('Forbidden'));
+  it('rejects when analytics capability guard throws', async () => {
+    requireCurrentAdminAppCapabilityMock.mockRejectedValueOnce(
+      new Error('Forbidden')
+    );
     await expect(
       getMauChartData({ data: { days: 7, timezoneOffset: -300 } })
     ).rejects.toMatchObject({ message: 'Forbidden' });
   });
 
   it('passes days and timezoneOffset to queryMauChartData', async () => {
-    requireAdminMock.mockResolvedValueOnce({});
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
     queryMauChartDataMock.mockResolvedValueOnce([]);
     await getMauChartData({ data: { days: 30, timezoneOffset: -300 } });
+    expect(requireCurrentAdminAppCapabilityMock).toHaveBeenCalledWith(
+      'canViewAnalytics'
+    );
     expect(queryMauChartDataMock).toHaveBeenCalledWith(30, -300);
   });
 
   it('returns the query result', async () => {
     const chartData = [{ date: '2026-03-01', mau: 100 }];
-    requireAdminMock.mockResolvedValueOnce({});
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
     queryMauChartDataMock.mockResolvedValueOnce(chartData);
     const result = await getMauChartData({
       data: { days: 7, timezoneOffset: 0 },

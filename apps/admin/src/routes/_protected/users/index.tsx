@@ -2,9 +2,10 @@ import * as React from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { Button } from '@workspace/ui/components/button';
-import { authClient } from '@workspace/auth/client';
 import type { SortingState } from '@tanstack/react-table';
+import { listUsers } from '@/admin/users.functions';
 import { AdminUserTable } from '@/components/admin/admin-user-table';
+import { useAdminAppCapabilities } from '@/policy/admin-app-capabilities';
 
 export const Route = createFileRoute('/_protected/users/')({
   component: AdminUserListPage,
@@ -42,6 +43,7 @@ function getFilterParams(filter: FilterTab) {
 }
 
 function AdminUserListPage() {
+  const { capabilities } = useAdminAppCapabilities();
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(DEFAULT_PAGE_SIZE);
   const [search, setSearch] = React.useState('');
@@ -98,10 +100,11 @@ function AdminUserListPage() {
       sortDirection,
     ],
     placeholderData: keepPreviousData,
+    enabled: capabilities.canViewUsers,
     queryFn: async () => {
       const filterParams = getFilterParams(filter);
-      const { data, error } = await authClient.admin.listUsers({
-        query: {
+      const data = await listUsers({
+        data: {
           limit: pageSize,
           offset: (page - 1) * pageSize,
           ...(debouncedSearch
@@ -114,8 +117,6 @@ function AdminUserListPage() {
           ...(sortBy ? { sortBy, sortDirection: sortDirection ?? 'asc' } : {}),
         },
       });
-
-      if (error) throw new Error(error.message);
 
       return {
         users: data.users,
@@ -138,6 +139,16 @@ function AdminUserListPage() {
         >
           Retry
         </Button>
+      </div>
+    );
+  }
+
+  if (!capabilities.canViewUsers) {
+    return (
+      <div className="flex flex-col items-center gap-2 py-12 text-center">
+        <p className="text-sm text-muted-foreground">
+          Your admin role does not include access to the user directory.
+        </p>
       </div>
     );
   }

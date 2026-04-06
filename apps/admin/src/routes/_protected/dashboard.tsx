@@ -19,8 +19,15 @@ import {
   AdminSignupChart,
   AdminSignupChartSkeleton,
 } from '@/components/admin/admin-signup-chart';
+import { getAdminAppCapabilities } from '@/policy/admin-app-capabilities.functions';
+import { useAdminAppCapabilities } from '@/policy/admin-app-capabilities';
+import { requireAdminRouteCapability } from '@/policy/admin-app-route-access';
 
 export const Route = createFileRoute('/_protected/dashboard')({
+  beforeLoad: async () => {
+    const capabilities = await getAdminAppCapabilities();
+    requireAdminRouteCapability(capabilities, 'canViewDashboard');
+  },
   component: AdminDashboardPage,
   staticData: { title: 'Dashboard' },
 });
@@ -32,6 +39,7 @@ const TIME_RANGE_DAYS: Record<string, number> = {
 };
 
 function AdminDashboardPage() {
+  const { capabilities } = useAdminAppCapabilities();
   const timezoneOffset = React.useMemo(
     () => new Date().getTimezoneOffset(),
     []
@@ -41,11 +49,13 @@ function AdminDashboardPage() {
 
   const metricsQuery = useQuery({
     queryKey: ['admin', 'dashboard-metrics', timezoneOffset],
+    enabled: capabilities.canViewDashboard,
     queryFn: () => getAdminDashboardMetrics({ data: { timezoneOffset } }),
   });
 
   const signupChartQuery = useQuery({
     queryKey: ['admin', 'signup-chart', signupRange, timezoneOffset],
+    enabled: capabilities.canViewAnalytics,
     queryFn: () =>
       getSignupChartData({
         data: { days: TIME_RANGE_DAYS[signupRange], timezoneOffset },
@@ -54,6 +64,7 @@ function AdminDashboardPage() {
 
   const mauChartQuery = useQuery({
     queryKey: ['admin', 'mau-chart', mauRange, timezoneOffset],
+    enabled: capabilities.canViewAnalytics,
     queryFn: () =>
       getMauChartData({
         data: { days: TIME_RANGE_DAYS[mauRange], timezoneOffset },
@@ -75,37 +86,46 @@ function AdminDashboardPage() {
       )}
 
       {/* Charts. */}
-      <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 xl:grid-cols-2">
-        {signupChartQuery.isPending ? (
-          <AdminSignupChartSkeleton />
-        ) : signupChartQuery.isError ? (
-          <InlineError
-            message="Failed to load signup chart."
-            onRetry={() => signupChartQuery.refetch()}
-          />
-        ) : (
-          <AdminSignupChart
-            data={signupChartQuery.data}
-            timeRange={signupRange}
-            onTimeRangeChange={setSignupRange}
-          />
-        )}
+      {capabilities.canViewAnalytics ? (
+        <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 xl:grid-cols-2">
+          {signupChartQuery.isPending ? (
+            <AdminSignupChartSkeleton />
+          ) : signupChartQuery.isError ? (
+            <InlineError
+              message="Failed to load signup chart."
+              onRetry={() => signupChartQuery.refetch()}
+            />
+          ) : (
+            <AdminSignupChart
+              data={signupChartQuery.data}
+              timeRange={signupRange}
+              onTimeRangeChange={setSignupRange}
+            />
+          )}
 
-        {mauChartQuery.isPending ? (
-          <AdminMauChartSkeleton />
-        ) : mauChartQuery.isError ? (
-          <InlineError
-            message="Failed to load MAU chart."
-            onRetry={() => mauChartQuery.refetch()}
-          />
-        ) : (
-          <AdminMauChart
-            data={mauChartQuery.data}
-            timeRange={mauRange}
-            onTimeRangeChange={setMauRange}
-          />
-        )}
-      </div>
+          {mauChartQuery.isPending ? (
+            <AdminMauChartSkeleton />
+          ) : mauChartQuery.isError ? (
+            <InlineError
+              message="Failed to load MAU chart."
+              onRetry={() => mauChartQuery.refetch()}
+            />
+          ) : (
+            <AdminMauChart
+              data={mauChartQuery.data}
+              timeRange={mauRange}
+              onTimeRangeChange={setMauRange}
+            />
+          )}
+        </div>
+      ) : (
+        <div className="px-4 lg:px-6">
+          <div className="rounded-lg border border-dashed p-8 text-sm text-muted-foreground">
+            Your admin role can view dashboard summaries, but not analytics
+            reports.
+          </div>
+        </div>
+      )}
     </div>
   );
 }
