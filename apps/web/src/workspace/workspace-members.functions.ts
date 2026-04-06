@@ -4,6 +4,10 @@ import { redirect } from '@tanstack/react-router';
 import * as z from 'zod';
 import { getAuth } from '@/init';
 import { requireWorkspaceCapabilityForUser } from '@/policy/workspace-capabilities.server';
+import {
+  requireWorkspaceLeaveAllowedForUser,
+  requireWorkspaceMemberRemovalAllowedForUser,
+} from '@/policy/workspace-lifecycle-capabilities.server';
 
 const workspaceIdInput = z.object({
   workspaceId: z.string().min(1),
@@ -88,11 +92,36 @@ export const removeWorkspaceMember = createServerFn()
       'canManageMembers'
     );
 
+    await requireWorkspaceMemberRemovalAllowedForUser(
+      headers,
+      data.workspaceId,
+      session.user.id,
+      data.memberId
+    );
+
     return getAuth().api.removeMember({
       body: {
         memberIdOrEmail: data.memberId,
         organizationId: data.workspaceId,
       },
+      headers,
+    });
+  });
+
+export const leaveWorkspace = createServerFn()
+  .inputValidator(workspaceIdInput)
+  .handler(async ({ data }) => {
+    const headers = getRequestHeaders();
+    const session = await requireVerifiedSession(headers);
+
+    await requireWorkspaceLeaveAllowedForUser(
+      headers,
+      data.workspaceId,
+      session.user.id
+    );
+
+    return getAuth().api.leaveOrganization({
+      body: { organizationId: data.workspaceId },
       headers,
     });
   });

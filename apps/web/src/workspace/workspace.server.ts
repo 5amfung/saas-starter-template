@@ -18,6 +18,11 @@ export async function listUserWorkspaces(headers: Headers) {
   return getAuth().api.listOrganizations({ headers });
 }
 
+export async function countOwnedWorkspaces(headers: Headers, userId: string) {
+  await getAuth().api.getSession({ headers });
+  return getAuth().billing.countOwnedWorkspaces(userId);
+}
+
 export async function ensureActiveWorkspaceForSession(
   headers: Headers,
   session: {
@@ -92,4 +97,18 @@ export async function getActiveMemberRole(
 
   const member = organization.members.find((m) => m.userId === userId);
   return member?.role ?? null;
+}
+
+export async function getWorkspaceMemberById(
+  headers: Headers,
+  workspaceId: string,
+  memberId: string
+) {
+  const organization = await getAuth().api.getFullOrganization({
+    headers,
+    query: { organizationId: workspaceId },
+  });
+  if (!organization) return null;
+
+  return organization.members.find((member) => member.id === memberId) ?? null;
 }

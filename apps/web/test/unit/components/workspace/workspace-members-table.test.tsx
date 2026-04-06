@@ -15,6 +15,7 @@ const defaultProps = {
   isLoading: false,
   currentUserId: 'user-1',
   workspaceRole: 'owner',
+  canLeaveWorkspace: false,
   canManageMembers: true,
   onSortingChange: vi.fn(),
   onPageChange: vi.fn(),
@@ -79,7 +80,6 @@ describe('WorkspaceMembersTable', () => {
       />
     );
 
-    // Skeleton elements are rendered — the empty state text should not appear.
     expect(
       screen.queryByText('No team members found.')
     ).not.toBeInTheDocument();
@@ -118,7 +118,6 @@ describe('WorkspaceMembersTable', () => {
     const user = userEvent.setup();
     const onRemoveMember = vi.fn();
     const members = [
-      // Current user is 'user-1' with role 'owner', this member is a different user.
       createMockMemberRow({
         id: 'member-2',
         userId: 'user-2',
@@ -134,7 +133,6 @@ describe('WorkspaceMembersTable', () => {
         total={1}
         currentUserId="user-1"
         workspaceRole="owner"
-        canManageMembers={true}
         onRemoveMember={onRemoveMember}
       />
     );
@@ -152,7 +150,6 @@ describe('WorkspaceMembersTable', () => {
     const user = userEvent.setup();
     const onLeave = vi.fn();
     const members = [
-      // Current user's own row with role 'member' (not owner).
       createMockMemberRow({
         id: 'member-1',
         userId: 'user-1',
@@ -168,6 +165,7 @@ describe('WorkspaceMembersTable', () => {
         total={1}
         currentUserId="user-1"
         workspaceRole="member"
+        canLeaveWorkspace={true}
         canManageMembers={false}
         onLeave={onLeave}
       />
@@ -224,6 +222,7 @@ describe('WorkspaceMembersTable', () => {
         total={1}
         currentUserId="user-1"
         workspaceRole="member"
+        canLeaveWorkspace={true}
         canManageMembers={false}
       />
     );
@@ -232,5 +231,33 @@ describe('WorkspaceMembersTable', () => {
 
     const removeItem = await screen.findByRole('menuitem', { name: /remove/i });
     expect(removeItem).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('shows disabled leave for owner self row', async () => {
+    const user = userEvent.setup();
+    const members = [
+      createMockMemberRow({
+        id: 'member-1',
+        userId: 'user-1',
+        email: 'owner@example.com',
+        role: 'owner',
+      }),
+    ];
+
+    render(
+      <WorkspaceMembersTable
+        {...defaultProps}
+        data={members}
+        total={1}
+        currentUserId="user-1"
+        workspaceRole="owner"
+        canLeaveWorkspace={false}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /row actions/i }));
+
+    const leaveItem = await screen.findByRole('menuitem', { name: /leave/i });
+    expect(leaveItem).toHaveAttribute('aria-disabled', 'true');
   });
 });

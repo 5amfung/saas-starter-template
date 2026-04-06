@@ -4,6 +4,7 @@ import { redirect } from '@tanstack/react-router';
 import * as z from 'zod';
 import { getAuth } from '@/init';
 import { requireWorkspaceCapabilityForUser } from '@/policy/workspace-capabilities.server';
+import { requireWorkspaceDeleteAllowedForUser } from '@/policy/workspace-lifecycle-capabilities.server';
 
 const workspaceSettingsInput = z.object({
   workspaceId: z.string().min(1),
@@ -56,11 +57,10 @@ export const deleteWorkspace = createServerFn()
     const headers = getRequestHeaders();
     const session = await requireVerifiedSession(headers);
 
-    await requireWorkspaceCapabilityForUser(
+    await requireWorkspaceDeleteAllowedForUser(
       headers,
       data.workspaceId,
-      session.user.id,
-      'canDeleteWorkspace'
+      session.user.id
     );
 
     const organizations = await getAuth().api.listOrganizations({ headers });

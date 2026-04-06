@@ -334,7 +334,7 @@ test.describe('Workspace Settings', () => {
     await expect(page.getByRole('button', { name: 'Save' })).toBeDisabled();
   });
 
-  test('Delete Workspace disabled for last workspace', async ({
+  test('Delete Workspace disabled for last personal workspace', async ({
     page,
     baseURL,
   }) => {
@@ -345,7 +345,7 @@ test.describe('Workspace Settings', () => {
       page.getByRole('button', { name: 'Delete Workspace' })
     ).toBeDisabled();
     await expect(
-      page.getByText('Cannot delete your last workspace.')
+      page.getByText('Cannot delete your last personal workspace.')
     ).toBeVisible();
   });
 
