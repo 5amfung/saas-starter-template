@@ -19,8 +19,8 @@ export async function listUserWorkspaces(headers: Headers) {
 }
 
 export async function countOwnedWorkspaces(headers: Headers, userId: string) {
-  await auth.api.getSession({ headers });
-  return auth.billing.countOwnedWorkspaces(userId);
+  await getAuth().api.getSession({ headers });
+  return getAuth().billing.countOwnedWorkspaces(userId);
 }
 
 export async function ensureActiveWorkspaceForSession(
@@ -99,8 +99,12 @@ export async function getActiveMemberRole(
   return member?.role ?? null;
 }
 
-export async function getWorkspaceMemberById(headers: Headers, workspaceId: string, memberId: string) {
-  const organization = await auth.api.getFullOrganization({
+export async function getWorkspaceMemberById(
+  headers: Headers,
+  workspaceId: string,
+  memberId: string
+) {
+  const organization = await getAuth().api.getFullOrganization({
     headers,
     query: { organizationId: workspaceId },
   });
