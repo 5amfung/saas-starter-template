@@ -33,3 +33,54 @@ export async function requireCurrentAdminAppCapability(
 
   return capabilities;
 }
+
+export function requireAdminDashboardCapability(
+  headers?: Headers
+): Promise<AdminAppCapabilities> {
+  return requireCurrentAdminAppCapability('canViewDashboard', headers);
+}
+
+export function requireAdminAnalyticsCapability(
+  headers?: Headers
+): Promise<AdminAppCapabilities> {
+  return requireCurrentAdminAppCapability('canViewAnalytics', headers);
+}
+
+export function requireAdminViewUsersCapability(
+  headers?: Headers
+): Promise<AdminAppCapabilities> {
+  return requireCurrentAdminAppCapability('canViewUsers', headers);
+}
+
+export function requireAdminManageUsersCapability(
+  headers?: Headers
+): Promise<AdminAppCapabilities> {
+  return requireCurrentAdminAppCapability('canManageUsers', headers);
+}
+
+export function requireAdminDeleteUsersCapability(
+  headers?: Headers
+): Promise<AdminAppCapabilities> {
+  return requireCurrentAdminAppCapability('canDeleteUsers', headers);
+}
+
+export function requireAdminViewWorkspacesCapability(
+  headers?: Headers
+): Promise<AdminAppCapabilities> {
+  return requireCurrentAdminAppCapability('canViewWorkspaces', headers);
+}
+
+export function requireAdminViewWorkspaceBillingCapability(
+  headers?: Headers
+): Promise<AdminAppCapabilities> {
+  return requireCurrentAdminAppCapability('canViewWorkspaceBilling', headers);
+}
+
+export function requireAdminManageEntitlementOverridesCapability(
+  headers?: Headers
+): Promise<AdminAppCapabilities> {
+  return requireCurrentAdminAppCapability(
+    'canManageEntitlementOverrides',
+    headers
+  );
+}
