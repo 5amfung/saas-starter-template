@@ -8,12 +8,21 @@ const { useSessionMock } = vi.hoisted(() => ({
   useSessionMock: vi.fn(),
 }));
 
+const { useAdminAppCapabilitiesMock, navAdminMock } = vi.hoisted(() => ({
+  useAdminAppCapabilitiesMock: vi.fn(),
+  navAdminMock: vi.fn(),
+}));
+
 // ── Module mocks ─────────────────────────────────────────────────────────────
 
 vi.mock('@workspace/auth/client', () => ({
   authClient: {
     useSession: useSessionMock,
   },
+}));
+
+vi.mock('@/policy/admin-app-capabilities', () => ({
+  useAdminAppCapabilities: useAdminAppCapabilitiesMock,
 }));
 
 vi.mock('@workspace/ui/components/sidebar', () => ({
@@ -46,9 +55,16 @@ vi.mock('@workspace/ui/components/sidebar', () => ({
 }));
 
 vi.mock('@workspace/components/layout', () => ({
-  NavAdmin: ({ items }: { items: Array<{ title: string; url: string }> }) => (
-    <nav data-testid="nav-admin" data-item-count={items.length} />
-  ),
+  NavAdmin: ({ items }: { items: Array<{ title: string; url: string }> }) => {
+    navAdminMock(items);
+    return (
+      <nav data-testid="nav-admin" data-item-count={items.length}>
+        {items.map((item) => (
+          <span key={item.url}>{item.title}</span>
+        ))}
+      </nav>
+    );
+  },
   NavSecondary: ({
     items,
   }: {
@@ -71,11 +87,28 @@ const mockUser = {
 };
 
 const mockSession = { user: mockUser };
+const mockCapabilities = {
+  canAccessAdminApp: true,
+  canViewDashboard: true,
+  canViewAnalytics: true,
+  canViewUsers: true,
+  canManageUsers: true,
+  canDeleteUsers: true,
+  canViewWorkspaces: true,
+  canViewWorkspaceBilling: true,
+  canManageEntitlementOverrides: true,
+  canPerformSupportActions: true,
+};
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
   vi.clearAllMocks();
+  useAdminAppCapabilitiesMock.mockReturnValue({
+    capabilities: mockCapabilities,
+    isPending: false,
+    session: mockSession,
+  });
 });
 
 describe('AppSidebar', () => {
@@ -108,8 +141,35 @@ describe('AppSidebar', () => {
 
     const navAdmin = screen.getByTestId('nav-admin');
     expect(navAdmin).toBeInTheDocument();
-    // Dashboard, Users, Workspaces = 3 items.
     expect(navAdmin).toHaveAttribute('data-item-count', '3');
+    expect(navAdminMock).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ title: 'Dashboard' }),
+        expect.objectContaining({ title: 'Users' }),
+        expect.objectContaining({ title: 'Workspaces' }),
+      ])
+    );
+  });
+
+  it('hides unavailable admin sections from navigation', async () => {
+    useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
+    useAdminAppCapabilitiesMock.mockReturnValue({
+      capabilities: {
+        ...mockCapabilities,
+        canViewDashboard: false,
+        canViewWorkspaces: false,
+      },
+      isPending: false,
+      session: mockSession,
+    });
+
+    await renderSidebar();
+
+    const navAdmin = screen.getByTestId('nav-admin');
+    expect(navAdmin).toHaveAttribute('data-item-count', '1');
+    expect(screen.getByText('Users')).toBeInTheDocument();
+    expect(screen.queryByText('Dashboard')).not.toBeInTheDocument();
+    expect(screen.queryByText('Workspaces')).not.toBeInTheDocument();
   });
 
   it('renders NavSecondary', async () => {

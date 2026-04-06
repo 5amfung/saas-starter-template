@@ -4,8 +4,14 @@ import { Button } from '@workspace/ui/components/button';
 import type { SortingState } from '@tanstack/react-table';
 import { AdminWorkspaceTable } from '@/components/admin/admin-workspace-table';
 import { useAdminWorkspaceListQuery } from '@/admin/workspaces.queries';
+import { getAdminAppCapabilities } from '@/policy/admin-app-capabilities.functions';
+import { requireAdminRouteCapability } from '@/policy/admin-app-route-access';
 
 export const Route = createFileRoute('/_protected/workspaces/')({
+  beforeLoad: async () => {
+    const capabilities = await getAdminAppCapabilities();
+    requireAdminRouteCapability(capabilities, 'canViewWorkspaces');
+  },
   component: AdminWorkspaceListPage,
 });
 
