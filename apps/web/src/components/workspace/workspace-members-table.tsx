@@ -50,6 +50,7 @@ interface WorkspaceMembersTableProps {
   leavingWorkspace?: boolean;
   currentUserId: string | null;
   workspaceRole: string | null;
+  canLeaveWorkspace: boolean;
   canManageMembers: boolean;
   onSortingChange: (sorting: SortingState) => void;
   onPageChange: (page: number) => void;
@@ -70,6 +71,7 @@ export function WorkspaceMembersTable({
   leavingWorkspace = false,
   currentUserId,
   workspaceRole,
+  canLeaveWorkspace,
   canManageMembers,
   onSortingChange,
   onPageChange,
@@ -133,7 +135,7 @@ export function WorkspaceMembersTable({
                 ) : isCurrentUserRow ? (
                   <DropdownMenuItem
                     onClick={() => onLeave()}
-                    disabled={leavingWorkspace}
+                    disabled={leavingWorkspace || !canLeaveWorkspace}
                     className="text-destructive focus:text-destructive"
                   >
                     Leave
@@ -156,6 +158,7 @@ export function WorkspaceMembersTable({
     [
       canManageMembers,
       currentUserId,
+      canLeaveWorkspace,
       isLoading,
       leavingWorkspace,
       onLeave,

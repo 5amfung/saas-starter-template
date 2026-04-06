@@ -10,11 +10,15 @@ import {
 } from './workspace-members.types';
 import type { SortingState } from '@tanstack/react-table';
 import type { WorkspaceMemberRow } from '@/components/workspace/workspace-members-table';
-import { removeWorkspaceMember } from '@/workspace/workspace-members.functions';
+import {
+  leaveWorkspace,
+  removeWorkspaceMember,
+} from '@/workspace/workspace-members.functions';
 
 export function useMembersTable(
   workspaceId: string,
-  currentUserRole: string | null
+  currentUserRole: string | null,
+  canLeaveWorkspace = false
 ) {
   const navigate = useNavigate();
   const { data: session } = useSessionQuery();
@@ -84,10 +88,11 @@ export function useMembersTable(
 
   const leaveMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await authClient.organization.leave({
-        organizationId: workspaceId,
+      await leaveWorkspace({
+        data: {
+          workspaceId,
+        },
       });
-      if (error) throw new Error(error.message);
     },
     onSuccess: () => {
       toast.success('You have left the workspace.');
@@ -120,6 +125,7 @@ export function useMembersTable(
   return {
     currentUserId,
     currentUserRole,
+    canLeaveWorkspace,
     data: members satisfies Array<WorkspaceMemberRow>,
     total,
     page,

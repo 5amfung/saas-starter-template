@@ -15,21 +15,30 @@ import { WorkspaceInviteDialog } from '@/components/workspace/workspace-invite-d
 import { WorkspaceMembersTable } from '@/components/workspace/workspace-members-table';
 import { useUpgradePrompt } from '@/hooks/use-upgrade-prompt';
 import { getWorkspaceCapabilities } from '@/policy/workspace-capabilities.functions';
+import { getWorkspaceLifecycleCapabilities } from '@/policy/workspace-lifecycle-capabilities.functions';
 import { useInvitationsTable } from '@/workspace/use-invitations-table';
 import { useMembersTable } from '@/workspace/use-members-table';
 import { DEFAULT_INVITE_ROLES } from '@/workspace/workspace-members.types';
 
 export const Route = createFileRoute('/_protected/ws/$workspaceId/members')({
   loader: async ({ params }) => {
-    const capabilities = await getWorkspaceCapabilities({
-      data: { workspaceId: params.workspaceId },
-    });
+    const [capabilities, lifecycle] = await Promise.all([
+      getWorkspaceCapabilities({
+        data: { workspaceId: params.workspaceId },
+      }),
+      getWorkspaceLifecycleCapabilities({
+        data: { workspaceId: params.workspaceId },
+      }),
+    ]);
 
     if (!capabilities.canViewMembers) {
       throw notFound({ routeId: '__root__' });
     }
 
-    return capabilities;
+    return {
+      ...capabilities,
+      canLeaveWorkspace: lifecycle.canLeaveWorkspace,
+    };
   },
   component: WorkspaceMembersPage,
   staticData: { title: 'Members' },
@@ -44,7 +53,8 @@ function WorkspaceMembersPage() {
 
   const { ...membersTableProps } = useMembersTable(
     workspaceId,
-    capabilities.workspaceRole
+    capabilities.workspaceRole,
+    capabilities.canLeaveWorkspace
   );
 
   const { inviteDialog, ...invitationsTableProps } =

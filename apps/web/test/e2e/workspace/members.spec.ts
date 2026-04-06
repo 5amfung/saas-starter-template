@@ -966,9 +966,9 @@ test.describe('Workspace Members Page', () => {
     await expect(removeItem).toBeDisabled();
   });
 
-  // ── 19. Owner's own row shows "Leave" not "Remove" ─────────────────────
+  // ── 19. Owner's own row shows disabled "Leave" ─────────────────────────
 
-  test('owner\'s own row shows "Leave" not "Remove"', async ({
+  test('owner\'s own row shows disabled "Leave"', async ({
     page,
     baseURL,
   }) => {
@@ -984,7 +984,7 @@ test.describe('Workspace Members Page', () => {
       password: VALID_PASSWORD,
     });
 
-    // Ensure there are 2 members so the owner can see Leave (single-owner workspaces may block it).
+    // Ensure there are 2 members so the row exists and the owner action state is visible.
     await setupInvitedMember(page, baseURL!, workspaceId, 'owner-leave-member');
 
     // Reload to see both members.
@@ -995,8 +995,10 @@ test.describe('Workspace Members Page', () => {
     const ownerRow = page.getByRole('row').filter({ hasText: ownerEmail });
     await ownerRow.getByRole('button', { name: 'Row actions' }).click();
 
-    // "Leave" should be visible.
-    await expect(page.getByRole('menuitem', { name: 'Leave' })).toBeVisible();
+    // "Leave" should be visible but disabled for owners.
+    const leaveItem = page.getByRole('menuitem', { name: 'Leave' });
+    await expect(leaveItem).toBeVisible();
+    await expect(leaveItem).toBeDisabled();
 
     // "Remove" should NOT be visible.
     await expect(
