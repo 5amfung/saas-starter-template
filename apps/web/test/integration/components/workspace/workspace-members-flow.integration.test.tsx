@@ -32,6 +32,7 @@ const defaultProps = {
   leavingWorkspace: false,
   currentUserId: 'user-1',
   workspaceRole: 'owner',
+  canLeaveWorkspace: false,
   canManageMembers: true,
   onSortingChange: vi.fn(),
   onPageChange: vi.fn(),
@@ -89,6 +90,7 @@ describe('WorkspaceMembersTable integration', () => {
         {...defaultProps}
         currentUserId="user-2"
         workspaceRole="member"
+        canLeaveWorkspace={true}
         canManageMembers={false}
       />
     );
@@ -111,6 +113,7 @@ describe('WorkspaceMembersTable integration', () => {
         {...defaultProps}
         currentUserId="user-2"
         workspaceRole="member"
+        canLeaveWorkspace={true}
         canManageMembers={false}
       />
     );

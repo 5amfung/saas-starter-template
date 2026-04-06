@@ -25,6 +25,7 @@ import { Separator } from '@workspace/ui/components/separator';
 import { toFieldErrorItem } from '@workspace/components/lib';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
 import { getWorkspaceCapabilities } from '@/policy/workspace-capabilities.functions';
+import { getWorkspaceLifecycleCapabilities } from '@/policy/workspace-lifecycle-capabilities.functions';
 import { useWorkspacesQuery } from '@/hooks/use-workspaces-query';
 import { renameWorkspaceInList } from '@/workspace/workspace.mutations';
 import {
@@ -67,15 +68,24 @@ function renameWorkspaceDetail(
 
 export const Route = createFileRoute('/_protected/ws/$workspaceId/settings')({
   loader: async ({ params }) => {
-    const capabilities = await getWorkspaceCapabilities({
-      data: { workspaceId: params.workspaceId },
-    });
+    const [capabilities, lifecycle] = await Promise.all([
+      getWorkspaceCapabilities({
+        data: { workspaceId: params.workspaceId },
+      }),
+      getWorkspaceLifecycleCapabilities({
+        data: { workspaceId: params.workspaceId },
+      }),
+    ]);
 
     if (!capabilities.canViewSettings) {
       throw notFound({ routeId: '__root__' });
     }
 
-    return capabilities;
+    return {
+      ...capabilities,
+      canDeleteWorkspace: lifecycle.canDeleteWorkspace,
+      deleteWorkspaceBlockedReason: lifecycle.deleteWorkspaceBlockedReason,
+    };
   },
   component: WorkspaceSettingsPage,
   staticData: { title: 'Workspace Settings' },
@@ -96,8 +106,9 @@ function WorkspaceSettingsPage() {
       ? 'Only the owner can delete this workspace.'
       : capabilities.deleteWorkspaceBlockedReason === 'active-subscription'
         ? 'This workspace can only be deleted after the subscription has ended.'
-        : capabilities.deleteWorkspaceBlockedReason === 'last-workspace'
-          ? 'Cannot delete your last workspace.'
+        : capabilities.deleteWorkspaceBlockedReason ===
+            'last-personal-workspace'
+          ? 'Cannot delete your last personal workspace.'
           : null;
 
   // This keeps the input stable during save and avoids the brief revert.
