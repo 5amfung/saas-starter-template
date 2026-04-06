@@ -11,11 +11,11 @@ const { mockGetSession } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/init', () => ({
-  auth: {
+  getAuth: () => ({
     api: {
       getSession: mockGetSession,
     },
-  },
+  }),
 }));
 
 describe('admin-app-capabilities.server', () => {

@@ -12,6 +12,7 @@ import {
 } from '@/billing/billing.functions';
 
 const {
+  getAuthMock,
   requireVerifiedSessionMock,
   requireWorkspaceCapabilityForUserMock,
   getRequestHeadersMock,
@@ -24,6 +25,7 @@ const {
   checkWorkspaceEntitlementMock,
   getInvoicesForWorkspaceMock,
 } = vi.hoisted(() => ({
+  getAuthMock: vi.fn(),
   requireVerifiedSessionMock: vi.fn(),
   requireWorkspaceCapabilityForUserMock: vi.fn(),
   getRequestHeadersMock: vi.fn().mockReturnValue(new Headers()),
@@ -59,12 +61,16 @@ vi.mock('@/policy/workspace-capabilities.server', () => ({
 }));
 
 vi.mock('@/init', () => ({
-  auth: {
+  getAuth: getAuthMock,
+}));
+
+beforeEach(() => {
+  getAuthMock.mockReturnValue({
     billing: {
       getInvoicesForWorkspace: getInvoicesForWorkspaceMock,
     },
-  },
-}));
+  });
+});
 
 vi.mock('@workspace/billing', () => ({
   PLANS: [

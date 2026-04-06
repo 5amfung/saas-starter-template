@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { redirect } from '@tanstack/react-router';
 import * as z from 'zod';
-import { auth } from '@/init';
+import { getAuth } from '@/init';
 import { requireWorkspaceCapabilityForUser } from '@/policy/workspace-capabilities.server';
 
 const workspaceIdInput = z.object({
@@ -24,7 +24,7 @@ const cancelInvitationInput = workspaceIdInput.extend({
 });
 
 async function requireVerifiedSession(headers: Headers) {
-  const session = await auth.api.getSession({ headers });
+  const session = await getAuth().api.getSession({ headers });
   if (!session || !session.user.emailVerified) {
     throw redirect({ to: '/signin' });
   }
@@ -45,7 +45,7 @@ export const inviteWorkspaceMember = createServerFn()
       'canInviteMembers'
     );
 
-    return auth.api.createInvitation({
+    return getAuth().api.createInvitation({
       body: {
         email: data.email,
         role: data.role,
@@ -69,7 +69,7 @@ export const cancelWorkspaceInvitation = createServerFn()
       'canManageMembers'
     );
 
-    return auth.api.cancelInvitation({
+    return getAuth().api.cancelInvitation({
       body: { invitationId: data.invitationId },
       headers,
     });
@@ -88,7 +88,7 @@ export const removeWorkspaceMember = createServerFn()
       'canManageMembers'
     );
 
-    return auth.api.removeMember({
+    return getAuth().api.removeMember({
       body: {
         memberIdOrEmail: data.memberId,
         organizationId: data.workspaceId,

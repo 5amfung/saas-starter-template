@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { extractEmailLinks } from '@workspace/components/lib';
 import type { MockEmailClient } from '@workspace/email';
-import { emailClient } from '@/init';
+import { getEmailClient } from '@/init';
 
 function isMockEmailClient(client: unknown): client is MockEmailClient {
   return (
@@ -13,12 +13,15 @@ function isMockEmailClient(client: unknown): client is MockEmailClient {
 }
 
 function getMockClient(): MockEmailClient | null {
-  if (
-    process.env.E2E_MOCK_EMAIL !== 'true' ||
-    !isMockEmailClient(emailClient)
-  ) {
+  if (process.env.E2E_MOCK_EMAIL !== 'true') {
     return null;
   }
+
+  const emailClient = getEmailClient();
+  if (!isMockEmailClient(emailClient)) {
+    return null;
+  }
+
   return emailClient;
 }
 

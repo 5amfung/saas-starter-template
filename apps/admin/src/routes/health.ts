@@ -1,17 +1,18 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { sql } from 'drizzle-orm';
-import { db } from '@/init';
+import { getDb } from '@/init';
 
 export const Route = createFileRoute('/health')({
   server: {
     handlers: {
       GET: async () => {
+        const database = await checkDatabase();
         const checks = {
-          status: 'healthy',
+          status: database.status === 'connected' ? 'healthy' : 'error',
           timestamp: new Date().toISOString(),
           uptime: process.uptime(),
           memory: process.memoryUsage(),
-          database: await checkDatabase(),
+          database,
         };
 
         return Response.json(checks);
@@ -22,7 +23,7 @@ export const Route = createFileRoute('/health')({
 
 async function checkDatabase() {
   try {
-    await db.execute(sql`SELECT 1`);
+    await getDb().execute(sql`SELECT 1`);
     return { status: 'connected', latency: 0 };
   } catch (error) {
     return {

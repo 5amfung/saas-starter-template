@@ -14,6 +14,8 @@ import {
 // ── Hoisted mocks ──────────────────────────────────────────────────────────
 
 const {
+  getAuthMock,
+  getDbMock,
   listActiveSubscriptionsMock,
   createBillingPortalMock,
   upgradeSubscriptionMock,
@@ -28,6 +30,8 @@ const {
   findFirstMock,
   dbSelectMock,
 } = vi.hoisted(() => ({
+  getAuthMock: vi.fn(),
+  getDbMock: vi.fn(),
   listActiveSubscriptionsMock: vi.fn(),
   createBillingPortalMock: vi.fn(),
   upgradeSubscriptionMock: vi.fn(),
@@ -71,7 +75,7 @@ const {
 // ── Module mocks ───────────────────────────────────────────────────────────
 
 vi.mock('@/init', () => ({
-  auth: {
+  getAuth: getAuthMock.mockImplementation(() => ({
     api: {
       listActiveSubscriptions: listActiveSubscriptionsMock,
       createBillingPortal: createBillingPortalMock,
@@ -86,15 +90,15 @@ vi.mock('@/init', () => ({
       getPlanIdByPriceId: getPlanIdByPriceIdMock,
       releaseSubscriptionSchedule: releaseSubscriptionScheduleMock,
     },
-  },
-  db: {
+  })),
+  getDb: getDbMock.mockImplementation(() => ({
     select: dbSelectMock,
     query: {
       workspaceEntitlementOverrides: {
         findFirst: findFirstMock,
       },
     },
-  },
+  })),
 }));
 
 vi.mock('@workspace/db-schema', async (importOriginal) => {

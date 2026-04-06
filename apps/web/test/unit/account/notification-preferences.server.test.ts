@@ -6,17 +6,25 @@ import {
   upsertNotificationPreferencesForUser,
 } from '@/account/notification-preferences.server';
 
-const { dbSelectMock, dbInsertMock, getSessionMock, getRequestHeadersMock } =
-  vi.hoisted(() => ({
-    dbSelectMock: vi.fn(),
-    dbInsertMock: vi.fn(),
-    getSessionMock: vi.fn(),
-    getRequestHeadersMock: vi.fn().mockReturnValue(new Headers()),
-  }));
+const {
+  getAuthMock,
+  getDbMock,
+  dbSelectMock,
+  dbInsertMock,
+  getSessionMock,
+  getRequestHeadersMock,
+} = vi.hoisted(() => ({
+  getAuthMock: vi.fn(),
+  getDbMock: vi.fn(),
+  dbSelectMock: vi.fn(),
+  dbInsertMock: vi.fn(),
+  getSessionMock: vi.fn(),
+  getRequestHeadersMock: vi.fn().mockReturnValue(new Headers()),
+}));
 
 vi.mock('@/init', () => ({
-  db: { select: dbSelectMock, insert: dbInsertMock },
-  auth: { api: { getSession: getSessionMock } },
+  getDb: getDbMock,
+  getAuth: getAuthMock,
 }));
 
 vi.mock('@workspace/db/schema', () => ({
@@ -47,6 +55,8 @@ vi.mock('@tanstack/react-router', () => ({
 describe('getNotificationPreferencesForUser', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getDbMock.mockReturnValue({ select: dbSelectMock, insert: dbInsertMock });
+    getAuthMock.mockReturnValue({ api: { getSession: getSessionMock } });
   });
 
   it('returns defaults when no row exists', async () => {
@@ -73,6 +83,8 @@ describe('getNotificationPreferencesForUser', () => {
 describe('upsertNotificationPreferencesForUser', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getDbMock.mockReturnValue({ select: dbSelectMock, insert: dbInsertMock });
+    getAuthMock.mockReturnValue({ api: { getSession: getSessionMock } });
   });
 
   it('returns current preferences when patch has no boolean marketingEmails', async () => {
@@ -102,6 +114,8 @@ describe('upsertNotificationPreferencesForUser', () => {
 describe('requireVerifiedSession', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getDbMock.mockReturnValue({ select: dbSelectMock, insert: dbInsertMock });
+    getAuthMock.mockReturnValue({ api: { getSession: getSessionMock } });
     getRequestHeadersMock.mockReturnValue(new Headers());
   });
 

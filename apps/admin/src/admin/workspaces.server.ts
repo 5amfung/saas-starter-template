@@ -11,13 +11,13 @@ import type {
   PlanId,
 } from '@workspace/billing';
 import type { EntitlementOverrideInput } from './workspaces.schemas';
-import { auth, db } from '@/init';
+import { getAuth, getDb } from '@/init';
 import { getVerifiedAdminSession } from '@/auth/validators';
 
 /** Verify the caller is an authenticated admin. Throws redirect otherwise. */
 export async function requireAdmin() {
   const headers = getRequestHeaders();
-  return getVerifiedAdminSession(headers, auth);
+  return getVerifiedAdminSession(headers, getAuth());
 }
 
 export type WorkspaceListParams = AdminWorkspaceListParams;
@@ -70,20 +70,20 @@ export interface WorkspaceDetail {
 export async function listWorkspacesWithPlan(
   params: WorkspaceListParams
 ): Promise<WorkspaceListResult> {
-  return listAdminWorkspaces({ db, params });
+  return listAdminWorkspaces({ db: getDb(), params });
 }
 
 export async function getWorkspaceDetail(
   workspaceId: string
 ): Promise<WorkspaceDetail | null> {
-  return getAdminWorkspaceDetail({ db, workspaceId });
+  return getAdminWorkspaceDetail({ db: getDb(), workspaceId });
 }
 
 export async function upsertEntitlementOverrides(
   input: EntitlementOverrideInput
 ): Promise<void> {
   await setAdminWorkspaceEntitlementOverrides({
-    db,
+    db: getDb(),
     workspaceId: input.workspaceId,
     limits: input.limits,
     features: input.features,
@@ -95,5 +95,8 @@ export async function upsertEntitlementOverrides(
 export async function deleteEntitlementOverrides(
   workspaceId: string
 ): Promise<void> {
-  await clearAdminWorkspaceEntitlementOverrides({ db, workspaceId });
+  await clearAdminWorkspaceEntitlementOverrides({
+    db: getDb(),
+    workspaceId,
+  });
 }

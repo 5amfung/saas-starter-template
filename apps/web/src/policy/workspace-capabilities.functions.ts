@@ -6,7 +6,7 @@ import {
   getWorkspaceAccessCapabilitiesForUser,
   getWorkspaceCapabilitiesForUser,
 } from './workspace-capabilities.server';
-import { auth } from '@/init';
+import { getAuth } from '@/init';
 
 const workspaceCapabilitiesInput = z.object({
   workspaceId: z.string().min(1),
@@ -16,7 +16,7 @@ export const getWorkspaceCapabilities = createServerFn()
   .inputValidator(workspaceCapabilitiesInput)
   .handler(async ({ data }) => {
     const headers = getRequestHeaders();
-    const session = await auth.api.getSession({ headers });
+    const session = await getAuth().api.getSession({ headers });
     if (!session || !session.user.emailVerified) {
       throw redirect({ to: '/signin' });
     }
@@ -31,7 +31,7 @@ export const getWorkspaceAccessCapabilities = createServerFn()
   .inputValidator(workspaceCapabilitiesInput)
   .handler(async ({ data }) => {
     const headers = getRequestHeaders();
-    const session = await auth.api.getSession({ headers });
+    const session = await getAuth().api.getSession({ headers });
     if (!session || !session.user.emailVerified) {
       throw redirect({ to: '/signin' });
     }

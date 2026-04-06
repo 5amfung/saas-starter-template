@@ -15,7 +15,7 @@ import {
   requireVerifiedSession,
 } from '@/billing/billing.server';
 import { requireWorkspaceCapabilityForUser } from '@/policy/workspace-capabilities.server';
-import { auth } from '@/init';
+import { getAuth } from '@/init';
 
 type BillingCapability = 'canViewBilling' | 'canManageBilling';
 
@@ -50,7 +50,7 @@ export const getWorkspaceInvoices = createServerFn()
   .inputValidator(z.object({ workspaceId: z.string() }))
   .handler(async ({ data }) => {
     await requireWorkspaceBillingCapability(data.workspaceId, 'canViewBilling');
-    return auth.billing.getInvoicesForWorkspace(data.workspaceId);
+    return getAuth().billing.getInvoicesForWorkspace(data.workspaceId);
   });
 
 const VALID_PLAN_IDS = PLANS.map((p) => p.id) as [PlanId, ...Array<PlanId>];
