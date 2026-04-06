@@ -31,11 +31,9 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@workspace/ui/components/sidebar';
-import {
-  WORKSPACES_QUERY_KEY,
-  addWorkspaceToList,
-} from '@/hooks/use-workspaces-query';
+import { addWorkspaceToList } from '@/workspace/workspace.mutations';
 import { buildWorkspaceSlug } from '@/workspace/workspace';
+import { WORKSPACE_LIST_QUERY_KEY } from '@/workspace/workspace.queries';
 
 const workspaceNameSchema = z
   .string()
@@ -91,6 +89,9 @@ export function WorkspaceSwitcher({
       if (error) throw new Error(error.message);
     },
     onSuccess: (_value, organizationId) => {
+      void queryClient.invalidateQueries({
+        queryKey: WORKSPACE_LIST_QUERY_KEY,
+      });
       navigate({
         to: '/ws/$workspaceId/overview',
         params: { workspaceId: organizationId },
@@ -126,7 +127,7 @@ export function WorkspaceSwitcher({
         return;
       }
       queryClient.setQueryData(
-        WORKSPACES_QUERY_KEY,
+        WORKSPACE_LIST_QUERY_KEY,
         (
           current:
             | Array<{
@@ -140,7 +141,9 @@ export function WorkspaceSwitcher({
             | undefined
         ) => addWorkspaceToList(current, workspace)
       );
-      void queryClient.invalidateQueries({ queryKey: WORKSPACES_QUERY_KEY });
+      void queryClient.invalidateQueries({
+        queryKey: WORKSPACE_LIST_QUERY_KEY,
+      });
       setWorkspaceName('');
       setValidationError(null);
       setIsCreateDialogOpen(false);

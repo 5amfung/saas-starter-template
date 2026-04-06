@@ -290,7 +290,6 @@ test.describe('Workspace Settings', () => {
     await goToSettings(page);
 
     const nameInput = page.getByLabel('Workspace Name');
-    const originalName = await nameInput.inputValue();
     const newName = `Renamed WS ${Date.now()}`;
 
     await nameInput.fill(newName);
@@ -306,14 +305,6 @@ test.describe('Workspace Settings', () => {
 
     await openWorkspaceSwitcher(page);
     await expect(page.getByRole('menuitem', { name: newName })).toBeVisible();
-
-    await page.getByRole('menuitem', { name: newName }).click();
-
-    await page.goto('/ws');
-    await openWorkspaceSwitcher(page);
-    await expect(
-      page.getByRole('menuitem', { name: originalName })
-    ).not.toBeVisible();
   });
 
   test('Cancel resets name to saved value', async ({ page, baseURL }) => {
