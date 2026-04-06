@@ -8,13 +8,14 @@ import {
 } from '@tanstack/react-router';
 import { Button } from '@workspace/ui/components/button';
 import { Separator } from '@workspace/ui/components/separator';
-import { authClient } from '@workspace/auth/client';
 import { useSessionQuery } from '@workspace/components/hooks';
+import { getUser } from '@/admin/users.functions';
 import { AdminDeleteUserDialog } from '@/components/admin/admin-delete-user-dialog';
 import {
   AdminUserForm,
   AdminUserFormSkeleton,
 } from '@/components/admin/admin-user-form';
+import { useAdminAppCapabilities } from '@/policy/admin-app-capabilities';
 
 export const Route = createFileRoute('/_protected/users/$userId')({
   component: AdminUserDetailPage,
@@ -43,31 +44,22 @@ function BackToUserListButton({ disabled }: { disabled?: boolean }) {
 function AdminUserDetailPage() {
   const { userId } = Route.useParams();
   const sessionQuery = useSessionQuery();
+  const { capabilities } = useAdminAppCapabilities();
+  const canDeleteTargetUser = capabilities.canDeleteUsers;
+  const isSelfDelete = sessionQuery.data?.user.id === userId;
 
   const userQuery = useQuery({
     queryKey: ['admin', 'user', userId],
+    enabled: capabilities.canViewUsers,
     queryFn: async () => {
-      const { data, error } = await authClient.admin.listUsers({
-        query: {
-          filterField: 'id',
-          filterValue: userId,
-          filterOperator: 'eq',
-          limit: 1,
-        },
-      });
-
-      // Network / API errors -- let TanStack Query surface them so the retry
-      // button is shown instead of a misleading 404 page.
-      if (error) throw error;
-
-      // No matching user -- surface as 404.
-      const user = data.users.at(0);
-      if (!user) throw notFound();
-
-      return user;
+      return getUser({ data: { userId } });
     },
     retry: false,
   });
+
+  if (!capabilities.canViewUsers) {
+    throw notFound();
+  }
 
   if (userQuery.isError) {
     // Re-throw during render so the router's CatchNotFound boundary shows 404.
@@ -92,28 +84,35 @@ function AdminUserDetailPage() {
         <AdminUserFormSkeleton />
       ) : (
         <>
-          <AdminUserForm user={userQuery.data} />
-          <Separator />
-          <div className="flex flex-col gap-4 rounded-lg border border-dashed border-destructive/30 p-4">
-            <div>
-              <h3 className="text-sm font-medium">Danger Zone</h3>
-              <p className="text-sm text-muted-foreground">
-                Permanently delete this user and all associated data.
-              </p>
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <AdminDeleteUserDialog
-                userId={userQuery.data.id}
-                userEmail={userQuery.data.email}
-                disabled={sessionQuery.data?.user.id === userQuery.data.id}
-              />
-              {sessionQuery.data?.user.id === userQuery.data.id ? (
-                <p className="text-xs text-muted-foreground">
-                  You cannot delete your own account.
-                </p>
-              ) : null}
-            </div>
-          </div>
+          <AdminUserForm
+            user={userQuery.data}
+            canManageUsers={capabilities.canManageUsers}
+          />
+          {canDeleteTargetUser ? (
+            <>
+              <Separator />
+              <div className="flex flex-col gap-4 rounded-lg border border-dashed border-destructive/30 p-4">
+                <div>
+                  <h3 className="text-sm font-medium">Danger Zone</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Permanently delete this user and all associated data.
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <AdminDeleteUserDialog
+                    userId={userQuery.data.id}
+                    userEmail={userQuery.data.email}
+                    disabled={isSelfDelete}
+                  />
+                  {isSelfDelete ? (
+                    <p className="text-xs text-muted-foreground">
+                      You cannot delete your own account.
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            </>
+          ) : null}
         </>
       )}
     </div>
