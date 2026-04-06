@@ -3,6 +3,7 @@ import {
   queryOptions,
   useQuery,
 } from '@tanstack/react-query';
+import { getWorkspace, listWorkspaces } from '@/admin/workspaces.functions';
 
 type FilterTab = 'all' | 'self-serve' | 'enterprise';
 
@@ -57,7 +58,6 @@ export function adminWorkspaceListQueryOptions({
     }),
     placeholderData: keepPreviousData,
     queryFn: async () => {
-      const { listWorkspaces } = await import('@/admin/workspaces.functions');
       const result = await listWorkspaces({
         data: {
           limit: pageSize,
@@ -82,10 +82,7 @@ export function adminWorkspaceListQueryOptions({
 export function adminWorkspaceDetailQueryOptions(workspaceId: string) {
   return queryOptions({
     queryKey: ADMIN_WORKSPACE_DETAIL_QUERY_KEY(workspaceId),
-    queryFn: async () => {
-      const { getWorkspace } = await import('@/admin/workspaces.functions');
-      return getWorkspace({ data: { workspaceId } });
-    },
+    queryFn: async () => getWorkspace({ data: { workspaceId } }),
     retry: false,
   });
 }

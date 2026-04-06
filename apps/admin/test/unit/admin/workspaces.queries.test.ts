@@ -3,6 +3,16 @@ import {
   adminWorkspaceListQueryKey,
 } from '@/admin/workspaces.queries';
 
+const { listWorkspacesMock, getWorkspaceMock } = vi.hoisted(() => ({
+  listWorkspacesMock: vi.fn(),
+  getWorkspaceMock: vi.fn(),
+}));
+
+vi.mock('@/admin/workspaces.functions', () => ({
+  listWorkspaces: listWorkspacesMock,
+  getWorkspace: getWorkspaceMock,
+}));
+
 describe('admin workspace query keys', () => {
   it('builds a stable list key from admin workspace filters', () => {
     expect(
