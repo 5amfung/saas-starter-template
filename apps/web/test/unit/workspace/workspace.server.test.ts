@@ -7,28 +7,41 @@ import {
 } from '@/workspace/workspace.server';
 
 const {
+  getAuthMock,
   listOrganizationsMock,
   setActiveOrganizationMock,
   getFullOrganizationMock,
 } = vi.hoisted(() => ({
+  getAuthMock: vi.fn(),
   listOrganizationsMock: vi.fn(),
   setActiveOrganizationMock: vi.fn(),
   getFullOrganizationMock: vi.fn(),
 }));
 
 vi.mock('@/init', () => ({
-  auth: {
+  getAuth: getAuthMock,
+}));
+
+beforeEach(() => {
+  getAuthMock.mockReturnValue({
     api: {
       listOrganizations: listOrganizationsMock,
       setActiveOrganization: setActiveOrganizationMock,
       getFullOrganization: getFullOrganizationMock,
     },
-  },
-}));
+  });
+});
 
 describe('workspace.server', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getAuthMock.mockReturnValue({
+      api: {
+        listOrganizations: listOrganizationsMock,
+        setActiveOrganization: setActiveOrganizationMock,
+        getFullOrganization: getFullOrganizationMock,
+      },
+    });
   });
 
   it('falls back to first workspace when active workspace is missing', async () => {

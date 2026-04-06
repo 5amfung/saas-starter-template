@@ -17,6 +17,7 @@ export default [
   {
     files: ['src/**/*.{ts,tsx}'],
     rules: {
+      '@workspace/no-top-level-app-service-getters': 'error',
       'no-restricted-imports': [
         'error',
         {

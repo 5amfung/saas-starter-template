@@ -13,11 +13,11 @@ import {
   resolveWorkspacePlanId,
 } from '@workspace/billing';
 import type { PlanDefinition, PlanId } from '@workspace/billing';
-import { auth, db } from '@/init';
+import { getAuth, getDb } from '@/init';
 
 export async function requireVerifiedSession() {
   const headers = getRequestHeaders();
-  const session = await auth.api.getSession({ headers });
+  const session = await getAuth().api.getSession({ headers });
   if (!session || !session.user.emailVerified) {
     throw redirect({ to: '/signin' });
   }
@@ -32,7 +32,7 @@ export async function getWorkspaceActivePlanId(
   headers: Headers,
   workspaceId: string
 ): Promise<PlanId> {
-  const subscriptions = await auth.api.listActiveSubscriptions({
+  const subscriptions = await getAuth().api.listActiveSubscriptions({
     headers,
     query: { referenceId: workspaceId, customerType: 'organization' },
   });
@@ -57,7 +57,10 @@ export async function getWorkspaceEntitlements(
 ): Promise<WorkspaceEntitlementsContext> {
   const planId = await getWorkspaceActivePlanId(headers, workspaceId);
   const plan = getPlanById(planId) ?? getFreePlan();
-  const entitlements = await getWorkspaceEntitlementsQuery({ db, workspaceId });
+  const entitlements = await getWorkspaceEntitlementsQuery({
+    db: getDb(),
+    workspaceId,
+  });
   const upgradePlan = PLANS.find((p) => p.tier > plan.tier) ?? null;
   return { planId, plan, entitlements, upgradePlan };
 }
@@ -72,7 +75,7 @@ export async function getWorkspaceBillingData(
   workspaceId: string
 ) {
   const snapshot = await getWorkspaceBillingSnapshot({
-    db,
+    db: getDb(),
     workspaceId,
     resolveScheduledTargetPlanId,
   });
@@ -106,6 +109,7 @@ export interface WorkspaceBillingSummary {
 export async function getOwnedWorkspacesBillingSummary(
   headers: Headers
 ): Promise<Array<WorkspaceBillingSummary>> {
+  const auth = getAuth();
   const workspaces = await auth.api.listOrganizations({ headers });
 
   const summaries: Array<WorkspaceBillingSummary> = [];
@@ -160,7 +164,7 @@ export async function checkWorkspaceEntitlement(
 ): Promise<CheckEntitlementResult> {
   try {
     const result = await assertWorkspaceLimit({
-      db,
+      db: getDb(),
       workspaceId,
       key,
     });
@@ -202,7 +206,7 @@ export async function createCheckoutForWorkspace(
   subscriptionId?: string
 ) {
   return createCheckoutSession({
-    db,
+    db: getDb(),
     workspaceId,
     targetPlanId: planId,
     annual,
@@ -210,7 +214,7 @@ export async function createCheckoutForWorkspace(
     successUrl: `${process.env.BETTER_AUTH_URL}/ws/${workspaceId}/billing?success=true`,
     cancelUrl: `${process.env.BETTER_AUTH_URL}/ws/${workspaceId}/billing`,
     execute: async (body) => {
-      const result = await auth.api.upgradeSubscription({
+      const result = await getAuth().api.upgradeSubscription({
         headers,
         body,
       });
@@ -229,7 +233,7 @@ export async function createWorkspaceBillingPortal(
   headers: Headers,
   workspaceId: string
 ) {
-  const result = await auth.api.createBillingPortal({
+  const result = await getAuth().api.createBillingPortal({
     headers,
     body: {
       referenceId: workspaceId,
@@ -248,6 +252,7 @@ export async function reactivateWorkspaceSubscription(
   headers: Headers,
   workspaceId: string
 ) {
+  const auth = getAuth();
   const subscriptions = await auth.api.listActiveSubscriptions({
     headers,
     query: { referenceId: workspaceId, customerType: 'organization' },
@@ -292,6 +297,7 @@ async function resolveScheduledTargetPlanId(
   scheduleId: string
 ): Promise<PlanId | null> {
   try {
+    const auth = getAuth();
     const schedule = await auth.billing.getSubscriptionSchedule(scheduleId);
     // A completed or canceled schedule is no longer pending — ignore it.
     if (schedule.status !== 'active' && schedule.status !== 'not_started') {
@@ -325,6 +331,7 @@ export async function downgradeWorkspaceSubscription(
   annual: boolean,
   subscriptionId: string
 ) {
+  const auth = getAuth();
   // Validate the target plan exists and has pricing.
   const targetPlan = PLANS.find((p) => p.id === planId);
   if (!targetPlan) {
@@ -364,6 +371,7 @@ export async function cancelWorkspaceSubscription(
   headers: Headers,
   workspaceId: string
 ) {
+  const auth = getAuth();
   const subscriptions = await auth.api.listActiveSubscriptions({
     headers,
     query: { referenceId: workspaceId, customerType: 'organization' },

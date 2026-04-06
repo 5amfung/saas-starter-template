@@ -4,16 +4,16 @@ import {
   getVerifiedAdminSession,
   validateGuestSession as validateGuest,
 } from '@/auth/validators';
-import { auth } from '@/init';
+import { getAuth } from '@/init';
 
 /** Validates that the request has an authenticated, email-verified admin session. */
 export async function validateAuthSession(headers: Headers) {
-  return await getVerifiedAdminSession(headers, auth);
+  return await getVerifiedAdminSession(headers, getAuth());
 }
 
 /** Validates that the request is from a guest (no verified admin session). */
 export async function validateGuestSession(headers: Headers) {
-  await validateGuest(headers, auth);
+  await validateGuest(headers, getAuth());
 }
 
 export const authMiddleware = createMiddleware().server(async ({ next }) => {

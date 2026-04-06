@@ -6,7 +6,7 @@ import type {
   NotificationPreferences,
   NotificationPreferencesPatch,
 } from '@/account/notification-preferences.schemas';
-import { auth, db } from '@/init';
+import { getAuth, getDb } from '@/init';
 
 const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   emailUpdates: true,
@@ -15,7 +15,7 @@ const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
 
 export async function requireVerifiedSession() {
   const headers = getRequestHeaders();
-  const session = await auth.api.getSession({ headers });
+  const session = await getAuth().api.getSession({ headers });
   if (!session || !session.user.emailVerified) {
     throw redirect({ to: '/signin' });
   }
@@ -26,7 +26,7 @@ export async function getNotificationPreferencesForUser(
   userId: string
 ): Promise<NotificationPreferences> {
   const row = (
-    await db
+    await getDb()
       .select({ marketingEmails: notificationPreferences.marketingEmails })
       .from(notificationPreferences)
       .where(eq(notificationPreferences.userId, userId))
@@ -48,7 +48,7 @@ export async function upsertNotificationPreferencesForUser(
     return getNotificationPreferencesForUser(userId);
   }
 
-  await db
+  await getDb()
     .insert(notificationPreferences)
     .values({
       userId,

@@ -2,7 +2,7 @@ import { redirect } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import * as z from 'zod';
-import { auth } from '@/init';
+import { getAuth } from '@/init';
 import {
   ensureActiveWorkspaceForSession,
   ensureWorkspaceMembership,
@@ -14,11 +14,11 @@ const workspaceRouteInput = z.object({
 });
 
 type VerifiedSession = NonNullable<
-  Awaited<ReturnType<typeof auth.api.getSession>>
+  Awaited<ReturnType<ReturnType<typeof getAuth>['api']['getSession']>>
 >;
 
 const requireVerifiedSession = async (headers: Headers) => {
-  const session = await auth.api.getSession({ headers });
+  const session = await getAuth().api.getSession({ headers });
   if (!session || !session.user.emailVerified) {
     throw redirect({ to: '/signin' });
   }
@@ -45,7 +45,7 @@ const resolveWorkspaceRouteAccess = async (
       : null;
 
   if (activeOrganizationId !== workspaceId) {
-    await auth.api.setActiveOrganization({
+    await getAuth().api.setActiveOrganization({
       body: { organizationId: workspaceId },
       headers,
     });

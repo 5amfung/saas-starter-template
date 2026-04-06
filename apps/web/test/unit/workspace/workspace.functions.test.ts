@@ -12,6 +12,7 @@ import {
 } from '@/workspace/workspace.functions';
 
 const {
+  getAuthMock,
   getSessionMock,
   getRequestHeadersMock,
   ensureWorkspaceMembershipMock,
@@ -19,6 +20,7 @@ const {
   ensureActiveWorkspaceForSessionMock,
   getActiveMemberRoleMock,
 } = vi.hoisted(() => ({
+  getAuthMock: vi.fn(),
   getSessionMock: vi.fn(),
   getRequestHeadersMock: vi.fn().mockReturnValue(new Headers()),
   ensureWorkspaceMembershipMock: vi.fn(),
@@ -30,13 +32,17 @@ const {
 vi.mock('@tanstack/react-start', () => createServerFnMock());
 
 vi.mock('@/init', () => ({
-  auth: {
+  getAuth: getAuthMock,
+}));
+
+beforeEach(() => {
+  getAuthMock.mockReturnValue({
     api: {
       getSession: getSessionMock,
       setActiveOrganization: setActiveOrganizationMock,
     },
-  },
-}));
+  });
+});
 
 vi.mock('@tanstack/react-start/server', () => ({
   getRequestHeaders: getRequestHeadersMock,
@@ -58,6 +64,12 @@ describe('resolveWorkspaceRouteAccess (via getWorkspaceById)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getRequestHeadersMock.mockReturnValue(new Headers());
+    getAuthMock.mockReturnValue({
+      api: {
+        getSession: getSessionMock,
+        setActiveOrganization: setActiveOrganizationMock,
+      },
+    });
   });
 
   it('redirects to /signin when no session', async () => {
@@ -144,6 +156,12 @@ describe('getActiveWorkspaceId', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getRequestHeadersMock.mockReturnValue(new Headers());
+    getAuthMock.mockReturnValue({
+      api: {
+        getSession: getSessionMock,
+        setActiveOrganization: setActiveOrganizationMock,
+      },
+    });
   });
 
   it('redirects to /signin when no session', async () => {
@@ -193,6 +211,12 @@ describe('ensureWorkspaceRouteAccess', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getRequestHeadersMock.mockReturnValue(new Headers());
+    getAuthMock.mockReturnValue({
+      api: {
+        getSession: getSessionMock,
+        setActiveOrganization: setActiveOrganizationMock,
+      },
+    });
   });
 
   it('returns workspaceId when user has access', async () => {
@@ -216,6 +240,12 @@ describe('getWorkspaceRouteAccess', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getRequestHeadersMock.mockReturnValue(new Headers());
+    getAuthMock.mockReturnValue({
+      api: {
+        getSession: getSessionMock,
+        setActiveOrganization: setActiveOrganizationMock,
+      },
+    });
   });
 
   it('returns route access facts without becoming the long-lived workspace entity store', async () => {

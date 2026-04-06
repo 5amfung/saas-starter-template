@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { redirect } from '@tanstack/react-router';
 import * as z from 'zod';
-import { auth } from '@/init';
+import { getAuth } from '@/init';
 import { requireWorkspaceCapabilityForUser } from '@/policy/workspace-capabilities.server';
 
 const workspaceSettingsInput = z.object({
@@ -14,7 +14,7 @@ const updateWorkspaceSettingsInput = workspaceSettingsInput.extend({
 });
 
 async function requireVerifiedSession(headers: Headers) {
-  const session = await auth.api.getSession({ headers });
+  const session = await getAuth().api.getSession({ headers });
   if (!session || !session.user.emailVerified) {
     throw redirect({ to: '/signin' });
   }
@@ -35,12 +35,12 @@ export const updateWorkspaceSettings = createServerFn()
       'canManageSettings'
     );
 
-    await auth.api.setActiveOrganization({
+    await getAuth().api.setActiveOrganization({
       body: { organizationId: data.workspaceId },
       headers,
     });
 
-    return auth.api.updateOrganization({
+    return getAuth().api.updateOrganization({
       body: {
         data: {
           name: data.name,
@@ -63,7 +63,7 @@ export const deleteWorkspace = createServerFn()
       'canDeleteWorkspace'
     );
 
-    const organizations = await auth.api.listOrganizations({ headers });
+    const organizations = await getAuth().api.listOrganizations({ headers });
     const nextWorkspaceId =
       organizations.find((organization) => organization.id !== data.workspaceId)
         ?.id ?? null;
@@ -72,12 +72,12 @@ export const deleteWorkspace = createServerFn()
       throw new Error('Failed to find an active workspace after deletion.');
     }
 
-    await auth.api.deleteOrganization({
+    await getAuth().api.deleteOrganization({
       body: { organizationId: data.workspaceId },
       headers,
     });
 
-    await auth.api.setActiveOrganization({
+    await getAuth().api.setActiveOrganization({
       body: { organizationId: nextWorkspaceId },
       headers,
     });

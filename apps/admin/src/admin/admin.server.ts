@@ -2,14 +2,14 @@ import { getRequestHeaders } from '@tanstack/react-start/server';
 import { and, gte, isNotNull, lt, sql } from 'drizzle-orm';
 import { user as userTable } from '@workspace/db-schema';
 import { getVerifiedAdminSession } from '@/auth/validators';
-import { auth, db } from '@/init';
+import { getAuth, getDb } from '@/init';
 
 // --- Auth ---
 
 /** Verify the caller is an authenticated admin. Throws redirect otherwise. */
 export async function requireAdmin() {
   const headers = getRequestHeaders();
-  return getVerifiedAdminSession(headers, auth);
+  return getVerifiedAdminSession(headers, getAuth());
 }
 
 // --- Timezone helpers ---
@@ -71,7 +71,7 @@ export async function queryDashboardMetrics(timezoneOffset: number) {
   const todayStart = getLocalDayStartUtc(timezoneOffset);
   const todayEnd = new Date(todayStart.getTime() + MILLISECONDS_PER_DAY);
 
-  const rows = await db
+  const rows = await getDb()
     .select({
       totalUsers: sql<number>`count(*)::int`.as('total_users'),
       verifiedUsers:
@@ -108,7 +108,7 @@ export async function querySignupChartData(
   const rangeStart = buckets[0].start;
   const rangeEnd = buckets[buckets.length - 1].end;
 
-  const rows = await db
+  const rows = await getDb()
     .select({
       createdAt: userTable.createdAt,
       emailVerified: userTable.emailVerified,
@@ -140,7 +140,7 @@ export async function queryMauChartData(days: number, timezoneOffset: number) {
   );
   const latestBucketEnd = buckets[buckets.length - 1].end;
 
-  const rows = await db
+  const rows = await getDb()
     .select({ lastSignInAt: userTable.lastSignInAt })
     .from(userTable)
     .where(

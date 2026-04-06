@@ -1,6 +1,6 @@
 import { APIError } from 'better-auth/api';
 import { isRecord } from '@workspace/auth';
-import { auth } from '@/init';
+import { getAuth } from '@/init';
 import { pickDefaultWorkspace } from '@/workspace/workspace';
 
 const getActiveOrganizationId = (session: unknown): string | null => {
@@ -15,7 +15,7 @@ const getActiveOrganizationId = (session: unknown): string | null => {
 };
 
 export async function listUserWorkspaces(headers: Headers) {
-  return auth.api.listOrganizations({ headers });
+  return getAuth().api.listOrganizations({ headers });
 }
 
 export async function ensureActiveWorkspaceForSession(
@@ -46,7 +46,7 @@ export async function ensureActiveWorkspaceForSession(
     });
   }
 
-  await auth.api.setActiveOrganization({
+  await getAuth().api.setActiveOrganization({
     body: { organizationId: targetWorkspace.id },
     headers,
   });
@@ -63,7 +63,7 @@ export async function ensureWorkspaceMembership(
     (candidate) => candidate.id === workspaceId
   );
   if (!workspace) {
-    const organization = await auth.api.getFullOrganization({
+    const organization = await getAuth().api.getFullOrganization({
       headers,
       query: { organizationId: workspaceId },
     });
@@ -84,7 +84,7 @@ export async function getActiveMemberRole(
   workspaceId: string,
   userId: string
 ): Promise<string | null> {
-  const organization = await auth.api.getFullOrganization({
+  const organization = await getAuth().api.getFullOrganization({
     headers,
     query: { organizationId: workspaceId },
   });

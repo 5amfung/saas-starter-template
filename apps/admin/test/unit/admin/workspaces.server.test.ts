@@ -6,11 +6,15 @@ import {
 } from '@/admin/workspaces.server';
 
 const {
+  getAuthMock,
+  getDbMock,
   listAdminWorkspacesMock,
   getAdminWorkspaceDetailMock,
   setAdminWorkspaceEntitlementOverridesMock,
   clearAdminWorkspaceEntitlementOverridesMock,
 } = vi.hoisted(() => ({
+  getAuthMock: vi.fn(),
+  getDbMock: vi.fn(),
   listAdminWorkspacesMock: vi.fn(),
   getAdminWorkspaceDetailMock: vi.fn(),
   setAdminWorkspaceEntitlementOverridesMock: vi.fn(),
@@ -27,13 +31,15 @@ vi.mock('@workspace/billing', () => ({
 }));
 
 vi.mock('@/init', () => ({
-  auth: { api: {} },
-  db: {},
+  getAuth: getAuthMock,
+  getDb: getDbMock,
 }));
 
 describe('listWorkspacesWithPlan', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getAuthMock.mockReturnValue({ api: {} });
+    getDbMock.mockReturnValue({ id: 'db' });
   });
 
   it('delegates to listAdminWorkspaces', async () => {
@@ -45,7 +51,7 @@ describe('listWorkspacesWithPlan', () => {
     });
 
     expect(listAdminWorkspacesMock).toHaveBeenCalledWith({
-      db: {},
+      db: { id: 'db' },
       params: {
         limit: 10,
         offset: 0,
@@ -59,6 +65,8 @@ describe('listWorkspacesWithPlan', () => {
 describe('getWorkspaceDetail', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getAuthMock.mockReturnValue({ api: {} });
+    getDbMock.mockReturnValue({ id: 'db' });
   });
 
   it('delegates to getAdminWorkspaceDetail', async () => {
@@ -66,7 +74,7 @@ describe('getWorkspaceDetail', () => {
     const result = await getWorkspaceDetail('ws-1');
 
     expect(getAdminWorkspaceDetailMock).toHaveBeenCalledWith({
-      db: {},
+      db: { id: 'db' },
       workspaceId: 'ws-1',
     });
     expect(result).toBeNull();
@@ -76,6 +84,8 @@ describe('getWorkspaceDetail', () => {
 describe('upsertEntitlementOverrides', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getAuthMock.mockReturnValue({ api: {} });
+    getDbMock.mockReturnValue({ id: 'db' });
   });
 
   it('delegates to setAdminWorkspaceEntitlementOverrides', async () => {
@@ -92,7 +102,7 @@ describe('upsertEntitlementOverrides', () => {
     });
 
     expect(setAdminWorkspaceEntitlementOverridesMock).toHaveBeenCalledWith({
-      db: {},
+      db: { id: 'db' },
       workspaceId: 'ws-1',
       limits: { members: 50 },
       features: { sso: true },
@@ -105,6 +115,8 @@ describe('upsertEntitlementOverrides', () => {
 describe('deleteEntitlementOverrides', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getAuthMock.mockReturnValue({ api: {} });
+    getDbMock.mockReturnValue({ id: 'db' });
   });
 
   it('delegates to clearAdminWorkspaceEntitlementOverrides', async () => {
@@ -115,7 +127,7 @@ describe('deleteEntitlementOverrides', () => {
     await deleteEntitlementOverrides('ws-1');
 
     expect(clearAdminWorkspaceEntitlementOverridesMock).toHaveBeenCalledWith({
-      db: {},
+      db: { id: 'db' },
       workspaceId: 'ws-1',
     });
   });

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { auth } from '@/init';
+import { getAuth } from '@/init';
 import { requestLogger } from '@/lib/logger';
 
 export const Route = createFileRoute('/api/auth/$')({
@@ -7,10 +7,10 @@ export const Route = createFileRoute('/api/auth/$')({
     middleware: [requestLogger],
     handlers: {
       GET: async ({ request }: { request: Request }) => {
-        return await auth.handler(request);
+        return await getAuth().handler(request);
       },
       POST: async ({ request }: { request: Request }) => {
-        return await auth.handler(request);
+        return await getAuth().handler(request);
       },
     },
   },

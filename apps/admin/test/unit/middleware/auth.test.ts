@@ -5,11 +5,13 @@ import type { CapturedServerFns } from '../../mocks/middleware';
 import { validateAuthSession, validateGuestSession } from '@/middleware/auth';
 
 const {
+  mockGetAuth,
   mockGetVerifiedAdminSession,
   mockValidateGuest,
   mockGetRequestHeaders,
   capturedServerFns,
 } = vi.hoisted(() => ({
+  mockGetAuth: vi.fn(),
   mockGetVerifiedAdminSession: vi.fn(),
   mockValidateGuest: vi.fn(),
   mockGetRequestHeaders: vi.fn(() => new Headers({ cookie: 'test' })),
@@ -17,7 +19,7 @@ const {
 }));
 
 vi.mock('@/init', () => ({
-  auth: { api: {} },
+  getAuth: mockGetAuth,
 }));
 
 vi.mock('@/auth/validators', () => ({
@@ -36,18 +38,18 @@ describe('validateAuthSession', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetAuth.mockReturnValue({ api: {} });
   });
 
   it('calls getVerifiedAdminSession and returns the result', async () => {
     const session = createMockSessionResponse();
     mockGetVerifiedAdminSession.mockResolvedValue(session);
+    const auth = { api: {} };
+    mockGetAuth.mockReturnValue(auth);
 
     const result = await validateAuthSession(headers);
 
-    expect(mockGetVerifiedAdminSession).toHaveBeenCalledWith(
-      headers,
-      expect.anything()
-    );
+    expect(mockGetVerifiedAdminSession).toHaveBeenCalledWith(headers, auth);
     expect(result).toEqual(session);
   });
 
@@ -79,6 +81,7 @@ describe('validateGuestSession', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetAuth.mockReturnValue({ api: {} });
   });
 
   it('returns without throwing when validateGuestSession succeeds', async () => {
@@ -111,6 +114,7 @@ describe('authMiddleware (createMiddleware wrapper)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetRequestHeaders.mockReturnValue(new Headers({ cookie: 'test' }));
+    mockGetAuth.mockReturnValue({ api: {} });
   });
 
   it('calls next on successful auth validation', async () => {
@@ -140,6 +144,7 @@ describe('guestMiddleware (createMiddleware wrapper)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetRequestHeaders.mockReturnValue(new Headers({ cookie: 'test' }));
+    mockGetAuth.mockReturnValue({ api: {} });
   });
 
   it('calls next for guest visitors', async () => {

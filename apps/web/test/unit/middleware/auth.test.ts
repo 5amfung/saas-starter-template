@@ -5,11 +5,13 @@ import type { CapturedServerFns } from '../../mocks/middleware';
 import { validateAuthSession, validateGuestSession } from '@/middleware/auth';
 
 const {
+  getAuthMock,
   mockGetSession,
   mockEnsureActiveWorkspace,
   mockGetRequestHeaders,
   capturedServerFns,
 } = vi.hoisted(() => ({
+  getAuthMock: vi.fn(),
   mockGetSession: vi.fn(),
   mockEnsureActiveWorkspace: vi.fn(),
   mockGetRequestHeaders: vi.fn(() => new Headers({ cookie: 'test' })),
@@ -17,7 +19,7 @@ const {
 }));
 
 vi.mock('@/init', () => ({
-  auth: { api: { getSession: mockGetSession } },
+  getAuth: getAuthMock,
 }));
 
 vi.mock('@/workspace/workspace.server', () => ({
@@ -35,6 +37,7 @@ describe('validateAuthSession', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    getAuthMock.mockReturnValue({ api: { getSession: mockGetSession } });
   });
 
   it('throws redirect to /signin when no session exists', async () => {
@@ -98,6 +101,7 @@ describe('validateGuestSession', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    getAuthMock.mockReturnValue({ api: { getSession: mockGetSession } });
   });
 
   it('returns without throwing when no session exists', async () => {
@@ -134,6 +138,7 @@ describe('validateGuestSession', () => {
 describe('authMiddleware (createMiddleware wrapper)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getAuthMock.mockReturnValue({ api: { getSession: mockGetSession } });
     mockGetRequestHeaders.mockReturnValue(new Headers({ cookie: 'test' }));
   });
 
@@ -164,6 +169,7 @@ describe('authMiddleware (createMiddleware wrapper)', () => {
 describe('guestMiddleware (createMiddleware wrapper)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getAuthMock.mockReturnValue({ api: { getSession: mockGetSession } });
     mockGetRequestHeaders.mockReturnValue(new Headers({ cookie: 'test' }));
   });
 

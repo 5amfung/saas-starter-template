@@ -7,12 +7,12 @@ import type {
   AdminAppCapability,
 } from '@workspace/policy';
 import type { AdminAppSessionLike } from './admin-app-capabilities.shared';
-import { auth } from '@/init';
+import { getAuth } from '@/init';
 
 export async function getCurrentAdminAppCapabilities(
   headers: Headers = getRequestHeaders()
 ): Promise<AdminAppCapabilities> {
-  const session = (await auth.api.getSession({
+  const session = (await getAuth().api.getSession({
     headers,
   })) as AdminAppSessionLike | null;
 
