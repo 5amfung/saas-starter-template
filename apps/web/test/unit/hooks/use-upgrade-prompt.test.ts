@@ -80,7 +80,7 @@ describe('useUpgradePrompt', () => {
     });
 
     act(() => {
-      result.current.show('Upgrade', 'You need more', mockPlan);
+      result.current.show('Upgrade', 'You need more', 'checkout', mockPlan);
     });
 
     expect(result.current.dialogProps.open).toBe(true);
@@ -98,7 +98,7 @@ describe('useUpgradePrompt', () => {
     });
 
     act(() => {
-      result.current.show('Upgrade', 'Description', mockPlan);
+      result.current.show('Upgrade', 'Description', 'checkout', mockPlan);
     });
     expect(result.current.dialogProps.open).toBe(true);
 
@@ -125,7 +125,7 @@ describe('useUpgradePrompt', () => {
     });
 
     act(() => {
-      result.current.show('Upgrade', 'Description', mockPlan);
+      result.current.show('Upgrade', 'Description', 'checkout', mockPlan);
     });
 
     act(() => {
@@ -147,7 +147,7 @@ describe('useUpgradePrompt', () => {
     });
 
     act(() => {
-      result.current.show('Limit Reached', 'Max tier', null);
+      result.current.show('Limit Reached', 'Max tier', 'none', null);
     });
 
     act(() => {
@@ -163,7 +163,12 @@ describe('useUpgradePrompt', () => {
     });
 
     act(() => {
-      result.current.show('Upgrade', 'Description', enterprisePlan);
+      result.current.show(
+        'Upgrade',
+        'Description',
+        'contact_sales',
+        enterprisePlan
+      );
     });
 
     expect(result.current.dialogProps.action).toEqual({
@@ -182,7 +187,7 @@ describe('useUpgradePrompt', () => {
     });
 
     act(() => {
-      result.current.show('Upgrade', 'Description', mockPlan);
+      result.current.show('Upgrade', 'Description', 'checkout', mockPlan);
     });
 
     act(() => {

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { evaluateWorkspaceProductPolicy } from '@workspace/billing';
 import { renderWithProviders } from '@workspace/test-utils';
 import type { Entitlements, PlanDefinition } from '@workspace/billing';
 import { BillingPlanCards } from '@/components/billing/billing-plan-cards';
@@ -77,9 +78,28 @@ const ENTERPRISE_OVERRIDE_ENTITLEMENTS: Entitlements = {
 };
 
 describe('BillingPlanCards', () => {
+  const buildProductPolicy = (
+    currentPlan: PlanDefinition,
+    currentEntitlements: Entitlements
+  ) =>
+    evaluateWorkspaceProductPolicy({
+      currentPlan,
+      resolvedEntitlements: currentEntitlements,
+      subscriptionState: {
+        status: null,
+        stripeSubscriptionId: null,
+        stripeScheduleId: null,
+        periodEnd: null,
+        cancelAtPeriodEnd: false,
+        cancelAt: null,
+      },
+      scheduledTargetPlanId: null,
+    });
+
   const defaultProps = {
     currentPlan: FREE_PLAN,
     currentEntitlements: FREE_PLAN.entitlements,
+    productPolicy: buildProductPolicy(FREE_PLAN, FREE_PLAN.entitlements),
     nextBillingDate: null,
     onManagePlan: vi.fn(),
     onBillingPortal: vi.fn(),
@@ -123,6 +143,10 @@ describe('BillingPlanCards', () => {
         {...defaultProps}
         currentPlan={STARTER_PLAN}
         currentEntitlements={STARTER_PLAN.entitlements}
+        productPolicy={buildProductPolicy(
+          STARTER_PLAN,
+          STARTER_PLAN.entitlements
+        )}
         onBillingPortal={onBillingPortal}
       />
     );
@@ -137,6 +161,10 @@ describe('BillingPlanCards', () => {
         {...defaultProps}
         currentPlan={ENTERPRISE_PLAN}
         currentEntitlements={ENTERPRISE_OVERRIDE_ENTITLEMENTS}
+        productPolicy={buildProductPolicy(
+          ENTERPRISE_PLAN,
+          ENTERPRISE_OVERRIDE_ENTITLEMENTS
+        )}
         workspaceName="Acme Corp"
       />
     );
@@ -159,6 +187,10 @@ describe('BillingPlanCards', () => {
         {...defaultProps}
         currentPlan={STARTER_PLAN}
         currentEntitlements={STARTER_PLAN.entitlements}
+        productPolicy={buildProductPolicy(
+          STARTER_PLAN,
+          STARTER_PLAN.entitlements
+        )}
         nextBillingDate={new Date('2026-05-15T12:00:00Z')}
       />
     );

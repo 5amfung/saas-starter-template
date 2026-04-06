@@ -175,40 +175,36 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
   if (billingQuery.isPending || !billingQuery.data) return null;
 
   const { plan: currentPlan, entitlements, subscription } = billingQuery.data;
-
-  // Stripe Flexible Billing uses cancelAt instead of cancelAtPeriodEnd.
-  // Check both to match Better Auth's isPendingCancel logic.
-  const isPendingCancel =
-    (subscription?.cancelAtPeriodEnd ?? false) || !!subscription?.cancelAt;
-  // A scheduled downgrade (via Subscription Schedule) is a separate state —
-  // it should not block upgrades or show cancellation messaging.
-  const isPendingDowngrade = !!subscription?.stripeScheduleId;
+  const { productPolicy } = billingQuery.data;
   const periodEnd = subscription?.periodEnd
     ? new Date(subscription.periodEnd)
     : null;
-  const effectiveCancelDate =
-    periodEnd ??
-    (subscription?.cancelAt ? new Date(subscription.cancelAt) : null);
+  const effectiveCancelDate = productPolicy.lifecycle.effectivePeriodEnd
+    ? new Date(productPolicy.lifecycle.effectivePeriodEnd)
+    : null;
 
   return (
     <div className={PAGE_LAYOUT_CLASS}>
-      {(isPendingCancel || isPendingDowngrade) && effectiveCancelDate && (
-        <BillingDowngradeBanner
-          targetPlanName={
-            billingQuery.data.scheduledTargetPlanId
-              ? (getPlanById(billingQuery.data.scheduledTargetPlanId)?.name ??
-                getFreePlan().name)
-              : getFreePlan().name
-          }
-          periodEnd={effectiveCancelDate}
-          onReactivate={() => reactivateMutation.mutate()}
-          isReactivating={reactivateMutation.isPending}
-        />
-      )}
+      {(productPolicy.lifecycle.isPendingCancel ||
+        productPolicy.lifecycle.isPendingDowngrade) &&
+        effectiveCancelDate && (
+          <BillingDowngradeBanner
+            targetPlanName={
+              productPolicy.lifecycle.scheduledTargetPlanId
+                ? (getPlanById(productPolicy.lifecycle.scheduledTargetPlanId)
+                    ?.name ?? getFreePlan().name)
+                : getFreePlan().name
+            }
+            periodEnd={effectiveCancelDate}
+            onReactivate={() => reactivateMutation.mutate()}
+            isReactivating={reactivateMutation.isPending}
+          />
+        )}
 
       <BillingPlanCards
         currentPlan={currentPlan}
         currentEntitlements={entitlements}
+        productPolicy={productPolicy}
         nextBillingDate={periodEnd}
         onManagePlan={() => setManagePlanOpen(true)}
         onBillingPortal={() => manageMutation.mutate()}
@@ -220,8 +216,9 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
         open={managePlanOpen}
         onOpenChange={setManagePlanOpen}
         currentPlan={currentPlan}
-        isPendingCancel={isPendingCancel}
-        isPendingDowngrade={isPendingDowngrade}
+        productPolicy={productPolicy}
+        isPendingCancel={productPolicy.lifecycle.isPendingCancel}
+        isPendingDowngrade={productPolicy.lifecycle.isPendingDowngrade}
         onUpgrade={(planId, annual) => {
           setManagePlanOpen(false);
           upgradeMutation.mutate({
@@ -250,7 +247,9 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
           periodEnd={periodEnd}
           currentMemberCount={billingQuery.data.memberCount}
           onConfirm={() => {
-            if (downgradeTarget.pricing === null) {
+            if (
+              productPolicy.planChanges[downgradeTarget.id].action === 'cancel'
+            ) {
               cancelMutation.mutate();
             } else {
               downgradeMutation.mutate({

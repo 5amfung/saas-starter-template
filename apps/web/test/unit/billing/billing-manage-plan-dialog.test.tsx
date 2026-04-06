@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { getPlanById } from '@workspace/billing';
+import {
+  evaluateWorkspaceProductPolicy,
+  getPlanById,
+} from '@workspace/billing';
 import { renderWithProviders } from '@workspace/test-utils';
 import type { PlanDefinition } from '@workspace/billing';
 
@@ -12,10 +15,26 @@ const STARTER_PLAN = getPlanById('starter') as PlanDefinition;
 const FREE_PLAN = getPlanById('free') as PlanDefinition;
 
 describe('BillingManagePlanDialog', () => {
+  const buildProductPolicy = (currentPlan: PlanDefinition) =>
+    evaluateWorkspaceProductPolicy({
+      currentPlan,
+      resolvedEntitlements: currentPlan.entitlements,
+      subscriptionState: {
+        status: null,
+        stripeSubscriptionId: null,
+        stripeScheduleId: null,
+        periodEnd: null,
+        cancelAtPeriodEnd: false,
+        cancelAt: null,
+      },
+      scheduledTargetPlanId: null,
+    });
+
   const defaultProps = {
     open: true,
     onOpenChange: vi.fn(),
     currentPlan: PRO_PLAN,
+    productPolicy: buildProductPolicy(PRO_PLAN),
     isPendingCancel: false,
     isPendingDowngrade: false,
     onUpgrade: vi.fn(),
@@ -44,7 +63,11 @@ describe('BillingManagePlanDialog', () => {
 
   it('shows "Upgrade" button for higher-tier plans', () => {
     renderWithProviders(
-      <BillingManagePlanDialog {...defaultProps} currentPlan={STARTER_PLAN} />
+      <BillingManagePlanDialog
+        {...defaultProps}
+        currentPlan={STARTER_PLAN}
+        productPolicy={buildProductPolicy(STARTER_PLAN)}
+      />
     );
     expect(
       screen.getByRole('button', { name: /^upgrade$/i })
@@ -67,6 +90,7 @@ describe('BillingManagePlanDialog', () => {
       <BillingManagePlanDialog
         {...defaultProps}
         currentPlan={FREE_PLAN}
+        productPolicy={buildProductPolicy(FREE_PLAN)}
         onUpgrade={onUpgrade}
       />
     );
@@ -111,6 +135,7 @@ describe('BillingManagePlanDialog', () => {
       <BillingManagePlanDialog
         {...defaultProps}
         currentPlan={STARTER_PLAN}
+        productPolicy={buildProductPolicy(STARTER_PLAN)}
         isPendingDowngrade={true}
       />
     );
@@ -140,6 +165,7 @@ describe('BillingManagePlanDialog', () => {
       <BillingManagePlanDialog
         {...defaultProps}
         currentPlan={STARTER_PLAN}
+        productPolicy={buildProductPolicy(STARTER_PLAN)}
         isProcessing={true}
       />
     );

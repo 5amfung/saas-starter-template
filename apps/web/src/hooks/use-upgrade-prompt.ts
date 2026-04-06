@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import type { PlanDefinition, PlanId } from '@workspace/billing';
+import type {
+  PlanDefinition,
+  PlanId,
+  ProductUpgradeAction,
+} from '@workspace/billing';
 import { createWorkspaceCheckoutSession } from '@/billing/billing.functions';
 
 export type UpgradePromptAction =
@@ -51,18 +55,20 @@ export function useUpgradePrompt(workspaceId: string) {
   const show = (
     title: string,
     description: string,
+    actionType: ProductUpgradeAction,
     upgradePlan: PlanDefinition | null
   ) => {
     setPrompt({
       open: true,
       title,
       description,
-      action: upgradePlan
-        ? {
-            type: upgradePlan.isEnterprise ? 'contact_sales' : 'checkout',
-            plan: upgradePlan,
-          }
-        : null,
+      action:
+        actionType !== 'none' && upgradePlan
+          ? {
+              type: actionType,
+              plan: upgradePlan,
+            }
+          : null,
     });
   };
 

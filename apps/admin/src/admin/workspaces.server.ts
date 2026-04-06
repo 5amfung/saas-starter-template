@@ -8,7 +8,9 @@ import {
 import type {
   AdminWorkspaceListParams,
   EntitlementOverrides,
+  Entitlements,
   PlanId,
+  WorkspaceProductPolicy,
 } from '@workspace/billing';
 import type { EntitlementOverrideInput } from './workspaces.schemas';
 import { getAuth, getDb } from '@/init';
@@ -50,6 +52,8 @@ export interface WorkspaceDetail {
   ownerUserId: string | null;
   memberCount: number;
   planId: PlanId;
+  entitlements: Entitlements;
+  productPolicy: WorkspaceProductPolicy;
   subscription: {
     id: string;
     plan: string;

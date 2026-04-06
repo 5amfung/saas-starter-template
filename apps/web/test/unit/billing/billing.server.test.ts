@@ -260,6 +260,9 @@ describe('billing.server', () => {
       expect(data.subscription).toBeNull();
       expect(data.scheduledTargetPlanId).toBeNull();
       expect(data.memberCount).toBe(1);
+      expect(data.productPolicy.currentPlanCta.type).toBe('manage_plan');
+      expect(data.productPolicy.billingPortal.visible).toBe(false);
+      expect(data.productPolicy.planChanges.starter.via).toBe('checkout');
     });
 
     it('returns plan and subscription for pro workspace', async () => {
@@ -294,6 +297,10 @@ describe('billing.server', () => {
       });
       expect(data.scheduledTargetPlanId).toBeNull();
       expect(data.memberCount).toBe(3);
+      expect(data.productPolicy.billingPortal.visible).toBe(true);
+      expect(data.productPolicy.featureAccess.sso.upgradeAction).toBe(
+        'contact_sales'
+      );
     });
 
     it('resolves scheduledTargetPlanId from subscription schedule', async () => {
@@ -380,6 +387,23 @@ describe('billing.server', () => {
       expect(result.allowed).toBe(true);
       expect(result.limit).toBe(25);
       expect(result.current).toBe(10);
+    });
+
+    it('returns normalized upgrade action when member limit is exceeded', async () => {
+      listActiveSubscriptionsMock.mockResolvedValue([
+        { plan: 'pro', status: 'active' },
+      ]);
+      countWorkspaceMembersMock.mockResolvedValue(25);
+
+      const result = await checkWorkspaceEntitlement(
+        TEST_HEADERS,
+        TEST_WORKSPACE_ID,
+        'members'
+      );
+
+      expect(result.allowed).toBe(false);
+      expect(result.upgradePlan?.id).toBe('enterprise');
+      expect(result.upgradeAction).toBe('contact_sales');
     });
 
     it('resolves workspace plan directly for member check', async () => {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { PLANS, PLAN_ACTION_CONFIG, getPlanAction } from '@workspace/billing';
+import { PLANS, PLAN_ACTION_CONFIG } from '@workspace/billing';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -11,12 +11,17 @@ import {
 import { Button, buttonVariants } from '@workspace/ui/components/button';
 import { Toggle } from '@workspace/ui/components/toggle';
 import { BillingPlanSummary } from './billing-plan-summary';
-import type { PlanDefinition, PlanId } from '@workspace/billing';
+import type {
+  PlanDefinition,
+  PlanId,
+  WorkspaceProductPolicy,
+} from '@workspace/billing';
 
 interface BillingManagePlanDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentPlan: PlanDefinition;
+  productPolicy: WorkspaceProductPolicy;
   isPendingCancel: boolean;
   isPendingDowngrade: boolean;
   onUpgrade: (planId: PlanId, annual: boolean) => void;
@@ -30,6 +35,7 @@ export function BillingManagePlanDialog({
   open,
   onOpenChange,
   currentPlan,
+  productPolicy,
   isPendingCancel,
   isPendingDowngrade,
   onUpgrade,
@@ -99,7 +105,7 @@ export function BillingManagePlanDialog({
         {/* Plan cards */}
         <div className="flex flex-col gap-4 p-7 md:flex-row">
           {PLANS.map((plan) => {
-            const action = getPlanAction(currentPlan, plan);
+            const action = productPolicy.planChanges[plan.id].action;
             const config = PLAN_ACTION_CONFIG[action];
             const isCurrent = action === 'current';
             const isDowngradeOrCancel =
