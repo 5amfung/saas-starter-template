@@ -1,25 +1,25 @@
 import { createMiddleware } from '@tanstack/react-start';
+import { redirect } from '@tanstack/react-router';
 import { getRequestHeaders } from '@tanstack/react-start/server';
+import { getWebAppEntryRedirectTarget } from '@/policy/web-app-entry.shared';
 import {
-  getVerifiedSession,
-  validateGuestSession as validateGuest,
-} from '@workspace/auth/validators';
-import { getAuth } from '@/init';
-import { ensureActiveWorkspaceForSession } from '@/workspace/workspace.server';
+  getCurrentWebAppEntry,
+  requireWebAppEntry,
+} from '@/policy/web-app-entry.server';
 
-/** Validates that the request has an authenticated, email-verified session and an active workspace. */
+/** Validates that the request can enter the web app. */
 export async function validateAuthSession(headers: Headers) {
-  const session = await getVerifiedSession(headers, getAuth());
-  await ensureActiveWorkspaceForSession(headers, {
-    user: { id: session.user.id },
-    session: session.session,
-  });
-  return session;
+  return requireWebAppEntry(headers);
 }
 
-/** Validates that the request is from a guest (no verified session). Redirects authenticated users. */
+/** Validates that the request should stay on guest routes. */
 export async function validateGuestSession(headers: Headers) {
-  await validateGuest(headers, getAuth());
+  const entry = await getCurrentWebAppEntry(headers);
+  const redirectTarget = getWebAppEntryRedirectTarget(entry, 'guest');
+
+  if (redirectTarget) {
+    throw redirect({ to: redirectTarget });
+  }
 }
 
 export const authMiddleware = createMiddleware().server(async ({ next }) => {

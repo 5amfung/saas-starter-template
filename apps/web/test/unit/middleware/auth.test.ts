@@ -1,29 +1,22 @@
-// src/middleware/auth.test.ts
-import { createMockSessionResponse } from '@workspace/test-utils';
 import { createMiddlewareMock } from '../../mocks/middleware';
 import type { CapturedServerFns } from '../../mocks/middleware';
 import { validateAuthSession, validateGuestSession } from '@/middleware/auth';
 
 const {
-  getAuthMock,
-  mockGetSession,
-  mockEnsureActiveWorkspace,
   mockGetRequestHeaders,
+  mockGetCurrentWebAppEntry,
+  mockRequireWebAppEntry,
   capturedServerFns,
 } = vi.hoisted(() => ({
-  getAuthMock: vi.fn(),
-  mockGetSession: vi.fn(),
-  mockEnsureActiveWorkspace: vi.fn(),
   mockGetRequestHeaders: vi.fn(() => new Headers({ cookie: 'test' })),
+  mockGetCurrentWebAppEntry: vi.fn(),
+  mockRequireWebAppEntry: vi.fn(),
   capturedServerFns: {} as CapturedServerFns,
 }));
 
-vi.mock('@/init', () => ({
-  getAuth: getAuthMock,
-}));
-
-vi.mock('@/workspace/workspace.server', () => ({
-  ensureActiveWorkspaceForSession: mockEnsureActiveWorkspace,
+vi.mock('@/policy/web-app-entry.server', () => ({
+  getCurrentWebAppEntry: mockGetCurrentWebAppEntry,
+  requireWebAppEntry: mockRequireWebAppEntry,
 }));
 
 vi.mock('@tanstack/react-start/server', () => ({
@@ -37,61 +30,27 @@ describe('validateAuthSession', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    getAuthMock.mockReturnValue({ api: { getSession: mockGetSession } });
   });
 
-  it('throws redirect to /signin when no session exists', async () => {
-    mockGetSession.mockResolvedValue(null);
-    await expect(validateAuthSession(headers)).rejects.toEqual(
-      expect.objectContaining({
-        options: expect.objectContaining({ to: '/signin' }),
-      })
+  it('delegates protected entry validation to requireWebAppEntry', async () => {
+    const entry = {
+      kind: 'canEnterWebApp',
+      activeWorkspaceId: 'ws-1',
+      capabilities: { canEnterWebApp: true },
+    };
+    mockRequireWebAppEntry.mockResolvedValue(entry);
+
+    await expect(validateAuthSession(headers)).resolves.toBe(entry);
+
+    expect(mockRequireWebAppEntry).toHaveBeenCalledWith(headers);
+  });
+
+  it('propagates entry guard failures', async () => {
+    mockRequireWebAppEntry.mockRejectedValue(
+      new Error('Auth service unavailable')
     );
-  });
-
-  it('throws redirect to /signin when emailVerified is false', async () => {
-    mockGetSession.mockResolvedValue(
-      createMockSessionResponse({ emailVerified: false })
-    );
-    await expect(validateAuthSession(headers)).rejects.toEqual(
-      expect.objectContaining({
-        options: expect.objectContaining({ to: '/signin' }),
-      })
-    );
-  });
-
-  it('calls ensureActiveWorkspaceForSession for verified sessions', async () => {
-    const session = createMockSessionResponse();
-    mockGetSession.mockResolvedValue(session);
-    mockEnsureActiveWorkspace.mockResolvedValue(undefined);
-
-    await validateAuthSession(headers);
-
-    expect(mockEnsureActiveWorkspace).toHaveBeenCalledWith(headers, {
-      user: { id: session.user.id },
-      session: session.session,
-    });
-  });
-
-  it('handles malformed session object (missing user)', async () => {
-    mockGetSession.mockResolvedValue({ session: null, user: null });
-    await expect(validateAuthSession(headers)).rejects.toBeTruthy();
-  });
-
-  it('handles getSession throwing an error', async () => {
-    mockGetSession.mockRejectedValue(new Error('Auth service unavailable'));
     await expect(validateAuthSession(headers)).rejects.toMatchObject({
       message: 'Auth service unavailable',
-    });
-  });
-
-  it('propagates errors from ensureActiveWorkspaceForSession', async () => {
-    const session = createMockSessionResponse();
-    mockGetSession.mockResolvedValue(session);
-    mockEnsureActiveWorkspace.mockRejectedValue(new Error('workspace error'));
-
-    await expect(validateAuthSession(headers)).rejects.toMatchObject({
-      message: 'workspace error',
     });
   });
 });
@@ -101,51 +60,83 @@ describe('validateGuestSession', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    getAuthMock.mockReturnValue({ api: { getSession: mockGetSession } });
   });
 
-  it('returns without throwing when no session exists', async () => {
-    mockGetSession.mockResolvedValue(null);
-    await expect(validateGuestSession(headers)).resolves.toBeUndefined();
-  });
-
-  it('returns without throwing when emailVerified is false', async () => {
-    mockGetSession.mockResolvedValue(
-      createMockSessionResponse({ emailVerified: false })
-    );
-    await expect(validateGuestSession(headers)).resolves.toBeUndefined();
-  });
-
-  it('handles getSession throwing an error', async () => {
-    mockGetSession.mockRejectedValue(new Error('Auth service unavailable'));
-    await expect(validateGuestSession(headers)).rejects.toMatchObject({
-      message: 'Auth service unavailable',
+  it('returns without throwing when the entry state is still guest-only', async () => {
+    mockGetCurrentWebAppEntry.mockResolvedValue({
+      kind: 'redirect',
+      to: '/signin',
+      capabilities: { mustSignIn: true },
     });
+
+    await expect(validateGuestSession(headers)).resolves.toBeUndefined();
+    expect(mockGetCurrentWebAppEntry).toHaveBeenCalledWith(headers);
   });
 
-  it('throws redirect to /ws when session has emailVerified true', async () => {
-    mockGetSession.mockResolvedValue(
-      createMockSessionResponse({ emailVerified: true })
+  it('redirects signed-in unverified users to verify', async () => {
+    mockGetCurrentWebAppEntry.mockResolvedValue({
+      kind: 'redirect',
+      to: '/verify',
+      capabilities: { mustVerifyEmail: true },
+    });
+
+    await expect(validateGuestSession(headers)).rejects.toEqual(
+      expect.objectContaining({
+        options: expect.objectContaining({ to: '/verify' }),
+      })
     );
+  });
+
+  it('redirects entered app users to the protected shell', async () => {
+    mockGetCurrentWebAppEntry.mockResolvedValue({
+      kind: 'canEnterWebApp',
+      activeWorkspaceId: 'ws-1',
+      capabilities: { canEnterWebApp: true },
+    });
+
     await expect(validateGuestSession(headers)).rejects.toEqual(
       expect.objectContaining({
         options: expect.objectContaining({ to: '/ws' }),
       })
     );
   });
+
+  it('redirects blocked users to the protected shell so the app entry policy can handle them centrally', async () => {
+    mockGetCurrentWebAppEntry.mockResolvedValue({
+      kind: 'blocked',
+      reason: 'noAccessibleWorkspaces',
+      capabilities: { canEnterWebApp: false },
+    });
+
+    await expect(validateGuestSession(headers)).rejects.toEqual(
+      expect.objectContaining({
+        options: expect.objectContaining({ to: '/ws' }),
+      })
+    );
+  });
+
+  it('propagates entry lookup errors', async () => {
+    mockGetCurrentWebAppEntry.mockRejectedValue(
+      new Error('Auth service unavailable')
+    );
+    await expect(validateGuestSession(headers)).rejects.toMatchObject({
+      message: 'Auth service unavailable',
+    });
+  });
 });
 
 describe('authMiddleware (createMiddleware wrapper)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getAuthMock.mockReturnValue({ api: { getSession: mockGetSession } });
     mockGetRequestHeaders.mockReturnValue(new Headers({ cookie: 'test' }));
   });
 
   it('calls next on successful auth validation', async () => {
-    const session = createMockSessionResponse();
-    mockGetSession.mockResolvedValue(session);
-    mockEnsureActiveWorkspace.mockResolvedValue(undefined);
+    mockRequireWebAppEntry.mockResolvedValue({
+      kind: 'canEnterWebApp',
+      activeWorkspaceId: 'ws-1',
+      capabilities: { canEnterWebApp: true },
+    });
     const mockNext = vi.fn().mockResolvedValue('next-result');
 
     const serverFn = capturedServerFns['middleware_0'];
@@ -157,7 +148,11 @@ describe('authMiddleware (createMiddleware wrapper)', () => {
   });
 
   it('propagates auth validation errors', async () => {
-    mockGetSession.mockResolvedValue(null);
+    mockRequireWebAppEntry.mockRejectedValue(
+      expect.objectContaining({
+        options: expect.objectContaining({ to: '/signin' }),
+      })
+    );
     const mockNext = vi.fn();
 
     const serverFn = capturedServerFns['middleware_0'];
@@ -169,12 +164,15 @@ describe('authMiddleware (createMiddleware wrapper)', () => {
 describe('guestMiddleware (createMiddleware wrapper)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getAuthMock.mockReturnValue({ api: { getSession: mockGetSession } });
     mockGetRequestHeaders.mockReturnValue(new Headers({ cookie: 'test' }));
   });
 
   it('calls next for guest visitors', async () => {
-    mockGetSession.mockResolvedValue(null);
+    mockGetCurrentWebAppEntry.mockResolvedValue({
+      kind: 'redirect',
+      to: '/signin',
+      capabilities: { mustSignIn: true },
+    });
     const mockNext = vi.fn().mockResolvedValue('next-result');
 
     const serverFn = capturedServerFns['middleware_1'];
@@ -184,10 +182,12 @@ describe('guestMiddleware (createMiddleware wrapper)', () => {
     expect(result).toBe('next-result');
   });
 
-  it('propagates redirect for authenticated users', async () => {
-    mockGetSession.mockResolvedValue(
-      createMockSessionResponse({ emailVerified: true })
-    );
+  it('propagates redirect for non-guest entry states', async () => {
+    mockGetCurrentWebAppEntry.mockResolvedValue({
+      kind: 'canEnterWebApp',
+      activeWorkspaceId: 'ws-1',
+      capabilities: { canEnterWebApp: true },
+    });
     const mockNext = vi.fn();
 
     const serverFn = capturedServerFns['middleware_1'];

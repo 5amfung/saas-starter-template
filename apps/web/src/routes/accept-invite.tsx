@@ -13,6 +13,8 @@ import {
 } from '@workspace/ui/components/card';
 import { FieldDescription } from '@workspace/ui/components/field';
 import { AuthLayout } from '@workspace/components/auth';
+import type { WebAppEntry } from '@/policy/web-app-entry.shared';
+import { useWebAppEntry } from '@/policy/web-app-entry';
 
 export const Route = createFileRoute('/accept-invite')({
   component: AcceptInvitePage,
@@ -26,20 +28,54 @@ type AcceptState =
   | { kind: 'invalid'; message: string }
   | { kind: 'error'; message: string };
 
+export type InviteEntryOutcome =
+  | { kind: 'redirectToSignup'; reason: 'missingSession' | 'unverifiedSession' }
+  | { kind: 'acceptInvite' };
+
+function assertNever(value: never): never {
+  throw new Error(`Unexpected invite entry variant: ${JSON.stringify(value)}`);
+}
+
+export function resolveInviteEntryOutcome(
+  entry: WebAppEntry
+): InviteEntryOutcome {
+  switch (entry.kind) {
+    case 'redirect':
+      switch (entry.to) {
+        case '/signin':
+          return {
+            kind: 'redirectToSignup',
+            reason: 'missingSession',
+          };
+        case '/verify':
+          return {
+            kind: 'redirectToSignup',
+            reason: 'unverifiedSession',
+          };
+        default:
+          return assertNever(entry.to);
+      }
+    case 'blocked':
+    case 'mustResolveWorkspace':
+    case 'canEnterWebApp':
+      return { kind: 'acceptInvite' };
+    default:
+      return assertNever(entry);
+  }
+}
+
 function AcceptInvitePage() {
   const navigate = useNavigate();
   const { id } = Route.useSearch();
-  const { data: session, isPending } = authClient.useSession();
+  const { data: entry, isPending } = useWebAppEntry();
   const [state, setState] = React.useState<AcceptState>({
     kind: 'working',
     message: 'Checking invitation...',
   });
-  const didRunRef = React.useRef(false);
+  const didRunRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
     if (isPending) return;
-    if (didRunRef.current) return;
-    didRunRef.current = true;
 
     const run = async () => {
       if (!id) {
@@ -47,16 +83,24 @@ function AcceptInvitePage() {
         return;
       }
 
-      const returnTo = `/accept-invite?id=${encodeURIComponent(id)}`;
-
-      if (!session) {
-        await navigate({ to: '/signup', search: { redirect: returnTo } });
+      if (!entry) {
+        setState({
+          kind: 'error',
+          message: 'Unable to check invitation eligibility.',
+        });
         return;
       }
 
-      // Logged in but email not verified — sign out and redirect to signup.
-      if (!session.user.emailVerified) {
-        await authClient.signOut();
+      if (didRunRef.current === id) return;
+      didRunRef.current = id;
+
+      const returnTo = `/accept-invite?id=${encodeURIComponent(id)}`;
+      const outcome = resolveInviteEntryOutcome(entry);
+
+      if (outcome.kind === 'redirectToSignup') {
+        if (outcome.reason === 'unverifiedSession') {
+          await authClient.signOut();
+        }
         await navigate({ to: '/signup', search: { redirect: returnTo } });
         return;
       }
@@ -79,7 +123,7 @@ function AcceptInvitePage() {
     };
 
     void run();
-  }, [id, isPending, navigate, session]);
+  }, [entry, id, isPending, navigate]);
 
   const webLogo = (
     <a href="/" className="flex items-center gap-2 self-center font-medium">

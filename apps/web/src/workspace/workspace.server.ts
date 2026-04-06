@@ -15,6 +15,10 @@ const getActiveOrganizationId = (session: unknown): string | null => {
 };
 
 export async function listUserWorkspaces(headers: Headers) {
+  return listAccessibleWorkspaces(headers);
+}
+
+export async function listAccessibleWorkspaces(headers: Headers) {
   return getAuth().api.listOrganizations({ headers });
 }
 
@@ -34,17 +38,12 @@ export async function ensureActiveWorkspaceForSession(
     };
   }
 ) {
-  const workspaces = await listUserWorkspaces(headers);
-  const activeOrganizationId = getActiveOrganizationId(session);
-  const activeWorkspace =
-    activeOrganizationId === null
-      ? null
-      : (workspaces.find(
-          (workspace) => workspace.id === activeOrganizationId
-        ) ?? null);
-  if (activeWorkspace) return activeWorkspace;
-
-  const targetWorkspace = pickDefaultWorkspace(workspaces);
+  const workspaces = await listAccessibleWorkspaces(headers);
+  const targetWorkspace = await resolvePreferredWorkspace(
+    headers,
+    session,
+    workspaces
+  );
   if (!targetWorkspace) {
     throw new APIError('INTERNAL_SERVER_ERROR', {
       message: 'No workspace found for this user.',
@@ -57,6 +56,32 @@ export async function ensureActiveWorkspaceForSession(
   });
 
   return targetWorkspace;
+}
+
+export async function resolvePreferredWorkspace(
+  headers: Headers,
+  session: {
+    session?: {
+      activeOrganizationId?: string | null;
+    };
+  },
+  workspaces?: Array<{ id: string }>
+) {
+  const accessibleWorkspaces =
+    workspaces ?? (await listAccessibleWorkspaces(headers));
+  const activeOrganizationId = getActiveOrganizationId(session);
+  const activeWorkspace =
+    activeOrganizationId === null
+      ? null
+      : (accessibleWorkspaces.find(
+          (workspace) => workspace.id === activeOrganizationId
+        ) ?? null);
+
+  if (activeWorkspace) {
+    return activeWorkspace;
+  }
+
+  return pickDefaultWorkspace(accessibleWorkspaces);
 }
 
 export async function ensureWorkspaceMembership(

@@ -1,15 +1,16 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
-import { getRequestHeaders } from '@tanstack/react-start/server';
-import { getAuth } from '@/init';
+import type { WebAppEntry } from '@/policy/web-app-entry.shared';
+import { getWebAppEntryRedirectTarget } from '@/policy/web-app-entry.shared';
+import { getCurrentWebAppEntry } from '@/policy/web-app-entry.server';
+
+export function getIndexRedirectTarget(entry: WebAppEntry) {
+  return getWebAppEntryRedirectTarget(entry, 'root');
+}
 
 const redirectByAuthStatus = createServerFn().handler(async () => {
-  const headers = getRequestHeaders();
-  const session = await getAuth().api.getSession({ headers });
-  if (session?.user.emailVerified) {
-    throw redirect({ to: '/ws' });
-  }
-  throw redirect({ to: '/signin' });
+  const entry = await getCurrentWebAppEntry();
+  throw redirect({ to: getIndexRedirectTarget(entry) });
 });
 
 export const Route = createFileRoute('/')({

@@ -2,6 +2,12 @@
 
 import config from '@workspace/eslint-config/react';
 
+const adminEntryRouteFiles = [
+  'src/routes/index.tsx',
+  'src/routes/_auth.tsx',
+  'src/routes/_protected.tsx',
+];
+
 export default [
   {
     ignores: [
@@ -68,6 +74,31 @@ export default [
             "BinaryExpression[operator='==='][right.value='admin'][left.name='role']",
           message:
             'Do not authorize admin routes from raw platform roles; consume admin app capabilities instead.',
+        },
+      ],
+    },
+  },
+  {
+    files: adminEntryRouteFiles,
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "CallExpression[callee.property.name='useSession'][callee.object.name='authClient']",
+          message:
+            'Do not derive admin app entry from authClient.useSession() in entry routes; use admin app entry hooks/helpers instead.',
+        },
+        {
+          selector: "MemberExpression[property.name='emailVerified']",
+          message:
+            'Do not derive admin app entry from raw session emailVerified fields in entry routes; use admin app entry helpers instead.',
+        },
+        {
+          selector:
+            "MemberExpression[property.name='role'][object.type='MemberExpression'][object.property.name='user']",
+          message:
+            'Do not derive admin app entry from raw session role fields in entry routes; use admin app entry helpers instead.',
         },
       ],
     },
