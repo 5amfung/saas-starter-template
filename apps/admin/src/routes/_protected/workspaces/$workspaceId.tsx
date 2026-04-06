@@ -1,5 +1,4 @@
 import { IconArrowLeft } from '@tabler/icons-react';
-import { useQuery } from '@tanstack/react-query';
 import {
   Link,
   createFileRoute,
@@ -19,7 +18,7 @@ import { Label } from '@workspace/ui/components/label';
 import { Separator } from '@workspace/ui/components/separator';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { AdminEntitlementOverrideForm } from '@/components/admin/admin-entitlement-override-form';
-import { getWorkspace } from '@/admin/workspaces.functions';
+import { useAdminWorkspaceDetailQuery } from '@/admin/workspaces.queries';
 
 export const Route = createFileRoute('/_protected/workspaces/$workspaceId')({
   component: AdminWorkspaceDetailPage,
@@ -51,15 +50,7 @@ function BackToWorkspaceListButton({ disabled }: { disabled?: boolean }) {
 function AdminWorkspaceDetailPage() {
   const { workspaceId } = Route.useParams();
 
-  const workspaceQuery = useQuery({
-    queryKey: ['admin', 'workspace', workspaceId],
-    queryFn: async () => {
-      const workspace = await getWorkspace({ data: { workspaceId } });
-      if (!workspace) throw notFound();
-      return workspace;
-    },
-    retry: false,
-  });
+  const workspaceQuery = useAdminWorkspaceDetailQuery(workspaceId);
 
   if (workspaceQuery.isError) {
     if (isNotFound(workspaceQuery.error)) throw workspaceQuery.error;
@@ -78,132 +69,132 @@ function AdminWorkspaceDetailPage() {
     );
   }
 
+  if (workspaceQuery.isPending) {
+    return (
+      <div className={PAGE_LAYOUT_CLASS}>
+        <div className="self-start">
+          <BackToWorkspaceListButton disabled />
+        </div>
+        <WorkspaceDetailSkeleton />
+      </div>
+    );
+  }
+
+  if (!workspaceQuery.data) {
+    throw notFound();
+  }
+
+  const workspace = workspaceQuery.data;
+
   return (
     <div className={PAGE_LAYOUT_CLASS}>
       <div className="self-start">
-        <BackToWorkspaceListButton disabled={workspaceQuery.isPending} />
+        <BackToWorkspaceListButton />
       </div>
-      {workspaceQuery.isPending ? (
-        <WorkspaceDetailSkeleton />
-      ) : (
-        <>
-          {/* Info Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Workspace Info</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className={TWO_COLUMN_GRID}>
-                <ReadOnlyField label="Name" value={workspaceQuery.data.name} />
-                <ReadOnlyField
-                  label="Slug"
-                  value={workspaceQuery.data.slug}
-                  mono
-                />
-              </div>
-              <div className={TWO_COLUMN_GRID}>
-                <ReadOnlyField
-                  label="Workspace ID"
-                  value={workspaceQuery.data.id}
-                  mono
-                />
-                <ReadOnlyField
-                  label="Members"
-                  value={String(workspaceQuery.data.memberCount)}
-                />
-              </div>
-              <div className={TWO_COLUMN_GRID}>
-                <ReadOnlyField
-                  label="Owner"
-                  value={workspaceQuery.data.ownerEmail ?? 'No owner'}
-                />
-                <ReadOnlyField
-                  label="Created"
-                  value={new Date(
-                    workspaceQuery.data.createdAt
-                  ).toLocaleString()}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Subscription Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Subscription</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className={TWO_COLUMN_GRID}>
-                <div className="space-y-2">
-                  <Label>Plan</Label>
-                  <div>
-                    <Badge variant="default" className="capitalize">
-                      {workspaceQuery.data.planId}
-                    </Badge>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <div>
-                    <Badge
-                      variant={
-                        workspaceQuery.data.subscription?.status === 'active'
-                          ? 'outline'
-                          : 'secondary'
-                      }
-                      className="capitalize"
-                    >
-                      {workspaceQuery.data.subscription?.status ?? 'Free'}
-                    </Badge>
-                    {workspaceQuery.data.subscription?.cancelAtPeriodEnd ? (
-                      <Badge variant="destructive" className="ml-2">
-                        Canceling
-                      </Badge>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-              {workspaceQuery.data.subscription ? (
-                <div className={TWO_COLUMN_GRID}>
-                  <ReadOnlyField
-                    label="Stripe Subscription ID"
-                    value={
-                      workspaceQuery.data.subscription.stripeSubscriptionId ??
-                      'N/A'
-                    }
-                    mono
-                  />
-                  <ReadOnlyField
-                    label="Period End"
-                    value={
-                      workspaceQuery.data.subscription.periodEnd
-                        ? new Date(
-                            workspaceQuery.data.subscription.periodEnd
-                          ).toLocaleString()
-                        : 'N/A'
-                    }
-                  />
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No active subscription.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Entitlement Overrides — enterprise only */}
-          {workspaceQuery.data.planId === 'enterprise' ? (
-            <>
-              <Separator />
-              <AdminEntitlementOverrideForm
-                workspaceId={workspaceQuery.data.id}
-                overrides={workspaceQuery.data.overrides}
+      <>
+        {/* Info Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Workspace Info</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className={TWO_COLUMN_GRID}>
+              <ReadOnlyField label="Name" value={workspace.name} />
+              <ReadOnlyField label="Slug" value={workspace.slug} mono />
+            </div>
+            <div className={TWO_COLUMN_GRID}>
+              <ReadOnlyField label="Workspace ID" value={workspace.id} mono />
+              <ReadOnlyField
+                label="Members"
+                value={String(workspace.memberCount)}
               />
-            </>
-          ) : null}
-        </>
-      )}
+            </div>
+            <div className={TWO_COLUMN_GRID}>
+              <ReadOnlyField
+                label="Owner"
+                value={workspace.ownerEmail ?? 'No owner'}
+              />
+              <ReadOnlyField
+                label="Created"
+                value={new Date(workspace.createdAt).toLocaleString()}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Subscription Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Subscription</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className={TWO_COLUMN_GRID}>
+              <div className="space-y-2">
+                <Label>Plan</Label>
+                <div>
+                  <Badge variant="default" className="capitalize">
+                    {workspace.planId}
+                  </Badge>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <div>
+                  <Badge
+                    variant={
+                      workspace.subscription?.status === 'active'
+                        ? 'outline'
+                        : 'secondary'
+                    }
+                    className="capitalize"
+                  >
+                    {workspace.subscription?.status ?? 'Free'}
+                  </Badge>
+                  {workspace.subscription?.cancelAtPeriodEnd ? (
+                    <Badge variant="destructive" className="ml-2">
+                      Canceling
+                    </Badge>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+            {workspace.subscription ? (
+              <div className={TWO_COLUMN_GRID}>
+                <ReadOnlyField
+                  label="Stripe Subscription ID"
+                  value={workspace.subscription.stripeSubscriptionId ?? 'N/A'}
+                  mono
+                />
+                <ReadOnlyField
+                  label="Period End"
+                  value={
+                    workspace.subscription.periodEnd
+                      ? new Date(
+                          workspace.subscription.periodEnd
+                        ).toLocaleString()
+                      : 'N/A'
+                  }
+                />
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No active subscription.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Entitlement Overrides — enterprise only */}
+        {workspace.planId === 'enterprise' ? (
+          <>
+            <Separator />
+            <AdminEntitlementOverrideForm
+              workspaceId={workspace.id}
+              overrides={workspace.overrides}
+            />
+          </>
+        ) : null}
+      </>
     </div>
   );
 }

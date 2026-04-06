@@ -32,6 +32,7 @@ import {
   clearEntitlementOverrides,
   saveEntitlementOverrides,
 } from '@/admin/workspaces.functions';
+import { ADMIN_WORKSPACE_DETAIL_QUERY_KEY } from '@/admin/workspaces.queries';
 
 // --- Types ---
 
@@ -167,7 +168,7 @@ export function AdminEntitlementOverrideForm({
     onSuccess: () => {
       toast.success('Entitlement overrides saved.');
       queryClient.invalidateQueries({
-        queryKey: ['admin', 'workspace', workspaceId],
+        queryKey: ADMIN_WORKSPACE_DETAIL_QUERY_KEY(workspaceId),
       });
     },
     onError: (err) => {
@@ -185,7 +186,7 @@ export function AdminEntitlementOverrideForm({
       toast.success('All entitlement overrides cleared.');
       setFormState(buildInitialState());
       queryClient.invalidateQueries({
-        queryKey: ['admin', 'workspace', workspaceId],
+        queryKey: ADMIN_WORKSPACE_DETAIL_QUERY_KEY(workspaceId),
       });
     },
     onError: (err) => {
