@@ -115,6 +115,7 @@ This repository is a multi-app Turborepo SaaS starter, not a single-app codebase
 - `packages/db-schema`: schema source, auth schema generation, Drizzle config/scripts
 - `packages/email`: email provider integration and React Email templates
 - `packages/logging`: shared logger and server request logging
+- `packages/policy`: shared authorization capability contracts and evaluators
 - `packages/test-utils`: shared testing helpers
 - `packages/ui`: low-level shared UI primitives, hooks, and styles
 - `packages/eslint-config`: shared lint configuration
@@ -154,6 +155,9 @@ Important live structure:
 - `apps/web/src/account/`
 - `apps/web/src/workspace/`
 - `apps/web/src/billing/`
+- `apps/web/src/policy/`
+- `apps/web/src/components/`
+- `apps/web/src/hooks/`
 
 ### `apps/admin`
 
@@ -162,7 +166,7 @@ Use `apps/admin` for:
 - admin-only routes and dashboards
 - user/workspace administration UI
 - admin-side metrics and workspace management
-- admin-specific middleware, loaders, and server functions
+- admin-specific middleware, loaders, server functions, and policy wiring
 
 Important live structure:
 
@@ -170,9 +174,9 @@ Important live structure:
 - `apps/admin/src/middleware/auth.ts`
 - `apps/admin/src/init.ts`
 - `apps/admin/src/admin/`
-- `apps/admin/src/account/`
-- `apps/admin/src/billing/`
-- `apps/admin/src/workspace/`
+- `apps/admin/src/auth/`
+- `apps/admin/src/policy/`
+- `apps/admin/src/components/`
 
 ### `apps/api-server`
 
@@ -230,7 +234,7 @@ If the task changes how code connects to or consumes the database at runtime, st
 This split also matters.
 
 - `packages/ui`: low-level design-system primitives and shared styles
-- `packages/components`: higher-level shared app components, layout pieces, forms, auth/account UI composition
+- `packages/components`: higher-level shared app components, layout pieces, forms, auth/account UI composition exposed through package subpaths such as `@workspace/components/account`, `@workspace/components/auth`, `@workspace/components/form`, and `@workspace/components/layout`
 
 If a component is a reusable primitive, style primitive, or generic UI building block, it likely belongs in `packages/ui`.
 If it is a product-level shared component that composes business-facing behavior, it likely belongs in `packages/components`.
@@ -242,6 +246,16 @@ Use `packages/logging` for:
 - shared logger implementation
 - shared server-side request logging helpers
 
+### `packages/policy`
+
+Use `packages/policy` for:
+
+- shared authorization capability types and policy evaluators
+- workspace/admin capability contracts reused across apps
+- pure policy logic that should not depend on app runtime concerns
+
+Keep app-specific context loading, server lookups, and route-facing wrappers in each app's `src/policy/` directory.
+
 ## 7. Routing, Middleware, and Server Functions
 
 ### Authorization and Capability Rules
@@ -251,8 +265,8 @@ Use `packages/logging` for:
 - Server functions guard action-level access.
 - Roles are inputs to policy evaluation, not business decisions by themselves.
 - Policy evaluation should be centralized, typed, and reusable across apps.
-- Shared packages own authorization contracts, capability definitions, and policy evaluators.
-- Apps own loading the contextual facts required for policy evaluation.
+- `packages/policy` owns shared capability contracts and pure evaluators.
+- App-local `src/policy/` modules own loading contextual facts and exposing app-facing wrappers/functions.
 - New protected features should define required capabilities before UI implementation begins.
 - Do not duplicate business semantics across packages; extend the existing owning package instead.
 
@@ -359,6 +373,8 @@ Important active rules:
 - `packages/billing` domain/application/contracts must not depend on app code
 - billing core layers must not depend directly on `packages/db-schema`
 - new app imports from `packages/db-schema/src/` are forbidden outside a narrow allow-list
+- components must not import app-local `src/policy/*.server.ts` modules directly
+- apps must consume `@workspace/policy` through its public entry, not internal source files
 
 Practical rule:
 
@@ -389,6 +405,7 @@ Run from repo root unless there is a reason not to:
 - `pnpm run build`
 - `pnpm run lint`
 - `pnpm run lint:fix`
+- `pnpm run format`
 - `pnpm run typecheck`
 - `pnpm run check`
 - `pnpm run check:boundaries`
@@ -397,6 +414,11 @@ Run from repo root unless there is a reason not to:
 - `pnpm run test:integration`
 - `pnpm run coverage`
 - `pnpm test:e2e`
+- `pnpm run web:test:e2e:chromium`
+- `pnpm run web:test:e2e:firefox`
+- `pnpm run web:test:e2e:webkit`
+- `pnpm run web:test:e2e:ui`
+- `pnpm run web:test:e2e:report`
 
 ### App-Specific Commands
 
@@ -441,6 +463,8 @@ Current test locations include:
 - `packages/db-schema/test/`
 - `packages/db/test/`
 - `packages/email/test/`
+- `packages/eslint-config/test/`
+- `packages/policy/test/`
 - `packages/ui/test/`
 
 Prefer the smallest matching test scope before broad repo-wide runs.
