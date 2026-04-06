@@ -1,10 +1,9 @@
 import * as React from 'react';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { Button } from '@workspace/ui/components/button';
 import type { SortingState } from '@tanstack/react-table';
 import { AdminWorkspaceTable } from '@/components/admin/admin-workspace-table';
-import { listWorkspaces } from '@/admin/workspaces.functions';
+import { useAdminWorkspaceListQuery } from '@/admin/workspaces.queries';
 
 export const Route = createFileRoute('/_protected/workspaces/')({
   component: AdminWorkspaceListPage,
@@ -60,37 +59,13 @@ function AdminWorkspaceListPage() {
       ? ('asc' as const)
       : undefined;
 
-  const workspacesQuery = useQuery({
-    queryKey: [
-      'admin',
-      'workspaces',
-      page,
-      pageSize,
-      debouncedSearch,
-      filter,
-      sortBy,
-      sortDirection,
-    ],
-    placeholderData: keepPreviousData,
-    queryFn: async () => {
-      const result = await listWorkspaces({
-        data: {
-          limit: pageSize,
-          offset: (page - 1) * pageSize,
-          ...(debouncedSearch ? { search: debouncedSearch } : {}),
-          ...(filter !== 'all' ? { filter } : {}),
-          ...(sortBy ? { sortBy, sortDirection: sortDirection ?? 'asc' } : {}),
-        },
-      });
-
-      return {
-        workspaces: result.workspaces,
-        total: result.total,
-        page,
-        pageSize,
-        totalPages: Math.ceil(result.total / pageSize),
-      };
-    },
+  const workspacesQuery = useAdminWorkspaceListQuery({
+    page,
+    pageSize,
+    search: debouncedSearch,
+    filter,
+    sortBy,
+    sortDirection,
   });
 
   if (workspacesQuery.isError && !workspacesQuery.data) {

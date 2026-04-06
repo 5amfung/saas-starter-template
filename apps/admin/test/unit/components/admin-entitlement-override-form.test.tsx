@@ -4,6 +4,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AdminEntitlementOverrideForm } from '@/components/admin/admin-entitlement-override-form';
+import { ADMIN_WORKSPACE_DETAIL_QUERY_KEY } from '@/admin/workspaces.queries';
 
 const { saveEntitlementOverridesMock, clearEntitlementOverridesMock } =
   vi.hoisted(() => ({
@@ -29,15 +30,19 @@ function renderForm(
   >['overrides']
 ) {
   const queryClient = new QueryClient();
+  const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <AdminEntitlementOverrideForm
-        workspaceId="ws_123"
-        overrides={overrides}
-      />
-    </QueryClientProvider>
-  );
+  return {
+    invalidateQueriesSpy,
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <AdminEntitlementOverrideForm
+          workspaceId="ws_123"
+          overrides={overrides}
+        />
+      </QueryClientProvider>
+    ),
+  };
 }
 
 describe('AdminEntitlementOverrideForm', () => {
@@ -188,6 +193,24 @@ describe('AdminEntitlementOverrideForm', () => {
             projects: 10,
           },
         },
+      });
+    });
+  });
+
+  it('invalidates the canonical admin workspace detail query after save', async () => {
+    const user = userEvent.setup();
+    const { invalidateQueriesSpy } = renderForm({
+      limits: null,
+      features: null,
+      quotas: null,
+      notes: null,
+    });
+
+    await user.click(screen.getByRole('button', { name: /save overrides/i }));
+
+    await waitFor(() => {
+      expect(invalidateQueriesSpy).toHaveBeenCalledWith({
+        queryKey: ADMIN_WORKSPACE_DETAIL_QUERY_KEY('ws_123'),
       });
     });
   });
