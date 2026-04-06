@@ -461,7 +461,6 @@ Current test locations include:
 - `packages/auth/test/`
 - `packages/billing/test/`
 - `packages/db-schema/test/`
-- `packages/db/test/`
 - `packages/email/test/`
 - `packages/eslint-config/test/`
 - `packages/policy/test/`
