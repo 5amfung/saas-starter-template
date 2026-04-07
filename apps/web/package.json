@@ -88,7 +88,7 @@
     "@workspace/eslint-config": "workspace:*",
     "@workspace/test-utils": "workspace:*",
     "jsdom": "^28.1.0",
-    "vite": "^7.3.1",
+    "vite": "^7.3.2",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.2",
     "web-vitals": "^5.2.0"
