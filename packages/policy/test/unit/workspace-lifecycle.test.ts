@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   evaluateWorkspaceLifecycleCapabilities,
   evaluateWorkspaceMemberRemovalCapabilities,
-} from '../../src/workspace-lifecycle';
+  evaluateWorkspaceOwnershipTransferCapabilities,
+} from '../../src/index';
 import type {
   WorkspaceLifecycleContext,
   WorkspaceMemberRemovalContext,
-} from '../../src/workspace-lifecycle';
+  WorkspaceOwnershipTransferContext,
+} from '../../src/index';
 
 const baseLifecycleContext = (
   overrides: Partial<WorkspaceLifecycleContext> = {}
@@ -25,6 +27,18 @@ const baseMemberRemovalContext = (
   hasActiveSubscription: false,
   targetMemberRole: 'member',
   targetMemberIsSelf: false,
+  ...overrides,
+});
+
+const baseOwnershipTransferContext = (
+  overrides: Partial<WorkspaceOwnershipTransferContext> = {}
+): WorkspaceOwnershipTransferContext => ({
+  actorWorkspaceRole: 'owner',
+  targetMember: {
+    targetMemberExists: true,
+    targetMemberRole: 'member',
+    targetMemberIsSelf: false,
+  },
   ...overrides,
 });
 
@@ -79,9 +93,7 @@ describe('evaluateWorkspaceLifecycleCapabilities', () => {
     );
 
     expect(capabilities.canLeaveWorkspace).toBe(false);
-    expect(capabilities.leaveWorkspaceBlockedReason).toBe(
-      'owner-cannot-leave'
-    );
+    expect(capabilities.leaveWorkspaceBlockedReason).toBe('owner-cannot-leave');
   });
 
   it('returns no delete or leave access when the actor has no role', () => {
@@ -122,5 +134,93 @@ describe('evaluateWorkspaceMemberRemovalCapabilities', () => {
 
     expect(capabilities.canRemoveMember).toBe(false);
     expect(capabilities.removeMemberBlockedReason).toBe('cannot-remove-self');
+  });
+});
+
+describe('evaluateWorkspaceOwnershipTransferCapabilities', () => {
+  it('allows owners to transfer ownership to non-self member or admin targets', () => {
+    expect(
+      evaluateWorkspaceOwnershipTransferCapabilities(
+        baseOwnershipTransferContext()
+      )
+    ).toEqual({
+      canTransferWorkspaceOwnership: true,
+      transferWorkspaceOwnershipBlockedReason: null,
+    });
+
+    expect(
+      evaluateWorkspaceOwnershipTransferCapabilities(
+        baseOwnershipTransferContext({
+          targetMember: {
+            targetMemberExists: true,
+            targetMemberRole: 'admin',
+            targetMemberIsSelf: false,
+          },
+        })
+      )
+    ).toEqual({
+      canTransferWorkspaceOwnership: true,
+      transferWorkspaceOwnershipBlockedReason: null,
+    });
+  });
+
+  it('blocks non-owners with not-owner', () => {
+    expect(
+      evaluateWorkspaceOwnershipTransferCapabilities(
+        baseOwnershipTransferContext({ actorWorkspaceRole: 'admin' })
+      )
+    ).toEqual({
+      canTransferWorkspaceOwnership: false,
+      transferWorkspaceOwnershipBlockedReason: 'not-owner',
+    });
+  });
+
+  it('blocks self transfer with cannot-transfer-to-self', () => {
+    expect(
+      evaluateWorkspaceOwnershipTransferCapabilities(
+        baseOwnershipTransferContext({
+          targetMember: {
+            targetMemberExists: true,
+            targetMemberRole: 'member',
+            targetMemberIsSelf: true,
+          },
+        })
+      )
+    ).toEqual({
+      canTransferWorkspaceOwnership: false,
+      transferWorkspaceOwnershipBlockedReason: 'cannot-transfer-to-self',
+    });
+  });
+
+  it('blocks transfer when target is already owner', () => {
+    expect(
+      evaluateWorkspaceOwnershipTransferCapabilities(
+        baseOwnershipTransferContext({
+          targetMember: {
+            targetMemberExists: true,
+            targetMemberRole: 'owner',
+            targetMemberIsSelf: false,
+          },
+        })
+      )
+    ).toEqual({
+      canTransferWorkspaceOwnership: false,
+      transferWorkspaceOwnershipBlockedReason: 'target-already-owner',
+    });
+  });
+
+  it('blocks transfer when target is missing', () => {
+    expect(
+      evaluateWorkspaceOwnershipTransferCapabilities(
+        baseOwnershipTransferContext({
+          targetMember: {
+            targetMemberExists: false,
+          },
+        })
+      )
+    ).toEqual({
+      canTransferWorkspaceOwnership: false,
+      transferWorkspaceOwnershipBlockedReason: 'target-not-found',
+    });
   });
 });

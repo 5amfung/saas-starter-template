@@ -109,6 +109,7 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
   const patchBillingCache = (patch: {
     scheduledTargetPlanId?: PlanId | null;
     subscription?: Partial<NonNullable<BillingData['subscription']>>;
+    lifecycle?: Partial<BillingData['productPolicy']['lifecycle']>;
   }) => {
     queryClient.setQueryData<BillingData>(
       BILLING_DATA_QUERY_KEY(workspaceId),
@@ -122,6 +123,13 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
           subscription: prev.subscription
             ? { ...prev.subscription, ...patch.subscription }
             : prev.subscription,
+          productPolicy: {
+            ...prev.productPolicy,
+            lifecycle: {
+              ...prev.productPolicy.lifecycle,
+              ...patch.lifecycle,
+            },
+          },
         };
       }
     );
@@ -147,6 +155,15 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
       patchBillingCache({
         scheduledTargetPlanId: planId,
         subscription: { stripeScheduleId: 'pending' },
+        lifecycle: {
+          isPendingCancel: false,
+          isPendingDowngrade: true,
+          effectivePeriodEnd:
+            subscription?.periodEnd ??
+            billingQuery.data?.productPolicy.lifecycle.effectivePeriodEnd ??
+            null,
+          scheduledTargetPlanId: planId,
+        },
       });
       void queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
     },
@@ -164,6 +181,15 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
       patchBillingCache({
         scheduledTargetPlanId: null,
         subscription: { cancelAtPeriodEnd: true },
+        lifecycle: {
+          isPendingCancel: true,
+          isPendingDowngrade: false,
+          effectivePeriodEnd:
+            subscription?.periodEnd ??
+            billingQuery.data?.productPolicy.lifecycle.effectivePeriodEnd ??
+            null,
+          scheduledTargetPlanId: null,
+        },
       });
       void queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
     },

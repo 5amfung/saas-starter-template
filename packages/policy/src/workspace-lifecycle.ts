@@ -30,6 +30,31 @@ export interface WorkspaceMemberRemovalCapabilities {
     | null;
 }
 
+export type WorkspaceOwnershipTransferTarget =
+  | {
+      targetMemberExists: true;
+      targetMemberRole: WorkspaceRole;
+      targetMemberIsSelf: boolean;
+    }
+  | {
+      targetMemberExists: false;
+    };
+
+export interface WorkspaceOwnershipTransferContext {
+  actorWorkspaceRole: WorkspaceRole | null;
+  targetMember: WorkspaceOwnershipTransferTarget;
+}
+
+export interface WorkspaceOwnershipTransferCapabilities {
+  canTransferWorkspaceOwnership: boolean;
+  transferWorkspaceOwnershipBlockedReason:
+    | 'not-owner'
+    | 'target-not-found'
+    | 'cannot-transfer-to-self'
+    | 'target-already-owner'
+    | null;
+}
+
 export function evaluateWorkspaceLifecycleCapabilities(
   context: WorkspaceLifecycleContext
 ): WorkspaceLifecycleCapabilities {
@@ -48,7 +73,8 @@ export function evaluateWorkspaceLifecycleCapabilities(
         : context.ownedWorkspaceCount <= 1
           ? 'last-personal-workspace'
           : null,
-    canLeaveWorkspace: context.actorWorkspaceRole !== 'owner' &&
+    canLeaveWorkspace:
+      context.actorWorkspaceRole !== 'owner' &&
       context.actorWorkspaceRole !== null,
     leaveWorkspaceBlockedReason:
       context.actorWorkspaceRole === 'owner' ? 'owner-cannot-leave' : null,
@@ -75,5 +101,42 @@ export function evaluateWorkspaceMemberRemovalCapabilities(
   return {
     canRemoveMember: true,
     removeMemberBlockedReason: null,
+  };
+}
+
+export function evaluateWorkspaceOwnershipTransferCapabilities(
+  context: WorkspaceOwnershipTransferContext
+): WorkspaceOwnershipTransferCapabilities {
+  if (context.actorWorkspaceRole !== 'owner') {
+    return {
+      canTransferWorkspaceOwnership: false,
+      transferWorkspaceOwnershipBlockedReason: 'not-owner',
+    };
+  }
+
+  if (!context.targetMember.targetMemberExists) {
+    return {
+      canTransferWorkspaceOwnership: false,
+      transferWorkspaceOwnershipBlockedReason: 'target-not-found',
+    };
+  }
+
+  if (context.targetMember.targetMemberIsSelf) {
+    return {
+      canTransferWorkspaceOwnership: false,
+      transferWorkspaceOwnershipBlockedReason: 'cannot-transfer-to-self',
+    };
+  }
+
+  if (context.targetMember.targetMemberRole === 'owner') {
+    return {
+      canTransferWorkspaceOwnership: false,
+      transferWorkspaceOwnershipBlockedReason: 'target-already-owner',
+    };
+  }
+
+  return {
+    canTransferWorkspaceOwnership: true,
+    transferWorkspaceOwnershipBlockedReason: null,
   };
 }

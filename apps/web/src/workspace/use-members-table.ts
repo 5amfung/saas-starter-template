@@ -1,6 +1,11 @@
 import * as React from 'react';
-import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
+import { useNavigate, useRouter } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { authClient } from '@workspace/auth/client';
 import { useSessionQuery } from '@workspace/components/hooks';
@@ -11,8 +16,14 @@ import {
 import type { SortingState } from '@tanstack/react-table';
 import type { WorkspaceMemberRow } from '@/components/workspace/workspace-members-table';
 import {
+  WORKSPACE_DETAIL_QUERY_KEY,
+  WORKSPACE_LIST_QUERY_KEY,
+  useWorkspaceDetailQuery,
+} from '@/workspace/workspace.queries';
+import {
   leaveWorkspace,
   removeWorkspaceMember,
+  transferWorkspaceOwnership,
 } from '@/workspace/workspace-members.functions';
 
 export function useMembersTable(
@@ -21,7 +32,10 @@ export function useMembersTable(
   canLeaveWorkspace = false
 ) {
   const navigate = useNavigate();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: session } = useSessionQuery();
+  const { data: workspace } = useWorkspaceDetailQuery(workspaceId);
   const currentUserId = session?.user.id ?? null;
 
   const [page, setPage] = React.useState(1);
@@ -30,6 +44,9 @@ export function useMembersTable(
   const [removingMemberId, setRemovingMemberId] = React.useState<string | null>(
     null
   );
+  const [transferringMemberId, setTransferringMemberId] = React.useState<
+    string | null
+  >(null);
 
   React.useEffect(() => {
     setPage(1);
@@ -118,6 +135,31 @@ export function useMembersTable(
     },
   });
 
+  const transferOwnershipMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      await transferWorkspaceOwnership({
+        data: {
+          workspaceId,
+          memberId,
+        },
+      });
+    },
+    onSuccess: async () => {
+      toast.success('Workspace ownership transferred successfully.');
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: WORKSPACE_LIST_QUERY_KEY }),
+        queryClient.invalidateQueries({
+          queryKey: WORKSPACE_DETAIL_QUERY_KEY(workspaceId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['workspace', 'members', workspaceId],
+        }),
+        router.invalidate({ sync: true }),
+      ]);
+      await membersQuery.refetch();
+    },
+  });
+
   const members = membersQuery.data?.members ?? [];
   const total = membersQuery.data?.total ?? 0;
   const totalPages = membersQuery.data?.totalPages ?? 1;
@@ -126,6 +168,7 @@ export function useMembersTable(
     currentUserId,
     currentUserRole,
     canLeaveWorkspace,
+    workspaceName: workspace?.name ?? workspaceId,
     data: members satisfies Array<WorkspaceMemberRow>,
     total,
     page,
@@ -134,6 +177,7 @@ export function useMembersTable(
     sorting,
     isLoading: membersQuery.isPending && !membersQuery.data,
     removingMemberId,
+    transferringMemberId,
     leavingWorkspace: leaveMutation.isPending,
     onSortingChange: setSorting,
     onPageChange: setPage,
@@ -148,6 +192,19 @@ export function useMembersTable(
           error instanceof Error
             ? error.message
             : 'Failed to remove membership.'
+        );
+      }
+    },
+    onTransferOwnership: async (memberId: string) => {
+      try {
+        await withPendingId(setTransferringMemberId, memberId, async () => {
+          await transferOwnershipMutation.mutateAsync(memberId);
+        });
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : 'Failed to transfer workspace ownership.'
         );
       }
     },

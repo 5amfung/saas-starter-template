@@ -2,11 +2,13 @@ import { APIError } from 'better-auth/api';
 import {
   evaluateWorkspaceLifecycleCapabilities,
   evaluateWorkspaceMemberRemovalCapabilities,
+  evaluateWorkspaceOwnershipTransferCapabilities,
 } from '@workspace/policy';
 import type {
   WorkspaceLifecycleCapabilities,
   WorkspaceLifecycleContext,
   WorkspaceMemberRemovalCapabilities,
+  WorkspaceOwnershipTransferCapabilities,
   WorkspaceRole,
 } from '@workspace/policy';
 import { getWorkspaceBillingData } from '@/billing/billing.server';
@@ -142,6 +144,64 @@ export async function requireWorkspaceMemberRemovalAllowedForUser(
   if (!capabilities.canRemoveMember) {
     throw new APIError('FORBIDDEN', {
       message: `forbidden: remove member blocked (${capabilities.removeMemberBlockedReason ?? 'unknown'})`,
+    });
+  }
+
+  return capabilities;
+}
+
+export async function getWorkspaceOwnershipTransferCapabilitiesForUser(
+  headers: Headers,
+  workspaceId: string,
+  userId: string,
+  memberId: string
+): Promise<WorkspaceOwnershipTransferCapabilities> {
+  await ensureWorkspaceMembership(headers, workspaceId);
+
+  const [workspaceRole, targetMember] = await Promise.all([
+    getActiveMemberRole(headers, workspaceId, userId),
+    getWorkspaceMemberById(headers, workspaceId, memberId),
+  ]);
+
+  if (!targetMember) {
+    throw new APIError('NOT_FOUND', {
+      message: 'Workspace member not found.',
+    });
+  }
+
+  const targetMemberRole = normalizeWorkspaceRole(targetMember.role);
+  if (!targetMemberRole) {
+    throw new APIError('INTERNAL_SERVER_ERROR', {
+      message: 'Workspace member has an unknown role.',
+    });
+  }
+
+  return evaluateWorkspaceOwnershipTransferCapabilities({
+    actorWorkspaceRole: normalizeWorkspaceRole(workspaceRole),
+    targetMember: {
+      targetMemberExists: true,
+      targetMemberRole,
+      targetMemberIsSelf: targetMember.userId === userId,
+    },
+  });
+}
+
+export async function requireWorkspaceOwnershipTransferAllowedForUser(
+  headers: Headers,
+  workspaceId: string,
+  userId: string,
+  memberId: string
+) {
+  const capabilities = await getWorkspaceOwnershipTransferCapabilitiesForUser(
+    headers,
+    workspaceId,
+    userId,
+    memberId
+  );
+
+  if (!capabilities.canTransferWorkspaceOwnership) {
+    throw new APIError('FORBIDDEN', {
+      message: `forbidden: transfer ownership blocked (${capabilities.transferWorkspaceOwnershipBlockedReason ?? 'unknown'})`,
     });
   }
 
