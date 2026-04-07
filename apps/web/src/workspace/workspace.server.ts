@@ -50,10 +50,12 @@ export async function ensureActiveWorkspaceForSession(
     });
   }
 
-  await getAuth().api.setActiveOrganization({
-    body: { organizationId: targetWorkspace.id },
-    headers,
-  });
+  if (getActiveOrganizationId(session) !== targetWorkspace.id) {
+    await getAuth().api.setActiveOrganization({
+      body: { organizationId: targetWorkspace.id },
+      headers,
+    });
+  }
 
   return targetWorkspace;
 }
