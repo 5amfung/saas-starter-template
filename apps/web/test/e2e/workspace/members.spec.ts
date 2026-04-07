@@ -209,7 +209,9 @@ async function setupInvitedMember(
     waitUntil: 'domcontentloaded',
   });
   await page.waitForURL(`**/ws/${workspaceId}/members`);
-  await expect(page.getByRole('cell', { name: inviteeEmail })).toBeVisible({
+  await expect(
+    page.getByRole('cell', { name: inviteeEmail, exact: true })
+  ).toBeVisible({
     timeout: 15000,
   });
 
@@ -256,7 +258,9 @@ test.describe('Workspace Members Page', () => {
     await expect(membersTab).toHaveAttribute('aria-selected', 'true');
 
     // Table should show the owner's email.
-    await expect(page.getByRole('cell', { name: email })).toBeVisible();
+    await expect(
+      page.getByRole('row').filter({ hasText: email }).first()
+    ).toBeVisible();
 
     // Owner role should be displayed.
     await expect(
@@ -444,7 +448,9 @@ test.describe('Workspace Members Page', () => {
     await page.getByRole('tab', { name: 'Pending Invitations' }).click();
 
     // Invitee row should appear.
-    await expect(page.getByRole('cell', { name: inviteeEmail })).toBeVisible();
+    await expect(
+      page.getByRole('cell', { name: inviteeEmail, exact: true })
+    ).toBeVisible();
 
     // Role should be "member" (default).
     await expect(page.getByRole('cell', { name: 'member' })).toBeVisible();
@@ -566,7 +572,9 @@ test.describe('Workspace Members Page', () => {
 
     // Go to Pending Invitations tab.
     await page.getByRole('tab', { name: 'Pending Invitations' }).click();
-    await expect(page.getByRole('cell', { name: inviteeEmail })).toBeVisible();
+    await expect(
+      page.getByRole('cell', { name: inviteeEmail, exact: true })
+    ).toBeVisible();
 
     // Open row actions for the invitee and click "Resend invitation".
     const inviteeRow = page.getByRole('row', { name: inviteeEmail });
@@ -579,7 +587,9 @@ test.describe('Workspace Members Page', () => {
     });
 
     // Row should still be present.
-    await expect(page.getByRole('cell', { name: inviteeEmail })).toBeVisible();
+    await expect(
+      page.getByRole('cell', { name: inviteeEmail, exact: true })
+    ).toBeVisible();
   });
 
   // ── 8. Remove invitation ───────────────────────────────────────────────
@@ -614,7 +624,9 @@ test.describe('Workspace Members Page', () => {
 
     // Go to Pending Invitations tab.
     await page.getByRole('tab', { name: 'Pending Invitations' }).click();
-    await expect(page.getByRole('cell', { name: inviteeEmail })).toBeVisible();
+    await expect(
+      page.getByRole('cell', { name: inviteeEmail, exact: true })
+    ).toBeVisible();
 
     // Open row actions for the invitee and click "Remove invitation".
     const inviteeRow = page.getByRole('row', { name: inviteeEmail });
@@ -628,7 +640,7 @@ test.describe('Workspace Members Page', () => {
 
     // Row should be gone.
     await expect(
-      page.getByRole('cell', { name: inviteeEmail })
+      page.getByRole('cell', { name: inviteeEmail, exact: true })
     ).not.toBeVisible();
 
     // Empty state should show.
@@ -672,10 +684,16 @@ test.describe('Workspace Members Page', () => {
 
     // Find the member row (not the owner row) and open actions.
     const memberRow = page.getByRole('row').filter({ hasText: member.email });
-    await memberRow.getByRole('button', { name: 'Row actions' }).click();
+    await memberRow
+      .getByRole('button', { name: `Row actions for ${member.email}` })
+      .click();
 
     // Click "Remove".
     await page.getByRole('menuitem', { name: 'Remove' }).click();
+    const removeDialog = page.getByRole('alertdialog');
+    await expect(removeDialog).toBeVisible();
+    await removeDialog.getByPlaceholder('REMOVE').fill('REMOVE');
+    await removeDialog.getByRole('button', { name: 'Confirm remove' }).click();
 
     // Toast confirms removal.
     await expect(page.getByText('Membership removed.')).toBeVisible({
@@ -684,7 +702,7 @@ test.describe('Workspace Members Page', () => {
 
     // Member row should be gone.
     await expect(
-      page.getByRole('cell', { name: member.email })
+      page.getByRole('cell', { name: member.email, exact: true })
     ).not.toBeVisible();
 
     // Footer should show "1 member".
@@ -1041,7 +1059,9 @@ test.describe('Workspace Members Page', () => {
 
     // Find the owner row and open actions.
     const ownerRow = page.getByRole('row').filter({ hasText: ownerEmail });
-    await ownerRow.getByRole('button', { name: 'Row actions' }).click();
+    await ownerRow
+      .getByRole('button', { name: `Row actions for ${ownerEmail}` })
+      .click();
 
     // "Remove" should be visible but disabled.
     const removeItem = page.getByRole('menuitem', { name: 'Remove' });
@@ -1073,7 +1093,9 @@ test.describe('Workspace Members Page', () => {
 
     // Find the owner row and open actions.
     const ownerRow = page.getByRole('row').filter({ hasText: ownerEmail });
-    await ownerRow.getByRole('button', { name: 'Row actions' }).click();
+    await ownerRow
+      .getByRole('button', { name: `Row actions for ${ownerEmail}` })
+      .click();
 
     // "Leave" should be visible but disabled for owners.
     const leaveItem = page.getByRole('menuitem', { name: 'Leave' });
@@ -1162,7 +1184,9 @@ test.describe('Workspace Members Page', () => {
 
     // Find the member's own row and open actions.
     const memberRow = page.getByRole('row').filter({ hasText: member.email });
-    await memberRow.getByRole('button', { name: 'Row actions' }).click();
+    await memberRow
+      .getByRole('button', { name: `Row actions for ${member.email}` })
+      .click();
 
     // "Leave" should be visible and enabled.
     const leaveItem = page.getByRole('menuitem', { name: 'Leave' });
@@ -1208,8 +1232,15 @@ test.describe('Workspace Members Page', () => {
 
     // Find member's own row and click Leave.
     const memberRow = page.getByRole('row').filter({ hasText: member.email });
-    await memberRow.getByRole('button', { name: 'Row actions' }).click();
+    await memberRow
+      .getByRole('button', { name: `Row actions for ${member.email}` })
+      .click();
     await page.getByRole('menuitem', { name: 'Leave' }).click();
+
+    const leaveDialog = page.getByRole('alertdialog');
+    await expect(leaveDialog).toBeVisible();
+    await leaveDialog.getByPlaceholder('LEAVE').fill('LEAVE');
+    await leaveDialog.getByRole('button', { name: 'Confirm leave' }).click();
 
     // Toast should confirm.
     await expect(page.getByText('You have left the workspace.')).toBeVisible({
@@ -1254,8 +1285,15 @@ test.describe('Workspace Members Page', () => {
 
     // Remove the member.
     const memberRow = page.getByRole('row').filter({ hasText: member.email });
-    await memberRow.getByRole('button', { name: 'Row actions' }).click();
+    await memberRow
+      .getByRole('button', { name: `Row actions for ${member.email}` })
+      .click();
     await page.getByRole('menuitem', { name: 'Remove' }).click();
+
+    const removeDialog = page.getByRole('alertdialog');
+    await expect(removeDialog).toBeVisible();
+    await removeDialog.getByPlaceholder('REMOVE').fill('REMOVE');
+    await removeDialog.getByRole('button', { name: 'Confirm remove' }).click();
 
     // Wait for removal toast.
     await expect(page.getByText('Membership removed.')).toBeVisible({
@@ -1341,7 +1379,9 @@ test.describe('Workspace Members Page', () => {
     await expect(skeletons.first()).toBeVisible({ timeout: 3000 });
 
     // Wait for data to load and skeletons to disappear.
-    await expect(page.getByRole('cell', { name: email })).toBeVisible({
+    await expect(
+      page.getByRole('row').filter({ hasText: email }).first()
+    ).toBeVisible({
       timeout: 10000,
     });
   });
@@ -1354,7 +1394,9 @@ test.describe('Workspace Members Page', () => {
     await signInAndGoToMembers(page, { email, password: VALID_PASSWORD });
 
     // Owner row should be visible.
-    await expect(page.getByRole('cell', { name: email })).toBeVisible();
+    await expect(
+      page.getByRole('row').filter({ hasText: email }).first()
+    ).toBeVisible();
 
     // "No team members found." should NOT be visible.
     await expect(page.getByText('No team members found.')).not.toBeVisible();

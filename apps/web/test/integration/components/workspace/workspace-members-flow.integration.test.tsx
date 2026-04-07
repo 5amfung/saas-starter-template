@@ -50,34 +50,55 @@ describe('WorkspaceMembersTable integration', () => {
     renderWithProviders(<WorkspaceMembersTable {...defaultProps} />);
     expect(screen.getByText('owner@test.com')).toBeInTheDocument();
     expect(screen.getByText('member@test.com')).toBeInTheDocument();
-    expect(screen.getByText('2 members')).toBeInTheDocument();
   });
 
   it('shows Remove option for non-owner members when user is owner', async () => {
     const user = userEvent.setup();
     renderWithProviders(<WorkspaceMembersTable {...defaultProps} />);
 
-    const actionButtons = screen.getAllByRole('button', {
-      name: /row actions/i,
-    });
     // Second row (member@test.com) should have Remove.
-    await user.click(actionButtons[1]);
+    await user.click(
+      screen.getByRole('button', {
+        name: /row actions for member@test\.com/i,
+      })
+    );
 
     const removeItem = await screen.findByRole('menuitem', { name: /remove/i });
     expect(removeItem).not.toBeDisabled();
   });
 
-  it('calls onRemoveMember when Remove is clicked', async () => {
+  it('requires REMOVE confirmation before calling onRemoveMember', async () => {
     const user = userEvent.setup();
     renderWithProviders(<WorkspaceMembersTable {...defaultProps} />);
 
-    const actionButtons = screen.getAllByRole('button', {
-      name: /row actions/i,
-    });
-    await user.click(actionButtons[1]);
+    await user.click(
+      screen.getByRole('button', {
+        name: /row actions for member@test\.com/i,
+      })
+    );
 
     const removeItem = await screen.findByRole('menuitem', { name: /remove/i });
     await user.click(removeItem);
+
+    const dialog = await screen.findByRole('alertdialog');
+    expect(dialog).toBeInTheDocument();
+    expect(defaultProps.onRemoveMember).not.toHaveBeenCalled();
+
+    const confirmButton = screen.getByRole('button', {
+      name: /confirm remove/i,
+    });
+    expect(confirmButton).toBeDisabled();
+
+    const confirmationInput = screen.getByPlaceholderText('REMOVE');
+    await user.type(confirmationInput, 'REMOV');
+    expect(confirmButton).toBeDisabled();
+    await user.click(confirmButton);
+    expect(defaultProps.onRemoveMember).not.toHaveBeenCalled();
+
+    await user.type(confirmationInput, 'E');
+    expect(confirmButton).not.toBeDisabled();
+
+    await user.click(confirmButton);
 
     expect(defaultProps.onRemoveMember).toHaveBeenCalledWith('mem-2');
   });
@@ -95,17 +116,18 @@ describe('WorkspaceMembersTable integration', () => {
       />
     );
 
-    const actionButtons = screen.getAllByRole('button', {
-      name: /row actions/i,
-    });
     // Second row (user-2 = currentUserId) should show Leave.
-    await user.click(actionButtons[1]);
+    await user.click(
+      screen.getByRole('button', {
+        name: /row actions for member@test\.com/i,
+      })
+    );
 
     const leaveItem = await screen.findByRole('menuitem', { name: /leave/i });
     expect(leaveItem).toBeInTheDocument();
   });
 
-  it('calls onLeave when Leave is clicked', async () => {
+  it('requires LEAVE confirmation before calling onLeave', async () => {
     const user = userEvent.setup();
     // Use user-2 (member role) as current user so isOwnerRow=false and isCurrentUserRow=true => shows Leave.
     renderWithProviders(
@@ -118,15 +140,54 @@ describe('WorkspaceMembersTable integration', () => {
       />
     );
 
-    const actionButtons = screen.getAllByRole('button', {
-      name: /row actions/i,
-    });
-    await user.click(actionButtons[1]);
+    await user.click(
+      screen.getByRole('button', {
+        name: /row actions for member@test\.com/i,
+      })
+    );
 
     const leaveItem = await screen.findByRole('menuitem', { name: /leave/i });
     await user.click(leaveItem);
 
+    const dialog = await screen.findByRole('alertdialog');
+    expect(dialog).toBeInTheDocument();
+    expect(defaultProps.onLeave).not.toHaveBeenCalled();
+
+    const confirmButton = screen.getByRole('button', {
+      name: /confirm leave/i,
+    });
+    expect(confirmButton).toBeDisabled();
+
+    const confirmationInput = screen.getByPlaceholderText('LEAVE');
+    await user.type(confirmationInput, 'LEAV');
+    expect(confirmButton).toBeDisabled();
+    await user.click(confirmButton);
+    expect(defaultProps.onLeave).not.toHaveBeenCalled();
+
+    await user.type(confirmationInput, 'E');
+    expect(confirmButton).not.toBeDisabled();
+
+    await user.click(confirmButton);
+
     expect(defaultProps.onLeave).toHaveBeenCalledTimes(1);
+  });
+
+  it('clears the pending action when the confirm dialog is dismissed', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<WorkspaceMembersTable {...defaultProps} />);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: /row actions for member@test\.com/i,
+      })
+    );
+
+    await user.click(await screen.findByRole('menuitem', { name: /remove/i }));
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /cancel/i }));
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });
 
   it('shows skeleton rows when isLoading is true', () => {
@@ -147,10 +208,11 @@ describe('WorkspaceMembersTable integration', () => {
       <WorkspaceMembersTable {...defaultProps} removingMemberId="mem-2" />
     );
 
-    const actionButtons = screen.getAllByRole('button', {
-      name: /row actions/i,
-    });
-    await user.click(actionButtons[1]);
+    await user.click(
+      screen.getByRole('button', {
+        name: /row actions for member@test\.com/i,
+      })
+    );
 
     const removeItem = await screen.findByRole('menuitem', { name: /remove/i });
     expect(removeItem).toHaveAttribute('aria-disabled', 'true');
@@ -169,10 +231,11 @@ describe('WorkspaceMembersTable integration', () => {
       />
     );
 
-    const actionButtons = screen.getAllByRole('button', {
-      name: /row actions/i,
-    });
-    await user.click(actionButtons[1]);
+    await user.click(
+      screen.getByRole('button', {
+        name: /row actions for member@test\.com/i,
+      })
+    );
 
     const leaveItem = await screen.findByRole('menuitem', { name: /leave/i });
     expect(leaveItem).toHaveAttribute('aria-disabled', 'true');

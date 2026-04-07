@@ -87,10 +87,36 @@ describe('WorkspaceDeleteDialog', () => {
     expect(confirmButton).toBeDisabled();
 
     await user.type(screen.getByPlaceholderText('DELETE'), 'DELET');
+    expect(screen.getByPlaceholderText('DELETE')).toHaveValue('DELET');
     expect(confirmButton).toBeDisabled();
 
     await user.type(screen.getByPlaceholderText('DELETE'), 'E');
+    expect(screen.getByPlaceholderText('DELETE')).toHaveValue('DELETE');
     expect(confirmButton).not.toBeDisabled();
+  });
+
+  it('clears the typed confirmation after closing and reopening the dialog', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<WorkspaceDeleteDialog {...defaultProps} />);
+
+    await user.click(screen.getByRole('button', { name: /delete workspace/i }));
+    const confirmButton = screen.getByRole('button', {
+      name: /confirm delete/i,
+    });
+
+    await user.type(screen.getByPlaceholderText('DELETE'), 'DELETE');
+    expect(confirmButton).not.toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: /cancel/i }));
+
+    expect(screen.queryByPlaceholderText('DELETE')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /delete workspace/i }));
+
+    expect(screen.getByPlaceholderText('DELETE')).toHaveValue('');
+    expect(
+      screen.getByRole('button', { name: /confirm delete/i })
+    ).toBeDisabled();
   });
 
   it('deletes workspace and redirects on success', async () => {
@@ -117,6 +143,35 @@ describe('WorkspaceDeleteDialog', () => {
         'Workspace deleted successfully.'
       );
     });
+  });
+
+  it('shows an error toast when setActive fails after deletion succeeds', async () => {
+    const { toast } = await import('sonner');
+    const user = userEvent.setup();
+
+    setActiveMock.mockResolvedValue({
+      error: { message: 'Failed to activate new workspace.' },
+    });
+
+    renderWithProviders(<WorkspaceDeleteDialog {...defaultProps} />);
+
+    await user.click(screen.getByRole('button', { name: /delete workspace/i }));
+    await user.type(screen.getByPlaceholderText('DELETE'), 'DELETE');
+    await user.click(screen.getByRole('button', { name: /confirm delete/i }));
+
+    await waitFor(() => {
+      expect(defaultProps.onDelete).toHaveBeenCalledTimes(1);
+    });
+
+    await waitFor(() => {
+      expect(setActiveMock).toHaveBeenCalledWith({ organizationId: 'ws-456' });
+      expect(toast.error).toHaveBeenCalledWith(
+        'Failed to activate new workspace.'
+      );
+    });
+
+    expect(assignMock).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it('shows error toast on deletion failure', async () => {

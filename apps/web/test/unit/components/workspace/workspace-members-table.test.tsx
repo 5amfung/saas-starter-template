@@ -1,5 +1,12 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react';
+import * as React from 'react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMockMemberRow } from '@workspace/test-utils';
 import type { SortingState } from '@tanstack/react-table';
@@ -23,6 +30,18 @@ const defaultProps = {
   onRemoveMember: vi.fn(),
   onLeave: vi.fn(),
 };
+
+function createDeferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+
+  return { promise, resolve, reject };
+}
 
 describe('WorkspaceMembersTable', () => {
   beforeEach(() => {
@@ -85,13 +104,18 @@ describe('WorkspaceMembersTable', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows member count', () => {
+  it('labels each row actions trigger with the member email', () => {
     const members = [
-      createMockMemberRow({ id: 'member-1', email: 'alice@example.com' }),
+      createMockMemberRow({
+        id: 'member-1',
+        email: 'alice@example.com',
+        role: 'owner',
+      }),
       createMockMemberRow({
         id: 'member-2',
         userId: 'user-2',
         email: 'bob@example.com',
+        role: 'member',
       }),
     ];
 
@@ -99,22 +123,17 @@ describe('WorkspaceMembersTable', () => {
       <WorkspaceMembersTable {...defaultProps} data={members} total={2} />
     );
 
-    expect(screen.getByText('2 members')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {
+        name: /row actions for alice@example\.com/i,
+      })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /row actions for bob@example\.com/i })
+    ).toBeInTheDocument();
   });
 
-  it('shows singular member count for one member', () => {
-    const members = [
-      createMockMemberRow({ id: 'member-1', email: 'alice@example.com' }),
-    ];
-
-    render(
-      <WorkspaceMembersTable {...defaultProps} data={members} total={1} />
-    );
-
-    expect(screen.getByText('1 member')).toBeInTheDocument();
-  });
-
-  it('calls onRemoveMember when remove action is clicked for another member', async () => {
+  it('requires REMOVE confirmation before calling onRemoveMember', async () => {
     const user = userEvent.setup();
     const onRemoveMember = vi.fn();
     const members = [
@@ -137,16 +156,33 @@ describe('WorkspaceMembersTable', () => {
       />
     );
 
-    const triggerButton = screen.getByRole('button', { name: /row actions/i });
+    const triggerButton = screen.getByRole('button', {
+      name: /row actions for bob@example\.com/i,
+    });
     await user.click(triggerButton);
 
     const removeItem = await screen.findByRole('menuitem', { name: /remove/i });
     await user.click(removeItem);
 
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    expect(onRemoveMember).not.toHaveBeenCalled();
+
+    const confirmationInput = screen.getByPlaceholderText('REMOVE');
+    const confirmButton = screen.getByRole('button', {
+      name: /confirm remove/i,
+    });
+    await user.type(confirmationInput, 'REMOV');
+    expect(confirmButton).toBeDisabled();
+    await user.click(confirmButton);
+    expect(onRemoveMember).not.toHaveBeenCalled();
+
+    await user.type(confirmationInput, 'E');
+    await user.click(screen.getByRole('button', { name: /confirm remove/i }));
+
     expect(onRemoveMember).toHaveBeenCalledWith('member-2');
   });
 
-  it('calls onLeave when current user clicks leave', async () => {
+  it('requires LEAVE confirmation before calling onLeave', async () => {
     const user = userEvent.setup();
     const onLeave = vi.fn();
     const members = [
@@ -171,13 +207,340 @@ describe('WorkspaceMembersTable', () => {
       />
     );
 
-    const triggerButton = screen.getByRole('button', { name: /row actions/i });
+    const triggerButton = screen.getByRole('button', {
+      name: /row actions for me@example\.com/i,
+    });
     await user.click(triggerButton);
 
     const leaveItem = await screen.findByRole('menuitem', { name: /leave/i });
     await user.click(leaveItem);
 
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    expect(onLeave).not.toHaveBeenCalled();
+
+    const confirmationInput = screen.getByPlaceholderText('LEAVE');
+    const confirmButton = screen.getByRole('button', {
+      name: /confirm leave/i,
+    });
+    await user.type(confirmationInput, 'LEAV');
+    expect(confirmButton).toBeDisabled();
+    await user.click(confirmButton);
+    expect(onLeave).not.toHaveBeenCalled();
+
+    await user.type(confirmationInput, 'E');
+    await user.click(confirmButton);
+
     expect(onLeave).toHaveBeenCalled();
+  });
+
+  it('keeps REMOVE pending, blocks dismissal, and closes after async confirmation resolves', async () => {
+    const user = userEvent.setup();
+    const deferred = createDeferred<void>();
+
+    function Harness() {
+      const [removingMemberId, setRemovingMemberId] = React.useState<
+        string | null
+      >(null);
+
+      const onRemoveMember = React.useCallback((memberId: string) => {
+        setRemovingMemberId(memberId);
+        return deferred.promise.finally(() => {
+          setRemovingMemberId(null);
+        });
+      }, []);
+
+      return (
+        <WorkspaceMembersTable
+          {...defaultProps}
+          data={[
+            createMockMemberRow({
+              id: 'member-2',
+              userId: 'user-2',
+              email: 'bob@example.com',
+              role: 'member',
+            }),
+          ]}
+          total={1}
+          currentUserId="user-1"
+          workspaceRole="owner"
+          removingMemberId={removingMemberId}
+          onRemoveMember={onRemoveMember}
+        />
+      );
+    }
+
+    render(<Harness />);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: /row actions for bob@example\.com/i,
+      })
+    );
+    await user.click(await screen.findByRole('menuitem', { name: /remove/i }));
+
+    const input = screen.getByPlaceholderText('REMOVE');
+    const confirmButton = screen.getByRole('button', {
+      name: /confirm remove/i,
+    });
+    await user.type(input, 'REMOVE');
+    await user.click(confirmButton);
+
+    expect(confirmButton).toBeDisabled();
+    expect(screen.getByRole('button', { name: /cancel/i })).toBeDisabled();
+
+    await user.keyboard('{Escape}');
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+
+    await act(async () => {
+      deferred.resolve();
+      await deferred.promise;
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    });
+  });
+
+  it('prevents double remove confirmation clicks before external pending updates', async () => {
+    const user = userEvent.setup();
+    const deferred = createDeferred<void>();
+    const onRemoveMember = vi.fn(() => deferred.promise);
+
+    render(
+      <WorkspaceMembersTable
+        {...defaultProps}
+        data={[
+          createMockMemberRow({
+            id: 'member-2',
+            userId: 'user-2',
+            email: 'bob@example.com',
+            role: 'member',
+          }),
+        ]}
+        total={1}
+        currentUserId="user-1"
+        workspaceRole="owner"
+        onRemoveMember={onRemoveMember}
+      />
+    );
+
+    await user.click(
+      screen.getByRole('button', {
+        name: /row actions for bob@example\.com/i,
+      })
+    );
+    await user.click(await screen.findByRole('menuitem', { name: /remove/i }));
+
+    const input = screen.getByPlaceholderText('REMOVE');
+    const confirmButton = screen.getByRole('button', {
+      name: /confirm remove/i,
+    });
+    await user.type(input, 'REMOVE');
+
+    fireEvent.click(confirmButton);
+    fireEvent.click(confirmButton);
+
+    expect(onRemoveMember).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      deferred.resolve();
+      await deferred.promise;
+    });
+  });
+
+  it('keeps REMOVE dialog open when async confirmation rejects', async () => {
+    const user = userEvent.setup();
+    const deferred = createDeferred<void>();
+
+    function Harness() {
+      const [removingMemberId, setRemovingMemberId] = React.useState<
+        string | null
+      >(null);
+
+      const onRemoveMember = React.useCallback((memberId: string) => {
+        setRemovingMemberId(memberId);
+        return deferred.promise.finally(() => {
+          setRemovingMemberId(null);
+        });
+      }, []);
+
+      return (
+        <WorkspaceMembersTable
+          {...defaultProps}
+          data={[
+            createMockMemberRow({
+              id: 'member-2',
+              userId: 'user-2',
+              email: 'bob@example.com',
+              role: 'member',
+            }),
+          ]}
+          total={1}
+          currentUserId="user-1"
+          workspaceRole="owner"
+          removingMemberId={removingMemberId}
+          onRemoveMember={onRemoveMember}
+        />
+      );
+    }
+
+    render(<Harness />);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: /row actions for bob@example\.com/i,
+      })
+    );
+    await user.click(await screen.findByRole('menuitem', { name: /remove/i }));
+
+    const input = screen.getByPlaceholderText('REMOVE');
+    const confirmButton = screen.getByRole('button', {
+      name: /confirm remove/i,
+    });
+    await user.type(input, 'REMOVE');
+    await user.click(confirmButton);
+
+    expect(confirmButton).toBeDisabled();
+
+    await act(async () => {
+      deferred.reject(new Error('permission denied'));
+      await deferred.promise.catch(() => undefined);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    });
+    expect(confirmButton).not.toBeDisabled();
+  });
+
+  it('keeps LEAVE open when async confirmation rejects', async () => {
+    const user = userEvent.setup();
+    const deferred = createDeferred<void>();
+
+    function Harness() {
+      const [leavingWorkspace, setLeavingWorkspace] = React.useState(false);
+
+      const onLeave = React.useCallback(() => {
+        setLeavingWorkspace(true);
+        return deferred.promise.finally(() => {
+          setLeavingWorkspace(false);
+        });
+      }, []);
+
+      return (
+        <WorkspaceMembersTable
+          {...defaultProps}
+          data={[
+            createMockMemberRow({
+              id: 'member-1',
+              userId: 'user-1',
+              email: 'me@example.com',
+              role: 'member',
+            }),
+          ]}
+          total={1}
+          currentUserId="user-1"
+          workspaceRole="member"
+          canLeaveWorkspace={true}
+          canManageMembers={false}
+          leavingWorkspace={leavingWorkspace}
+          onLeave={onLeave}
+        />
+      );
+    }
+
+    render(<Harness />);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: /row actions for me@example\.com/i,
+      })
+    );
+    await user.click(await screen.findByRole('menuitem', { name: /leave/i }));
+
+    const input = screen.getByPlaceholderText('LEAVE');
+    const confirmButton = screen.getByRole('button', {
+      name: /confirm leave/i,
+    });
+    await user.type(input, 'LEAVE');
+    await user.click(confirmButton);
+
+    expect(confirmButton).toBeDisabled();
+    expect(screen.getByRole('button', { name: /cancel/i })).toBeDisabled();
+
+    await act(async () => {
+      deferred.reject(new Error('permission denied'));
+      await deferred.promise.catch(() => undefined);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    });
+    expect(confirmButton).not.toBeDisabled();
+  });
+
+  it('closes LEAVE dialog after async confirmation resolves', async () => {
+    const user = userEvent.setup();
+    const deferred = createDeferred<void>();
+
+    function Harness() {
+      const [leavingWorkspace, setLeavingWorkspace] = React.useState(false);
+
+      const onLeave = React.useCallback(() => {
+        setLeavingWorkspace(true);
+        return deferred.promise.finally(() => {
+          setLeavingWorkspace(false);
+        });
+      }, []);
+
+      return (
+        <WorkspaceMembersTable
+          {...defaultProps}
+          data={[
+            createMockMemberRow({
+              id: 'member-1',
+              userId: 'user-1',
+              email: 'me@example.com',
+              role: 'member',
+            }),
+          ]}
+          total={1}
+          currentUserId="user-1"
+          workspaceRole="member"
+          canLeaveWorkspace={true}
+          canManageMembers={false}
+          leavingWorkspace={leavingWorkspace}
+          onLeave={onLeave}
+        />
+      );
+    }
+
+    render(<Harness />);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: /row actions for me@example\.com/i,
+      })
+    );
+    await user.click(await screen.findByRole('menuitem', { name: /leave/i }));
+
+    const input = screen.getByPlaceholderText('LEAVE');
+    const confirmButton = screen.getByRole('button', {
+      name: /confirm leave/i,
+    });
+    await user.type(input, 'LEAVE');
+    await user.click(confirmButton);
+
+    expect(confirmButton).toBeDisabled();
+
+    await act(async () => {
+      deferred.resolve();
+      await deferred.promise;
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    });
   });
 
   it('disables next and last pagination buttons on single page', () => {

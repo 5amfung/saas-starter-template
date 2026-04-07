@@ -210,7 +210,9 @@ test.describe('Accept-invite entry policy', () => {
     await expect(page).not.toHaveURL(/\/accept-invite/);
     await page.goto(`/ws/${workspaceId}/members`);
     await page.waitForURL(`**/ws/${workspaceId}/members`, { timeout: 15000 });
-    await expect(page.getByRole('cell', { name: inviteeEmail })).toBeVisible();
+    await expect(
+      page.getByRole('cell', { name: inviteeEmail, exact: true })
+    ).toBeVisible();
     await page.close();
   });
 });
