@@ -209,7 +209,9 @@ async function setupInvitedMember(
     waitUntil: 'domcontentloaded',
   });
   await page.waitForURL(`**/ws/${workspaceId}/members`);
-  await expect(page.getByRole('cell', { name: inviteeEmail })).toBeVisible({
+  await expect(
+    page.getByRole('cell', { name: inviteeEmail, exact: true })
+  ).toBeVisible({
     timeout: 15000,
   });
 
@@ -446,7 +448,9 @@ test.describe('Workspace Members Page', () => {
     await page.getByRole('tab', { name: 'Pending Invitations' }).click();
 
     // Invitee row should appear.
-    await expect(page.getByRole('cell', { name: inviteeEmail })).toBeVisible();
+    await expect(
+      page.getByRole('cell', { name: inviteeEmail, exact: true })
+    ).toBeVisible();
 
     // Role should be "member" (default).
     await expect(page.getByRole('cell', { name: 'member' })).toBeVisible();
@@ -568,7 +572,9 @@ test.describe('Workspace Members Page', () => {
 
     // Go to Pending Invitations tab.
     await page.getByRole('tab', { name: 'Pending Invitations' }).click();
-    await expect(page.getByRole('cell', { name: inviteeEmail })).toBeVisible();
+    await expect(
+      page.getByRole('cell', { name: inviteeEmail, exact: true })
+    ).toBeVisible();
 
     // Open row actions for the invitee and click "Resend invitation".
     const inviteeRow = page.getByRole('row', { name: inviteeEmail });
@@ -581,7 +587,9 @@ test.describe('Workspace Members Page', () => {
     });
 
     // Row should still be present.
-    await expect(page.getByRole('cell', { name: inviteeEmail })).toBeVisible();
+    await expect(
+      page.getByRole('cell', { name: inviteeEmail, exact: true })
+    ).toBeVisible();
   });
 
   // ── 8. Remove invitation ───────────────────────────────────────────────
@@ -616,7 +624,9 @@ test.describe('Workspace Members Page', () => {
 
     // Go to Pending Invitations tab.
     await page.getByRole('tab', { name: 'Pending Invitations' }).click();
-    await expect(page.getByRole('cell', { name: inviteeEmail })).toBeVisible();
+    await expect(
+      page.getByRole('cell', { name: inviteeEmail, exact: true })
+    ).toBeVisible();
 
     // Open row actions for the invitee and click "Remove invitation".
     const inviteeRow = page.getByRole('row', { name: inviteeEmail });
@@ -630,7 +640,7 @@ test.describe('Workspace Members Page', () => {
 
     // Row should be gone.
     await expect(
-      page.getByRole('cell', { name: inviteeEmail })
+      page.getByRole('cell', { name: inviteeEmail, exact: true })
     ).not.toBeVisible();
 
     // Empty state should show.
@@ -692,7 +702,7 @@ test.describe('Workspace Members Page', () => {
 
     // Member row should be gone.
     await expect(
-      page.getByRole('cell', { name: member.email })
+      page.getByRole('cell', { name: member.email, exact: true })
     ).not.toBeVisible();
 
     // Footer should show "1 member".
