@@ -5,6 +5,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
   waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -64,6 +65,41 @@ describe('WorkspaceMembersTable', () => {
 
     expect(screen.getByText('alice@example.com')).toBeInTheDocument();
     expect(screen.getByText('bob@example.com')).toBeInTheDocument();
+  });
+
+  it('shows the Current user badge exactly once for the signed-in member', () => {
+    const members = [
+      createMockMemberRow({
+        id: 'member-1',
+        userId: 'user-1',
+        email: 'alice@example.com',
+      }),
+      createMockMemberRow({
+        id: 'member-2',
+        userId: 'user-2',
+        email: 'bob@example.com',
+      }),
+    ];
+
+    render(
+      <WorkspaceMembersTable {...defaultProps} data={members} total={2} />
+    );
+
+    expect(screen.getByText('alice@example.com')).toBeInTheDocument();
+    expect(screen.getByText('bob@example.com')).toBeInTheDocument();
+
+    const currentUserRow = screen.getByText('alice@example.com').closest('tr');
+    const otherMemberRow = screen.getByText('bob@example.com').closest('tr');
+
+    expect(currentUserRow).not.toBeNull();
+    expect(otherMemberRow).not.toBeNull();
+
+    expect(
+      within(currentUserRow as HTMLElement).getByText('Current user')
+    ).toBeInTheDocument();
+    expect(
+      within(otherMemberRow as HTMLElement).queryByText('Current user')
+    ).not.toBeInTheDocument();
   });
 
   it('displays role for each member', () => {
