@@ -2,9 +2,9 @@ import { redirect } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import * as z from 'zod';
+import { requireWebAppEntry } from '@/policy/web-app-entry.server';
 import { getAuth } from '@/init';
 import {
-  ensureActiveWorkspaceForSession,
   ensureWorkspaceMembership,
   getActiveMemberRole,
 } from '@/workspace/workspace.server';
@@ -109,17 +109,6 @@ export const ensureWorkspaceRouteAccess = createServerFn()
 
 export const getActiveWorkspaceId = createServerFn().handler(async () => {
   const headers = getRequestHeaders();
-  const session = await requireVerifiedSession(headers);
-
-  const activeOrganizationId =
-    (session.session as { activeOrganizationId?: string | null })
-      .activeOrganizationId ?? null;
-  if (activeOrganizationId) {
-    return activeOrganizationId;
-  }
-  const workspace = await ensureActiveWorkspaceForSession(headers, {
-    user: { id: session.user.id },
-    session: session.session,
-  });
-  return workspace.id;
+  const entry = await requireWebAppEntry(headers);
+  return entry.activeWorkspaceId;
 });

@@ -14,3 +14,4 @@ export type {
   WorkspaceOwnershipTransferTarget,
 } from './workspace-lifecycle';
 export * from './admin-app';
+export * from './auth-entry';

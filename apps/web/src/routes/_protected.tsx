@@ -1,13 +1,13 @@
-import { useEffect } from 'react';
-import { Outlet, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { authClient } from '@workspace/auth/client';
+import { Outlet, createFileRoute } from '@tanstack/react-router';
 import {
   SidebarInset,
   SidebarProvider,
 } from '@workspace/ui/components/sidebar';
 import { SiteHeader } from '@workspace/components/layout';
+import type { WebAppEntry } from '@/policy/web-app-entry.shared';
 import { AppSidebar } from '@/components/app-sidebar';
 import { authMiddleware } from '@/middleware/auth';
+import { useWebAppEntry } from '@/policy/web-app-entry';
 
 export const Route = createFileRoute('/_protected')({
   component: ProtectedLayout,
@@ -16,19 +16,35 @@ export const Route = createFileRoute('/_protected')({
   },
 });
 
+export function canRenderProtectedLayout(entry?: WebAppEntry) {
+  return entry?.kind === 'canEnterWebApp';
+}
+
+export function getProtectedLayoutState({
+  entry,
+  isPending,
+  error,
+}: {
+  entry?: WebAppEntry;
+  isPending: boolean;
+  error: unknown;
+}) {
+  if (isPending) {
+    return 'loading' as const;
+  }
+
+  if (error || !canRenderProtectedLayout(entry)) {
+    return 'blocked' as const;
+  }
+
+  return 'ready' as const;
+}
+
 function ProtectedLayout() {
-  const navigate = useNavigate();
-  const { data: session, isPending } = authClient.useSession();
+  const { data: entry, error, isPending } = useWebAppEntry();
+  const state = getProtectedLayoutState({ entry, isPending, error });
 
-  const isAuthenticated = session && session.user.emailVerified;
-
-  useEffect(() => {
-    if (!isPending && !isAuthenticated) {
-      navigate({ to: '/signin' });
-    }
-  }, [isAuthenticated, isPending, navigate]);
-
-  if (isPending || !isAuthenticated) {
+  if (state !== 'ready') {
     return null;
   }
 
