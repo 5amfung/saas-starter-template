@@ -17,7 +17,7 @@ const {
   getRequestHeadersMock,
   ensureWorkspaceMembershipMock,
   setActiveOrganizationMock,
-  ensureActiveWorkspaceForSessionMock,
+  requireWebAppEntryMock,
   getActiveMemberRoleMock,
 } = vi.hoisted(() => ({
   getAuthMock: vi.fn(),
@@ -25,7 +25,7 @@ const {
   getRequestHeadersMock: vi.fn().mockReturnValue(new Headers()),
   ensureWorkspaceMembershipMock: vi.fn(),
   setActiveOrganizationMock: vi.fn(),
-  ensureActiveWorkspaceForSessionMock: vi.fn(),
+  requireWebAppEntryMock: vi.fn(),
   getActiveMemberRoleMock: vi.fn(),
 }));
 
@@ -50,8 +50,11 @@ vi.mock('@tanstack/react-start/server', () => ({
 
 vi.mock('@/workspace/workspace.server', () => ({
   ensureWorkspaceMembership: ensureWorkspaceMembershipMock,
-  ensureActiveWorkspaceForSession: ensureActiveWorkspaceForSessionMock,
   getActiveMemberRole: getActiveMemberRoleMock,
+}));
+
+vi.mock('@/policy/web-app-entry.server', () => ({
+  requireWebAppEntry: requireWebAppEntryMock,
 }));
 
 vi.mock('@tanstack/react-router', () => ({
@@ -165,7 +168,7 @@ describe('getActiveWorkspaceId', () => {
   });
 
   it('redirects to /signin when no session', async () => {
-    getSessionMock.mockResolvedValueOnce(null);
+    requireWebAppEntryMock.mockRejectedValueOnce({ to: '/signin' });
 
     await expect(getActiveWorkspaceId()).rejects.toMatchObject({
       to: '/signin',
@@ -173,37 +176,39 @@ describe('getActiveWorkspaceId', () => {
   });
 
   it('returns activeOrganizationId when already set', async () => {
-    const session = createMockSessionResponse(
-      {},
-      { activeOrganizationId: 'ws-active' }
-    );
-    getSessionMock.mockResolvedValueOnce(session);
+    requireWebAppEntryMock.mockResolvedValueOnce({
+      kind: 'canEnterWebApp',
+      activeWorkspaceId: 'ws-active',
+      capabilities: {
+        canEnterWebApp: true,
+        mustSignIn: false,
+        mustVerifyEmail: false,
+        mustResolveWorkspace: false,
+      },
+    });
 
     const result = await getActiveWorkspaceId();
 
     expect(result).toBe('ws-active');
-    expect(ensureActiveWorkspaceForSessionMock).not.toHaveBeenCalled();
+    expect(requireWebAppEntryMock).toHaveBeenCalledWith(expect.any(Headers));
   });
 
-  it('falls back to ensureActiveWorkspaceForSession when no active ID', async () => {
-    const session = createMockSessionResponse(
-      {},
-      { activeOrganizationId: null }
-    );
-    const workspace = createMockWorkspace({ id: 'ws-fallback' });
-    getSessionMock.mockResolvedValueOnce(session);
-    ensureActiveWorkspaceForSessionMock.mockResolvedValueOnce(workspace);
+  it('uses requireWebAppEntry to resolve and return the active workspace id', async () => {
+    requireWebAppEntryMock.mockResolvedValueOnce({
+      kind: 'canEnterWebApp',
+      activeWorkspaceId: 'ws-fallback',
+      capabilities: {
+        canEnterWebApp: true,
+        mustSignIn: false,
+        mustVerifyEmail: false,
+        mustResolveWorkspace: false,
+      },
+    });
 
     const result = await getActiveWorkspaceId();
 
     expect(result).toBe('ws-fallback');
-    expect(ensureActiveWorkspaceForSessionMock).toHaveBeenCalledWith(
-      expect.any(Headers),
-      expect.objectContaining({
-        user: { id: session.user.id },
-        session: session.session,
-      })
-    );
+    expect(requireWebAppEntryMock).toHaveBeenCalledWith(expect.any(Headers));
   });
 });
 

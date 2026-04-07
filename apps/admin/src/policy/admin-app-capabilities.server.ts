@@ -1,13 +1,32 @@
 import { APIError } from 'better-auth/api';
+import { redirect } from '@tanstack/react-router';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { hasAdminAppCapability } from '@workspace/policy';
-import { getAdminAppCapabilitiesForSession } from './admin-app-capabilities.shared';
+import {
+  getAdminAppCapabilitiesForSession,
+  getAdminAppEntryForSession,
+  getAdminAppEntryRedirect,
+} from './admin-app-capabilities.shared';
 import type {
   AdminAppCapabilities,
   AdminAppCapability,
 } from '@workspace/policy';
-import type { AdminAppSessionLike } from './admin-app-capabilities.shared';
+import type {
+  AdminAppEntry,
+  AdminAppEntryAllowed,
+  AdminAppSessionLike,
+} from './admin-app-capabilities.shared';
 import { getAuth } from '@/init';
+
+export async function getCurrentAdminAppEntry(
+  headers: Headers = getRequestHeaders()
+): Promise<AdminAppEntry> {
+  const session = (await getAuth().api.getSession({
+    headers,
+  })) as AdminAppSessionLike | null;
+
+  return getAdminAppEntryForSession(session);
+}
 
 export async function getCurrentAdminAppCapabilities(
   headers: Headers = getRequestHeaders()
@@ -17,6 +36,20 @@ export async function getCurrentAdminAppCapabilities(
   })) as AdminAppSessionLike | null;
 
   return getAdminAppCapabilitiesForSession(session);
+}
+
+export async function requireCurrentAdminAppEntry(
+  headers: Headers = getRequestHeaders()
+): Promise<AdminAppEntryAllowed> {
+  const entry = await getCurrentAdminAppEntry(headers);
+
+  if (entry.kind !== 'canEnterAdminApp') {
+    throw redirect(
+      getAdminAppEntryRedirect(entry, 'protected') ?? { to: '/signin' }
+    );
+  }
+
+  return entry;
 }
 
 export async function requireCurrentAdminAppCapability(

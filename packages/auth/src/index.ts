@@ -2,7 +2,7 @@
 // Server-only exports are available via sub-path imports:
 //   - createAuth, Auth, AuthConfig -> "@workspace/auth/server"
 //   - authClient -> "@workspace/auth/client"
-//   - getVerifiedSession, validateGuestSession, validateAdminSession -> "@workspace/auth/validators"
+//   - getSessionOrNull, requireVerifiedSession -> "@workspace/auth/validators"
 // Mixing server-only modules here would pull node:stream into the client bundle.
 
 export type { AuthConfig, Auth } from './auth.server';

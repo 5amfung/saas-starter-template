@@ -5,9 +5,11 @@ import {
   SidebarProvider,
 } from '@workspace/ui/components/sidebar';
 import { SiteHeader } from '@workspace/components/layout';
+import type { AdminAppEntry } from '@/policy/admin-app-capabilities.shared';
 import { AppSidebar } from '@/components/app-sidebar';
 import { authMiddleware } from '@/middleware/auth';
-import { useAdminAppCapabilities } from '@/policy/admin-app-capabilities';
+import { getAdminAppEntryRedirect } from '@/policy/admin-app-capabilities.shared';
+import { useAdminAppEntry } from '@/policy/admin-app-capabilities';
 
 export const Route = createFileRoute('/_protected')({
   component: ProtectedLayout,
@@ -16,18 +18,46 @@ export const Route = createFileRoute('/_protected')({
   },
 });
 
+export function canRenderProtectedLayout(entry?: AdminAppEntry) {
+  return entry?.kind === 'canEnterAdminApp';
+}
+
+export function getProtectedLayoutState({
+  entry,
+  isPending,
+  error,
+}: {
+  entry?: AdminAppEntry;
+  isPending: boolean;
+  error: unknown;
+}) {
+  if (isPending) {
+    return 'loading' as const;
+  }
+
+  if (error || !canRenderProtectedLayout(entry)) {
+    return 'blocked' as const;
+  }
+
+  return 'ready' as const;
+}
+
 function ProtectedLayout() {
   const navigate = useNavigate();
-  const { capabilities, isPending } = useAdminAppCapabilities();
-  const isAuthenticated = capabilities.canAccessAdminApp;
+  const { data: entry, error, isPending } = useAdminAppEntry();
+  const state = getProtectedLayoutState({ entry, isPending, error });
+  const redirectTarget =
+    state === 'blocked' && entry
+      ? getAdminAppEntryRedirect(entry, 'protected')
+      : null;
 
   useEffect(() => {
-    if (!isPending && !isAuthenticated) {
-      navigate({ to: '/signin' });
+    if (redirectTarget) {
+      navigate(redirectTarget);
     }
-  }, [isAuthenticated, isPending, navigate]);
+  }, [navigate, redirectTarget]);
 
-  if (isPending || !isAuthenticated) {
+  if (state !== 'ready') {
     return null;
   }
 

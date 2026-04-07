@@ -2,17 +2,50 @@ import { APIError } from 'better-auth/api';
 import { createMockSessionResponse } from '@workspace/test-utils';
 import {
   getCurrentAdminAppCapabilities,
+  getCurrentAdminAppEntry,
   requireAdminAnalyticsCapability,
   requireAdminDeleteUsersCapability,
   requireAdminManageEntitlementOverridesCapability,
   requireAdminManageUsersCapability,
   requireAdminViewUsersCapability,
   requireCurrentAdminAppCapability,
+  requireCurrentAdminAppEntry,
 } from '@/policy/admin-app-capabilities.server';
 import { getAdminAppCapabilitiesForSession } from '@/policy/admin-app-capabilities.shared';
 
 const { mockGetSession } = vi.hoisted(() => ({
   mockGetSession: vi.fn(),
+}));
+
+vi.mock('@tanstack/react-router', () => ({
+  createFileRoute: () => () => ({}),
+  redirect: vi.fn((options: unknown) => {
+    throw { options };
+  }),
+  Outlet: () => null,
+  useNavigate: () => vi.fn(),
+}));
+
+vi.mock('@workspace/components/auth', () => ({
+  AuthLayout: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+vi.mock('@workspace/ui/components/sidebar', () => ({
+  SidebarInset: ({ children }: { children: React.ReactNode }) => children,
+  SidebarProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+vi.mock('@workspace/components/layout', () => ({
+  SiteHeader: () => null,
+}));
+
+vi.mock('@/components/app-sidebar', () => ({
+  AppSidebar: () => null,
+}));
+
+vi.mock('@/middleware/auth', () => ({
+  authMiddleware: {},
+  guestMiddleware: {},
 }));
 
 vi.mock('@/init', () => ({
@@ -51,6 +84,7 @@ describe('admin-app-capabilities.server', () => {
     expect(adminCapabilities.canManageEntitlementOverrides).toBe(true);
     expect(unverifiedAdminCapabilities.canAccessAdminApp).toBe(false);
     expect(unverifiedAdminCapabilities.canViewUsers).toBe(false);
+    expect(unverifiedAdminCapabilities.platformRole).toBe('admin');
     expect(userCapabilities.canAccessAdminApp).toBe(false);
     expect(userCapabilities.canViewUsers).toBe(false);
   });
@@ -90,6 +124,95 @@ describe('admin-app-capabilities.server', () => {
     expect(capabilities.canAccessAdminApp).toBe(false);
     expect(capabilities.canManageEntitlementOverrides).toBe(false);
     expect(capabilities.canDeleteUsers).toBe(false);
+  });
+
+  it('resolves guests to a sign-in redirect entry', async () => {
+    mockGetSession.mockResolvedValueOnce(null);
+
+    const entry = await getCurrentAdminAppEntry(headers);
+
+    expect(entry).toMatchObject({
+      kind: 'redirect',
+      to: '/signin',
+      capabilities: {
+        canEnterAdminApp: false,
+        mustSignIn: true,
+        mustVerifyEmail: false,
+        isAdminOnlyDenied: false,
+      },
+    });
+  });
+
+  it('resolves unverified users to a verify redirect entry', async () => {
+    mockGetSession.mockResolvedValueOnce(
+      createMockSessionResponse({ role: 'user', emailVerified: false })
+    );
+
+    const entry = await getCurrentAdminAppEntry(headers);
+
+    expect(entry).toMatchObject({
+      kind: 'redirect',
+      to: '/verify',
+      capabilities: {
+        canEnterAdminApp: false,
+        mustSignIn: false,
+        mustVerifyEmail: true,
+        isAdminOnlyDenied: false,
+      },
+    });
+  });
+
+  it('resolves verified non-admin users to an admin-only denial entry', async () => {
+    mockGetSession.mockResolvedValueOnce(
+      createMockSessionResponse({ role: 'user' })
+    );
+
+    const entry = await getCurrentAdminAppEntry(headers);
+
+    expect(entry).toMatchObject({
+      kind: 'redirect',
+      to: '/signin',
+      search: { error: 'admin_only' },
+      capabilities: {
+        canEnterAdminApp: false,
+        mustSignIn: false,
+        mustVerifyEmail: false,
+        isAdminOnlyDenied: true,
+      },
+    });
+  });
+
+  it('resolves verified admins to dashboard access entry state', async () => {
+    mockGetSession.mockResolvedValueOnce(
+      createMockSessionResponse({ role: 'admin' })
+    );
+
+    const entry = await getCurrentAdminAppEntry(headers);
+
+    expect(entry).toMatchObject({
+      kind: 'canEnterAdminApp',
+      capabilities: {
+        canEnterAdminApp: true,
+        mustSignIn: false,
+        mustVerifyEmail: false,
+        isAdminOnlyDenied: false,
+      },
+    });
+  });
+
+  it('throws redirect from requireCurrentAdminAppEntry when entry cannot access the admin app', async () => {
+    mockGetSession.mockResolvedValueOnce(
+      createMockSessionResponse({ role: 'user' })
+    );
+
+    const denied = requireCurrentAdminAppEntry(headers);
+
+    await expect(denied).rejects.toMatchObject({
+      options: {
+        to: '/signin',
+        search: { error: 'admin_only' },
+      },
+    });
   });
 
   it('throws a forbidden APIError when a required capability is missing', async () => {
@@ -148,5 +271,219 @@ describe('admin-app-capabilities.server', () => {
     ).resolves.toMatchObject({
       canViewAnalytics: true,
     });
+  });
+
+  it('maps root entry redirects to the expected admin destinations', async () => {
+    const { getIndexRedirectTarget } = await import('@/routes/index');
+
+    expect(
+      getIndexRedirectTarget({
+        kind: 'redirect',
+        to: '/signin',
+        facts: {
+          hasSession: false,
+          emailVerified: false,
+          platformRole: null,
+        },
+        capabilities: {
+          canEnterAdminApp: false,
+          mustSignIn: true,
+          mustVerifyEmail: false,
+          isAdminOnlyDenied: false,
+        },
+      })
+    ).toEqual({ to: '/signin' });
+
+    expect(
+      getIndexRedirectTarget({
+        kind: 'redirect',
+        to: '/verify',
+        facts: {
+          hasSession: true,
+          emailVerified: false,
+          platformRole: 'user',
+        },
+        capabilities: {
+          canEnterAdminApp: false,
+          mustSignIn: false,
+          mustVerifyEmail: true,
+          isAdminOnlyDenied: false,
+        },
+      })
+    ).toEqual({ to: '/verify' });
+
+    expect(
+      getIndexRedirectTarget({
+        kind: 'redirect',
+        to: '/signin',
+        search: { error: 'admin_only' },
+        facts: {
+          hasSession: true,
+          emailVerified: true,
+          platformRole: 'user',
+        },
+        capabilities: {
+          canEnterAdminApp: false,
+          mustSignIn: false,
+          mustVerifyEmail: false,
+          isAdminOnlyDenied: true,
+        },
+      })
+    ).toEqual({ to: '/signin', search: { error: 'admin_only' } });
+
+    expect(
+      getIndexRedirectTarget({
+        kind: 'canEnterAdminApp',
+        facts: {
+          hasSession: true,
+          emailVerified: true,
+          platformRole: 'admin',
+        },
+        capabilities: {
+          canEnterAdminApp: true,
+          mustSignIn: false,
+          mustVerifyEmail: false,
+          isAdminOnlyDenied: false,
+        },
+      })
+    ).toEqual({ to: '/dashboard' });
+  });
+
+  it('redirects auth layout only for admin-capable sessions', async () => {
+    const { getAuthEntryRedirectTarget } = await import('@/routes/_auth');
+
+    expect(
+      getAuthEntryRedirectTarget({
+        kind: 'redirect',
+        to: '/signin',
+        facts: {
+          hasSession: false,
+          emailVerified: false,
+          platformRole: null,
+        },
+        capabilities: {
+          canEnterAdminApp: false,
+          mustSignIn: true,
+          mustVerifyEmail: false,
+          isAdminOnlyDenied: false,
+        },
+      })
+    ).toBeNull();
+
+    expect(
+      getAuthEntryRedirectTarget({
+        kind: 'redirect',
+        to: '/verify',
+        facts: {
+          hasSession: true,
+          emailVerified: false,
+          platformRole: 'user',
+        },
+        capabilities: {
+          canEnterAdminApp: false,
+          mustSignIn: false,
+          mustVerifyEmail: true,
+          isAdminOnlyDenied: false,
+        },
+      })
+    ).toBeNull();
+
+    expect(
+      getAuthEntryRedirectTarget({
+        kind: 'redirect',
+        to: '/signin',
+        search: { error: 'admin_only' },
+        facts: {
+          hasSession: true,
+          emailVerified: true,
+          platformRole: 'user',
+        },
+        capabilities: {
+          canEnterAdminApp: false,
+          mustSignIn: false,
+          mustVerifyEmail: false,
+          isAdminOnlyDenied: true,
+        },
+      })
+    ).toBeNull();
+
+    expect(
+      getAuthEntryRedirectTarget({
+        kind: 'canEnterAdminApp',
+        facts: {
+          hasSession: true,
+          emailVerified: true,
+          platformRole: 'admin',
+        },
+        capabilities: {
+          canEnterAdminApp: true,
+          mustSignIn: false,
+          mustVerifyEmail: false,
+          isAdminOnlyDenied: false,
+        },
+      })
+    ).toEqual({ to: '/dashboard' });
+  });
+
+  it('blocks auth layout rendering on missing hydrated entry or query error', async () => {
+    const { getAuthPageState } = await import('@/routes/_auth');
+
+    expect(
+      getAuthPageState({
+        entry: undefined,
+        isPending: false,
+        error: new Error('request failed'),
+      })
+    ).toMatchObject({ kind: 'blocked' });
+
+    expect(
+      getAuthPageState({
+        entry: undefined,
+        isPending: false,
+        error: null,
+      })
+    ).toMatchObject({ kind: 'blocked' });
+  });
+
+  it('treats protected-layout query errors and missing/non-enter states as blocked', async () => {
+    const { getProtectedLayoutState } = await import('@/routes/_protected');
+
+    expect(
+      getProtectedLayoutState({
+        entry: undefined,
+        isPending: false,
+        error: new Error('request failed'),
+      })
+    ).toBe('blocked');
+
+    expect(
+      getProtectedLayoutState({
+        entry: undefined,
+        isPending: false,
+        error: null,
+      })
+    ).toBe('blocked');
+
+    expect(
+      getProtectedLayoutState({
+        entry: {
+          kind: 'redirect',
+          to: '/signin',
+          capabilities: {
+            canEnterAdminApp: false,
+            mustSignIn: true,
+            mustVerifyEmail: false,
+            isAdminOnlyDenied: false,
+          },
+          facts: {
+            hasSession: false,
+            emailVerified: false,
+            platformRole: null,
+          },
+        },
+        isPending: false,
+        error: null,
+      })
+    ).toBe('blocked');
   });
 });
