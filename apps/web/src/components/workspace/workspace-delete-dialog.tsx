@@ -3,8 +3,8 @@ import { IconAlertTriangle } from '@tabler/icons-react';
 import { useMutation } from '@tanstack/react-query';
 import { authClient } from '@workspace/auth/client';
 import { toast } from 'sonner';
-import { TypedConfirmDialog } from '@/components/shared/typed-confirm-dialog';
 import { Button } from '@workspace/ui/components/button';
+import { TypedConfirmDialog } from '@/components/shared/typed-confirm-dialog';
 
 const CONFIRMATION_TEXT = 'DELETE';
 
