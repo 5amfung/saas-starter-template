@@ -6,6 +6,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { Button } from '@workspace/ui/components/button';
+import { Badge } from '@workspace/ui/components/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -210,7 +211,14 @@ export function WorkspaceMembersTable({
         header: ({ column }) => (
           <SortableHeader column={column} label="Email Address" />
         ),
-        cell: ({ row }) => row.original.email,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <span>{row.original.email}</span>
+            {row.original.userId === currentUserId ? (
+              <Badge variant="secondary">Current user</Badge>
+            ) : null}
+          </div>
+        ),
         enableSorting: true,
       },
       {
