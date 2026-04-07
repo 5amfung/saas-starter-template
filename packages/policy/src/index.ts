@@ -1,3 +1,16 @@
 export * from './workspace';
-export * from './workspace-lifecycle';
+export {
+  evaluateWorkspaceLifecycleCapabilities,
+  evaluateWorkspaceMemberRemovalCapabilities,
+  evaluateWorkspaceOwnershipTransferCapabilities,
+} from './workspace-lifecycle';
+export type {
+  WorkspaceLifecycleCapabilities,
+  WorkspaceLifecycleContext,
+  WorkspaceMemberRemovalCapabilities,
+  WorkspaceMemberRemovalContext,
+  WorkspaceOwnershipTransferCapabilities,
+  WorkspaceOwnershipTransferContext,
+  WorkspaceOwnershipTransferTarget,
+} from './workspace-lifecycle';
 export * from './admin-app';

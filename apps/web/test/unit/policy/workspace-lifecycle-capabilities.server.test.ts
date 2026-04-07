@@ -2,9 +2,11 @@ import { APIError } from 'better-auth/api';
 import {
   getWorkspaceLifecycleCapabilitiesForUser,
   getWorkspaceMemberRemovalCapabilitiesForUser,
+  getWorkspaceOwnershipTransferCapabilitiesForUser,
   requireWorkspaceDeleteAllowedForUser,
   requireWorkspaceLeaveAllowedForUser,
   requireWorkspaceMemberRemovalAllowedForUser,
+  requireWorkspaceOwnershipTransferAllowedForUser,
 } from '@/policy/workspace-lifecycle-capabilities.server';
 
 const {
@@ -87,9 +89,7 @@ describe('workspace-lifecycle-capabilities.server', () => {
     );
 
     expect(capabilities.canLeaveWorkspace).toBe(false);
-    expect(capabilities.leaveWorkspaceBlockedReason).toBe(
-      'owner-cannot-leave'
-    );
+    expect(capabilities.leaveWorkspaceBlockedReason).toBe('owner-cannot-leave');
   });
 
   it('blocks removing an owner member', async () => {
@@ -142,6 +142,75 @@ describe('workspace-lifecycle-capabilities.server', () => {
         'ws-1',
         'user-1',
         'member-1'
+      )
+    ).rejects.toBeInstanceOf(APIError);
+  });
+
+  it('allows owner transfer when target member is a non-owner teammate', async () => {
+    getActiveMemberRoleMock.mockResolvedValueOnce('owner');
+    getWorkspaceMemberByIdMock.mockResolvedValueOnce({
+      id: 'member-2',
+      userId: 'user-2',
+      role: 'admin',
+    });
+
+    const capabilities = await getWorkspaceOwnershipTransferCapabilitiesForUser(
+      headers,
+      'ws-1',
+      'user-1',
+      'member-2'
+    );
+
+    expect(capabilities.canTransferWorkspaceOwnership).toBe(true);
+    expect(capabilities.transferWorkspaceOwnershipBlockedReason).toBeNull();
+  });
+
+  it('throws when transfer target is invalid', async () => {
+    getActiveMemberRoleMock.mockResolvedValueOnce('owner');
+    getWorkspaceMemberByIdMock.mockResolvedValueOnce({
+      id: 'member-1',
+      userId: 'user-1',
+      role: 'owner',
+    });
+
+    await expect(
+      requireWorkspaceOwnershipTransferAllowedForUser(
+        headers,
+        'ws-1',
+        'user-1',
+        'member-1'
+      )
+    ).rejects.toBeInstanceOf(APIError);
+  });
+
+  it('throws NOT_FOUND when transfer target is missing', async () => {
+    getActiveMemberRoleMock.mockResolvedValueOnce('owner');
+    getWorkspaceMemberByIdMock.mockResolvedValueOnce(null);
+
+    await expect(
+      getWorkspaceOwnershipTransferCapabilitiesForUser(
+        headers,
+        'ws-1',
+        'user-1',
+        'member-missing'
+      )
+    ).rejects.toMatchObject({ status: 'NOT_FOUND' });
+  });
+
+  it('fails closed when transfer target role is unknown', async () => {
+    getActiveMemberRoleMock.mockResolvedValueOnce('owner');
+    getWorkspaceMemberByIdMock.mockResolvedValueOnce({
+      id: 'member-2',
+      userId: 'user-2',
+      role: 'superadmin',
+    });
+
+    await expect(
+      getWorkspaceOwnershipTransferCapabilitiesForUser(
+        headers,
+        'ws-1',
+        'user-1',
+        'member-2'
       )
     ).rejects.toBeInstanceOf(APIError);
   });

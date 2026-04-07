@@ -1,13 +1,20 @@
+import { APIError } from 'better-auth/api';
+import { sql } from 'drizzle-orm';
 import { createServerFn } from '@tanstack/react-start';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { redirect } from '@tanstack/react-router';
 import * as z from 'zod';
-import { getAuth } from '@/init';
+import { getAuth, getDb } from '@/init';
 import { requireWorkspaceCapabilityForUser } from '@/policy/workspace-capabilities.server';
 import {
   requireWorkspaceLeaveAllowedForUser,
   requireWorkspaceMemberRemovalAllowedForUser,
+  requireWorkspaceOwnershipTransferAllowedForUser,
 } from '@/policy/workspace-lifecycle-capabilities.server';
+import {
+  getWorkspaceMemberById,
+  getWorkspaceMemberForUser,
+} from '@/workspace/workspace.server';
 
 const workspaceIdInput = z.object({
   workspaceId: z.string().min(1),
@@ -20,6 +27,10 @@ const inviteWorkspaceMemberInput = workspaceIdInput.extend({
 });
 
 const removeWorkspaceMemberInput = workspaceIdInput.extend({
+  memberId: z.string().min(1),
+});
+
+const transferWorkspaceOwnershipInput = workspaceIdInput.extend({
   memberId: z.string().min(1),
 });
 
@@ -106,6 +117,126 @@ export const removeWorkspaceMember = createServerFn()
       },
       headers,
     });
+  });
+
+export const transferWorkspaceOwnership = createServerFn()
+  .inputValidator(transferWorkspaceOwnershipInput)
+  .handler(async ({ data }) => {
+    const headers = getRequestHeaders();
+    const session = await requireVerifiedSession(headers);
+
+    await requireWorkspaceOwnershipTransferAllowedForUser(
+      headers,
+      data.workspaceId,
+      session.user.id,
+      data.memberId
+    );
+
+    const actorMember = await getWorkspaceMemberForUser(
+      headers,
+      data.workspaceId,
+      session.user.id
+    );
+
+    if (!actorMember) {
+      throw new APIError('NOT_FOUND', {
+        message: 'Current workspace member not found.',
+      });
+    }
+
+    const targetMember = await getWorkspaceMemberById(
+      headers,
+      data.workspaceId,
+      data.memberId
+    );
+
+    if (!targetMember) {
+      throw new APIError('NOT_FOUND', {
+        message: 'Workspace member not found.',
+      });
+    }
+
+    if (targetMember.role !== 'member' && targetMember.role !== 'admin') {
+      throw new APIError('INTERNAL_SERVER_ERROR', {
+        message: 'Workspace member has an unknown role.',
+      });
+    }
+
+    if (actorMember.role !== 'owner') {
+      throw new APIError('INTERNAL_SERVER_ERROR', {
+        message: 'Current workspace member has an unknown role.',
+      });
+    }
+
+    await getDb().transaction(async (tx) => {
+      const targetAfterPromotion = await tx.execute(
+        sql<{ id: string; role: string }>`
+          update "member"
+          set "role" = 'owner'
+          where "id" = ${data.memberId}
+            and "organization_id" = ${data.workspaceId}
+            and "role" in ('member', 'admin')
+          returning "id", "role"
+        `
+      );
+
+      if (targetAfterPromotion.rows.length === 0) {
+        throw new APIError('INTERNAL_SERVER_ERROR', {
+          message: 'Workspace ownership transfer could not be started.',
+        });
+      }
+      const promotedTarget = targetAfterPromotion.rows[0];
+
+      const actorAfterDemotion = await tx.execute(
+        sql<{ id: string; role: string }>`
+          update "member"
+          set "role" = 'admin'
+          where "id" = ${actorMember.id}
+            and "organization_id" = ${data.workspaceId}
+            and "role" = 'owner'
+          returning "id", "role"
+        `
+      );
+
+      if (actorAfterDemotion.rows.length === 0) {
+        throw new APIError('INTERNAL_SERVER_ERROR', {
+          message: 'Workspace ownership transfer could not be completed.',
+        });
+      }
+      const demotedActor = actorAfterDemotion.rows[0];
+
+      const membersResult = await tx.execute(
+        sql<{ id: string; role: string }>`
+          select "id", "role"
+          from "member"
+          where "organization_id" = ${data.workspaceId}
+        `
+      );
+      const members = membersResult.rows;
+
+      const owners = members.filter((member) => member.role === 'owner');
+      const actorAfter = members.find((member) => member.id === actorMember.id);
+      const targetAfter = members.find((member) => member.id === data.memberId);
+
+      if (
+        promotedTarget.role !== 'owner' ||
+        demotedActor.role !== 'admin' ||
+        owners.length !== 1 ||
+        owners[0]?.id !== data.memberId ||
+        actorAfter?.role !== 'admin' ||
+        targetAfter?.role !== 'owner'
+      ) {
+        throw new APIError('INTERNAL_SERVER_ERROR', {
+          message:
+            'Workspace ownership transfer could not be verified after update.',
+        });
+      }
+    });
+
+    return {
+      workspaceId: data.workspaceId,
+      memberId: data.memberId,
+    };
   });
 
 export const leaveWorkspace = createServerFn()

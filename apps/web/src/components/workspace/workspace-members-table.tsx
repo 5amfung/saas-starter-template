@@ -30,6 +30,7 @@ import {
 import { useColumnSort } from '@workspace/components/hooks';
 import { SortableHeader, TablePagination } from '@workspace/components/layout';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
+import { WorkspaceTransferOwnershipDialog } from '@/components/workspace/workspace-transfer-ownership-dialog';
 
 export interface WorkspaceMemberRow {
   id: string;
@@ -47,8 +48,10 @@ interface WorkspaceMembersTableProps {
   sorting: SortingState;
   isLoading?: boolean;
   removingMemberId?: string | null;
+  transferringMemberId?: string | null;
   leavingWorkspace?: boolean;
   currentUserId: string | null;
+  workspaceName?: string;
   workspaceRole: string | null;
   canLeaveWorkspace: boolean;
   canManageMembers: boolean;
@@ -57,6 +60,7 @@ interface WorkspaceMembersTableProps {
   onPageSizeChange: (pageSize: number) => void;
   onRemoveMember: (memberId: string) => void;
   onLeave: () => void;
+  onTransferOwnership?: (memberId: string) => Promise<void>;
 }
 
 export function WorkspaceMembersTable({
@@ -68,8 +72,10 @@ export function WorkspaceMembersTable({
   sorting,
   isLoading = false,
   removingMemberId = null,
+  transferringMemberId = null,
   leavingWorkspace = false,
   currentUserId,
+  workspaceName,
   workspaceRole,
   canLeaveWorkspace,
   canManageMembers,
@@ -78,7 +84,11 @@ export function WorkspaceMembersTable({
   onPageSizeChange,
   onRemoveMember,
   onLeave,
+  onTransferOwnership,
 }: WorkspaceMembersTableProps) {
+  const [transferTarget, setTransferTarget] =
+    React.useState<WorkspaceMemberRow | null>(null);
+
   const columns = React.useMemo<Array<ColumnDef<WorkspaceMemberRow>>>(
     () => [
       {
@@ -103,6 +113,8 @@ export function WorkspaceMembersTable({
           const { id, userId, role } = row.original;
           const isOwnerRow = role === 'owner';
           const isCurrentUserRow = userId === currentUserId;
+          const canTransferOwnership =
+            workspaceRole === 'owner' && !isCurrentUserRow && !isOwnerRow;
           const isMemberViewer = workspaceRole === 'member';
           const showDisabledRemove =
             !isCurrentUserRow &&
@@ -141,13 +153,22 @@ export function WorkspaceMembersTable({
                     Leave
                   </DropdownMenuItem>
                 ) : (
-                  <DropdownMenuItem
-                    onClick={() => onRemoveMember(id)}
-                    disabled={removingMemberId === id}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    Remove
-                  </DropdownMenuItem>
+                  <>
+                    {canTransferOwnership ? (
+                      <DropdownMenuItem
+                        onClick={() => setTransferTarget(row.original)}
+                      >
+                        Transfer ownership
+                      </DropdownMenuItem>
+                    ) : null}
+                    <DropdownMenuItem
+                      onClick={() => onRemoveMember(id)}
+                      disabled={removingMemberId === id}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      Remove
+                    </DropdownMenuItem>
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -163,6 +184,7 @@ export function WorkspaceMembersTable({
       leavingWorkspace,
       onLeave,
       onRemoveMember,
+      setTransferTarget,
       removingMemberId,
       workspaceRole,
     ]
@@ -283,6 +305,22 @@ export function WorkspaceMembersTable({
         selectId="members-rows-per-page"
         onPageChange={onPageChange}
         onPageSizeChange={onPageSizeChange}
+      />
+
+      <WorkspaceTransferOwnershipDialog
+        open={transferTarget !== null}
+        workspaceName={workspaceName ?? ''}
+        targetMemberEmail={transferTarget?.email ?? ''}
+        isPending={transferringMemberId === transferTarget?.id}
+        onOpenChange={(open) => {
+          if (!open) setTransferTarget(null);
+        }}
+        onTransfer={async () => {
+          if (!transferTarget || !onTransferOwnership) return;
+
+          await onTransferOwnership(transferTarget.id);
+          setTransferTarget(null);
+        }}
       />
     </div>
   );

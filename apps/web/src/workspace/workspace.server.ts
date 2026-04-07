@@ -112,3 +112,23 @@ export async function getWorkspaceMemberById(
 
   return organization.members.find((member) => member.id === memberId) ?? null;
 }
+
+export async function getWorkspaceMembers(
+  headers: Headers,
+  workspaceId: string
+) {
+  const organization = await getAuth().api.getFullOrganization({
+    headers,
+    query: { organizationId: workspaceId },
+  });
+  return organization?.members ?? [];
+}
+
+export async function getWorkspaceMemberForUser(
+  headers: Headers,
+  workspaceId: string,
+  userId: string
+) {
+  const members = await getWorkspaceMembers(headers, workspaceId);
+  return members.find((member) => member.userId === userId) ?? null;
+}

@@ -260,4 +260,83 @@ describe('WorkspaceMembersTable', () => {
     const leaveItem = await screen.findByRole('menuitem', { name: /leave/i });
     expect(leaveItem).toHaveAttribute('aria-disabled', 'true');
   });
+
+  it('shows transfer ownership for eligible rows when viewer is owner', async () => {
+    const user = userEvent.setup();
+    const members = [
+      createMockMemberRow({
+        id: 'owner-row',
+        userId: 'user-1',
+        email: 'owner@example.com',
+        role: 'owner',
+      }),
+      createMockMemberRow({
+        id: 'target-row',
+        userId: 'user-2',
+        email: 'target@example.com',
+        role: 'admin',
+      }),
+    ];
+
+    render(
+      <WorkspaceMembersTable
+        {...defaultProps}
+        data={members}
+        total={2}
+        currentUserId="user-1"
+        workspaceRole="owner"
+      />
+    );
+
+    const rowActionButtons = screen.getAllByRole('button', {
+      name: /row actions/i,
+    });
+    await user.click(rowActionButtons[1]);
+
+    expect(
+      await screen.findByRole('menuitem', { name: /transfer ownership/i })
+    ).toBeInTheDocument();
+  });
+
+  it('does not show transfer ownership for self or owner rows', async () => {
+    const user = userEvent.setup();
+    const members = [
+      createMockMemberRow({
+        id: 'owner-row',
+        userId: 'user-1',
+        email: 'owner@example.com',
+        role: 'owner',
+      }),
+      createMockMemberRow({
+        id: 'self-admin-row',
+        userId: 'user-1',
+        email: 'self@example.com',
+        role: 'admin',
+      }),
+    ];
+
+    render(
+      <WorkspaceMembersTable
+        {...defaultProps}
+        data={members}
+        total={2}
+        currentUserId="user-1"
+        workspaceRole="owner"
+      />
+    );
+
+    await user.click(
+      screen.getAllByRole('button', { name: /row actions/i })[0]
+    );
+    expect(
+      screen.queryByRole('menuitem', { name: /transfer ownership/i })
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getAllByRole('button', { name: /row actions/i })[1]
+    );
+    expect(
+      screen.queryByRole('menuitem', { name: /transfer ownership/i })
+    ).not.toBeInTheDocument();
+  });
 });

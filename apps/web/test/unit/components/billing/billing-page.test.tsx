@@ -12,6 +12,8 @@ const {
   getWorkspaceInvoices,
   createWorkspaceCheckoutSession,
   createWorkspacePortalSession,
+  downgradeWorkspaceSubscription,
+  cancelWorkspaceSubscription,
   reactivateWorkspaceSubscription,
   toast,
 } = vi.hoisted(() => ({
@@ -19,6 +21,8 @@ const {
   getWorkspaceInvoices: vi.fn(),
   createWorkspaceCheckoutSession: vi.fn(),
   createWorkspacePortalSession: vi.fn(),
+  downgradeWorkspaceSubscription: vi.fn(),
+  cancelWorkspaceSubscription: vi.fn(),
   reactivateWorkspaceSubscription: vi.fn(),
   toast: {
     success: vi.fn(),
@@ -33,6 +37,8 @@ vi.mock('@/billing/billing.functions', () => ({
   getWorkspaceInvoices,
   createWorkspaceCheckoutSession,
   createWorkspacePortalSession,
+  downgradeWorkspaceSubscription,
+  cancelWorkspaceSubscription,
   reactivateWorkspaceSubscription,
 }));
 
@@ -346,6 +352,8 @@ describe('BillingPage', () => {
     createWorkspacePortalSession.mockResolvedValue({
       url: 'https://billing.stripe.com/portal123',
     });
+    downgradeWorkspaceSubscription.mockResolvedValue({ success: true });
+    cancelWorkspaceSubscription.mockResolvedValue({ success: true });
 
     const user = userEvent.setup();
     renderWithProviders(
@@ -471,6 +479,96 @@ describe('BillingPage', () => {
     expect(
       screen.queryByRole('link', { name: /contact sales/i })
     ).not.toBeInTheDocument();
+  });
+
+  it('shows the downgrade banner immediately after scheduling a downgrade', async () => {
+    getWorkspaceBillingData.mockResolvedValue(
+      buildBillingData({
+        plan: PRO_PLAN,
+        subscription: {
+          status: 'active',
+          periodEnd: new Date('2026-04-15'),
+          cancelAtPeriodEnd: false,
+          cancelAt: null,
+          stripeSubscriptionId: 'sub_123',
+        },
+      })
+    );
+    downgradeWorkspaceSubscription.mockResolvedValue({ success: true });
+
+    const user = userEvent.setup();
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /manage plan/i })
+      ).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /manage plan/i }));
+    await user.click(screen.getAllByRole('button', { name: 'Downgrade' })[1]);
+    await user.click(
+      screen.getByRole('button', { name: /confirm downgrade/i })
+    );
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith('Downgrade scheduled.');
+    });
+
+    expect(
+      screen.getByText(/Your plan will downgrade to Starter on/i)
+    ).toBeInTheDocument();
+  });
+
+  it('shows pending cancellation notice immediately after scheduling cancellation', async () => {
+    getWorkspaceBillingData.mockResolvedValue(
+      buildBillingData({
+        plan: STARTER_PLAN,
+        subscription: {
+          status: 'active',
+          periodEnd: new Date('2026-04-15'),
+          cancelAtPeriodEnd: false,
+          cancelAt: null,
+          stripeSubscriptionId: 'sub_456',
+        },
+      })
+    );
+    cancelWorkspaceSubscription.mockResolvedValue({ success: true });
+
+    const user = userEvent.setup();
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /manage plan/i })
+      ).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /manage plan/i }));
+    await user.click(screen.getByRole('button', { name: 'Downgrade' }));
+    await user.click(
+      screen.getByRole('button', { name: /confirm downgrade/i })
+    );
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith(
+        'Subscription will cancel at period end.'
+      );
+    });
+
+    await user.click(screen.getByRole('button', { name: /manage plan/i }));
+
+    expect(screen.getByText(/pending cancellation/i)).toBeInTheDocument();
   });
 
   it('shows current enterprise entitlements and custom pricing language', async () => {

@@ -31,7 +31,9 @@ async function signInAndGoToMembers(
   if (!workspaceId)
     throw new Error(`Could not extract workspaceId from ${url}`);
 
-  await page.goto(`/ws/${workspaceId}/members`);
+  await page.goto(`/ws/${workspaceId}/members`, {
+    waitUntil: 'domcontentloaded',
+  });
   await page.waitForURL(`**/ws/${workspaceId}/members`);
 
   return workspaceId;
@@ -187,9 +189,7 @@ async function setupInvitedMember(
     await page.getByRole('option', { name: 'admin' }).click();
   }
   await page.getByRole('button', { name: 'Send Invitation' }).click();
-
-  // Wait for toast confirming invitation sent.
-  await expect(page.getByText('Invitation sent.').last()).toBeVisible({
+  await expect(page.getByRole('alertdialog')).not.toBeVisible({
     timeout: 10000,
   });
 
@@ -204,6 +204,14 @@ async function setupInvitedMember(
     },
     invitationId
   );
+
+  await page.goto(`/ws/${workspaceId}/members`, {
+    waitUntil: 'domcontentloaded',
+  });
+  await page.waitForURL(`**/ws/${workspaceId}/members`);
+  await expect(page.getByRole('cell', { name: inviteeEmail })).toBeVisible({
+    timeout: 15000,
+  });
 
   return { email: inviteeEmail, password: inviteePassword };
 }
@@ -449,6 +457,81 @@ test.describe('Workspace Members Page', () => {
     await expect(
       page.getByText('1 invitation', { exact: false })
     ).toBeVisible();
+  });
+
+  // ── 7. Owner can transfer workspace ownership ──────────────────────────
+
+  test('owner can transfer workspace ownership to another member', async ({
+    page,
+    baseURL,
+  }) => {
+    test.setTimeout(120_000);
+
+    const ownerEmail = uniqueEmail('transfer-owner');
+    await createVerifiedUser(baseURL!, {
+      email: ownerEmail,
+      password: VALID_PASSWORD,
+    });
+
+    const workspaceId = await signInAndGoToMembers(page, {
+      email: ownerEmail,
+      password: VALID_PASSWORD,
+    });
+
+    await upgradeViaInvitePrompt(page, workspaceId);
+
+    const target = await setupInvitedMember(
+      page,
+      baseURL!,
+      workspaceId,
+      'transfer-target',
+      'admin'
+    );
+
+    const targetRow = page.getByRole('row', { name: target.email });
+    await targetRow.getByRole('button', { name: 'Row actions' }).click();
+
+    const transferItem = page.getByRole('menuitem', {
+      name: 'Transfer ownership',
+    });
+    await expect(transferItem).toBeVisible({ timeout: 5000 });
+    await transferItem.click();
+
+    const dialog = page.getByRole('alertdialog');
+    await expect(dialog).toContainText(
+      'The workspace must always have exactly one owner.'
+    );
+    await expect(dialog).toContainText(
+      'Billing stays with the workspace, but payment transfer in Stripe must be handled separately.'
+    );
+    await expect(dialog).toContainText(
+      'This action cannot be reversed unless the new owner transfers ownership back to you.'
+    );
+    await expect(
+      dialog.getByRole('button', { name: 'Transfer ownership' })
+    ).toBeDisabled();
+
+    await dialog.getByLabel(/type TRANSFER to confirm/i).fill('TRANSFER');
+    await dialog.getByRole('button', { name: 'Transfer ownership' }).click();
+    await expect(dialog).not.toBeVisible({ timeout: 10000 });
+
+    await page.goto(`/ws/${workspaceId}/members`, {
+      waitUntil: 'domcontentloaded',
+    });
+    await page.waitForURL(`**/ws/${workspaceId}/members`);
+
+    await expect(page.getByRole('row', { name: target.email })).toContainText(
+      'owner'
+    );
+    await expect(page.getByRole('row', { name: ownerEmail })).toContainText(
+      'admin'
+    );
+
+    const formerOwnerRow = page.getByRole('row', { name: ownerEmail });
+    await formerOwnerRow.getByRole('button', { name: 'Row actions' }).click();
+    await expect(
+      page.getByRole('menuitem', { name: 'Transfer ownership' })
+    ).toHaveCount(0);
   });
 
   // ── 7. Resend invitation ───────────────────────────────────────────────
@@ -968,10 +1051,7 @@ test.describe('Workspace Members Page', () => {
 
   // ── 19. Owner's own row shows disabled "Leave" ─────────────────────────
 
-  test('owner\'s own row shows disabled "Leave"', async ({
-    page,
-    baseURL,
-  }) => {
+  test('owner\'s own row shows disabled "Leave"', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
     const ownerEmail = uniqueEmail('owner-leave-owner');
     await createVerifiedUser(baseURL!, {
@@ -1007,6 +1087,8 @@ test.describe('Workspace Members Page', () => {
   });
 
   test('workspace admin can invite a new member', async ({ page, baseURL }) => {
+    test.setTimeout(120_000);
+
     const ownerEmail = uniqueEmail('admin-invite-owner');
     const ownerCredentials = {
       email: ownerEmail,
@@ -1015,6 +1097,7 @@ test.describe('Workspace Members Page', () => {
 
     await createVerifiedUser(baseURL!, ownerCredentials);
     const workspaceId = await signInAndGoToMembers(page, ownerCredentials);
+    await upgradeViaInvitePrompt(page, workspaceId);
     const adminCredentials = await setupInvitedMember(
       page,
       baseURL!,
@@ -1032,10 +1115,16 @@ test.describe('Workspace Members Page', () => {
     await expect(page.getByText('Invite Member')).toBeVisible({
       timeout: 5000,
     });
-    await page.getByLabel('Email').fill(uniqueEmail('admin-invite-member'));
+    const inviteeEmail = uniqueEmail('admin-invite-member');
+    await page.getByLabel('Email').fill(inviteeEmail);
     await page.getByRole('button', { name: 'Send Invitation' }).click();
 
-    await expect(page.getByText('Invitation sent.').last()).toBeVisible({
+    await expect(page.getByRole('alertdialog')).not.toBeVisible({
+      timeout: 10000,
+    });
+
+    await page.getByRole('tab', { name: 'Pending Invitations' }).click();
+    await expect(page.getByText(inviteeEmail)).toBeVisible({
       timeout: 10000,
     });
   });
