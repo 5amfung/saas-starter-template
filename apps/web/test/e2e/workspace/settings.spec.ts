@@ -514,7 +514,7 @@ test.describe('Workspace Switching & Creation', () => {
     const confirmBtn = dialog.getByRole('button', { name: 'Confirm delete' });
     await expect(confirmBtn).toBeDisabled();
 
-    await page.locator('#workspace-delete-confirm').fill('DELETE');
+    await dialog.getByPlaceholder('DELETE').fill('DELETE');
     await expect(confirmBtn).toBeEnabled();
     await confirmBtn.click();
 

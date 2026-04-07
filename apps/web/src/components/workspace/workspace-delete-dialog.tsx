@@ -1,22 +1,10 @@
 import * as React from 'react';
-import { IconAlertTriangle, IconLoader2 } from '@tabler/icons-react';
+import { IconAlertTriangle } from '@tabler/icons-react';
 import { useMutation } from '@tanstack/react-query';
 import { authClient } from '@workspace/auth/client';
 import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@workspace/ui/components/alert-dialog';
+import { TypedConfirmDialog } from '@/components/shared/typed-confirm-dialog';
 import { Button } from '@workspace/ui/components/button';
-import { Input } from '@workspace/ui/components/input';
 
 const CONFIRMATION_TEXT = 'DELETE';
 
@@ -33,8 +21,6 @@ export function WorkspaceDeleteDialog({
   onDelete,
 }: WorkspaceDeleteDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const [confirmation, setConfirmation] = React.useState('');
-  const isConfirmed = confirmation === CONFIRMATION_TEXT;
 
   const deleteMutation = useMutation({
     mutationFn: onDelete,
@@ -54,70 +40,41 @@ export function WorkspaceDeleteDialog({
     },
   });
 
-  React.useEffect(() => {
-    if (!open) setConfirmation('');
-  }, [open]);
-
   return (
     <div className="flex flex-col items-end gap-2">
-      <AlertDialog open={open} onOpenChange={setOpen}>
-        <AlertDialogTrigger
-          render={
-            <Button
-              variant="destructive"
-              className="w-fit"
-              disabled={isDisabled}
-            >
-              Delete Workspace
-            </Button>
-          }
-        />
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogMedia className="bg-destructive/10">
+      <Button
+        variant="destructive"
+        className="w-fit"
+        disabled={isDisabled}
+        onClick={() => setOpen(true)}
+      >
+        Delete Workspace
+      </Button>
+      <TypedConfirmDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={
+          <span className="inline-flex items-center gap-2">
+            <span className="inline-flex size-8 items-center justify-center rounded-full bg-destructive/10">
               <IconAlertTriangle className="text-destructive" />
-            </AlertDialogMedia>
-            <AlertDialogTitle>Delete Workspace</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete <strong>{workspaceName}</strong> and
-              all associated workspace data. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          <div className="flex flex-col gap-2">
-            <label
-              htmlFor="workspace-delete-confirm"
-              className="text-sm font-medium"
-            >
-              Type <strong>{CONFIRMATION_TEXT}</strong> to confirm
-            </label>
-            <Input
-              id="workspace-delete-confirm"
-              value={confirmation}
-              onChange={(event) => setConfirmation(event.target.value)}
-              placeholder={CONFIRMATION_TEXT}
-              autoComplete="off"
-            />
-          </div>
-
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              disabled={!isConfirmed || deleteMutation.isPending}
-              onClick={(event) => {
-                event.preventDefault();
-                deleteMutation.mutate();
-              }}
-            >
-              {deleteMutation.isPending && (
-                <IconLoader2 className="size-4 animate-spin" />
-              )}
-              Confirm delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </span>
+            Delete Workspace
+          </span>
+        }
+        description={
+          <>
+            This will permanently delete <strong>{workspaceName}</strong> and
+            all associated workspace data. This action cannot be undone.
+          </>
+        }
+        confirmLabel="Confirm delete"
+        confirmationText={CONFIRMATION_TEXT}
+        isPending={deleteMutation.isPending}
+        confirmVariant="destructive"
+        onConfirm={async () => {
+          await deleteMutation.mutateAsync();
+        }}
+      />
     </div>
   );
 }

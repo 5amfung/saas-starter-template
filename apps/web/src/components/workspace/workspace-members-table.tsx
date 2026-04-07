@@ -31,6 +31,7 @@ import { useColumnSort } from '@workspace/components/hooks';
 import { SortableHeader, TablePagination } from '@workspace/components/layout';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { WorkspaceTransferOwnershipDialog } from '@/components/workspace/workspace-transfer-ownership-dialog';
+import { TypedConfirmDialog } from '@/components/shared/typed-confirm-dialog';
 
 export interface WorkspaceMemberRow {
   id: string;
@@ -58,9 +59,28 @@ interface WorkspaceMembersTableProps {
   onSortingChange: (sorting: SortingState) => void;
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
-  onRemoveMember: (memberId: string) => void;
-  onLeave: () => void;
+  onRemoveMember: (memberId: string) => void | Promise<void>;
+  onLeave: () => void | Promise<void>;
   onTransferOwnership?: (memberId: string) => Promise<void>;
+}
+
+type PendingAction =
+  | {
+      type: 'remove';
+      memberId: string;
+      email: string;
+    }
+  | {
+      type: 'leave';
+    }
+  | null;
+
+function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return (
+    (typeof value === 'object' || typeof value === 'function') &&
+    value !== null &&
+    'then' in value
+  );
 }
 
 export function WorkspaceMembersTable({
@@ -88,6 +108,100 @@ export function WorkspaceMembersTable({
 }: WorkspaceMembersTableProps) {
   const [transferTarget, setTransferTarget] =
     React.useState<WorkspaceMemberRow | null>(null);
+  const [pendingAction, setPendingAction] = React.useState<PendingAction>(null);
+  const [isSubmittingAction, setIsSubmittingAction] = React.useState(false);
+  const isSubmittingActionRef = React.useRef(false);
+
+  const resetSubmissionState = React.useCallback(() => {
+    isSubmittingActionRef.current = false;
+    setIsSubmittingAction(false);
+  }, []);
+
+  const closePendingAction = React.useCallback(() => {
+    resetSubmissionState();
+    setPendingAction(null);
+  }, [resetSubmissionState]);
+
+  const beginSubmission = React.useCallback(() => {
+    isSubmittingActionRef.current = true;
+    setIsSubmittingAction(true);
+  }, []);
+
+  const handleConfirmRemove = React.useCallback(() => {
+    if (
+      !pendingAction ||
+      pendingAction.type !== 'remove' ||
+      isSubmittingActionRef.current
+    ) {
+      return;
+    }
+
+    try {
+      beginSubmission();
+      const result = onRemoveMember(pendingAction.memberId);
+
+      if (isPromiseLike(result)) {
+        return Promise.resolve(result).then(
+          () => {
+            closePendingAction();
+          },
+          () => {
+            // Keep the dialog open so the user can retry without retyping.
+            resetSubmissionState();
+          }
+        );
+      }
+
+      closePendingAction();
+    } catch {
+      // Keep the dialog open on synchronous failure as well.
+      resetSubmissionState();
+    }
+  }, [
+    beginSubmission,
+    closePendingAction,
+    onRemoveMember,
+    pendingAction,
+    resetSubmissionState,
+  ]);
+
+  const handleConfirmLeave = React.useCallback(() => {
+    if (
+      !pendingAction ||
+      pendingAction.type !== 'leave' ||
+      isSubmittingActionRef.current
+    ) {
+      return;
+    }
+
+    try {
+      beginSubmission();
+      const result = onLeave();
+
+      if (isPromiseLike(result)) {
+        return Promise.resolve(result).then(
+          () => {
+            closePendingAction();
+          },
+          () => {
+            // Keep the dialog open so the user can retry without retyping.
+            resetSubmissionState();
+          }
+        );
+      }
+
+      closePendingAction();
+    } catch {
+      // Keep the dialog open on synchronous failure as well.
+      resetSubmissionState();
+    }
+  }, [
+    beginSubmission,
+    closePendingAction,
+    onLeave,
+    pendingAction,
+    resetSubmissionState,
+  ]);
 
   const columns = React.useMemo<Array<ColumnDef<WorkspaceMemberRow>>>(
     () => [
@@ -110,7 +224,7 @@ export function WorkspaceMembersTable({
         header: '',
         enableSorting: false,
         cell: ({ row }) => {
-          const { id, userId, role } = row.original;
+          const { id, userId, role, email } = row.original;
           const isOwnerRow = role === 'owner';
           const isCurrentUserRow = userId === currentUserId;
           const canTransferOwnership =
@@ -130,7 +244,7 @@ export function WorkspaceMembersTable({
                     size="icon"
                     className="size-8 text-muted-foreground data-[state=open]:bg-muted"
                     disabled={isLoading}
-                    aria-label="Row actions"
+                    aria-label={`Row actions for ${email}`}
                   >
                     <IconDotsVertical className="size-4" />
                   </Button>
@@ -146,7 +260,11 @@ export function WorkspaceMembersTable({
                   </DropdownMenuItem>
                 ) : isCurrentUserRow ? (
                   <DropdownMenuItem
-                    onClick={() => onLeave()}
+                    onClick={() =>
+                      setPendingAction({
+                        type: 'leave',
+                      })
+                    }
                     disabled={leavingWorkspace || !canLeaveWorkspace}
                     className="text-destructive focus:text-destructive"
                   >
@@ -162,7 +280,13 @@ export function WorkspaceMembersTable({
                       </DropdownMenuItem>
                     ) : null}
                     <DropdownMenuItem
-                      onClick={() => onRemoveMember(id)}
+                      onClick={() =>
+                        setPendingAction({
+                          type: 'remove',
+                          memberId: id,
+                          email,
+                        })
+                      }
                       disabled={removingMemberId === id}
                       className="text-destructive focus:text-destructive"
                     >
@@ -182,8 +306,6 @@ export function WorkspaceMembersTable({
       canLeaveWorkspace,
       isLoading,
       leavingWorkspace,
-      onLeave,
-      onRemoveMember,
       setTransferTarget,
       removingMemberId,
       workspaceRole,
@@ -201,110 +323,146 @@ export function WorkspaceMembersTable({
   });
 
   const skeletonRowCount = Math.min(pageSize, MAX_SKELETON_ROWS);
-
   const handleHeaderSort = useColumnSort(sorting, onSortingChange);
+  const confirmDialogOpen = pendingAction !== null;
+  const confirmDialogPending =
+    isSubmittingAction ||
+    (pendingAction?.type === 'remove'
+      ? removingMemberId === pendingAction.memberId
+      : pendingAction?.type === 'leave'
+        ? leavingWorkspace
+        : false);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="overflow-hidden rounded-lg border">
-        <Table>
-          <TableHeader className="bg-muted">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    onClick={
-                      header.column.getCanSort()
-                        ? () => handleHeaderSort(header.id)
-                        : undefined
-                    }
-                    className={
-                      header.id === 'actions'
-                        ? ACTIONS_COLUMN_CLASS
-                        : header.column.getCanSort()
-                          ? 'cursor-pointer select-none'
-                          : undefined
-                    }
-                    aria-sort={
-                      header.column.getIsSorted() === 'asc'
-                        ? 'ascending'
-                        : header.column.getIsSorted() === 'desc'
-                          ? 'descending'
-                          : undefined
-                    }
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: skeletonRowCount }).map((_, rowIndex) => (
-                <TableRow key={`members-loading-${rowIndex}`}>
-                  <TableCell>
-                    <Skeleton className="h-4 w-56" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-4 w-20" />
-                  </TableCell>
-                  <TableCell className={ACTIONS_COLUMN_CLASS}>
-                    <Skeleton className="ml-auto h-8 w-8 rounded-md" />
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      className={
-                        cell.column.id === 'actions'
-                          ? ACTIONS_COLUMN_CLASS
+    <>
+      <div className="flex flex-col gap-4">
+        <div className="overflow-hidden rounded-lg border">
+          <Table>
+            <TableHeader className="bg-muted">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead
+                      key={header.id}
+                      onClick={
+                        header.column.getCanSort()
+                          ? () => handleHeaderSort(header.id)
                           : undefined
                       }
+                      className={
+                        header.id === 'actions'
+                          ? ACTIONS_COLUMN_CLASS
+                          : header.column.getCanSort()
+                            ? 'cursor-pointer select-none'
+                            : undefined
+                      }
+                      aria-sort={
+                        header.column.getIsSorted() === 'asc'
+                          ? 'ascending'
+                          : header.column.getIsSorted() === 'desc'
+                            ? 'descending'
+                            : undefined
+                      }
                     >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-20 text-center"
-                >
-                  No team members found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                Array.from({ length: skeletonRowCount }).map((_, rowIndex) => (
+                  <TableRow key={`members-loading-${rowIndex}`}>
+                    <TableCell>
+                      <Skeleton className="h-4 w-56" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-20" />
+                    </TableCell>
+                    <TableCell className={ACTIONS_COLUMN_CLASS}>
+                      <Skeleton className="ml-auto h-8 w-8 rounded-md" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : table.getRowModel().rows.length > 0 ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        className={
+                          cell.column.id === 'actions'
+                            ? ACTIONS_COLUMN_CLASS
+                            : undefined
+                        }
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-20 text-center"
+                  >
+                    No team members found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        <TablePagination
+          page={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
+          isLoading={isLoading}
+          totalCount={total}
+          countLabel="member"
+          selectId="members-rows-per-page"
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+        />
       </div>
 
-      <TablePagination
-        page={page}
-        totalPages={totalPages}
-        pageSize={pageSize}
-        pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
-        isLoading={isLoading}
-        totalCount={total}
-        countLabel="member"
-        selectId="members-rows-per-page"
-        onPageChange={onPageChange}
-        onPageSizeChange={onPageSizeChange}
+      <TypedConfirmDialog
+        open={confirmDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            closePendingAction();
+          }
+        }}
+        title={
+          pendingAction?.type === 'remove' ? 'Remove member' : 'Leave workspace'
+        }
+        description={
+          pendingAction?.type === 'remove'
+            ? `This will remove ${pendingAction.email} from the workspace. The user will lose access immediately.`
+            : 'This will remove your access to this workspace immediately.'
+        }
+        confirmLabel={
+          pendingAction?.type === 'remove' ? 'Confirm remove' : 'Confirm leave'
+        }
+        confirmationText={pendingAction?.type === 'remove' ? 'REMOVE' : 'LEAVE'}
+        isPending={confirmDialogPending}
+        onConfirm={
+          pendingAction?.type === 'remove'
+            ? handleConfirmRemove
+            : handleConfirmLeave
+        }
       />
 
       <WorkspaceTransferOwnershipDialog
@@ -322,6 +480,6 @@ export function WorkspaceMembersTable({
           setTransferTarget(null);
         }}
       />
-    </div>
+    </>
   );
 }
