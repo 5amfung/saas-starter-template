@@ -1,4 +1,4 @@
-import { getTestEmails } from './email-helpers';
+import { waitForTestEmail } from './email-helpers';
 
 interface CreateVerifiedUserOptions {
   email: string;
@@ -81,8 +81,13 @@ export async function createVerifiedUser(
   }
 
   // Step 2: Fetch the verification URL from the captured test email.
-  const emails = await getTestEmails(baseUrl, options.email, 10);
-  const verificationUrl = emails[0]?.verificationUrl;
+  const verificationEmail = await waitForTestEmail(
+    baseUrl,
+    options.email,
+    (email) => Boolean(email.verificationUrl),
+    20
+  );
+  const verificationUrl = verificationEmail?.verificationUrl;
   if (!verificationUrl) {
     throw new Error(`No verification email captured for ${options.email}.`);
   }

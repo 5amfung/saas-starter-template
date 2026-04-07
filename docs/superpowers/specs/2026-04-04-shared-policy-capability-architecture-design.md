@@ -393,6 +393,17 @@ Example future questions:
 - can this user enter `apps/admin`?
 - must this user complete onboarding or verification steps before continuing?
 
+Follow-up status as of 2026-04-06:
+
+- implemented an auth-entry policy slice for `apps/web` entry, `apps/admin` entry, and web invite acceptance entry,
+- centralized entry evaluation around shared auth-entry facts plus app-local redirect/guard mapping,
+- added lint guardrails so entry routes stop re-deriving app entry from raw session email verification, role, or workspace-session fields.
+
+Remaining future work:
+
+- broader onboarding requirements beyond email verification and workspace readiness,
+- richer account-state and access-precondition modeling if additional product entry gates are introduced.
+
 ### 14.2 Workspace lifecycle policy
 
 Workspace creation, switching, deletion, and membership transitions can eventually adopt the same pattern:
