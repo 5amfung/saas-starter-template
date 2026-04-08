@@ -1,8 +1,8 @@
 import { inArray, like, or } from 'drizzle-orm';
 import { createDb } from '@workspace/db';
 import {
-  organization,
   member,
+  organization,
   subscription,
   user,
   verification,
@@ -21,7 +21,9 @@ function resolveDatabaseUrl(databaseUrl?: string): string {
   throw new Error('DATABASE_URL is required for resetE2EState');
 }
 
-function uniqueStrings(values: Array<string | null | undefined>): string[] {
+function uniqueStrings(
+  values: Array<string | null | undefined>
+): Array<string> {
   return Array.from(
     new Set(values.filter((value): value is string => !!value))
   );
@@ -39,7 +41,7 @@ export async function resetE2EState(
       email: user.email,
     })
     .from(user)
-    .where(or(like(user.id, 'e2e_user_%'), like(user.email, '%@e2e.local'))!);
+    .where(or(like(user.id, 'e2e_user_%'), like(user.email, '%@e2e.local')));
 
   const userIds = uniqueStrings(e2eUsers.map((entry) => entry.id));
   const emails = uniqueStrings(e2eUsers.map((entry) => entry.email));
@@ -60,7 +62,7 @@ export async function resetE2EState(
     })
     .from(organization)
     .where(
-      or(like(organization.id, 'e2e_org_%'), like(organization.slug, 'e2e-%'))!
+      or(like(organization.id, 'e2e_org_%'), like(organization.slug, 'e2e-%'))
     );
 
   const organizationIds = uniqueStrings([
