@@ -20,7 +20,7 @@ let dbSingleton: ReturnType<typeof createDb<typeof schema>> | null = null;
 
 function loadEnvFileIfPresent(path: string): void {
   try {
-    process.loadEnvFile?.(path);
+    process.loadEnvFile(path);
   } catch {
     // Ignore missing env files and keep looking.
   }
@@ -66,7 +66,7 @@ export async function createSeededUser(
 
   await db.insert(user).values({
     id: userId,
-    name: options.name ?? options.email.split('@')[0] ?? 'E2E User',
+    name: options.name ?? options.email.split('@')[0],
     email: options.email,
     emailVerified: true,
     createdAt: now,

@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 import {
+  VALID_PASSWORD,
   signInBaselineUser,
   uniqueEmail,
-  VALID_PASSWORD,
 } from '@workspace/test-utils';
 import { E2E_BASELINE_USERS, E2E_PASSWORD } from '@workspace/db-schema';
 import { parseCookieHeader } from '../lib/parse-cookie-header';

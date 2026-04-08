@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { signInBaselineUser, signInSeededUser } from '@workspace/test-utils';
+import { signInBaselineUser, signInSeededUser } from '../src/index';
 
 describe('signInSeededUser', () => {
   afterEach(() => {
