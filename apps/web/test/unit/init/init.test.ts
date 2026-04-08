@@ -76,6 +76,9 @@ describe('web init getters', () => {
       logger: expect.any(Function),
       getRequestHeaders: expect.any(Function),
     });
+    expect(createAuthMock.mock.calls[0]?.[0]).not.toHaveProperty(
+      'cookiePrefix'
+    );
   });
 });
 
