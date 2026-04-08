@@ -3,6 +3,7 @@ import {
   VALID_PASSWORD,
   createIsolatedWorkspaceFixture,
   createSeededUser,
+  ensureWorkspaceSubscription,
   uniqueEmail,
   waitForTestEmail,
 } from '@workspace/test-utils';
@@ -29,9 +30,13 @@ async function signInAndGoToMembers(
   if (activeWorkspaceId) {
     await page.waitForURL(new RegExp(`/ws/${activeWorkspaceId}/overview`), {
       timeout: 15000,
+      waitUntil: 'domcontentloaded',
     });
   } else {
-    await page.waitForURL(/\/ws\/.*\/overview/, { timeout: 15000 });
+    await page.waitForURL(/\/ws\/.*\/overview/, {
+      timeout: 15000,
+      waitUntil: 'domcontentloaded',
+    });
     activeWorkspaceId = page.url().match(/\/ws\/([^/]+)\//)?.[1];
   }
 
@@ -192,6 +197,8 @@ async function setupInvitedMember(
     password: inviteePassword,
   });
 
+  await ensureWorkspaceSubscription(workspaceId, 'starter');
+
   // Send invitation from the members page (owner should already be on the page).
   await page.getByRole('button', { name: 'Invite', exact: true }).click();
 
@@ -202,13 +209,13 @@ async function setupInvitedMember(
   // Handle upgrade prompt if on free plan — upgrade first.
   const upgradeBtn = alertdialog.getByRole('button', { name: /upgrade to/i });
   if (await upgradeBtn.isVisible()) {
-    await upgradeBtn.click();
-    await completeStripeCheckout(page);
-    await page.waitForURL(new RegExp(`/ws/${workspaceId}/(overview|billing)`), {
-      timeout: 15000,
+    await page.keyboard.press('Escape');
+    await page.goto(`/ws/${workspaceId}/members`, {
+      waitUntil: 'domcontentloaded',
     });
-    await page.getByRole('link', { name: 'Members' }).click();
-    await page.waitForURL(`**/ws/${workspaceId}/members`);
+    await page.waitForURL(`**/ws/${workspaceId}/members`, {
+      waitUntil: 'domcontentloaded',
+    });
     await page.getByRole('button', { name: 'Invite', exact: true }).click();
   }
 

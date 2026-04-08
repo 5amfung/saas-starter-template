@@ -1,7 +1,6 @@
 import { hashPassword } from 'better-auth/crypto';
-import { createDb } from '@workspace/db';
-import * as schema from '@workspace/db-schema';
 import { account, member, organization, user } from '@workspace/db-schema';
+import { getE2EDb } from './e2e-db';
 import { signInSeededUser } from './e2e-auth';
 
 interface CreateSeededUserOptions {
@@ -16,45 +15,11 @@ interface CreateSeededUserResult {
   cookie: string;
 }
 
-let dbSingleton: ReturnType<typeof createDb<typeof schema>> | null = null;
-
-function loadEnvFileIfPresent(path: string): void {
-  try {
-    process.loadEnvFile(path);
-  } catch {
-    // Ignore missing env files and keep looking.
-  }
-}
-
-function getDatabaseUrl(): string {
-  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
-
-  loadEnvFileIfPresent(
-    new URL('../../../apps/web/.env', import.meta.url).pathname
-  );
-  loadEnvFileIfPresent(
-    new URL('../../../packages/db-schema/.env', import.meta.url).pathname
-  );
-
-  if (!process.env.DATABASE_URL) {
-    throw new Error(
-      'DATABASE_URL is required to create seeded E2E users. Checked apps/web/.env and packages/db-schema/.env.'
-    );
-  }
-
-  return process.env.DATABASE_URL;
-}
-
-function getDb() {
-  dbSingleton ??= createDb(getDatabaseUrl(), schema);
-  return dbSingleton;
-}
-
 export async function createSeededUser(
   baseUrl: string,
   options: CreateSeededUserOptions
 ): Promise<CreateSeededUserResult> {
-  const db = getDb();
+  const db = getE2EDb();
   const seedId = crypto.randomUUID().replace(/-/g, '');
   const now = new Date();
   const userId = `e2e_user_${seedId}`;
