@@ -211,7 +211,7 @@ test.describe('Accept-invite entry policy', () => {
     await page.goto(`/ws/${workspaceId}/members`);
     await page.waitForURL(`**/ws/${workspaceId}/members`, { timeout: 15000 });
     await expect(
-      page.getByRole('cell', { name: inviteeEmail, exact: true })
+      page.getByRole('row').filter({ hasText: inviteeEmail }).first()
     ).toBeVisible();
     await page.close();
   });
