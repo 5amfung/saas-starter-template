@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import {
   VALID_PASSWORD,
-  createVerifiedUser,
+  createSeededUser,
   uniqueEmail,
   waitForTestEmail,
 } from '@workspace/test-utils';
@@ -36,7 +36,7 @@ async function createInvitationForEmail(
   inviteeEmail: string
 ): Promise<{ invitationUrl: string; workspaceId: string }> {
   const ownerEmail = uniqueEmail('invite-owner');
-  const { cookie } = await createVerifiedUser(baseURL, {
+  const { cookie } = await createSeededUser(baseURL, {
     email: ownerEmail,
     password: VALID_PASSWORD,
   });
@@ -197,7 +197,7 @@ test.describe('Accept-invite entry policy', () => {
     );
     await invitationSetupPage.close();
 
-    const { cookie } = await createVerifiedUser(baseURL!, {
+    const { cookie } = await createSeededUser(baseURL!, {
       email: inviteeEmail,
       password: VALID_PASSWORD,
     });
