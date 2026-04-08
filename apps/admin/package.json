@@ -5,11 +5,7 @@
   "scripts": {
     "dev": "vite dev --port 3001",
     "build": "vite build",
-    "build:e2e": "E2E_MOCK_EMAIL=true vite build",
     "preview": "vite preview",
-    "test:e2e": "pnpm run build:e2e && dotenv -e .env -- playwright test",
-    "test:e2e:chromium": "pnpm run build:e2e && dotenv -e .env -- playwright test --project=chromium",
-    "test:e2e:report": "playwright show-report",
     "test": "vitest run",
     "test:unit": "vitest run --dir test/unit",
     "test:integration": "vitest run --dir test/integration",
@@ -61,7 +57,6 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1",
     "@tanstack/devtools-vite": "^0.5.5",
     "@tanstack/react-devtools": "^0.9.13",
     "@tanstack/react-form-devtools": "^0.2.20",
@@ -78,7 +73,6 @@
     "@vitest/coverage-v8": "4.1.0",
     "@workspace/eslint-config": "workspace:*",
     "@workspace/test-utils": "workspace:*",
-    "dotenv-cli": "^8.0.0",
     "drizzle-kit": "^0.31.9",
     "jsdom": "^28.1.0",
     "vite": "^7.3.2",
