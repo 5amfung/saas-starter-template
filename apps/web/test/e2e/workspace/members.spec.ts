@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import {
   VALID_PASSWORD,
-  createVerifiedUser,
+  createSeededUser,
   uniqueEmail,
   waitForTestEmail,
 } from '@workspace/test-utils';
@@ -156,7 +156,7 @@ async function setupInvitedMember(
   const inviteePassword = VALID_PASSWORD;
 
   // Create the invitee as a verified user before sending invitation.
-  await createVerifiedUser(baseURL, {
+  await createSeededUser(baseURL, {
     email: inviteeEmail,
     password: inviteePassword,
   });
@@ -250,7 +250,7 @@ test.describe('Workspace Members Page', () => {
 
   test('renders and shows current user as owner', async ({ page, baseURL }) => {
     const email = uniqueEmail('owner-render');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
+    await createSeededUser(baseURL!, { email, password: VALID_PASSWORD });
     await signInAndGoToMembers(page, { email, password: VALID_PASSWORD });
 
     // "Team Members" tab should be active.
@@ -275,7 +275,7 @@ test.describe('Workspace Members Page', () => {
 
   test('correct column headers', async ({ page, baseURL }) => {
     const email = uniqueEmail('col-headers');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
+    await createSeededUser(baseURL!, { email, password: VALID_PASSWORD });
     await signInAndGoToMembers(page, { email, password: VALID_PASSWORD });
 
     // "Email Address" header should be sortable (has cursor-pointer class and SVG icon).
@@ -299,7 +299,7 @@ test.describe('Workspace Members Page', () => {
   test('free-plan invite shows upgrade prompt', async ({ page, baseURL }) => {
     // Create a fresh user on the free plan.
     const email = uniqueEmail('free-plan');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
+    await createSeededUser(baseURL!, { email, password: VALID_PASSWORD });
 
     await signInAndGoToMembers(page, {
       email,
@@ -333,7 +333,7 @@ test.describe('Workspace Members Page', () => {
 
   test('upgrade prompt "Maybe later" dismisses', async ({ page, baseURL }) => {
     const email = uniqueEmail('dismiss-upgrade');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
+    await createSeededUser(baseURL!, { email, password: VALID_PASSWORD });
 
     await signInAndGoToMembers(page, { email, password: VALID_PASSWORD });
 
@@ -357,7 +357,7 @@ test.describe('Workspace Members Page', () => {
   test('upgrade to Starter then invite', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
     const ownerEmail = uniqueEmail('upgrade-owner');
-    await createVerifiedUser(baseURL!, {
+    await createSeededUser(baseURL!, {
       email: ownerEmail,
       password: VALID_PASSWORD,
     });
@@ -410,7 +410,7 @@ test.describe('Workspace Members Page', () => {
   }) => {
     test.setTimeout(120_000);
     const ownerEmail = uniqueEmail('inv-tab-owner');
-    await createVerifiedUser(baseURL!, {
+    await createSeededUser(baseURL!, {
       email: ownerEmail,
       password: VALID_PASSWORD,
     });
@@ -474,7 +474,7 @@ test.describe('Workspace Members Page', () => {
     test.setTimeout(120_000);
 
     const ownerEmail = uniqueEmail('transfer-owner');
-    await createVerifiedUser(baseURL!, {
+    await createSeededUser(baseURL!, {
       email: ownerEmail,
       password: VALID_PASSWORD,
     });
@@ -545,7 +545,7 @@ test.describe('Workspace Members Page', () => {
   test('resend invitation', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
     const ownerEmail = uniqueEmail('resend-owner');
-    await createVerifiedUser(baseURL!, {
+    await createSeededUser(baseURL!, {
       email: ownerEmail,
       password: VALID_PASSWORD,
     });
@@ -597,7 +597,7 @@ test.describe('Workspace Members Page', () => {
   test('remove invitation', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
     const ownerEmail = uniqueEmail('remove-inv-owner');
-    await createVerifiedUser(baseURL!, {
+    await createSeededUser(baseURL!, {
       email: ownerEmail,
       password: VALID_PASSWORD,
     });
@@ -657,7 +657,7 @@ test.describe('Workspace Members Page', () => {
   test('remove member (owner perspective)', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
     const ownerEmail = uniqueEmail('rm-member-owner');
-    await createVerifiedUser(baseURL!, {
+    await createSeededUser(baseURL!, {
       email: ownerEmail,
       password: VALID_PASSWORD,
     });
@@ -713,7 +713,7 @@ test.describe('Workspace Members Page', () => {
 
   test('sort by email', async ({ page, baseURL }) => {
     const email = uniqueEmail('sort-email');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
+    await createSeededUser(baseURL!, { email, password: VALID_PASSWORD });
     await signInAndGoToMembers(page, { email, password: VALID_PASSWORD });
 
     const emailHeader = page.getByRole('columnheader').filter({
@@ -739,7 +739,7 @@ test.describe('Workspace Members Page', () => {
   test('sort invitations', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
     const ownerEmail = uniqueEmail('sort-inv-owner');
-    await createVerifiedUser(baseURL!, {
+    await createSeededUser(baseURL!, {
       email: ownerEmail,
       password: VALID_PASSWORD,
     });
@@ -808,7 +808,7 @@ test.describe('Workspace Members Page', () => {
 
   test('rows-per-page selector', async ({ page, baseURL }) => {
     const email = uniqueEmail('rows-per-page');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
+    await createSeededUser(baseURL!, { email, password: VALID_PASSWORD });
     await signInAndGoToMembers(page, { email, password: VALID_PASSWORD });
 
     // Default should be "10".
@@ -835,7 +835,7 @@ test.describe('Workspace Members Page', () => {
 
   test('pagination disabled on single page', async ({ page, baseURL }) => {
     const email = uniqueEmail('pagination');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
+    await createSeededUser(baseURL!, { email, password: VALID_PASSWORD });
     await signInAndGoToMembers(page, { email, password: VALID_PASSWORD });
 
     // Should show "Page 1 of 1".
@@ -860,7 +860,7 @@ test.describe('Workspace Members Page', () => {
   test('multi-page navigation', async ({ page, baseURL }) => {
     test.setTimeout(180_000);
     const ownerEmail = uniqueEmail('pagination-owner');
-    await createVerifiedUser(baseURL!, {
+    await createSeededUser(baseURL!, {
       email: ownerEmail,
       password: VALID_PASSWORD,
     });
@@ -928,7 +928,7 @@ test.describe('Workspace Members Page', () => {
   test('empty email rejected', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
     const ownerEmail = uniqueEmail('empty-email-owner');
-    await createVerifiedUser(baseURL!, {
+    await createSeededUser(baseURL!, {
       email: ownerEmail,
       password: VALID_PASSWORD,
     });
@@ -964,7 +964,7 @@ test.describe('Workspace Members Page', () => {
   test('malformed email rejected', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
     const ownerEmail = uniqueEmail('malformed-email-owner');
-    await createVerifiedUser(baseURL!, {
+    await createSeededUser(baseURL!, {
       email: ownerEmail,
       password: VALID_PASSWORD,
     });
@@ -998,7 +998,7 @@ test.describe('Workspace Members Page', () => {
   test('invite hidden for member role', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
     const ownerEmail = uniqueEmail('hidden-inv-owner');
-    await createVerifiedUser(baseURL!, {
+    await createSeededUser(baseURL!, {
       email: ownerEmail,
       password: VALID_PASSWORD,
     });
@@ -1031,7 +1031,7 @@ test.describe('Workspace Members Page', () => {
   test('member sees Remove disabled on others', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
     const ownerEmail = uniqueEmail('disabled-rm-owner');
-    await createVerifiedUser(baseURL!, {
+    await createSeededUser(baseURL!, {
       email: ownerEmail,
       password: VALID_PASSWORD,
     });
@@ -1074,7 +1074,7 @@ test.describe('Workspace Members Page', () => {
   test('owner\'s own row shows disabled "Leave"', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
     const ownerEmail = uniqueEmail('owner-leave-owner');
-    await createVerifiedUser(baseURL!, {
+    await createSeededUser(baseURL!, {
       email: ownerEmail,
       password: VALID_PASSWORD,
     });
@@ -1117,7 +1117,7 @@ test.describe('Workspace Members Page', () => {
       password: VALID_PASSWORD,
     };
 
-    await createVerifiedUser(baseURL!, ownerCredentials);
+    await createSeededUser(baseURL!, ownerCredentials);
     const workspaceId = await signInAndGoToMembers(page, ownerCredentials);
     await upgradeViaInvitePrompt(page, workspaceId);
     const adminCredentials = await setupInvitedMember(
@@ -1156,7 +1156,7 @@ test.describe('Workspace Members Page', () => {
   test('member\'s own row shows "Leave"', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
     const ownerEmail = uniqueEmail('member-leave-owner');
-    await createVerifiedUser(baseURL!, {
+    await createSeededUser(baseURL!, {
       email: ownerEmail,
       password: VALID_PASSWORD,
     });
@@ -1204,7 +1204,7 @@ test.describe('Workspace Members Page', () => {
   test('leave redirects away', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
     const ownerEmail = uniqueEmail('leave-redir-owner');
-    await createVerifiedUser(baseURL!, {
+    await createSeededUser(baseURL!, {
       email: ownerEmail,
       password: VALID_PASSWORD,
     });
@@ -1258,7 +1258,7 @@ test.describe('Workspace Members Page', () => {
   test('footer count updates after removal', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
     const ownerEmail = uniqueEmail('footer-rm-owner');
-    await createVerifiedUser(baseURL!, {
+    await createSeededUser(baseURL!, {
       email: ownerEmail,
       password: VALID_PASSWORD,
     });
@@ -1309,7 +1309,7 @@ test.describe('Workspace Members Page', () => {
   test('invitation count updates', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
     const ownerEmail = uniqueEmail('inv-count-owner');
-    await createVerifiedUser(baseURL!, {
+    await createSeededUser(baseURL!, {
       email: ownerEmail,
       password: VALID_PASSWORD,
     });
@@ -1361,7 +1361,7 @@ test.describe('Workspace Members Page', () => {
 
   test('loading skeletons', async ({ page, baseURL }) => {
     const email = uniqueEmail('skeletons');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
+    await createSeededUser(baseURL!, { email, password: VALID_PASSWORD });
 
     // Intercept the listMembers API to delay the response.
     await page.route(
@@ -1390,7 +1390,7 @@ test.describe('Workspace Members Page', () => {
 
   test('no empty state with member', async ({ page, baseURL }) => {
     const email = uniqueEmail('no-empty');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
+    await createSeededUser(baseURL!, { email, password: VALID_PASSWORD });
     await signInAndGoToMembers(page, { email, password: VALID_PASSWORD });
 
     // Owner row should be visible.
@@ -1406,7 +1406,7 @@ test.describe('Workspace Members Page', () => {
 
   test('empty state on Pending Invitations', async ({ page, baseURL }) => {
     const email = uniqueEmail('empty-invitations');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
+    await createSeededUser(baseURL!, { email, password: VALID_PASSWORD });
     await signInAndGoToMembers(page, { email, password: VALID_PASSWORD });
 
     // Switch to Pending Invitations tab.

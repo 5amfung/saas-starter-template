@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import {
   VALID_PASSWORD,
-  createVerifiedUser,
+  createSeededUser,
   uniqueEmail,
   waitForTestEmail,
 } from '@workspace/test-utils';
@@ -18,7 +18,7 @@ async function signUpAndLogin(
   baseURL: string,
   email: string = uniqueEmail()
 ): Promise<{ email: string; cookieHeader: string }> {
-  const { cookie } = await createVerifiedUser(baseURL, {
+  const { cookie } = await createSeededUser(baseURL, {
     email,
     password: VALID_PASSWORD,
   });
@@ -186,7 +186,7 @@ async function inviteWorkspaceUser(
   const inviteeEmail = uniqueEmail(`settings-${role}`);
   const inviteePassword = VALID_PASSWORD;
 
-  await createVerifiedUser(baseURL, {
+  await createSeededUser(baseURL, {
     email: inviteeEmail,
     password: inviteePassword,
   });
@@ -371,7 +371,7 @@ test.describe('Workspace Settings', () => {
       email: uniqueEmail('settings-owner'),
       password: VALID_PASSWORD,
     };
-    await createVerifiedUser(baseURL!, owner);
+    await createSeededUser(baseURL!, owner);
     await signIn(page, owner);
     const workspaceId = await getActiveWorkspaceId(page);
     const admin = await inviteWorkspaceUser(
@@ -405,7 +405,7 @@ test.describe('Workspace Settings', () => {
       email: uniqueEmail('settings-member-owner'),
       password: VALID_PASSWORD,
     };
-    await createVerifiedUser(baseURL!, owner);
+    await createSeededUser(baseURL!, owner);
     await signIn(page, owner);
     const workspaceId = await getActiveWorkspaceId(page);
     const member = await inviteWorkspaceUser(
