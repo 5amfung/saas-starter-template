@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "vite dev --port 3001",
     "build": "vite build",
+    "build:e2e": "E2E_MOCK_EMAIL=true vite build",
     "preview": "vite preview",
+    "test:e2e": "pnpm run build:e2e && dotenv -e .env -- playwright test",
+    "test:e2e:chromium": "pnpm run build:e2e && dotenv -e .env -- playwright test --project=chromium",
+    "test:e2e:report": "playwright show-report",
     "test": "vitest run",
     "test:unit": "vitest run --dir test/unit",
     "test:integration": "vitest run --dir test/integration",

@@ -28,6 +28,7 @@ export interface AuthConfig {
   emailClient: EmailClient;
   baseUrl: string;
   secret: string;
+  cookiePrefix?: string;
   google: {
     clientId: string;
     clientSecret: string;
@@ -81,6 +82,10 @@ function buildSubscriptionLogPayload(subscription: {
 export function createAuth(config: AuthConfig) {
   const log = config.logger ?? console.log;
   const stripeClient = new Stripe(config.stripe.secretKey);
+  const cookiePrefix =
+    typeof config.cookiePrefix === 'string' && config.cookiePrefix.length > 0
+      ? config.cookiePrefix
+      : undefined;
 
   // Build Stripe plan config from PLANS — reads price IDs from process.env.
   const stripePlans = PLANS.filter((p) => p.stripeEnabled).map((p) => {
@@ -125,6 +130,13 @@ export function createAuth(config: AuthConfig) {
     telemetry: {
       enabled: false,
     },
+    ...(cookiePrefix !== undefined
+      ? {
+          advanced: {
+            cookiePrefix,
+          },
+        }
+      : {}),
     trustedOrigins: config.trustedOrigins ?? ['http://localhost:3000'],
     account: {
       accountLinking: {
