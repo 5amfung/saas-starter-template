@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
 import {
   VALID_PASSWORD,
-  createVerifiedUser,
+  createIsolatedWorkspaceFixture,
+  createSeededUser,
+  ensureWorkspaceSubscription,
   uniqueEmail,
   waitForTestEmail,
 } from '@workspace/test-utils';
@@ -15,28 +17,62 @@ import type { Page } from '@playwright/test';
  */
 async function signInAndGoToMembers(
   page: Page,
-  credentials: { email: string; password: string }
+  credentials: { email: string; password: string },
+  workspaceId?: string
 ): Promise<string> {
   await page.goto('/signin');
   await page.getByLabel('Email').fill(credentials.email);
   await page.getByLabel('Password', { exact: true }).fill(credentials.password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 
-  // Wait for redirect to workspace overview.
-  await page.waitForURL(/\/ws\/.*\/overview/, { timeout: 15000 });
+  let activeWorkspaceId = workspaceId;
 
-  const url = page.url();
-  const match = url.match(/\/ws\/([^/]+)\//);
-  const workspaceId = match?.[1];
-  if (!workspaceId)
-    throw new Error(`Could not extract workspaceId from ${url}`);
+  if (activeWorkspaceId) {
+    await page.waitForURL(new RegExp(`/ws/${activeWorkspaceId}/overview`), {
+      timeout: 15000,
+      waitUntil: 'domcontentloaded',
+    });
+  } else {
+    await page.waitForURL(/\/ws\/.*\/overview/, {
+      timeout: 15000,
+      waitUntil: 'domcontentloaded',
+    });
+    activeWorkspaceId = page.url().match(/\/ws\/([^/]+)\//)?.[1];
+  }
 
-  await page.goto(`/ws/${workspaceId}/members`, {
+  if (!activeWorkspaceId) {
+    throw new Error(`Could not extract workspaceId from ${page.url()}`);
+  }
+  await page.goto(`/ws/${activeWorkspaceId}/members`, {
     waitUntil: 'domcontentloaded',
   });
-  await page.waitForURL(`**/ws/${workspaceId}/members`);
+  await page.waitForURL(`**/ws/${activeWorkspaceId}/members`);
 
-  return workspaceId;
+  return activeWorkspaceId;
+}
+
+async function setupOwnerAndGoToMembers(
+  page: Page,
+  baseURL: string,
+  options: {
+    email?: string;
+    emailPrefix?: string;
+    password?: string;
+    name?: string;
+  } = {}
+) {
+  const fixture = await createIsolatedWorkspaceFixture(baseURL, {
+    emailPrefix: options.emailPrefix,
+    owner: {
+      email: options.email,
+      password: options.password,
+      name: options.name,
+    },
+  });
+
+  await signInAndGoToMembers(page, fixture.owner, fixture.workspace.id);
+
+  return fixture;
 }
 
 /**
@@ -156,10 +192,12 @@ async function setupInvitedMember(
   const inviteePassword = VALID_PASSWORD;
 
   // Create the invitee as a verified user before sending invitation.
-  await createVerifiedUser(baseURL, {
+  await createSeededUser(baseURL, {
     email: inviteeEmail,
     password: inviteePassword,
   });
+
+  await ensureWorkspaceSubscription(workspaceId, 'starter');
 
   // Send invitation from the members page (owner should already be on the page).
   await page.getByRole('button', { name: 'Invite', exact: true }).click();
@@ -171,13 +209,13 @@ async function setupInvitedMember(
   // Handle upgrade prompt if on free plan — upgrade first.
   const upgradeBtn = alertdialog.getByRole('button', { name: /upgrade to/i });
   if (await upgradeBtn.isVisible()) {
-    await upgradeBtn.click();
-    await completeStripeCheckout(page);
-    await page.waitForURL(new RegExp(`/ws/${workspaceId}/(overview|billing)`), {
-      timeout: 15000,
+    await page.keyboard.press('Escape');
+    await page.goto(`/ws/${workspaceId}/members`, {
+      waitUntil: 'domcontentloaded',
     });
-    await page.getByRole('link', { name: 'Members' }).click();
-    await page.waitForURL(`**/ws/${workspaceId}/members`);
+    await page.waitForURL(`**/ws/${workspaceId}/members`, {
+      waitUntil: 'domcontentloaded',
+    });
     await page.getByRole('button', { name: 'Invite', exact: true }).click();
   }
 
@@ -249,9 +287,10 @@ test.describe('Workspace Members Page', () => {
   // ── 1. Renders and shows current user as owner ─────────────────────────
 
   test('renders and shows current user as owner', async ({ page, baseURL }) => {
-    const email = uniqueEmail('owner-render');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
-    await signInAndGoToMembers(page, { email, password: VALID_PASSWORD });
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'owner-render',
+    });
+    const email = fixture.owner.email;
 
     // "Team Members" tab should be active.
     const membersTab = page.getByRole('tab', { name: 'Team Members' });
@@ -274,9 +313,9 @@ test.describe('Workspace Members Page', () => {
   // ── 2. Correct column headers ──────────────────────────────────────────
 
   test('correct column headers', async ({ page, baseURL }) => {
-    const email = uniqueEmail('col-headers');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
-    await signInAndGoToMembers(page, { email, password: VALID_PASSWORD });
+    await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'col-headers',
+    });
 
     // "Email Address" header should be sortable (has cursor-pointer class and SVG icon).
     const emailHeader = page.getByRole('columnheader').filter({
@@ -297,13 +336,8 @@ test.describe('Workspace Members Page', () => {
   // ── 3. Free-plan Invite shows upgrade prompt ──────────────────────────
 
   test('free-plan invite shows upgrade prompt', async ({ page, baseURL }) => {
-    // Create a fresh user on the free plan.
-    const email = uniqueEmail('free-plan');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
-
-    await signInAndGoToMembers(page, {
-      email,
-      password: VALID_PASSWORD,
+    await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'free-plan',
     });
 
     // Click Invite.
@@ -332,10 +366,9 @@ test.describe('Workspace Members Page', () => {
   // ── 4. Upgrade prompt "Maybe later" dismisses ─────────────────────────
 
   test('upgrade prompt "Maybe later" dismisses', async ({ page, baseURL }) => {
-    const email = uniqueEmail('dismiss-upgrade');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
-
-    await signInAndGoToMembers(page, { email, password: VALID_PASSWORD });
+    await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'dismiss-upgrade',
+    });
 
     await page.getByRole('button', { name: 'Invite', exact: true }).click();
 
@@ -356,16 +389,10 @@ test.describe('Workspace Members Page', () => {
 
   test('upgrade to Starter then invite', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
-    const ownerEmail = uniqueEmail('upgrade-owner');
-    await createVerifiedUser(baseURL!, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'upgrade-owner',
     });
-
-    const workspaceId = await signInAndGoToMembers(page, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
-    });
+    const workspaceId = fixture.workspace.id;
 
     // Click Invite — should show upgrade prompt.
     await page.getByRole('button', { name: 'Invite', exact: true }).click();
@@ -409,16 +436,10 @@ test.describe('Workspace Members Page', () => {
     baseURL,
   }) => {
     test.setTimeout(120_000);
-    const ownerEmail = uniqueEmail('inv-tab-owner');
-    await createVerifiedUser(baseURL!, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'inv-tab-owner',
     });
-
-    const workspaceId = await signInAndGoToMembers(page, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
-    });
+    const workspaceId = fixture.workspace.id;
 
     // Upgrade plan first (free plan has 1/1 limit).
     await page.getByRole('button', { name: 'Invite', exact: true }).click();
@@ -472,17 +493,11 @@ test.describe('Workspace Members Page', () => {
     baseURL,
   }) => {
     test.setTimeout(120_000);
-
-    const ownerEmail = uniqueEmail('transfer-owner');
-    await createVerifiedUser(baseURL!, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'transfer-owner',
     });
-
-    const workspaceId = await signInAndGoToMembers(page, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
-    });
+    const workspaceId = fixture.workspace.id;
+    const ownerEmail = fixture.owner.email;
 
     await upgradeViaInvitePrompt(page, workspaceId);
 
@@ -544,16 +559,10 @@ test.describe('Workspace Members Page', () => {
 
   test('resend invitation', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
-    const ownerEmail = uniqueEmail('resend-owner');
-    await createVerifiedUser(baseURL!, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'resend-owner',
     });
-
-    const workspaceId = await signInAndGoToMembers(page, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
-    });
+    const workspaceId = fixture.workspace.id;
 
     // Upgrade from free plan (1/1 member limit) then open invite dialog.
     await upgradeViaInvitePrompt(page, workspaceId);
@@ -596,16 +605,10 @@ test.describe('Workspace Members Page', () => {
 
   test('remove invitation', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
-    const ownerEmail = uniqueEmail('remove-inv-owner');
-    await createVerifiedUser(baseURL!, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'remove-inv-owner',
     });
-
-    const workspaceId = await signInAndGoToMembers(page, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
-    });
+    const workspaceId = fixture.workspace.id;
 
     // Upgrade from free plan (1/1 member limit) then open invite dialog.
     await upgradeViaInvitePrompt(page, workspaceId);
@@ -656,16 +659,10 @@ test.describe('Workspace Members Page', () => {
 
   test('remove member (owner perspective)', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
-    const ownerEmail = uniqueEmail('rm-member-owner');
-    await createVerifiedUser(baseURL!, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'rm-member-owner',
     });
-
-    const workspaceId = await signInAndGoToMembers(page, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
-    });
+    const workspaceId = fixture.workspace.id;
 
     // Set up an accepted member.
     const member = await setupInvitedMember(
@@ -712,9 +709,9 @@ test.describe('Workspace Members Page', () => {
   // ── 10. Sort by email ──────────────────────────────────────────────────
 
   test('sort by email', async ({ page, baseURL }) => {
-    const email = uniqueEmail('sort-email');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
-    await signInAndGoToMembers(page, { email, password: VALID_PASSWORD });
+    await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'sort-email',
+    });
 
     const emailHeader = page.getByRole('columnheader').filter({
       hasText: 'Email Address',
@@ -738,16 +735,10 @@ test.describe('Workspace Members Page', () => {
 
   test('sort invitations', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
-    const ownerEmail = uniqueEmail('sort-inv-owner');
-    await createVerifiedUser(baseURL!, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'sort-inv-owner',
     });
-
-    const workspaceId = await signInAndGoToMembers(page, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
-    });
+    const workspaceId = fixture.workspace.id;
 
     // Upgrade from free plan (1/1 member limit).
     await upgradeViaInvitePrompt(page, workspaceId);
@@ -807,9 +798,9 @@ test.describe('Workspace Members Page', () => {
   // ── 12. Rows-per-page selector ─────────────────────────────────────────
 
   test('rows-per-page selector', async ({ page, baseURL }) => {
-    const email = uniqueEmail('rows-per-page');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
-    await signInAndGoToMembers(page, { email, password: VALID_PASSWORD });
+    await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'rows-per-page',
+    });
 
     // Default should be "10".
     const selectTrigger = page.locator('#members-rows-per-page');
@@ -834,9 +825,9 @@ test.describe('Workspace Members Page', () => {
   // ── 13. Pagination disabled on single page ─────────────────────────────
 
   test('pagination disabled on single page', async ({ page, baseURL }) => {
-    const email = uniqueEmail('pagination');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
-    await signInAndGoToMembers(page, { email, password: VALID_PASSWORD });
+    await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'pagination',
+    });
 
     // Should show "Page 1 of 1".
     await expect(page.getByText('Page 1 of 1')).toBeVisible();
@@ -859,16 +850,10 @@ test.describe('Workspace Members Page', () => {
 
   test('multi-page navigation', async ({ page, baseURL }) => {
     test.setTimeout(180_000);
-    const ownerEmail = uniqueEmail('pagination-owner');
-    await createVerifiedUser(baseURL!, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'pagination-owner',
     });
-
-    const workspaceId = await signInAndGoToMembers(page, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
-    });
+    const workspaceId = fixture.workspace.id;
 
     await upgradeViaInvitePrompt(page, workspaceId);
 
@@ -927,16 +912,10 @@ test.describe('Workspace Members Page', () => {
 
   test('empty email rejected', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
-    const ownerEmail = uniqueEmail('empty-email-owner');
-    await createVerifiedUser(baseURL!, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'empty-email-owner',
     });
-
-    const workspaceId = await signInAndGoToMembers(page, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
-    });
+    const workspaceId = fixture.workspace.id;
 
     // Upgrade from free plan (1/1 member limit) then open invite dialog.
     await upgradeViaInvitePrompt(page, workspaceId);
@@ -963,16 +942,10 @@ test.describe('Workspace Members Page', () => {
 
   test('malformed email rejected', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
-    const ownerEmail = uniqueEmail('malformed-email-owner');
-    await createVerifiedUser(baseURL!, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'malformed-email-owner',
     });
-
-    const workspaceId = await signInAndGoToMembers(page, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
-    });
+    const workspaceId = fixture.workspace.id;
 
     // Upgrade from free plan (1/1 member limit) then open invite dialog.
     await upgradeViaInvitePrompt(page, workspaceId);
@@ -997,16 +970,10 @@ test.describe('Workspace Members Page', () => {
 
   test('invite hidden for member role', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
-    const ownerEmail = uniqueEmail('hidden-inv-owner');
-    await createVerifiedUser(baseURL!, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'hidden-inv-owner',
     });
-
-    const workspaceId = await signInAndGoToMembers(page, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
-    });
+    const workspaceId = fixture.workspace.id;
 
     // Set up an accepted member.
     const member = await setupInvitedMember(
@@ -1030,16 +997,11 @@ test.describe('Workspace Members Page', () => {
 
   test('member sees Remove disabled on others', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
-    const ownerEmail = uniqueEmail('disabled-rm-owner');
-    await createVerifiedUser(baseURL!, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'disabled-rm-owner',
     });
-
-    const workspaceId = await signInAndGoToMembers(page, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
-    });
+    const ownerEmail = fixture.owner.email;
+    const workspaceId = fixture.workspace.id;
 
     // Set up an accepted member.
     const member = await setupInvitedMember(
@@ -1073,16 +1035,11 @@ test.describe('Workspace Members Page', () => {
 
   test('owner\'s own row shows disabled "Leave"', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
-    const ownerEmail = uniqueEmail('owner-leave-owner');
-    await createVerifiedUser(baseURL!, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'owner-leave-owner',
     });
-
-    const workspaceId = await signInAndGoToMembers(page, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
-    });
+    const ownerEmail = fixture.owner.email;
+    const workspaceId = fixture.workspace.id;
 
     // Ensure there are 2 members so the row exists and the owner action state is visible.
     await setupInvitedMember(page, baseURL!, workspaceId, 'owner-leave-member');
@@ -1110,15 +1067,10 @@ test.describe('Workspace Members Page', () => {
 
   test('workspace admin can invite a new member', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
-
-    const ownerEmail = uniqueEmail('admin-invite-owner');
-    const ownerCredentials = {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
-    };
-
-    await createVerifiedUser(baseURL!, ownerCredentials);
-    const workspaceId = await signInAndGoToMembers(page, ownerCredentials);
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'admin-invite-owner',
+    });
+    const workspaceId = fixture.workspace.id;
     await upgradeViaInvitePrompt(page, workspaceId);
     const adminCredentials = await setupInvitedMember(
       page,
@@ -1155,16 +1107,10 @@ test.describe('Workspace Members Page', () => {
 
   test('member\'s own row shows "Leave"', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
-    const ownerEmail = uniqueEmail('member-leave-owner');
-    await createVerifiedUser(baseURL!, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'member-leave-owner',
     });
-
-    const workspaceId = await signInAndGoToMembers(page, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
-    });
+    const workspaceId = fixture.workspace.id;
 
     // Set up an accepted member.
     const member = await setupInvitedMember(
@@ -1203,16 +1149,10 @@ test.describe('Workspace Members Page', () => {
 
   test('leave redirects away', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
-    const ownerEmail = uniqueEmail('leave-redir-owner');
-    await createVerifiedUser(baseURL!, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'leave-redir-owner',
     });
-
-    const workspaceId = await signInAndGoToMembers(page, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
-    });
+    const workspaceId = fixture.workspace.id;
 
     // Set up an accepted member.
     const member = await setupInvitedMember(
@@ -1257,16 +1197,10 @@ test.describe('Workspace Members Page', () => {
 
   test('footer count updates after removal', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
-    const ownerEmail = uniqueEmail('footer-rm-owner');
-    await createVerifiedUser(baseURL!, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'footer-rm-owner',
     });
-
-    const workspaceId = await signInAndGoToMembers(page, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
-    });
+    const workspaceId = fixture.workspace.id;
 
     // Set up an accepted member.
     const member = await setupInvitedMember(
@@ -1308,16 +1242,10 @@ test.describe('Workspace Members Page', () => {
 
   test('invitation count updates', async ({ page, baseURL }) => {
     test.setTimeout(120_000);
-    const ownerEmail = uniqueEmail('inv-count-owner');
-    await createVerifiedUser(baseURL!, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'inv-count-owner',
     });
-
-    const workspaceId = await signInAndGoToMembers(page, {
-      email: ownerEmail,
-      password: VALID_PASSWORD,
-    });
+    const workspaceId = fixture.workspace.id;
 
     // Upgrade from free plan (1/1 member limit).
     await upgradeViaInvitePrompt(page, workspaceId);
@@ -1360,8 +1288,10 @@ test.describe('Workspace Members Page', () => {
   // ── 24. Loading skeletons ──────────────────────────────────────────────
 
   test('loading skeletons', async ({ page, baseURL }) => {
-    const email = uniqueEmail('skeletons');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
+    const fixture = await createIsolatedWorkspaceFixture(baseURL!, {
+      emailPrefix: 'skeletons',
+    });
+    const email = fixture.owner.email;
 
     // Intercept the listMembers API to delay the response.
     await page.route(
@@ -1372,7 +1302,7 @@ test.describe('Workspace Members Page', () => {
       }
     );
 
-    await signInAndGoToMembers(page, { email, password: VALID_PASSWORD });
+    await signInAndGoToMembers(page, fixture.owner, fixture.workspace.id);
 
     // Skeleton elements with animate-pulse should be visible during loading.
     const skeletons = page.locator('.animate-pulse');
@@ -1389,9 +1319,10 @@ test.describe('Workspace Members Page', () => {
   // ── 25. No empty state with member ─────────────────────────────────────
 
   test('no empty state with member', async ({ page, baseURL }) => {
-    const email = uniqueEmail('no-empty');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
-    await signInAndGoToMembers(page, { email, password: VALID_PASSWORD });
+    const fixture = await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'no-empty',
+    });
+    const email = fixture.owner.email;
 
     // Owner row should be visible.
     await expect(
@@ -1405,9 +1336,9 @@ test.describe('Workspace Members Page', () => {
   // ── 26. Empty state on Pending Invitations ─────────────────────────────
 
   test('empty state on Pending Invitations', async ({ page, baseURL }) => {
-    const email = uniqueEmail('empty-invitations');
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
-    await signInAndGoToMembers(page, { email, password: VALID_PASSWORD });
+    await setupOwnerAndGoToMembers(page, baseURL!, {
+      emailPrefix: 'empty-invitations',
+    });
 
     // Switch to Pending Invitations tab.
     await page.getByRole('tab', { name: 'Pending Invitations' }).click();

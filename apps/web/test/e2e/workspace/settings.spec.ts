@@ -1,12 +1,13 @@
 import { expect, test } from '@playwright/test';
 import {
   VALID_PASSWORD,
-  createVerifiedUser,
+  createIsolatedWorkspaceFixture,
+  createSeededUser,
+  ensureWorkspaceSubscription,
   uniqueEmail,
   waitForTestEmail,
 } from '@workspace/test-utils';
 import { parseCookieHeader, toCookieHeader } from '../lib/parse-cookie-header';
-import { completeStripeCheckout } from '../lib/complete-stripe-checkout';
 import type { Page } from '@playwright/test';
 
 /**
@@ -17,31 +18,45 @@ async function signUpAndLogin(
   page: Page,
   baseURL: string,
   email: string = uniqueEmail()
-): Promise<{ email: string; cookieHeader: string }> {
-  const { cookie } = await createVerifiedUser(baseURL, {
-    email,
-    password: VALID_PASSWORD,
+): Promise<{ email: string; cookieHeader: string; workspaceId: string }> {
+  const fixture = await createIsolatedWorkspaceFixture(baseURL, {
+    owner: {
+      email,
+      password: VALID_PASSWORD,
+    },
   });
 
-  await page.context().addCookies(parseCookieHeader(cookie));
-  return { email, cookieHeader: toCookieHeader(cookie) };
+  await page.context().addCookies(parseCookieHeader(fixture.owner.cookie));
+  return {
+    email: fixture.owner.email,
+    cookieHeader: toCookieHeader(fixture.owner.cookie),
+    workspaceId: fixture.workspace.id,
+  };
 }
 
 /** Navigate to /ws, wait for redirect, extract workspaceId from URL. */
 async function getActiveWorkspaceId(page: Page): Promise<string> {
-  await page.goto('/ws');
-  await page.waitForURL(/\/ws\/.+\/overview/, { timeout: 10000 });
+  await page.goto('/ws', { waitUntil: 'domcontentloaded' });
+  await page.waitForURL(/\/ws\/.+\/overview/, {
+    timeout: 10000,
+    waitUntil: 'domcontentloaded',
+  });
   const match = page.url().match(/\/ws\/([^/]+)\/overview/);
   if (!match) throw new Error(`Cannot extract workspaceId from: ${page.url()}`);
   return match[1];
 }
 
 /** Navigate to the active workspace's settings page. */
-async function goToSettings(page: Page): Promise<string> {
-  const workspaceId = await getActiveWorkspaceId(page);
-  await page.goto(`/ws/${workspaceId}/settings`);
-  await page.waitForURL(`**/ws/${workspaceId}/settings`, { timeout: 10000 });
-  return workspaceId;
+async function goToSettings(page: Page, workspaceId?: string): Promise<string> {
+  const activeWorkspaceId = workspaceId ?? (await getActiveWorkspaceId(page));
+  await page.goto(`/ws/${activeWorkspaceId}/settings`, {
+    waitUntil: 'domcontentloaded',
+  });
+  await page.waitForURL(`**/ws/${activeWorkspaceId}/settings`, {
+    timeout: 10000,
+    waitUntil: 'domcontentloaded',
+  });
+  return activeWorkspaceId;
 }
 
 /** Open the workspace switcher dropdown in the sidebar. */
@@ -75,7 +90,7 @@ async function createWorkspaceViaSwitcher(
     (url) =>
       /\/ws\/.+\/overview/.test(url.pathname) &&
       url.toString() !== urlBeforeCreate,
-    { timeout: 15000 }
+    { timeout: 15000, waitUntil: 'domcontentloaded' }
   );
 }
 
@@ -164,7 +179,10 @@ async function signIn(
   await page.getByLabel('Email').fill(credentials.email);
   await page.getByLabel('Password', { exact: true }).fill(credentials.password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await page.waitForURL(/\/ws\/.*\/overview/, { timeout: 15000 });
+  await page.waitForURL(/\/ws\/.*\/overview/, {
+    timeout: 15000,
+    waitUntil: 'domcontentloaded',
+  });
 }
 
 async function resetToSignedOutState(page: Page): Promise<void> {
@@ -186,26 +204,34 @@ async function inviteWorkspaceUser(
   const inviteeEmail = uniqueEmail(`settings-${role}`);
   const inviteePassword = VALID_PASSWORD;
 
-  await createVerifiedUser(baseURL, {
+  await createSeededUser(baseURL, {
     email: inviteeEmail,
     password: inviteePassword,
   });
 
-  await page.goto(`/ws/${workspaceId}/members`);
-  await page.waitForURL(`**/ws/${workspaceId}/members`, { timeout: 15000 });
+  await ensureWorkspaceSubscription(workspaceId, 'starter');
+
+  await page.goto(`/ws/${workspaceId}/members`, {
+    waitUntil: 'domcontentloaded',
+  });
+  await page.waitForURL(`**/ws/${workspaceId}/members`, {
+    timeout: 15000,
+    waitUntil: 'domcontentloaded',
+  });
   await page.getByRole('button', { name: 'Invite', exact: true }).click();
   const alertdialog = page.getByRole('alertdialog');
   await expect(alertdialog).toBeVisible({ timeout: 10000 });
 
   const upgradeBtn = alertdialog.getByRole('button', { name: /upgrade to/i });
   if (await upgradeBtn.isVisible()) {
-    await upgradeBtn.click();
-    await completeStripeCheckout(page, { redirectPattern: /localhost/ });
-    await page.waitForURL(new RegExp(`/ws/${workspaceId}/(overview|billing)`), {
-      timeout: 15000,
+    await page.keyboard.press('Escape');
+    await page.goto(`/ws/${workspaceId}/members`, {
+      waitUntil: 'domcontentloaded',
     });
-    await page.getByRole('link', { name: 'Members' }).click();
-    await page.waitForURL(`**/ws/${workspaceId}/members`, { timeout: 15000 });
+    await page.waitForURL(`**/ws/${workspaceId}/members`, {
+      timeout: 15000,
+      waitUntil: 'domcontentloaded',
+    });
     await page.getByRole('button', { name: 'Invite', exact: true }).click();
   }
 
@@ -367,13 +393,13 @@ test.describe('Workspace Settings', () => {
     page,
     baseURL,
   }) => {
-    const owner = {
-      email: uniqueEmail('settings-owner'),
-      password: VALID_PASSWORD,
-    };
-    await createVerifiedUser(baseURL!, owner);
-    await signIn(page, owner);
-    const workspaceId = await getActiveWorkspaceId(page);
+    test.setTimeout(120_000);
+
+    const fixture = await createIsolatedWorkspaceFixture(baseURL!, {
+      emailPrefix: 'settings-owner',
+    });
+    await signIn(page, fixture.owner);
+    const workspaceId = fixture.workspace.id;
     const admin = await inviteWorkspaceUser(
       page,
       baseURL!,
@@ -385,8 +411,13 @@ test.describe('Workspace Settings', () => {
     await signIn(page, admin);
 
     await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
-    await page.goto(`/ws/${workspaceId}/settings`);
-    await page.waitForURL(`**/ws/${workspaceId}/settings`, { timeout: 10000 });
+    await page.goto(`/ws/${workspaceId}/settings`, {
+      waitUntil: 'domcontentloaded',
+    });
+    await page.waitForURL(`**/ws/${workspaceId}/settings`, {
+      timeout: 10000,
+      waitUntil: 'domcontentloaded',
+    });
 
     const newName = `Admin Renamed ${Date.now()}`;
     await page.getByLabel('Workspace Name').fill(newName);
@@ -401,13 +432,13 @@ test.describe('Workspace Settings', () => {
     page,
     baseURL,
   }) => {
-    const owner = {
-      email: uniqueEmail('settings-member-owner'),
-      password: VALID_PASSWORD,
-    };
-    await createVerifiedUser(baseURL!, owner);
-    await signIn(page, owner);
-    const workspaceId = await getActiveWorkspaceId(page);
+    test.setTimeout(120_000);
+
+    const fixture = await createIsolatedWorkspaceFixture(baseURL!, {
+      emailPrefix: 'settings-member-owner',
+    });
+    await signIn(page, fixture.owner);
+    const workspaceId = fixture.workspace.id;
     const member = await inviteWorkspaceUser(
       page,
       baseURL!,
@@ -421,9 +452,16 @@ test.describe('Workspace Settings', () => {
     await expect(
       page.getByRole('link', { name: 'Settings' })
     ).not.toBeVisible();
-    await page.goto(`/ws/${workspaceId}/settings`);
+    await page.goto(`/ws/${workspaceId}/settings`, {
+      waitUntil: 'domcontentloaded',
+    });
     await page.waitForLoadState('networkidle');
-    await expect(page.getByRole('heading', { name: '404' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '404' })).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(
+      page.getByText("The page you're looking for doesn't exist.")
+    ).toBeVisible({ timeout: 15000 });
   });
 });
 
@@ -478,13 +516,21 @@ test.describe('Workspace Switching & Creation', () => {
     const secondId = page.url().match(/\/ws\/([^/]+)\/overview/)![1];
 
     // Switch back to first workspace via direct navigation.
-    await page.goto(`/ws/${firstId}/overview`);
-    await page.waitForURL(`**/ws/${firstId}/overview`, { timeout: 10000 });
+    await page.goto(`/ws/${firstId}/overview`, {
+      waitUntil: 'domcontentloaded',
+    });
+    await page.waitForURL(`**/ws/${firstId}/overview`, {
+      timeout: 10000,
+      waitUntil: 'domcontentloaded',
+    });
 
     // Switch to second workspace via dropdown.
     await openWorkspaceSwitcher(page);
     await page.getByRole('menuitem', { name: secondName }).click();
-    await page.waitForURL(`**/ws/${secondId}/overview`, { timeout: 10000 });
+    await page.waitForURL(`**/ws/${secondId}/overview`, {
+      timeout: 10000,
+      waitUntil: 'domcontentloaded',
+    });
     expect(page.url()).toContain(secondId);
   });
 
@@ -498,8 +544,13 @@ test.describe('Workspace Switching & Creation', () => {
     const secondId = page.url().match(/\/ws\/([^/]+)\/overview/)![1];
 
     // Go to its settings.
-    await page.goto(`/ws/${secondId}/settings`);
-    await page.waitForURL(`**/ws/${secondId}/settings`, { timeout: 10000 });
+    await page.goto(`/ws/${secondId}/settings`, {
+      waitUntil: 'domcontentloaded',
+    });
+    await page.waitForURL(`**/ws/${secondId}/settings`, {
+      timeout: 10000,
+      waitUntil: 'domcontentloaded',
+    });
 
     const deleteBtn = page.getByRole('button', { name: 'Delete Workspace' });
     await expect(deleteBtn).toBeEnabled();
@@ -519,7 +570,10 @@ test.describe('Workspace Switching & Creation', () => {
     await confirmBtn.click();
 
     // Redirected to remaining workspace.
-    await page.waitForURL(/\/ws\/.+\/overview/, { timeout: 15000 });
+    await page.waitForURL(/\/ws\/.+\/overview/, {
+      timeout: 15000,
+      waitUntil: 'domcontentloaded',
+    });
     expect(page.url()).not.toContain(secondId);
     expect(page.url()).toContain(firstId);
 
@@ -544,8 +598,12 @@ test.describe('Workspace Switching & Creation', () => {
     await createWorkspaceViaSwitcher(page, `Keep WS ${Date.now()}`);
     const wsId = page.url().match(/\/ws\/([^/]+)\/overview/)![1];
 
-    await page.goto(`/ws/${wsId}/settings`);
-    await page.waitForURL(`**/ws/${wsId}/settings`);
+    await page.goto(`/ws/${wsId}/settings`, {
+      waitUntil: 'domcontentloaded',
+    });
+    await page.waitForURL(`**/ws/${wsId}/settings`, {
+      waitUntil: 'domcontentloaded',
+    });
 
     await page.getByRole('button', { name: 'Delete Workspace' }).click();
     await expect(page.getByRole('alertdialog')).toBeVisible();

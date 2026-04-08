@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import {
   VALID_PASSWORD,
-  createVerifiedUser,
+  createSeededUser,
   uniqueEmail,
 } from '@workspace/test-utils';
 import { parseCookieHeader } from '../lib/parse-cookie-header';
@@ -18,7 +18,7 @@ async function loginWithCookie(
 ) {
   const email = opts.email ?? uniqueEmail();
   const password = opts.password ?? VALID_PASSWORD;
-  const { cookie } = await createVerifiedUser(baseURL, {
+  const { cookie } = await createSeededUser(baseURL, {
     email,
     password,
     name: opts.name,

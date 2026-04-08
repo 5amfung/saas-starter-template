@@ -12,7 +12,7 @@ async function waitForRedirect(
   timeout = 60000
 ): Promise<boolean> {
   return page
-    .waitForURL(redirectPattern, { timeout })
+    .waitForURL(redirectPattern, { timeout, waitUntil: 'domcontentloaded' })
     .then(() => true)
     .catch(() => false);
 }
@@ -82,7 +82,10 @@ export async function completeStripeCheckout(
 
   if (await confirmButton.isVisible().catch(() => false)) {
     await confirmButton.click();
-    await page.waitForURL(redirectPattern, { timeout: 60000 });
+    await page.waitForURL(redirectPattern, {
+      timeout: 60000,
+      waitUntil: 'domcontentloaded',
+    });
     return;
   }
 
@@ -166,5 +169,8 @@ export async function completeStripeCheckout(
     }
   }
 
-  await page.waitForURL(redirectPattern, { timeout: 60000 });
+  await page.waitForURL(redirectPattern, {
+    timeout: 60000,
+    waitUntil: 'domcontentloaded',
+  });
 }
