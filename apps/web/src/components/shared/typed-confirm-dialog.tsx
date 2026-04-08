@@ -132,7 +132,9 @@ export function TypedConfirmDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
+          <AlertDialogDescription render={<div />}>
+            {description}
+          </AlertDialogDescription>
         </AlertDialogHeader>
 
         <div className="grid gap-2">

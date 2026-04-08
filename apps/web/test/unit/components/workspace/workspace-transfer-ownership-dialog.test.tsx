@@ -46,6 +46,12 @@ describe('WorkspaceTransferOwnershipDialog', () => {
     );
 
     expect(
+      document
+        .querySelector('[data-slot="alert-dialog-description"]')
+        ?.tagName.toLowerCase()
+    ).toBe('div');
+
+    expect(
       screen.getByRole('heading', { name: /transfer workspace ownership/i })
     ).toBeInTheDocument();
     expect(screen.getByText(/acme workspace/i)).toBeInTheDocument();

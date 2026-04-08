@@ -1,0 +1,4 @@
+interface:
+  display_name: "Verify Check Test"
+  short_description: "Run check and test until clean"
+  default_prompt: "Use $verify-check-test to verify this repo by running pnpm run check and pnpm test, fixing failures until both pass."

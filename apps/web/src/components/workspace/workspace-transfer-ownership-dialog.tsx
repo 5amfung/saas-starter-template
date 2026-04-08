@@ -47,7 +47,7 @@ export function WorkspaceTransferOwnershipDialog({
             <IconAlertTriangle className="text-destructive" />
           </AlertDialogMedia>
           <AlertDialogTitle>Transfer workspace ownership</AlertDialogTitle>
-          <AlertDialogDescription className="space-y-3">
+          <AlertDialogDescription render={<div />} className="space-y-3">
             <p>
               You are transferring <strong>{workspaceName}</strong> to{' '}
               <strong>{targetMemberEmail}</strong>. Your account will be demoted
