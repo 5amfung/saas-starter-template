@@ -130,6 +130,25 @@ describe('TypedConfirmDialog', () => {
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 
+  it('renders rich descriptions in a block container', () => {
+    renderDialog({
+      description: (
+        <>
+          <p>This action cannot be undone.</p>
+          <ul>
+            <li>Associated data will be deleted.</li>
+          </ul>
+        </>
+      ),
+    });
+
+    expect(
+      document
+        .querySelector('[data-slot="alert-dialog-description"]')
+        ?.tagName.toLowerCase()
+    ).toBe('div');
+  });
+
   it('prevents closing while async confirmation is pending', async () => {
     const user = userEvent.setup();
     let resolveConfirm!: () => void;
