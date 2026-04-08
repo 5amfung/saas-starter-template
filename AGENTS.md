@@ -34,6 +34,7 @@ If the task becomes unclear or the current approach stops making technical sense
 - Do not mark work complete without concrete verification.
 - Start with the smallest meaningful verification for the changed area, then widen scope if needed.
 - Compare expected behavior versus actual behavior; do not rely only on command exit status.
+- When Playwright end-to-end verification is required, run it outside the Codex sandbox. If sandbox limits block browser-based verification, request escalation immediately instead of skipping or downgrading the check.
 - If you cannot run verification, say exactly what was not verified and why.
 
 ### Keep Changes Tight
