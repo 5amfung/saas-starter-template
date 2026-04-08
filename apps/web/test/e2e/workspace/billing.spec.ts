@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import {
   VALID_PASSWORD,
+  createIsolatedWorkspaceFixture,
   createSeededUser,
   uniqueEmail,
   waitForTestEmail,
@@ -18,28 +19,27 @@ async function setupUserAndGoToBilling(
   page: Page,
   baseURL: string
 ): Promise<{ workspaceId: string }> {
-  const email = uniqueEmail();
-  const { cookie } = await createSeededUser(baseURL, {
-    email,
-    password: VALID_PASSWORD,
+  const fixture = await createIsolatedWorkspaceFixture(baseURL, {
+    emailPrefix: 'billing-owner',
   });
 
   await page
     .context()
-    .addCookies(parseCookieHeader(cookie, new URL(baseURL).hostname));
+    .addCookies(
+      parseCookieHeader(fixture.owner.cookie, new URL(baseURL).hostname)
+    );
 
-  // Navigate to /ws — the app redirects to /ws/<workspaceId>/overview.
-  await page.goto('/ws');
-  await page.waitForURL(/\/ws\/.*\/overview/, { timeout: 15000 });
-
-  const workspaceId = page.url().match(/\/ws\/([^/]+)\//)?.[1];
-  if (!workspaceId) throw new Error('Could not extract workspaceId from URL');
-
-  await waitForWorkspacePageReady(page, workspaceId, 'overview');
-  await openWorkspacePageFromSidebar(page, workspaceId, 'Billing', 'billing');
+  await page.goto(`/ws/${fixture.workspace.id}/overview`);
+  await waitForWorkspacePageReady(page, fixture.workspace.id, 'overview');
+  await openWorkspacePageFromSidebar(
+    page,
+    fixture.workspace.id,
+    'Billing',
+    'billing'
+  );
   await expect(page.getByText('Current plan')).toBeVisible({ timeout: 15000 });
 
-  return { workspaceId };
+  return { workspaceId: fixture.workspace.id };
 }
 
 async function waitForWorkspacePageReady(
@@ -924,15 +924,13 @@ test.describe('Workspace Billing', () => {
   }) => {
     test.setTimeout(180_000);
 
-    const ownerCredentials = {
-      email: uniqueEmail('billing-downgrade-owner'),
-      password: VALID_PASSWORD,
-    };
-    await createSeededUser(baseURL!, ownerCredentials);
+    const fixture = await createIsolatedWorkspaceFixture(baseURL!, {
+      emailPrefix: 'billing-downgrade-owner',
+    });
 
     const workspaceId = await signInAndGoToWorkspacePage(
       page,
-      ownerCredentials,
+      fixture.owner,
       'members'
     );
 
@@ -944,7 +942,7 @@ test.describe('Workspace Billing', () => {
         `billing-downgrade-${i}`
       );
       await resetToSignedOutState(page);
-      await signInAndGoToWorkspacePage(page, ownerCredentials, 'members');
+      await signInAndGoToWorkspacePage(page, fixture.owner, 'members');
     }
 
     await navigateToWorkspaceBilling(page, workspaceId);
@@ -969,7 +967,7 @@ test.describe('Workspace Billing', () => {
       'billing-downgrade-over-limit'
     );
     await resetToSignedOutState(page);
-    await signInAndGoToWorkspacePage(page, ownerCredentials, 'billing');
+    await signInAndGoToWorkspacePage(page, fixture.owner, 'billing');
 
     await navigateToWorkspaceBilling(page, workspaceId);
     await expect(page.getByText('Current plan')).toBeVisible({
@@ -1029,15 +1027,13 @@ test.describe('Workspace Billing', () => {
   }) => {
     test.setTimeout(180_000);
 
-    const ownerCredentials = {
-      email: uniqueEmail('billing-member-owner'),
-      password: VALID_PASSWORD,
-    };
-    await createSeededUser(baseURL!, ownerCredentials);
+    const fixture = await createIsolatedWorkspaceFixture(baseURL!, {
+      emailPrefix: 'billing-member-owner',
+    });
 
     const workspaceId = await signInAndGoToWorkspacePage(
       page,
-      ownerCredentials,
+      fixture.owner,
       'members'
     );
 

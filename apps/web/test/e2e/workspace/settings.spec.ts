@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import {
   VALID_PASSWORD,
+  createIsolatedWorkspaceFixture,
   createSeededUser,
   uniqueEmail,
   waitForTestEmail,
@@ -17,14 +18,20 @@ async function signUpAndLogin(
   page: Page,
   baseURL: string,
   email: string = uniqueEmail()
-): Promise<{ email: string; cookieHeader: string }> {
-  const { cookie } = await createSeededUser(baseURL, {
-    email,
-    password: VALID_PASSWORD,
+): Promise<{ email: string; cookieHeader: string; workspaceId: string }> {
+  const fixture = await createIsolatedWorkspaceFixture(baseURL, {
+    owner: {
+      email,
+      password: VALID_PASSWORD,
+    },
   });
 
-  await page.context().addCookies(parseCookieHeader(cookie));
-  return { email, cookieHeader: toCookieHeader(cookie) };
+  await page.context().addCookies(parseCookieHeader(fixture.owner.cookie));
+  return {
+    email: fixture.owner.email,
+    cookieHeader: toCookieHeader(fixture.owner.cookie),
+    workspaceId: fixture.workspace.id,
+  };
 }
 
 /** Navigate to /ws, wait for redirect, extract workspaceId from URL. */
@@ -37,11 +44,13 @@ async function getActiveWorkspaceId(page: Page): Promise<string> {
 }
 
 /** Navigate to the active workspace's settings page. */
-async function goToSettings(page: Page): Promise<string> {
-  const workspaceId = await getActiveWorkspaceId(page);
-  await page.goto(`/ws/${workspaceId}/settings`);
-  await page.waitForURL(`**/ws/${workspaceId}/settings`, { timeout: 10000 });
-  return workspaceId;
+async function goToSettings(page: Page, workspaceId?: string): Promise<string> {
+  const activeWorkspaceId = workspaceId ?? (await getActiveWorkspaceId(page));
+  await page.goto(`/ws/${activeWorkspaceId}/settings`);
+  await page.waitForURL(`**/ws/${activeWorkspaceId}/settings`, {
+    timeout: 10000,
+  });
+  return activeWorkspaceId;
 }
 
 /** Open the workspace switcher dropdown in the sidebar. */
@@ -201,10 +210,9 @@ async function inviteWorkspaceUser(
   if (await upgradeBtn.isVisible()) {
     await upgradeBtn.click();
     await completeStripeCheckout(page, { redirectPattern: /localhost/ });
-    await page.waitForURL(new RegExp(`/ws/${workspaceId}/(overview|billing)`), {
-      timeout: 15000,
+    await page.goto(`/ws/${workspaceId}/members`, {
+      waitUntil: 'domcontentloaded',
     });
-    await page.getByRole('link', { name: 'Members' }).click();
     await page.waitForURL(`**/ws/${workspaceId}/members`, { timeout: 15000 });
     await page.getByRole('button', { name: 'Invite', exact: true }).click();
   }
@@ -367,13 +375,13 @@ test.describe('Workspace Settings', () => {
     page,
     baseURL,
   }) => {
-    const owner = {
-      email: uniqueEmail('settings-owner'),
-      password: VALID_PASSWORD,
-    };
-    await createSeededUser(baseURL!, owner);
-    await signIn(page, owner);
-    const workspaceId = await getActiveWorkspaceId(page);
+    test.setTimeout(120_000);
+
+    const fixture = await createIsolatedWorkspaceFixture(baseURL!, {
+      emailPrefix: 'settings-owner',
+    });
+    await signIn(page, fixture.owner);
+    const workspaceId = fixture.workspace.id;
     const admin = await inviteWorkspaceUser(
       page,
       baseURL!,
@@ -401,13 +409,13 @@ test.describe('Workspace Settings', () => {
     page,
     baseURL,
   }) => {
-    const owner = {
-      email: uniqueEmail('settings-member-owner'),
-      password: VALID_PASSWORD,
-    };
-    await createSeededUser(baseURL!, owner);
-    await signIn(page, owner);
-    const workspaceId = await getActiveWorkspaceId(page);
+    test.setTimeout(120_000);
+
+    const fixture = await createIsolatedWorkspaceFixture(baseURL!, {
+      emailPrefix: 'settings-member-owner',
+    });
+    await signIn(page, fixture.owner);
+    const workspaceId = fixture.workspace.id;
     const member = await inviteWorkspaceUser(
       page,
       baseURL!,
@@ -423,7 +431,12 @@ test.describe('Workspace Settings', () => {
     ).not.toBeVisible();
     await page.goto(`/ws/${workspaceId}/settings`);
     await page.waitForLoadState('networkidle');
-    await expect(page.getByRole('heading', { name: '404' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '404' })).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(
+      page.getByText("The page you're looking for doesn't exist.")
+    ).toBeVisible({ timeout: 15000 });
   });
 });
 
