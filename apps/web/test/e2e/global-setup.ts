@@ -1,3 +1,4 @@
+import { seedE2EBaseline } from '@workspace/db-schema';
 import type { FullConfig } from '@playwright/test';
 
 /**
@@ -11,6 +12,8 @@ import type { FullConfig } from '@playwright/test';
  */
 export default async function globalSetup(config: FullConfig): Promise<void> {
   const baseURL = config.projects[0]?.use?.baseURL ?? 'http://localhost:3000';
+
+  process.loadEnvFile?.(new URL('../../.env', import.meta.url).pathname);
 
   const probeURL = `${baseURL}/api/test/emails?to=probe@test.local`;
 
@@ -34,4 +37,6 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
         '  manage the server (remove reuseExistingServer or stop your dev server).'
     );
   }
+
+  await seedE2EBaseline();
 }

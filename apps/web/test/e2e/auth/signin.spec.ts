@@ -1,36 +1,31 @@
 import { expect, test } from '@playwright/test';
 import {
-  VALID_PASSWORD,
-  createVerifiedUser,
+  signInBaselineUser,
   uniqueEmail,
+  VALID_PASSWORD,
 } from '@workspace/test-utils';
+import { E2E_BASELINE_USERS, E2E_PASSWORD } from '@workspace/db-schema';
 import { parseCookieHeader } from '../lib/parse-cookie-header';
 
 test.describe('Sign-in flow', () => {
   test('happy path: valid credentials redirect to workspace overview', async ({
     page,
-    baseURL,
   }) => {
-    const email = uniqueEmail();
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
+    const email = E2E_BASELINE_USERS.owner.email;
 
     await page.goto('/signin');
     await expect(page.getByText('Welcome back')).toBeVisible();
 
     await page.getByLabel('Email').fill(email);
-    await page.getByLabel('Password').fill(VALID_PASSWORD);
+    await page.getByLabel('Password').fill(E2E_PASSWORD);
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 
     await page.waitForURL(/\/ws\/.+\/overview/, { timeout: 10000 });
     await expect(page.locator('body')).toBeVisible();
   });
 
-  test('wrong password shows invalid credentials error', async ({
-    page,
-    baseURL,
-  }) => {
-    const email = uniqueEmail();
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
+  test('wrong password shows invalid credentials error', async ({ page }) => {
+    const email = E2E_BASELINE_USERS.owner.email;
 
     await page.goto('/signin');
     await page.getByLabel('Email').fill(email);
@@ -108,11 +103,7 @@ test.describe('Sign-in flow', () => {
     page,
     baseURL,
   }) => {
-    const email = uniqueEmail();
-    const { cookie } = await createVerifiedUser(baseURL!, {
-      email,
-      password: VALID_PASSWORD,
-    });
+    const { cookie } = await signInBaselineUser(baseURL!, 'admin');
 
     await page.context().addCookies(parseCookieHeader(cookie));
     await page.goto('/signin');
@@ -155,23 +146,17 @@ test.describe('Sign-in flow', () => {
 
   test('sidebar shows correct user name and email after sign-in', async ({
     page,
-    baseURL,
   }) => {
-    const email = uniqueEmail();
-    await createVerifiedUser(baseURL!, {
-      email,
-      password: VALID_PASSWORD,
-      name: 'Sidebar Test',
-    });
+    const { email, name } = E2E_BASELINE_USERS.member;
 
     await page.goto('/signin');
     await page.getByLabel('Email').fill(email);
-    await page.getByLabel('Password').fill(VALID_PASSWORD);
+    await page.getByLabel('Password').fill(E2E_PASSWORD);
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 
     await page.waitForURL(/\/ws\/.+\/overview/, { timeout: 10000 });
 
-    await expect(page.getByText('Sidebar Test')).toBeVisible();
+    await expect(page.getByText(name)).toBeVisible();
     await expect(page.getByText(email)).toBeVisible();
   });
 
@@ -208,16 +193,12 @@ test.describe('Sign-in flow', () => {
     ).toBeVisible();
   });
 
-  test('redirect query param honored after sign-in', async ({
-    page,
-    baseURL,
-  }) => {
-    const email = uniqueEmail();
-    await createVerifiedUser(baseURL!, { email, password: VALID_PASSWORD });
+  test('redirect query param honored after sign-in', async ({ page }) => {
+    const email = E2E_BASELINE_USERS.proOwner.email;
 
     await page.goto('/signin?redirect=/account');
     await page.getByLabel('Email').fill(email);
-    await page.getByLabel('Password').fill(VALID_PASSWORD);
+    await page.getByLabel('Password').fill(E2E_PASSWORD);
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 
     await expect(page).toHaveURL(/\/account/, { timeout: 10000 });
