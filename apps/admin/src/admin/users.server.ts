@@ -27,26 +27,14 @@ interface AdminListUsersResult {
   total: number;
 }
 
-interface AdminApiLike {
-  listUsers: (input: {
-    headers: Headers;
-    query: AdminListUsersInput;
-  }) => Promise<unknown>;
-  updateUser: (input: {
-    headers: Headers;
-    userId: string;
-    data: {
-      name: string;
-      email: string;
-      emailVerified: boolean;
-      image: string | null;
-      role: string | null;
-      banned: boolean;
-      banReason: string | null;
-      banExpires: Date | null;
-    };
-  }) => Promise<unknown>;
-  removeUser: (input: { headers: Headers; userId: string }) => Promise<unknown>;
+type AdminAuthApi = ReturnType<typeof getAuth>['api'];
+type AdminApi = Pick<
+  AdminAuthApi,
+  'listUsers' | 'adminUpdateUser' | 'removeUser'
+>;
+
+function getAdminApi(): AdminApi {
+  return getAuth().api;
 }
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -79,7 +67,7 @@ function unwrapBetterAuthResult<T>(result: unknown): T {
 
 export async function listAdminUsers(input: AdminListUsersInput) {
   const headers = getRequestHeaders();
-  const api = getAuth().api as unknown as AdminApiLike;
+  const api = getAdminApi();
   const result = await api.listUsers({
     headers,
     query: input,
@@ -107,19 +95,21 @@ export async function getAdminUserDetail(userId: string) {
 
 export async function updateAdminUser(input: AdminUpdateUserInput) {
   const headers = getRequestHeaders();
-  const api = getAuth().api as unknown as AdminApiLike;
-  const result = await api.updateUser({
+  const api = getAdminApi();
+  const result = await api.adminUpdateUser({
     headers,
-    userId: input.userId,
-    data: {
-      name: input.name,
-      email: input.email,
-      emailVerified: input.emailVerified,
-      image: input.image || null,
-      role: input.role || null,
-      banned: input.banned,
-      banReason: input.banReason || null,
-      banExpires: input.banExpires ? new Date(input.banExpires) : null,
+    body: {
+      userId: input.userId,
+      data: {
+        name: input.name,
+        email: input.email,
+        emailVerified: input.emailVerified,
+        image: input.image || null,
+        role: input.role || null,
+        banned: input.banned,
+        banReason: input.banReason || null,
+        banExpires: input.banExpires ? new Date(input.banExpires) : null,
+      },
     },
   });
 
@@ -130,7 +120,7 @@ export async function updateAdminUser(input: AdminUpdateUserInput) {
 export async function deleteAdminUser(userId: string) {
   const headers = getRequestHeaders();
   const session = await getVerifiedAdminSession(headers, getAuth());
-  const api = getAuth().api as unknown as AdminApiLike;
+  const api = getAdminApi();
 
   if (session.user.id === userId) {
     throw new Error('You cannot delete your own account.');
@@ -138,7 +128,7 @@ export async function deleteAdminUser(userId: string) {
 
   const result = await api.removeUser({
     headers,
-    userId,
+    body: { userId },
   });
 
   unwrapBetterAuthResult(result);
