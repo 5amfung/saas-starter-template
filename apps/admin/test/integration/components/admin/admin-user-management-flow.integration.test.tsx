@@ -84,6 +84,42 @@ describe('Admin user management flow', () => {
       });
     });
 
+    it('updates the role to admin and shows a success toast', async () => {
+      const user = userEvent.setup();
+      adminUpdateUserMock.mockResolvedValue({});
+
+      renderWithProviders(<AdminUserForm user={mockUser} />);
+
+      const roleSelect = screen.getByRole('combobox', { name: /role/i });
+      await user.click(roleSelect);
+
+      const adminOption = await screen.findByRole('option', {
+        name: /admin/i,
+      });
+      await user.click(adminOption);
+
+      const saveButton = screen.getByRole('button', { name: /save changes/i });
+      await waitFor(() => expect(saveButton).toBeEnabled());
+      await user.click(saveButton);
+
+      await waitFor(() => {
+        expect(adminUpdateUserMock).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              userId: 'user-1',
+              role: 'admin',
+            }),
+          })
+        );
+      });
+
+      await waitFor(() => {
+        expect(mockToastSuccess).toHaveBeenCalledWith(
+          'User updated successfully.'
+        );
+      });
+    });
+
     it('cancels edit and reverts to original values', async () => {
       const user = userEvent.setup();
 
