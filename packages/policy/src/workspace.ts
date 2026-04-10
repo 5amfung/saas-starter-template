@@ -13,10 +13,12 @@ export interface WorkspaceCapabilities {
   canViewMembers: boolean;
   canViewSettings: boolean;
   canViewBilling: boolean;
+  canViewIntegrations: boolean;
   canInviteMembers: boolean;
   canManageMembers: boolean;
   canManageSettings: boolean;
   canManageBilling: boolean;
+  canManageIntegrations: boolean;
   canDeleteWorkspace: boolean;
   deleteWorkspaceBlockedReason:
     | 'not-owner'
@@ -39,10 +41,12 @@ const emptyCapabilities = (
   canViewMembers: false,
   canViewSettings: false,
   canViewBilling: false,
+  canViewIntegrations: false,
   canInviteMembers: false,
   canManageMembers: false,
   canManageSettings: false,
   canManageBilling: false,
+  canManageIntegrations: false,
   canDeleteWorkspace: false,
   deleteWorkspaceBlockedReason:
     workspaceRole === 'owner' ? 'active-subscription' : 'not-owner',
@@ -71,10 +75,12 @@ export function evaluateWorkspaceCapabilities(
     canViewMembers: true,
     canViewSettings: true,
     canViewBilling: true,
+    canViewIntegrations: hasActiveSubscription,
     canInviteMembers: true,
     canManageMembers: true,
     canManageSettings: true,
     canManageBilling: true,
+    canManageIntegrations: hasActiveSubscription,
     canDeleteWorkspace: false,
     deleteWorkspaceBlockedReason: 'not-owner',
   };
