@@ -171,7 +171,7 @@ log('info', 'request completed', {
 Run: `pnpm test apps/web/test/unit/lib/logger.test.ts apps/admin/test/unit/lib/logger.test.ts`
 Expected: PASS
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/logging/src/request-context.ts packages/logging/src/logger.ts packages/logging/src/request-logger.server.ts packages/logging/package.json apps/web/test/unit/lib/logger.test.ts apps/admin/test/unit/lib/logger.test.ts
@@ -260,7 +260,7 @@ export function recordUserActionBreadcrumb(input: {
 Run: `pnpm test apps/web/test/unit/lib/observability.test.ts apps/admin/test/unit/lib/observability.test.ts apps/api-server/test/unit/lib/observability.test.ts`
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/web/src/lib/observability.ts apps/admin/src/lib/observability.ts apps/api-server/src/lib/observability.ts apps/web/test/unit/lib/observability.test.ts apps/admin/test/unit/lib/observability.test.ts apps/api-server/test/unit/lib/observability.test.ts
@@ -324,7 +324,7 @@ captureServerError(_error, {
 Run: `pnpm --filter @workspace/api-server test test/unit/app.test.ts`
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/api-server/src/app.ts apps/api-server/src/middleware/request-logger.ts apps/api-server/src/middleware/error-handler.ts apps/api-server/test/unit/app.test.ts
@@ -393,7 +393,7 @@ SENTRY_DSN=
 Run: `pnpm test apps/web/test/unit/init/init.test.ts apps/admin/test/unit/init/init.test.ts packages/auth/test/unit/auth.server.test.ts`
 Expected: PASS
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/web/src/init.ts apps/admin/src/init.ts apps/web/src/routes/api/auth/$.ts apps/admin/src/routes/api/auth/$.ts .env.example packages/auth/src/auth.server.ts
@@ -457,7 +457,7 @@ recordUserActionBreadcrumb({
 Run: `pnpm test apps/web/test/unit/components apps/admin/test/unit/components`
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/web/src/components/error-boundary.tsx apps/admin/src/components/error-boundary.tsx apps/web/src/routes/__root.tsx apps/admin/src/routes/__root.tsx
@@ -511,7 +511,7 @@ return Response.json({
 Run: `pnpm test apps/web/test/unit/routes/health.test.ts apps/admin/test/unit/routes/health.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/routes/health.ts apps/admin/src/routes/health.ts apps/web/test/unit/routes/health.test.ts apps/admin/test/unit/routes/health.test.ts
@@ -554,7 +554,7 @@ Expected: PASS
 4. Visit `/health` in web and admin and confirm the readiness payload is concise and dependency-focused.
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add .
