@@ -4,7 +4,6 @@ import { createDb } from '@workspace/db';
 import * as schema from '@workspace/db-schema';
 import { createEmailClient, createMockEmailClient } from '@workspace/email';
 import { logger } from '@/lib/logger';
-import { initObservability } from '@/lib/observability';
 
 let dbSingleton: ReturnType<typeof createDb> | undefined;
 let emailClientSingleton:
@@ -12,16 +11,6 @@ let emailClientSingleton:
   | ReturnType<typeof createMockEmailClient>
   | undefined;
 let authSingleton: ReturnType<typeof createAuth> | undefined;
-
-initObservability({
-  app: 'admin',
-  appEnv:
-    process.env.APP_ENV === 'staging' || process.env.APP_ENV === 'production'
-      ? process.env.APP_ENV
-      : 'local',
-  dsn: process.env.SENTRY_DSN,
-  release: process.env.APP_RELEASE,
-});
 
 export function getDb() {
   if (!dbSingleton) {

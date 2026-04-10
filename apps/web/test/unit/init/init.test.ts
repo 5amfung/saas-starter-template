@@ -4,14 +4,12 @@ const {
   createEmailClientMock,
   createMockEmailClientMock,
   getEmailClientMock,
-  initObservabilityMock,
 } = vi.hoisted(() => ({
   createAuthMock: vi.fn(),
   createDbMock: vi.fn(),
   createEmailClientMock: vi.fn(),
   createMockEmailClientMock: vi.fn(),
   getEmailClientMock: vi.fn(),
-  initObservabilityMock: vi.fn(),
 }));
 
 vi.mock('@workspace/auth/server', () => ({
@@ -25,10 +23,6 @@ vi.mock('@workspace/db', () => ({
 vi.mock('@workspace/email', () => ({
   createEmailClient: createEmailClientMock,
   createMockEmailClient: createMockEmailClientMock,
-}));
-
-vi.mock('@/lib/observability', () => ({
-  initObservability: initObservabilityMock,
 }));
 
 describe('web init getters', () => {
@@ -49,12 +43,6 @@ describe('web init getters', () => {
     expect(createEmailClientMock).not.toHaveBeenCalled();
     expect(createMockEmailClientMock).not.toHaveBeenCalled();
     expect(createAuthMock).not.toHaveBeenCalled();
-    expect(initObservabilityMock).toHaveBeenCalledWith({
-      app: 'web',
-      appEnv: 'local',
-      dsn: process.env.SENTRY_DSN,
-      release: process.env.APP_RELEASE,
-    });
 
     createDbMock.mockReturnValue(db);
     createEmailClientMock.mockReturnValue(emailClient);

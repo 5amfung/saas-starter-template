@@ -190,6 +190,65 @@ function getOrganizationPluginOpts() {
   };
 }
 
+function getStripePluginOpts() {
+  const call = stripeMock.mock.calls[0];
+  return call[0] as {
+    subscription: {
+      onSubscriptionComplete: (args: {
+        subscription: {
+          id: string;
+          plan: string;
+          referenceId: string;
+          status: string;
+          stripeSubscriptionId?: string | null;
+        };
+        plan: { name: string };
+      }) => Promise<void>;
+      onSubscriptionCreated: (args: {
+        subscription: {
+          id: string;
+          plan: string;
+          referenceId: string;
+          status: string;
+          stripeSubscriptionId?: string | null;
+        };
+        plan: { name: string };
+      }) => Promise<void>;
+      onSubscriptionUpdate: (args: {
+        subscription: {
+          id: string;
+          plan: string;
+          referenceId: string;
+          status: string;
+          stripeSubscriptionId?: string | null;
+        };
+      }) => Promise<void>;
+      onSubscriptionCancel: (args: {
+        subscription: {
+          id: string;
+          plan: string;
+          referenceId: string;
+          status: string;
+          stripeSubscriptionId?: string | null;
+        };
+        cancellationDetails?: {
+          reason?: string;
+          feedback?: string;
+        };
+      }) => Promise<void>;
+      onSubscriptionDeleted: (args: {
+        subscription: {
+          id: string;
+          plan: string;
+          referenceId: string;
+          status: string;
+          stripeSubscriptionId?: string | null;
+        };
+      }) => Promise<void>;
+    };
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Tests.
 // ---------------------------------------------------------------------------
@@ -689,6 +748,143 @@ describe('createAuth', () => {
       const meta = logger.mock.calls[0][2] as Record<string, unknown>;
       expect(meta).not.toHaveProperty('password');
       expect(meta).not.toHaveProperty('token');
+    });
+
+    it('logs subscription lifecycle events through the configured logger', async () => {
+      const logger = vi.fn();
+      const createAuth = await importCreateAuth();
+
+      createAuth(buildTestConfig({ logger }));
+      const opts = getStripePluginOpts();
+      const subscription = {
+        id: 'sub_123',
+        plan: 'starter',
+        referenceId: 'org_123',
+        status: 'active',
+        stripeSubscriptionId: 'stripe_sub_123',
+      };
+
+      await opts.subscription.onSubscriptionComplete({
+        subscription,
+        plan: { name: 'Starter' },
+      });
+      await opts.subscription.onSubscriptionCreated({
+        subscription,
+        plan: { name: 'Starter' },
+      });
+      await opts.subscription.onSubscriptionUpdate({
+        subscription,
+      });
+      await opts.subscription.onSubscriptionCancel({
+        subscription,
+        cancellationDetails: {
+          reason: 'customer-request',
+          feedback: 'too expensive',
+        },
+      });
+      await opts.subscription.onSubscriptionDeleted({
+        subscription,
+      });
+
+      expect(logger).toHaveBeenNthCalledWith(
+        1,
+        'info',
+        'subscription complete',
+        {
+          subscriptionId: 'sub_123',
+          plan: 'starter',
+          referenceId: 'org_123',
+          status: 'active',
+          stripeSubscriptionId: 'stripe_sub_123',
+          periodStart: undefined,
+          periodEnd: undefined,
+          billingInterval: undefined,
+          cancelAt: undefined,
+          canceledAt: undefined,
+          cancelAtPeriodEnd: undefined,
+          endedAt: undefined,
+          planName: 'Starter',
+        }
+      );
+      expect(logger).toHaveBeenNthCalledWith(
+        2,
+        'info',
+        'subscription created',
+        {
+          subscriptionId: 'sub_123',
+          plan: 'starter',
+          referenceId: 'org_123',
+          status: 'active',
+          stripeSubscriptionId: 'stripe_sub_123',
+          periodStart: undefined,
+          periodEnd: undefined,
+          billingInterval: undefined,
+          cancelAt: undefined,
+          canceledAt: undefined,
+          cancelAtPeriodEnd: undefined,
+          endedAt: undefined,
+          planName: 'Starter',
+        }
+      );
+      expect(logger).toHaveBeenNthCalledWith(
+        3,
+        'info',
+        'subscription updated',
+        {
+          subscriptionId: 'sub_123',
+          plan: 'starter',
+          referenceId: 'org_123',
+          status: 'active',
+          stripeSubscriptionId: 'stripe_sub_123',
+          periodStart: undefined,
+          periodEnd: undefined,
+          billingInterval: undefined,
+          cancelAt: undefined,
+          canceledAt: undefined,
+          cancelAtPeriodEnd: undefined,
+          endedAt: undefined,
+        }
+      );
+      expect(logger).toHaveBeenNthCalledWith(
+        4,
+        'info',
+        'subscription canceled',
+        {
+          subscriptionId: 'sub_123',
+          plan: 'starter',
+          referenceId: 'org_123',
+          status: 'active',
+          stripeSubscriptionId: 'stripe_sub_123',
+          periodStart: undefined,
+          periodEnd: undefined,
+          billingInterval: undefined,
+          cancelAt: undefined,
+          canceledAt: undefined,
+          cancelAtPeriodEnd: undefined,
+          endedAt: undefined,
+          reason: 'customer-request',
+          feedback: 'too expensive',
+        }
+      );
+      expect(logger).toHaveBeenNthCalledWith(
+        5,
+        'info',
+        'subscription deleted',
+        {
+          subscriptionId: 'sub_123',
+          plan: 'starter',
+          referenceId: 'org_123',
+          status: 'active',
+          stripeSubscriptionId: 'stripe_sub_123',
+          periodStart: undefined,
+          periodEnd: undefined,
+          billingInterval: undefined,
+          cancelAt: undefined,
+          canceledAt: undefined,
+          cancelAtPeriodEnd: undefined,
+          endedAt: undefined,
+        }
+      );
     });
   });
 });

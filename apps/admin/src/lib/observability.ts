@@ -1,6 +1,8 @@
 import * as Sentry from '@sentry/react';
+import type { ErrorInfo } from 'react';
 
 type AppEnv = 'local' | 'staging' | 'production';
+let isObservabilityInitialized = false;
 
 export function initObservability(config: {
   app: 'admin';
@@ -8,7 +10,7 @@ export function initObservability(config: {
   dsn?: string;
   release?: string;
 }) {
-  if (!config.dsn) {
+  if (!config.dsn || isObservabilityInitialized) {
     return;
   }
 
@@ -23,6 +25,7 @@ export function initObservability(config: {
     },
     tracesSampleRate: 0,
   });
+  isObservabilityInitialized = true;
 }
 
 export function recordUserActionBreadcrumb(input: {
@@ -58,5 +61,17 @@ export function recordWorkflowBreadcrumb(input: {
       workspaceId: input.workspaceId,
       route: input.route,
     },
+  });
+}
+
+export function captureRouterError(error: Error, errorInfo?: ErrorInfo) {
+  Sentry.withScope((scope) => {
+    if (errorInfo?.componentStack) {
+      scope.setContext('react', {
+        componentStack: errorInfo.componentStack,
+      });
+    }
+
+    Sentry.captureException(error);
   });
 }
