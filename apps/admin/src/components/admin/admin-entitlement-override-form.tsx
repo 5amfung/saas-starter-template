@@ -28,6 +28,7 @@ import type {
   LimitKey,
   QuotaKey,
 } from '@workspace/billing';
+import { recordWorkflowBreadcrumb } from '@/lib/observability';
 import {
   clearEntitlementOverrides,
   saveEntitlementOverrides,
@@ -53,6 +54,10 @@ type FeatureOverrideState = 'inherit' | 'enabled' | 'disabled';
 // --- Helpers ---
 
 const CARD_FOOTER_CLASS = 'flex justify-end gap-2 pt-6';
+const ADMIN_ENTITLEMENT_OVERRIDE_SAVE_OPERATION =
+  'admin.entitlement_override.saved';
+const ADMIN_ENTITLEMENT_OVERRIDE_CLEAR_OPERATION =
+  'admin.entitlement_override.cleared';
 
 /**
  * Converts a stored numeric override value to the form state.
@@ -165,6 +170,15 @@ export function AdminEntitlementOverrideForm({
         },
       });
     },
+    onMutate: () => {
+      recordWorkflowBreadcrumb({
+        category: 'admin',
+        operation: ADMIN_ENTITLEMENT_OVERRIDE_SAVE_OPERATION,
+        message: 'admin entitlement override save started',
+        workspaceId,
+        route: '/workspaces/$workspaceId',
+      });
+    },
     onSuccess: () => {
       toast.success('Entitlement overrides saved.');
       queryClient.invalidateQueries({
@@ -181,6 +195,15 @@ export function AdminEntitlementOverrideForm({
   const clearMutation = useMutation({
     mutationFn: async () => {
       await clearEntitlementOverrides({ data: { workspaceId } });
+    },
+    onMutate: () => {
+      recordWorkflowBreadcrumb({
+        category: 'admin',
+        operation: ADMIN_ENTITLEMENT_OVERRIDE_CLEAR_OPERATION,
+        message: 'admin entitlement override clear started',
+        workspaceId,
+        route: '/workspaces/$workspaceId',
+      });
     },
     onSuccess: () => {
       toast.success('All entitlement overrides cleared.');

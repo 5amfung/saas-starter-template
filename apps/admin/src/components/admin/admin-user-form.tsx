@@ -38,6 +38,7 @@ import { cn } from '@workspace/ui/lib/utils';
 import { getInitials, toFieldErrorItem } from '@workspace/components/lib';
 import { adminUserFormSchema } from '@/admin/schemas';
 import { updateUser } from '@/admin/users.functions';
+import { recordWorkflowBreadcrumb } from '@/lib/observability';
 
 interface UserData {
   id: string;
@@ -67,6 +68,7 @@ const THREE_COLUMN_GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-3';
 const READ_ONLY_INPUT_CLASS = 'bg-muted text-sm';
 const READ_ONLY_MONO_INPUT_CLASS = 'bg-muted font-mono text-sm';
 const CARD_FOOTER_CLASS = 'flex justify-end gap-2 pt-6';
+const ADMIN_USER_UPDATE_OPERATION = 'admin.user.updated';
 
 type AdminUserUpdatePayload = {
   name: string;
@@ -154,6 +156,15 @@ export function AdminUserForm({
           userId: user.id,
           ...values,
         },
+      });
+    },
+    onMutate: () => {
+      recordWorkflowBreadcrumb({
+        category: 'admin',
+        operation: ADMIN_USER_UPDATE_OPERATION,
+        message: 'admin user update started',
+        userId: user.id,
+        route: '/users/$userId',
       });
     },
     onSuccess: (_data, variables) => {

@@ -66,3 +66,36 @@ describe('recordUserActionBreadcrumb', () => {
     });
   });
 });
+
+describe('recordWorkflowBreadcrumb', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('adds a workflow breadcrumb with request context', async () => {
+    const { recordWorkflowBreadcrumb } = await import('@/lib/observability');
+
+    recordWorkflowBreadcrumb({
+      category: 'workspace',
+      operation: 'workspace.member.invited',
+      message: 'workspace member invited',
+      requestId: 'req_123',
+      userId: 'user_123',
+      workspaceId: 'ws_123',
+      route: '/workspaces/ws_123/members',
+    });
+
+    expect(Sentry.addBreadcrumb).toHaveBeenCalledWith({
+      category: 'workspace',
+      data: {
+        operation: 'workspace.member.invited',
+        requestId: 'req_123',
+        userId: 'user_123',
+        workspaceId: 'ws_123',
+        route: '/workspaces/ws_123/members',
+      },
+      level: 'info',
+      message: 'workspace member invited',
+    });
+  });
+});

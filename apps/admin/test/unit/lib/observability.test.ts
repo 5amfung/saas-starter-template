@@ -66,3 +66,36 @@ describe('recordUserActionBreadcrumb', () => {
     });
   });
 });
+
+describe('recordWorkflowBreadcrumb', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('adds a workflow breadcrumb with request context', async () => {
+    const { recordWorkflowBreadcrumb } = await import('@/lib/observability');
+
+    recordWorkflowBreadcrumb({
+      category: 'admin',
+      operation: 'admin.user.updated',
+      message: 'admin user updated',
+      requestId: 'req_456',
+      userId: 'user_456',
+      workspaceId: 'ws_456',
+      route: '/admin/users/user_456',
+    });
+
+    expect(Sentry.addBreadcrumb).toHaveBeenCalledWith({
+      category: 'admin',
+      data: {
+        operation: 'admin.user.updated',
+        requestId: 'req_456',
+        userId: 'user_456',
+        workspaceId: 'ws_456',
+        route: '/admin/users/user_456',
+      },
+      level: 'info',
+      message: 'admin user updated',
+    });
+  });
+});

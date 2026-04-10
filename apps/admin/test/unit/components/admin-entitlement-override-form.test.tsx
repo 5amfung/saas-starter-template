@@ -6,11 +6,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AdminEntitlementOverrideForm } from '@/components/admin/admin-entitlement-override-form';
 import { ADMIN_WORKSPACE_DETAIL_QUERY_KEY } from '@/admin/workspaces.queries';
 
-const { saveEntitlementOverridesMock, clearEntitlementOverridesMock } =
-  vi.hoisted(() => ({
-    saveEntitlementOverridesMock: vi.fn(),
-    clearEntitlementOverridesMock: vi.fn(),
-  }));
+const {
+  saveEntitlementOverridesMock,
+  clearEntitlementOverridesMock,
+  recordWorkflowBreadcrumbMock,
+} = vi.hoisted(() => ({
+  saveEntitlementOverridesMock: vi.fn(),
+  clearEntitlementOverridesMock: vi.fn(),
+  recordWorkflowBreadcrumbMock: vi.fn(),
+}));
 
 vi.mock('@/admin/workspaces.functions', () => ({
   saveEntitlementOverrides: saveEntitlementOverridesMock,
@@ -22,6 +26,10 @@ vi.mock('sonner', () => ({
     success: vi.fn(),
     error: vi.fn(),
   },
+}));
+
+vi.mock('@/lib/observability', () => ({
+  recordWorkflowBreadcrumb: recordWorkflowBreadcrumbMock,
 }));
 
 function renderForm(
@@ -212,6 +220,50 @@ describe('AdminEntitlementOverrideForm', () => {
       expect(invalidateQueriesSpy).toHaveBeenCalledWith({
         queryKey: ADMIN_WORKSPACE_DETAIL_QUERY_KEY('ws_123'),
       });
+    });
+  });
+
+  it('records a workflow breadcrumb when override save starts', async () => {
+    const user = userEvent.setup();
+
+    renderForm({
+      limits: null,
+      features: null,
+      quotas: null,
+      notes: null,
+    });
+
+    await user.click(screen.getByRole('button', { name: /save overrides/i }));
+
+    expect(recordWorkflowBreadcrumbMock).toHaveBeenCalledWith({
+      category: 'admin',
+      operation: 'admin.entitlement_override.saved',
+      message: 'admin entitlement override save started',
+      workspaceId: 'ws_123',
+      route: '/workspaces/$workspaceId',
+    });
+  });
+
+  it('records a workflow breadcrumb when override clear starts', async () => {
+    const user = userEvent.setup();
+
+    renderForm({
+      limits: null,
+      features: null,
+      quotas: null,
+      notes: null,
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: /clear all overrides/i })
+    );
+
+    expect(recordWorkflowBreadcrumbMock).toHaveBeenCalledWith({
+      category: 'admin',
+      operation: 'admin.entitlement_override.cleared',
+      message: 'admin entitlement override clear started',
+      workspaceId: 'ws_123',
+      route: '/workspaces/$workspaceId',
     });
   });
 });

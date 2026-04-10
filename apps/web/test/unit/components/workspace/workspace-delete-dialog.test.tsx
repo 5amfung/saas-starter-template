@@ -9,6 +9,10 @@ const { setActiveMock, assignMock } = vi.hoisted(() => ({
   assignMock: vi.fn(),
 }));
 
+const { recordWorkflowBreadcrumbMock } = vi.hoisted(() => ({
+  recordWorkflowBreadcrumbMock: vi.fn(),
+}));
+
 vi.mock('@workspace/auth/client', () => ({
   authClient: {
     organization: {
@@ -22,6 +26,10 @@ vi.mock('sonner', () => ({
     success: vi.fn(),
     error: vi.fn(),
   },
+}));
+
+vi.mock('@/lib/observability', () => ({
+  recordWorkflowBreadcrumb: recordWorkflowBreadcrumbMock,
 }));
 
 const defaultProps = {
@@ -128,6 +136,13 @@ describe('WorkspaceDeleteDialog', () => {
     await user.click(screen.getByRole('button', { name: /delete workspace/i }));
     await user.type(screen.getByPlaceholderText('DELETE'), 'DELETE');
     await user.click(screen.getByRole('button', { name: /confirm delete/i }));
+
+    expect(recordWorkflowBreadcrumbMock).toHaveBeenCalledWith({
+      category: 'workspace',
+      operation: 'workspace.delete.confirmed',
+      message: 'workspace delete confirmed',
+      workspaceId: 'ws-123',
+    });
 
     await waitFor(() => {
       expect(defaultProps.onDelete).toHaveBeenCalledTimes(1);

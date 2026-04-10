@@ -7,12 +7,14 @@ import {
 } from '@/admin/users.functions';
 
 const {
+  loggerMock,
   requireCurrentAdminAppCapabilityMock,
   listAdminUsersMock,
   getAdminUserDetailMock,
   updateAdminUserMock,
   deleteAdminUserMock,
 } = vi.hoisted(() => ({
+  loggerMock: vi.fn(),
   requireCurrentAdminAppCapabilityMock: vi.fn(),
   listAdminUsersMock: vi.fn(),
   getAdminUserDetailMock: vi.fn(),
@@ -24,6 +26,10 @@ vi.mock('@tanstack/react-start', () => createServerFnMock());
 
 vi.mock('@/policy/admin-app-capabilities.server', () => ({
   requireCurrentAdminAppCapability: requireCurrentAdminAppCapabilityMock,
+}));
+
+vi.mock('@/lib/logger', () => ({
+  logger: loggerMock,
 }));
 
 vi.mock('@/admin/users.server', () => ({
@@ -149,6 +155,34 @@ describe('updateUser', () => {
       })
     );
   });
+
+  it('logs an admin user update operation before delegating', async () => {
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
+    updateAdminUserMock.mockResolvedValueOnce({ success: true });
+
+    await updateUser({
+      data: {
+        userId: 'user-1',
+        name: 'Alice',
+        email: 'alice@example.com',
+        emailVerified: true,
+        image: '',
+        role: 'user',
+        banned: false,
+        banReason: '',
+        banExpires: '',
+      },
+    });
+
+    expect(loggerMock).toHaveBeenCalledWith(
+      'info',
+      'admin user update started',
+      {
+        operation: 'admin.user.updated',
+        userId: 'user-1',
+      }
+    );
+  });
 });
 
 describe('deleteUser', () => {
@@ -176,5 +210,21 @@ describe('deleteUser', () => {
       'canDeleteUsers'
     );
     expect(deleteAdminUserMock).toHaveBeenCalledWith('user-1');
+  });
+
+  it('logs an admin user delete operation before delegating', async () => {
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
+    deleteAdminUserMock.mockResolvedValueOnce({ success: true });
+
+    await deleteUser({ data: { userId: 'user-1' } });
+
+    expect(loggerMock).toHaveBeenCalledWith(
+      'info',
+      'admin user delete started',
+      {
+        operation: 'admin.user.deleted',
+        userId: 'user-1',
+      }
+    );
   });
 });

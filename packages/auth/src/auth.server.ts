@@ -15,6 +15,8 @@ import {
   user as userTable,
 } from '@workspace/db-schema';
 import { assertInviteAllowed } from '@workspace/billing';
+import { AUTH_OPERATIONS } from '@workspace/logging/operations';
+import { redactAuthMetadata } from '@workspace/logging/redaction';
 import { createAuthEmails } from './auth-emails.server';
 import { isDuplicateOrganizationError, isSignInPath } from './auth-utils';
 import { createBillingHelpers } from './billing.server';
@@ -156,7 +158,20 @@ export function createAuth(config: AuthConfig) {
       after: createAuthMiddleware(async (ctx) => {
         if (!isSignInPath(ctx.path)) return;
         const newSession = ctx.context.newSession;
-        if (!newSession) return;
+
+        if (!newSession) {
+          const body = (ctx.body ?? {}) as Record<string, unknown>;
+          const signInMetadata = redactAuthMetadata({
+            route: ctx.path,
+            ...(typeof body.email === 'string' ? { email: body.email } : {}),
+          });
+
+          log('warn', 'sign-in failed', {
+            operation: AUTH_OPERATIONS.signInFailed,
+            ...signInMetadata,
+          });
+          return;
+        }
 
         await config.db
           .update(userTable)

@@ -1,3 +1,6 @@
+import { describe, expect, it, vi } from 'vitest';
+import { AUTH_OPERATIONS } from '@workspace/logging/operations';
+import { redactAuthMetadata } from '@workspace/logging/redaction';
 import type { AuthConfig } from '../../src/auth.server';
 
 // ---------------------------------------------------------------------------
@@ -167,6 +170,7 @@ interface BetterAuthConfig {
   hooks?: {
     after?: (ctx: {
       path: string;
+      body?: Record<string, unknown>;
       context: { newSession?: { user: { id: string } } };
     }) => Promise<void>;
   };
@@ -189,6 +193,40 @@ function getOrganizationPluginOpts() {
 // ---------------------------------------------------------------------------
 // Tests.
 // ---------------------------------------------------------------------------
+
+describe('redactAuthMetadata', () => {
+  it('removes password and token-like fields', () => {
+    expect(
+      redactAuthMetadata({
+        email: 'user@example.com',
+        password: 'secret',
+        token: 'token-value',
+      })
+    ).toEqual({
+      email: '[REDACTED_EMAIL]',
+    });
+  });
+
+  it('keeps non-sensitive fields and removes alternate secret keys', () => {
+    expect(
+      redactAuthMetadata({
+        requestId: 'req_123',
+        workspaceId: 'ws_123',
+        email: 'user@example.com',
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+        authorization: 'Bearer abc',
+        cookie: 'session=abc',
+        newPassword: 'new-secret',
+        confirmPassword: 'new-secret',
+      })
+    ).toEqual({
+      requestId: 'req_123',
+      workspaceId: 'ws_123',
+      email: '[REDACTED_EMAIL]',
+    });
+  });
+});
 
 describe('createAuth', () => {
   beforeEach(() => {
@@ -618,6 +656,39 @@ describe('createAuth', () => {
         'sk_test',
         expect.any(Object)
       );
+    });
+
+    it('logs sign-in failures without leaking auth credentials', async () => {
+      const createAuth = await importCreateAuth();
+      const logger = vi.fn();
+
+      createAuth(buildTestConfig({ logger }));
+      const config = betterAuthSpy.mock.calls[0][0] as BetterAuthConfig;
+      const hook = config.hooks!.after!;
+
+      await hook({
+        path: '/sign-in/email',
+        body: {
+          email: 'user@example.com',
+          password: 'super-secret',
+          token: 'token-value',
+        },
+        context: { newSession: undefined },
+      });
+
+      expect(logger).toHaveBeenCalledWith(
+        'warn',
+        'sign-in failed',
+        expect.objectContaining({
+          operation: AUTH_OPERATIONS.signInFailed,
+          route: '/sign-in/email',
+          email: '[REDACTED_EMAIL]',
+        })
+      );
+
+      const meta = logger.mock.calls[0][2] as Record<string, unknown>;
+      expect(meta).not.toHaveProperty('password');
+      expect(meta).not.toHaveProperty('token');
     });
   });
 });

@@ -5,6 +5,9 @@ import { authClient } from '@workspace/auth/client';
 import { toast } from 'sonner';
 import { Button } from '@workspace/ui/components/button';
 import { TypedConfirmDialog } from '@/components/shared/typed-confirm-dialog';
+import { recordWorkflowBreadcrumb } from '@/lib/observability';
+
+const WORKSPACE_DELETE_CONFIRMATION_OPERATION = 'workspace.delete.confirmed';
 
 const CONFIRMATION_TEXT = 'DELETE';
 
@@ -16,6 +19,7 @@ type WorkspaceDeleteDialogProps = {
 };
 
 export function WorkspaceDeleteDialog({
+  workspaceId,
   workspaceName,
   isDisabled,
   onDelete,
@@ -72,6 +76,12 @@ export function WorkspaceDeleteDialog({
         isPending={deleteMutation.isPending}
         confirmVariant="destructive"
         onConfirm={async () => {
+          recordWorkflowBreadcrumb({
+            category: 'workspace',
+            operation: WORKSPACE_DELETE_CONFIRMATION_OPERATION,
+            message: 'workspace delete confirmed',
+            workspaceId,
+          });
           await deleteMutation.mutateAsync();
         }}
       />

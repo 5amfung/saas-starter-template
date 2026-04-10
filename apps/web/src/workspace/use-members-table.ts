@@ -25,6 +25,11 @@ import {
   removeWorkspaceMember,
   transferWorkspaceOwnership,
 } from '@/workspace/workspace-members.functions';
+import { recordWorkflowBreadcrumb } from '@/lib/observability';
+
+const WORKSPACE_MEMBER_REMOVAL_REQUEST_OPERATION =
+  'workspace.member.removal.requested';
+const WORKSPACE_LEAVE_REQUEST_OPERATION = 'workspace.leave.requested';
 
 export function useMembersTable(
   workspaceId: string,
@@ -184,6 +189,13 @@ export function useMembersTable(
     onPageSizeChange: setPageSize,
     onRemoveMember: async (memberId: string) => {
       try {
+        recordWorkflowBreadcrumb({
+          category: 'workspace',
+          operation: WORKSPACE_MEMBER_REMOVAL_REQUEST_OPERATION,
+          message: 'workspace member removal requested',
+          userId: currentUserId ?? undefined,
+          workspaceId,
+        });
         await withPendingId(setRemovingMemberId, memberId, async () => {
           await removeMemberMutation.mutateAsync(memberId);
         });
@@ -209,6 +221,13 @@ export function useMembersTable(
       }
     },
     onLeave: async () => {
+      recordWorkflowBreadcrumb({
+        category: 'workspace',
+        operation: WORKSPACE_LEAVE_REQUEST_OPERATION,
+        message: 'workspace leave requested',
+        userId: currentUserId ?? undefined,
+        workspaceId,
+      });
       await leaveMutation.mutateAsync();
     },
   };

@@ -7,12 +7,14 @@ import {
 } from '@/admin/workspaces.functions';
 
 const {
+  loggerMock,
   requireCurrentAdminAppCapabilityMock,
   listWorkspacesWithPlanMock,
   getWorkspaceDetailMock,
   upsertEntitlementOverridesMock,
   deleteEntitlementOverridesMock,
 } = vi.hoisted(() => ({
+  loggerMock: vi.fn(),
   requireCurrentAdminAppCapabilityMock: vi.fn(),
   listWorkspacesWithPlanMock: vi.fn(),
   getWorkspaceDetailMock: vi.fn(),
@@ -24,6 +26,10 @@ vi.mock('@tanstack/react-start', () => createServerFnMock());
 
 vi.mock('@/policy/admin-app-capabilities.server', () => ({
   requireCurrentAdminAppCapability: requireCurrentAdminAppCapabilityMock,
+}));
+
+vi.mock('@/lib/logger', () => ({
+  logger: loggerMock,
 }));
 
 vi.mock('@/admin/workspaces.server', () => ({
@@ -153,6 +159,27 @@ describe('saveEntitlementOverrides', () => {
     });
     expect(result).toEqual({ success: true });
   });
+
+  it('logs an entitlement override save operation before delegating', async () => {
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
+    upsertEntitlementOverridesMock.mockResolvedValueOnce(undefined);
+
+    await saveEntitlementOverrides({
+      data: {
+        workspaceId: 'ws-1',
+        limits: { members: 50 },
+      },
+    });
+
+    expect(loggerMock).toHaveBeenCalledWith(
+      'info',
+      'admin entitlement override save started',
+      {
+        operation: 'admin.entitlement_override.saved',
+        workspaceId: 'ws-1',
+      }
+    );
+  });
 });
 
 describe('clearEntitlementOverrides', () => {
@@ -186,5 +213,26 @@ describe('clearEntitlementOverrides', () => {
       data: { workspaceId: 'ws-1' },
     });
     expect(result).toEqual({ success: true });
+  });
+
+  it('logs an entitlement override clear operation before delegating', async () => {
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
+    deleteEntitlementOverridesMock.mockResolvedValueOnce(undefined);
+
+    await clearEntitlementOverrides({
+      data: { workspaceId: 'ws-1' },
+    });
+
+    expect(loggerMock).toHaveBeenCalledWith(
+      'info',
+      'admin entitlement override clear started',
+      {
+        operation: 'admin.entitlement_override.cleared',
+        workspaceId: 'ws-1',
+      }
+    );
+    expect(loggerMock.mock.invocationCallOrder[0]).toBeLessThan(
+      deleteEntitlementOverridesMock.mock.invocationCallOrder[0]
+    );
   });
 });

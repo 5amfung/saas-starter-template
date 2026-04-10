@@ -19,6 +19,9 @@ import {
   SelectValue,
 } from '@workspace/ui/components/select';
 import type { InviteRole } from '@/workspace/workspace-members.types';
+import { recordWorkflowBreadcrumb } from '@/lib/observability';
+
+const WORKSPACE_INVITE_REQUEST_OPERATION = 'workspace.member.invite.requested';
 
 interface WorkspaceInviteDialogProps {
   open: boolean;
@@ -97,6 +100,11 @@ export function WorkspaceInviteDialog({
             disabled={isPending}
             onClick={(event) => {
               event.preventDefault();
+              recordWorkflowBreadcrumb({
+                category: 'workspace',
+                operation: WORKSPACE_INVITE_REQUEST_OPERATION,
+                message: 'workspace member invite requested',
+              });
               onSubmit();
             }}
           >

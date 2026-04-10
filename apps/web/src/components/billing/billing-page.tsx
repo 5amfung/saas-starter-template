@@ -2,14 +2,15 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getFreePlan, getPlanById } from '@workspace/billing';
-import { Card, CardContent } from '@workspace/ui/components/card';
 import { SESSION_QUERY_KEY } from '@workspace/components/hooks';
+import { Card, CardContent } from '@workspace/ui/components/card';
 import { BillingDowngradeBanner } from './billing-downgrade-banner';
 import { BillingDowngradeConfirmDialog } from './billing-downgrade-confirm-dialog';
 import { BillingInvoiceTable } from './billing-invoice-table';
 import { BillingManagePlanDialog } from './billing-manage-plan-dialog';
 import { BillingPlanCards } from './billing-plan-cards';
 import type { PlanDefinition, PlanId } from '@workspace/billing';
+import { recordWorkflowBreadcrumb } from '@/lib/observability';
 import {
   cancelWorkspaceSubscription,
   createWorkspaceCheckoutSession,
@@ -73,6 +74,13 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
       }),
     onMutate: ({ planId }) => {
       setUpgradingPlanId(planId);
+      recordWorkflowBreadcrumb({
+        category: 'billing',
+        operation: 'billing.checkout.started',
+        message: 'billing checkout started',
+        workspaceId,
+        route: '/billing',
+      });
     },
     onSuccess: (result) => {
       if (result.url) {

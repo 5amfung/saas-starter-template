@@ -32,6 +32,12 @@
       "@workspace/logging/request-context": [
         "../../packages/logging/src/request-context.ts"
       ],
+      "@workspace/logging/operations": [
+        "../../packages/logging/src/operations.ts"
+      ],
+      "@workspace/logging/redaction": [
+        "../../packages/logging/src/redaction.ts"
+      ],
       "@workspace/test-utils": ["../../packages/test-utils/src/index.ts"]
     }
   }

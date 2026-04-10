@@ -18,8 +18,10 @@ import {
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { deleteUser } from '@/admin/users.functions';
+import { recordWorkflowBreadcrumb } from '@/lib/observability';
 
 const CONFIRMATION_TEXT = 'DELETE';
+const ADMIN_USER_DELETE_OPERATION = 'admin.user.deleted';
 
 interface AdminDeleteUserDialogProps {
   userId: string;
@@ -42,6 +44,15 @@ export function AdminDeleteUserDialog({
   const mutation = useMutation({
     mutationFn: async () => {
       await deleteUser({ data: { userId } });
+    },
+    onMutate: () => {
+      recordWorkflowBreadcrumb({
+        category: 'admin',
+        operation: ADMIN_USER_DELETE_OPERATION,
+        message: 'admin user delete started',
+        userId,
+        route: '/users/$userId',
+      });
     },
     onSuccess: () => {
       toast.success('User deleted successfully.');

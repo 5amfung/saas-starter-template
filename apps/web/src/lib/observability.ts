@@ -37,3 +37,26 @@ export function recordUserActionBreadcrumb(input: {
     level: 'info',
   });
 }
+
+export function recordWorkflowBreadcrumb(input: {
+  category: string;
+  operation: string;
+  message: string;
+  requestId?: string;
+  userId?: string;
+  workspaceId?: string;
+  route?: string;
+}) {
+  Sentry.addBreadcrumb({
+    category: input.category,
+    message: input.message,
+    level: 'info',
+    data: {
+      operation: input.operation,
+      requestId: input.requestId,
+      userId: input.userId,
+      workspaceId: input.workspaceId,
+      route: input.route,
+    },
+  });
+}

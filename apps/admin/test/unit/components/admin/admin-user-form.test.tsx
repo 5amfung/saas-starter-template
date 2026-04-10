@@ -4,12 +4,17 @@ import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
 import { AdminUserForm } from '@/components/admin/admin-user-form';
 
-const { updateUserMock } = vi.hoisted(() => ({
+const { updateUserMock, recordWorkflowBreadcrumbMock } = vi.hoisted(() => ({
   updateUserMock: vi.fn(),
+  recordWorkflowBreadcrumbMock: vi.fn(),
 }));
 
 vi.mock('@/admin/users.functions', () => ({
   updateUser: updateUserMock,
+}));
+
+vi.mock('@/lib/observability', () => ({
+  recordWorkflowBreadcrumb: recordWorkflowBreadcrumbMock,
 }));
 
 const mockUser = {
@@ -89,6 +94,29 @@ describe('AdminUserForm', () => {
           }),
         })
       );
+    });
+  });
+
+  it('records a workflow breadcrumb when the update mutation starts', async () => {
+    updateUserMock.mockResolvedValue({});
+    const user = userEvent.setup();
+    renderWithProviders(<AdminUserForm user={mockUser} />);
+
+    const nameInput = screen.getByDisplayValue('Test User');
+    await user.clear(nameInput);
+    await user.type(nameInput, 'Updated Name');
+    await user.tab();
+
+    const saveButton = screen.getByRole('button', { name: /save changes/i });
+    await waitFor(() => expect(saveButton).toBeEnabled());
+    await user.click(saveButton);
+
+    expect(recordWorkflowBreadcrumbMock).toHaveBeenCalledWith({
+      category: 'admin',
+      operation: 'admin.user.updated',
+      message: 'admin user update started',
+      userId: 'user-1',
+      route: '/users/$userId',
     });
   });
 

@@ -4,6 +4,8 @@ import { createServerFn } from '@tanstack/react-start';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { redirect } from '@tanstack/react-router';
 import * as z from 'zod';
+import { WORKSPACE_OPERATIONS } from '@workspace/logging/operations';
+import { logger } from '@/lib/logger';
 import { getAuth, getDb } from '@/init';
 import { requireWorkspaceCapabilityForUser } from '@/policy/workspace-capabilities.server';
 import {
@@ -60,7 +62,7 @@ export const inviteWorkspaceMember = createServerFn()
       'canInviteMembers'
     );
 
-    return getAuth().api.createInvitation({
+    const invitation = await getAuth().api.createInvitation({
       body: {
         email: data.email,
         role: data.role,
@@ -69,6 +71,17 @@ export const inviteWorkspaceMember = createServerFn()
       },
       headers,
     });
+
+    logger('info', 'workspace member invited', {
+      operation: WORKSPACE_OPERATIONS.memberInvited,
+      workspaceId: data.workspaceId,
+      userId: session.user.id,
+      email: data.email,
+      role: data.role,
+      resend: data.resend ?? false,
+    });
+
+    return invitation;
   });
 
 export const cancelWorkspaceInvitation = createServerFn()
@@ -110,13 +123,22 @@ export const removeWorkspaceMember = createServerFn()
       data.memberId
     );
 
-    return getAuth().api.removeMember({
+    const result = await getAuth().api.removeMember({
       body: {
         memberIdOrEmail: data.memberId,
         organizationId: data.workspaceId,
       },
       headers,
     });
+
+    logger('info', 'workspace member removed', {
+      operation: WORKSPACE_OPERATIONS.memberRemoved,
+      workspaceId: data.workspaceId,
+      userId: session.user.id,
+      memberId: data.memberId,
+    });
+
+    return result;
   });
 
 export const transferWorkspaceOwnership = createServerFn()
@@ -233,6 +255,13 @@ export const transferWorkspaceOwnership = createServerFn()
       }
     });
 
+    logger('info', 'workspace ownership transferred', {
+      operation: WORKSPACE_OPERATIONS.ownershipTransferred,
+      workspaceId: data.workspaceId,
+      userId: session.user.id,
+      memberId: data.memberId,
+    });
+
     return {
       workspaceId: data.workspaceId,
       memberId: data.memberId,
@@ -251,8 +280,16 @@ export const leaveWorkspace = createServerFn()
       session.user.id
     );
 
-    return getAuth().api.leaveOrganization({
+    const result = await getAuth().api.leaveOrganization({
       body: { organizationId: data.workspaceId },
       headers,
     });
+
+    logger('info', 'workspace member left', {
+      operation: WORKSPACE_OPERATIONS.memberRemoved,
+      workspaceId: data.workspaceId,
+      userId: session.user.id,
+    });
+
+    return result;
   });

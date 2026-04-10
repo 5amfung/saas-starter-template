@@ -4,6 +4,14 @@ import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
 import { WorkspaceTransferOwnershipDialog } from '@/components/workspace/workspace-transfer-ownership-dialog';
 
+const { recordWorkflowBreadcrumbMock } = vi.hoisted(() => ({
+  recordWorkflowBreadcrumbMock: vi.fn(),
+}));
+
+vi.mock('@/lib/observability', () => ({
+  recordWorkflowBreadcrumb: recordWorkflowBreadcrumbMock,
+}));
+
 const defaultProps = {
   open: true,
   workspaceName: 'Acme Workspace',
@@ -81,6 +89,12 @@ describe('WorkspaceTransferOwnershipDialog', () => {
     await user.click(
       screen.getByRole('button', { name: /transfer ownership/i })
     );
+
+    expect(recordWorkflowBreadcrumbMock).toHaveBeenCalledWith({
+      category: 'workspace',
+      operation: 'workspace.ownership.transfer.requested',
+      message: 'workspace ownership transfer requested',
+    });
 
     await waitFor(() => {
       expect(defaultProps.onTransfer).toHaveBeenCalledTimes(1);

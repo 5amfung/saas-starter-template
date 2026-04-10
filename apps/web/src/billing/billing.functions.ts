@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import * as z from 'zod';
 import { PLANS } from '@workspace/billing';
+import { BILLING_OPERATIONS } from '@workspace/logging/operations';
 import type { PlanId } from '@workspace/billing';
 import {
   cancelWorkspaceSubscription as cancelWorkspaceSubscriptionServer,
@@ -14,6 +15,7 @@ import {
   reactivateWorkspaceSubscription as reactivateWorkspaceSubscriptionServer,
   requireVerifiedSession,
 } from '@/billing/billing.server';
+import { logger } from '@/lib/logger';
 import { requireWorkspaceCapabilityForUser } from '@/policy/workspace-capabilities.server';
 import { getAuth } from '@/init';
 
@@ -73,6 +75,13 @@ export const createWorkspaceCheckoutSession = createServerFn()
       data.workspaceId,
       'canManageBilling'
     );
+    logger('info', 'billing checkout started', {
+      operation: BILLING_OPERATIONS.checkoutStarted,
+      workspaceId: data.workspaceId,
+      planId: data.planId,
+      annual: data.annual,
+      subscriptionId: data.subscriptionId,
+    });
     return createCheckoutForWorkspace(
       headers,
       data.workspaceId,

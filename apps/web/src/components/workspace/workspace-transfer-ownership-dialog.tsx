@@ -12,6 +12,10 @@ import {
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog';
 import { Input } from '@workspace/ui/components/input';
+import { recordWorkflowBreadcrumb } from '@/lib/observability';
+
+const WORKSPACE_TRANSFER_REQUEST_OPERATION =
+  'workspace.ownership.transfer.requested';
 
 const CONFIRMATION_TEXT = 'TRANSFER';
 
@@ -90,6 +94,11 @@ export function WorkspaceTransferOwnershipDialog({
             disabled={!isConfirmed || isPending}
             onClick={(event) => {
               event.preventDefault();
+              recordWorkflowBreadcrumb({
+                category: 'workspace',
+                operation: WORKSPACE_TRANSFER_REQUEST_OPERATION,
+                message: 'workspace ownership transfer requested',
+              });
               void onTransfer?.();
             }}
           >

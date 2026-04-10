@@ -11,6 +11,10 @@ import {
   reactivateWorkspaceSubscription,
 } from '@/billing/billing.functions';
 
+const { logger } = vi.hoisted(() => ({
+  logger: vi.fn(),
+}));
+
 const {
   getAuthMock,
   requireVerifiedSessionMock,
@@ -62,6 +66,10 @@ vi.mock('@/policy/workspace-capabilities.server', () => ({
 
 vi.mock('@/init', () => ({
   getAuth: getAuthMock,
+}));
+
+vi.mock('@/lib/logger', () => ({
+  logger,
 }));
 
 beforeEach(() => {
@@ -207,6 +215,13 @@ describe('createWorkspaceCheckoutSession', () => {
       true,
       undefined
     );
+    expect(logger).toHaveBeenCalledWith('info', 'billing checkout started', {
+      operation: 'billing.checkout.started',
+      workspaceId: TEST_WORKSPACE_ID,
+      planId: 'pro',
+      annual: true,
+      subscriptionId: undefined,
+    });
   });
 
   it('returns the checkout result', async () => {

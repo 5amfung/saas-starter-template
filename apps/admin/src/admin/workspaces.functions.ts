@@ -8,6 +8,12 @@ import {
   upsertEntitlementOverrides,
 } from '@/admin/workspaces.server';
 import { entitlementOverrideSchema } from '@/admin/workspaces.schemas';
+import { logger } from '@/lib/logger';
+
+const ADMIN_ENTITLEMENT_OVERRIDE_SAVE_OPERATION =
+  'admin.entitlement_override.saved';
+const ADMIN_ENTITLEMENT_OVERRIDE_CLEAR_OPERATION =
+  'admin.entitlement_override.cleared';
 
 // --- List Workspaces ---
 
@@ -42,6 +48,10 @@ export const saveEntitlementOverrides = createServerFn()
   .inputValidator(entitlementOverrideSchema)
   .handler(async ({ data }) => {
     await requireCurrentAdminAppCapability('canManageEntitlementOverrides');
+    logger('info', 'admin entitlement override save started', {
+      operation: ADMIN_ENTITLEMENT_OVERRIDE_SAVE_OPERATION,
+      workspaceId: data.workspaceId,
+    });
     await upsertEntitlementOverrides(data);
     return { success: true };
   });
@@ -52,6 +62,10 @@ export const clearEntitlementOverrides = createServerFn()
   .inputValidator(z.object({ workspaceId: z.string() }))
   .handler(async ({ data }) => {
     await requireCurrentAdminAppCapability('canManageEntitlementOverrides');
+    logger('info', 'admin entitlement override clear started', {
+      operation: ADMIN_ENTITLEMENT_OVERRIDE_CLEAR_OPERATION,
+      workspaceId: data.workspaceId,
+    });
     await deleteEntitlementOverrides(data.workspaceId);
     return { success: true };
   });

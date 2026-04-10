@@ -11,7 +11,11 @@ import {
   listAdminUsers,
   updateAdminUser,
 } from './users.server';
+import { logger } from '@/lib/logger';
 import { requireCurrentAdminAppCapability } from '@/policy/admin-app-capabilities.server';
+
+const ADMIN_USER_UPDATE_OPERATION = 'admin.user.updated';
+const ADMIN_USER_DELETE_OPERATION = 'admin.user.deleted';
 
 export const listUsers = createServerFn()
   .inputValidator(adminListUsersSchema)
@@ -31,6 +35,10 @@ export const updateUser = createServerFn()
   .inputValidator(adminUpdateUserSchema)
   .handler(async ({ data }) => {
     await requireCurrentAdminAppCapability('canManageUsers');
+    logger('info', 'admin user update started', {
+      operation: ADMIN_USER_UPDATE_OPERATION,
+      userId: data.userId,
+    });
     return updateAdminUser(data);
   });
 
@@ -38,5 +46,9 @@ export const deleteUser = createServerFn()
   .inputValidator(adminDeleteUserSchema)
   .handler(async ({ data }) => {
     await requireCurrentAdminAppCapability('canDeleteUsers');
+    logger('info', 'admin user delete started', {
+      operation: ADMIN_USER_DELETE_OPERATION,
+      userId: data.userId,
+    });
     return deleteAdminUser(data.userId);
   });

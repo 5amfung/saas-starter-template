@@ -1,23 +1,43 @@
 import { APIError } from 'better-auth/api';
+import { WORKSPACE_OPERATIONS } from '@workspace/logging/operations';
 import { createServerFnMock } from '../../mocks/server-fn';
-import { transferWorkspaceOwnership } from '@/workspace/workspace-members.functions';
+import {
+  inviteWorkspaceMember,
+  leaveWorkspace,
+  removeWorkspaceMember,
+  transferWorkspaceOwnership,
+} from '@/workspace/workspace-members.functions';
 
 const {
+  loggerMock,
   getAuthMock,
   getDbMock,
   getSessionMock,
   getRequestHeadersMock,
+  requireWorkspaceCapabilityForUserMock,
+  requireWorkspaceLeaveAllowedForUserMock,
+  requireWorkspaceMemberRemovalAllowedForUserMock,
   requireWorkspaceOwnershipTransferAllowedForUserMock,
   getWorkspaceMemberByIdMock,
   getWorkspaceMemberForUserMock,
+  createInvitationMock,
+  removeMemberMock,
+  leaveOrganizationMock,
 } = vi.hoisted(() => ({
+  loggerMock: vi.fn(),
   getAuthMock: vi.fn(),
   getDbMock: vi.fn(),
   getSessionMock: vi.fn(),
   getRequestHeadersMock: vi.fn().mockReturnValue(new Headers()),
+  requireWorkspaceCapabilityForUserMock: vi.fn(),
+  requireWorkspaceLeaveAllowedForUserMock: vi.fn(),
+  requireWorkspaceMemberRemovalAllowedForUserMock: vi.fn(),
   requireWorkspaceOwnershipTransferAllowedForUserMock: vi.fn(),
   getWorkspaceMemberByIdMock: vi.fn(),
   getWorkspaceMemberForUserMock: vi.fn(),
+  createInvitationMock: vi.fn(),
+  removeMemberMock: vi.fn(),
+  leaveOrganizationMock: vi.fn(),
 }));
 
 vi.mock('@tanstack/react-start', () => createServerFnMock());
@@ -31,7 +51,18 @@ vi.mock('@/init', () => ({
   getDb: getDbMock,
 }));
 
+vi.mock('@/lib/logger', () => ({
+  logger: loggerMock,
+}));
+
+vi.mock('@/policy/workspace-capabilities.server', () => ({
+  requireWorkspaceCapabilityForUser: requireWorkspaceCapabilityForUserMock,
+}));
+
 vi.mock('@/policy/workspace-lifecycle-capabilities.server', () => ({
+  requireWorkspaceLeaveAllowedForUser: requireWorkspaceLeaveAllowedForUserMock,
+  requireWorkspaceMemberRemovalAllowedForUser:
+    requireWorkspaceMemberRemovalAllowedForUserMock,
   requireWorkspaceOwnershipTransferAllowedForUser:
     requireWorkspaceOwnershipTransferAllowedForUserMock,
 }));
@@ -75,8 +106,99 @@ describe('workspace-members.functions', () => {
     getAuthMock.mockReturnValue({
       api: {
         getSession: getSessionMock,
+        createInvitation: createInvitationMock,
+        removeMember: removeMemberMock,
+        leaveOrganization: leaveOrganizationMock,
       },
     });
+  });
+
+  it('logs workspace invitation events on success', async () => {
+    getSessionMock.mockResolvedValueOnce({
+      user: { id: 'user-1', emailVerified: true },
+    });
+    requireWorkspaceCapabilityForUserMock.mockResolvedValueOnce(undefined);
+    createInvitationMock.mockResolvedValueOnce({ id: 'inv-1' });
+
+    await expect(
+      inviteWorkspaceMember({
+        data: {
+          workspaceId: 'ws-1',
+          email: 'jane@example.com',
+          role: 'admin',
+        },
+      })
+    ).resolves.toEqual({ id: 'inv-1' });
+
+    expect(loggerMock).toHaveBeenCalledWith(
+      'info',
+      'workspace member invited',
+      expect.objectContaining({
+        operation: WORKSPACE_OPERATIONS.memberInvited,
+        workspaceId: 'ws-1',
+        userId: 'user-1',
+        email: 'jane@example.com',
+        role: 'admin',
+        resend: false,
+      })
+    );
+  });
+
+  it('logs workspace member removals on success', async () => {
+    getSessionMock.mockResolvedValueOnce({
+      user: { id: 'user-1', emailVerified: true },
+    });
+    requireWorkspaceCapabilityForUserMock.mockResolvedValueOnce(undefined);
+    requireWorkspaceMemberRemovalAllowedForUserMock.mockResolvedValueOnce(
+      undefined
+    );
+    removeMemberMock.mockResolvedValueOnce({ success: true });
+
+    await expect(
+      removeWorkspaceMember({
+        data: {
+          workspaceId: 'ws-1',
+          memberId: 'member-2',
+        },
+      })
+    ).resolves.toEqual({ success: true });
+
+    expect(loggerMock).toHaveBeenCalledWith(
+      'info',
+      'workspace member removed',
+      expect.objectContaining({
+        operation: WORKSPACE_OPERATIONS.memberRemoved,
+        workspaceId: 'ws-1',
+        userId: 'user-1',
+        memberId: 'member-2',
+      })
+    );
+  });
+
+  it('logs workspace leave events on success', async () => {
+    getSessionMock.mockResolvedValueOnce({
+      user: { id: 'user-1', emailVerified: true },
+    });
+    requireWorkspaceLeaveAllowedForUserMock.mockResolvedValueOnce(undefined);
+    leaveOrganizationMock.mockResolvedValueOnce({ success: true });
+
+    await expect(
+      leaveWorkspace({
+        data: {
+          workspaceId: 'ws-1',
+        },
+      })
+    ).resolves.toEqual({ success: true });
+
+    expect(loggerMock).toHaveBeenCalledWith(
+      'info',
+      'workspace member left',
+      expect.objectContaining({
+        operation: WORKSPACE_OPERATIONS.memberRemoved,
+        workspaceId: 'ws-1',
+        userId: 'user-1',
+      })
+    );
   });
 
   it('transfers ownership inside a single database transaction', async () => {
@@ -129,6 +251,16 @@ describe('workspace-members.functions', () => {
     );
     expect(transactionMock).toHaveBeenCalledTimes(1);
     expect(tx.execute).toHaveBeenCalledTimes(3);
+    expect(loggerMock).toHaveBeenCalledWith(
+      'info',
+      'workspace ownership transferred',
+      expect.objectContaining({
+        operation: WORKSPACE_OPERATIONS.ownershipTransferred,
+        workspaceId: 'ws-1',
+        userId: 'user-1',
+        memberId: 'member-target',
+      })
+    );
   });
 
   it('throws when the ownership promotion update cannot start', async () => {

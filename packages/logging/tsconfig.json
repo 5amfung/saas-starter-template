@@ -5,7 +5,9 @@
     "paths": {
       "@workspace/logging": ["./src/logger.ts"],
       "@workspace/logging/server": ["./src/request-logger.server.ts"],
-      "@workspace/logging/request-context": ["./src/request-context.ts"]
+      "@workspace/logging/request-context": ["./src/request-context.ts"],
+      "@workspace/logging/operations": ["./src/operations.ts"],
+      "@workspace/logging/redaction": ["./src/redaction.ts"]
     }
   },
   "include": ["src/**/*.ts", "eslint.config.ts"]

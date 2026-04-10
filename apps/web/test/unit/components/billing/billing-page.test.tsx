@@ -16,6 +16,7 @@ const {
   cancelWorkspaceSubscription,
   reactivateWorkspaceSubscription,
   toast,
+  recordWorkflowBreadcrumb,
 } = vi.hoisted(() => ({
   getWorkspaceBillingData: vi.fn(),
   getWorkspaceInvoices: vi.fn(),
@@ -24,6 +25,7 @@ const {
   downgradeWorkspaceSubscription: vi.fn(),
   cancelWorkspaceSubscription: vi.fn(),
   reactivateWorkspaceSubscription: vi.fn(),
+  recordWorkflowBreadcrumb: vi.fn(),
   toast: {
     success: vi.fn(),
     error: vi.fn(),
@@ -43,6 +45,10 @@ vi.mock('@/billing/billing.functions', () => ({
 }));
 
 vi.mock('sonner', () => ({ toast }));
+
+vi.mock('@/lib/observability', () => ({
+  recordWorkflowBreadcrumb,
+}));
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -334,6 +340,14 @@ describe('BillingPage', () => {
 
     await waitFor(() => {
       expect(window.location.href).toBe('https://checkout.stripe.com/test123');
+    });
+
+    expect(recordWorkflowBreadcrumb).toHaveBeenCalledWith({
+      category: 'billing',
+      operation: 'billing.checkout.started',
+      message: 'billing checkout started',
+      workspaceId: TEST_WORKSPACE_ID,
+      route: '/billing',
     });
   });
 

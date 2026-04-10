@@ -4,6 +4,14 @@ import userEvent from '@testing-library/user-event';
 import type { InviteRole } from '@/workspace/workspace-members.types';
 import { WorkspaceInviteDialog } from '@/components/workspace/workspace-invite-dialog';
 
+const { recordWorkflowBreadcrumbMock } = vi.hoisted(() => ({
+  recordWorkflowBreadcrumbMock: vi.fn(),
+}));
+
+vi.mock('@/lib/observability', () => ({
+  recordWorkflowBreadcrumb: recordWorkflowBreadcrumbMock,
+}));
+
 const DEFAULT_ROLES: ReadonlyArray<InviteRole> = ['member', 'admin'];
 
 const defaultProps = {
@@ -56,6 +64,11 @@ describe('WorkspaceInviteDialog', () => {
     await user.click(screen.getByRole('button', { name: /send invitation/i }));
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(recordWorkflowBreadcrumbMock).toHaveBeenCalledWith({
+      category: 'workspace',
+      operation: 'workspace.member.invite.requested',
+      message: 'workspace member invite requested',
+    });
   });
 
   it('disables buttons when isPending is true', () => {

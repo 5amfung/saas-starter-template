@@ -4,10 +4,12 @@ import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
 import { AdminDeleteUserDialog } from '@/components/admin/admin-delete-user-dialog';
 
-const { removeUserMock, navigateMock } = vi.hoisted(() => ({
-  removeUserMock: vi.fn(),
-  navigateMock: vi.fn(),
-}));
+const { removeUserMock, navigateMock, recordWorkflowBreadcrumbMock } =
+  vi.hoisted(() => ({
+    removeUserMock: vi.fn(),
+    navigateMock: vi.fn(),
+    recordWorkflowBreadcrumbMock: vi.fn(),
+  }));
 
 vi.mock('@/admin/users.functions', () => ({
   deleteUser: removeUserMock,
@@ -17,6 +19,10 @@ vi.mock('@tanstack/react-router', async () => {
   const actual = await import('@tanstack/react-router');
   return { ...actual, useNavigate: () => navigateMock };
 });
+
+vi.mock('@/lib/observability', () => ({
+  recordWorkflowBreadcrumb: recordWorkflowBreadcrumbMock,
+}));
 
 beforeEach(() => vi.clearAllMocks());
 
@@ -89,6 +95,27 @@ describe('AdminDeleteUserDialog', () => {
       expect(navigateMock).toHaveBeenCalledWith(
         expect.objectContaining({ to: '/users' })
       );
+    });
+  });
+
+  it('records a workflow breadcrumb when deletion starts', async () => {
+    removeUserMock.mockResolvedValue({});
+    const user = userEvent.setup();
+    renderWithProviders(
+      <AdminDeleteUserDialog userId="user-1" userEmail="user@example.com" />
+    );
+    await user.click(screen.getByRole('button', { name: /delete user/i }));
+
+    const input = screen.getByPlaceholderText('DELETE');
+    await user.type(input, 'DELETE');
+    await user.click(screen.getByRole('button', { name: /confirm delete/i }));
+
+    expect(recordWorkflowBreadcrumbMock).toHaveBeenCalledWith({
+      category: 'admin',
+      operation: 'admin.user.deleted',
+      message: 'admin user delete started',
+      userId: 'user-1',
+      route: '/users/$userId',
     });
   });
 });

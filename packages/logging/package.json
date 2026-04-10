@@ -6,7 +6,9 @@
   "exports": {
     ".": "./src/logger.ts",
     "./server": "./src/request-logger.server.ts",
-    "./request-context": "./src/request-context.ts"
+    "./request-context": "./src/request-context.ts",
+    "./operations": "./src/operations.ts",
+    "./redaction": "./src/redaction.ts"
   },
   "scripts": {
     "lint": "eslint",
