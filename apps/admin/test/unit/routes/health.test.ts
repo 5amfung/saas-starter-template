@@ -31,10 +31,16 @@ describe('admin health route', () => {
     const response = await handler!();
     const payload = await response.json();
 
-    expect(payload.status).toBe('error');
-    expect(payload.database).toEqual({
+    expect(payload).toEqual({
       status: 'error',
-      error: 'db offline',
+      app: 'admin',
+      timestamp: expect.any(String),
+      checks: {
+        database: {
+          status: 'error',
+          error: 'db offline',
+        },
+      },
     });
   });
 });

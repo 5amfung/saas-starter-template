@@ -7,15 +7,16 @@ export const Route = createFileRoute('/health')({
     handlers: {
       GET: async () => {
         const database = await checkDatabase();
-        const checks = {
-          status: database.status === 'connected' ? 'healthy' : 'error',
-          timestamp: new Date().toISOString(),
-          uptime: process.uptime(),
-          memory: process.memoryUsage(),
-          database,
-        };
+        const status = database.status === 'connected' ? 'healthy' : 'error';
 
-        return Response.json(checks);
+        return Response.json({
+          status,
+          app: 'admin',
+          timestamp: new Date().toISOString(),
+          checks: {
+            database,
+          },
+        });
       },
     },
   },

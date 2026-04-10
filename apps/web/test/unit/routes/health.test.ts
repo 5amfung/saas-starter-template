@@ -31,10 +31,16 @@ describe('web health route', () => {
     const response = await handler!();
     const payload = await response.json();
 
-    expect(payload.status).toBe('error');
-    expect(payload.database).toEqual({
+    expect(payload).toEqual({
       status: 'error',
-      error: 'db offline',
+      app: 'web',
+      timestamp: expect.any(String),
+      checks: {
+        database: {
+          status: 'error',
+          error: 'db offline',
+        },
+      },
     });
   });
 });

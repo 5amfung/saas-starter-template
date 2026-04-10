@@ -4,6 +4,7 @@ import { cors } from 'hono/cors';
 import { secureHeaders } from 'hono/secure-headers';
 
 import { getCorsOrigin } from './lib/env.js';
+import { initObservability } from './lib/observability.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 import { requestIdMiddleware } from './middleware/request-id.js';
 import { requestLoggerMiddleware } from './middleware/request-logger.js';
@@ -11,6 +12,16 @@ import { registerHelloRoute } from './routes/hello.js';
 import type { AppVariables } from './lib/request-id.js';
 
 export const app = new Hono<{ Variables: AppVariables }>();
+
+initObservability({
+  app: 'api-server',
+  appEnv:
+    process.env.APP_ENV === 'staging' || process.env.APP_ENV === 'production'
+      ? process.env.APP_ENV
+      : 'local',
+  dsn: process.env.SENTRY_DSN,
+  release: process.env.APP_RELEASE,
+});
 
 app.use('*', requestIdMiddleware);
 app.use('*', requestLoggerMiddleware);

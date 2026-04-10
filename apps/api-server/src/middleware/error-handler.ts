@@ -1,3 +1,4 @@
+import { captureServerError } from '../lib/observability.js';
 import { getRequestId } from '../lib/request-id.js';
 import type { AppVariables } from '../lib/request-id.js';
 
@@ -27,8 +28,13 @@ export function notFoundHandler(
 }
 
 export function errorHandler(
-  _error: Error,
+  error: Error,
   context: Context<{ Variables: AppVariables }>
 ): Response {
+  captureServerError(error, {
+    requestId: getRequestId(context),
+    route: context.req.path,
+  });
+
   return buildErrorResponse(context, 'Internal Server Error', 500);
 }

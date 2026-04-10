@@ -48,37 +48,6 @@ export interface AuthConfig {
   getRequestHeaders?: () => Headers;
 }
 
-/** Extract common subscription fields for structured logging. */
-function buildSubscriptionLogPayload(subscription: {
-  id: string;
-  plan: string;
-  referenceId: string;
-  status: string;
-  stripeSubscriptionId?: string | null;
-  periodStart?: Date | null;
-  periodEnd?: Date | null;
-  billingInterval?: string | null;
-  cancelAt?: Date | null;
-  canceledAt?: Date | null;
-  cancelAtPeriodEnd?: boolean | null;
-  endedAt?: Date | null;
-}) {
-  return {
-    subscriptionId: subscription.id,
-    plan: subscription.plan,
-    referenceId: subscription.referenceId,
-    status: subscription.status,
-    stripeSubscriptionId: subscription.stripeSubscriptionId,
-    periodStart: subscription.periodStart,
-    periodEnd: subscription.periodEnd,
-    billingInterval: subscription.billingInterval,
-    cancelAt: subscription.cancelAt,
-    canceledAt: subscription.canceledAt,
-    cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-    endedAt: subscription.endedAt,
-  };
-}
-
 export function createAuth(config: AuthConfig) {
   const log = config.logger ?? console.log;
   const stripeClient = new Stripe(config.stripe.secretKey);
@@ -211,7 +180,11 @@ export function createAuth(config: AuthConfig) {
               });
             } catch (error) {
               if (!isDuplicateOrganizationError(error)) {
-                console.error(error);
+                log('error', 'workspace auto-create failed', {
+                  operation: 'auth.workspace.auto_create.failed',
+                  userId: user.id,
+                  error,
+                });
                 throw error;
               }
             }
@@ -237,42 +210,6 @@ export function createAuth(config: AuthConfig) {
             // Only the workspace owner can manage subscriptions.
             const ownerId = await billing.getWorkspaceOwnerUserId(referenceId);
             return ownerId === user.id;
-          },
-          onSubscriptionComplete: async ({ subscription, plan }) => {
-            await log('info', 'subscription complete', {
-              ...buildSubscriptionLogPayload(subscription),
-              planName: plan.name,
-            });
-          },
-          onSubscriptionCreated: async ({ subscription, plan }) => {
-            await log('info', 'subscription created', {
-              ...buildSubscriptionLogPayload(subscription),
-              planName: plan.name,
-            });
-          },
-          onSubscriptionUpdate: async ({ subscription }) => {
-            await log(
-              'info',
-              'subscription updated',
-              buildSubscriptionLogPayload(subscription)
-            );
-          },
-          onSubscriptionCancel: async ({
-            subscription,
-            cancellationDetails,
-          }) => {
-            await log('info', 'subscription canceled', {
-              ...buildSubscriptionLogPayload(subscription),
-              reason: cancellationDetails?.reason,
-              feedback: cancellationDetails?.feedback,
-            });
-          },
-          onSubscriptionDeleted: async ({ subscription }) => {
-            await log(
-              'info',
-              'subscription deleted',
-              buildSubscriptionLogPayload(subscription)
-            );
           },
         },
       }),

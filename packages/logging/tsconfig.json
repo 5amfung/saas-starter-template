@@ -4,7 +4,8 @@
     "types": ["node"],
     "paths": {
       "@workspace/logging": ["./src/logger.ts"],
-      "@workspace/logging/server": ["./src/request-logger.server.ts"]
+      "@workspace/logging/server": ["./src/request-logger.server.ts"],
+      "@workspace/logging/request-context": ["./src/request-context.ts"]
     }
   },
   "include": ["src/**/*.ts", "eslint.config.ts"]

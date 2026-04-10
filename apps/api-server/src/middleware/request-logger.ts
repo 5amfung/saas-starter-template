@@ -8,6 +8,8 @@ export const requestLoggerMiddleware = createMiddleware<{
   Variables: AppVariables;
 }>(async (context, next) => {
   const startedAt = Date.now();
+  const requestId = getRequestId(context);
+  const durationMs = () => Date.now() - startedAt;
 
   await next();
 
@@ -16,11 +18,15 @@ export const requestLoggerMiddleware = createMiddleware<{
   }
 
   console.info(
-    '%s %s %d %dms %s',
-    context.req.method,
-    context.req.path,
-    context.res.status,
-    Date.now() - startedAt,
-    getRequestId(context)
+    JSON.stringify({
+      level: 'info',
+      message: 'request completed',
+      service: 'api-server',
+      requestId,
+      route: context.req.path,
+      operation: `${context.req.method} ${context.req.path}`,
+      statusCode: context.res.status,
+      durationMs: durationMs(),
+    })
   );
 });

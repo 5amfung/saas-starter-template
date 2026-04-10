@@ -15,6 +15,7 @@ import {
   useTheme,
 } from '@workspace/components/layout';
 import type { QueryClient } from '@tanstack/react-query';
+import { AppErrorBoundary } from '@/components/error-boundary';
 
 interface RouterContext {
   queryClient: QueryClient;
@@ -59,28 +60,30 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <ThemeProvider defaultTheme="system" storageKey="app-theme">
-          {children}
-          <ThemedToaster />
-          <TanStackDevtools
-            config={{
-              position: 'bottom-right',
-            }}
-            plugins={[
-              {
-                name: 'TanStack Query',
-                render: <ReactQueryDevtoolsPanel />,
-                defaultOpen: false,
-              },
-              {
-                name: 'Tanstack Router',
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-              formDevtoolsPlugin(),
-            ]}
-          />
-          <Scripts />
-        </ThemeProvider>
+        <AppErrorBoundary>
+          <ThemeProvider defaultTheme="system" storageKey="app-theme">
+            {children}
+            <ThemedToaster />
+            <TanStackDevtools
+              config={{
+                position: 'bottom-right',
+              }}
+              plugins={[
+                {
+                  name: 'TanStack Query',
+                  render: <ReactQueryDevtoolsPanel />,
+                  defaultOpen: false,
+                },
+                {
+                  name: 'Tanstack Router',
+                  render: <TanStackRouterDevtoolsPanel />,
+                },
+                formDevtoolsPlugin(),
+              ]}
+            />
+            <Scripts />
+          </ThemeProvider>
+        </AppErrorBoundary>
       </body>
     </html>
   );

@@ -29,6 +29,9 @@
       "@workspace/logging/server": [
         "../../packages/logging/src/request-logger.server.ts"
       ],
+      "@workspace/logging/request-context": [
+        "../../packages/logging/src/request-context.ts"
+      ],
       "@workspace/test-utils": ["../../packages/test-utils/src/index.ts"]
     }
   }

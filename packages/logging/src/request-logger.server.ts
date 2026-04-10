@@ -1,4 +1,5 @@
 import { createMiddleware } from '@tanstack/react-start';
+import { normalizeLogContext } from './request-context';
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -11,21 +12,33 @@ export function createRequestLogger(
 ) {
   return createMiddleware().server(async ({ request, next }) => {
     const startTime = Date.now();
+    const url = new URL(request.url);
+    const operation = `${request.method} ${url.pathname}`;
+    const requestId = request.headers.get('x-request-id') ?? undefined;
     try {
       const result = await next();
       const duration = Date.now() - startTime;
-      log(
-        'info',
-        `${request.method} ${request.url} - ${result.response.status} (${duration}ms)`
-      );
+      log('info', 'request completed', {
+        ...normalizeLogContext({
+          requestId,
+          route: url.pathname,
+          operation,
+          statusCode: result.response.status,
+          durationMs: duration,
+        }),
+      });
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
-      log(
-        'error',
-        `${request.method} ${request.url} - Error (${duration}ms):`,
-        error
-      );
+      log('error', 'request failed', {
+        ...normalizeLogContext({
+          requestId,
+          route: url.pathname,
+          operation,
+          durationMs: duration,
+        }),
+        error,
+      });
       throw error;
     }
   });
