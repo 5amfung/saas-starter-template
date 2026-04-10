@@ -7,6 +7,7 @@ import {
   type IntegrationFieldKey,
   type IntegrationKey,
 } from './integration-definitions';
+import type { WorkspaceIntegrationSummary } from './integration-secrets.types';
 import {
   decryptIntegrationSecret,
   encryptIntegrationSecret,
@@ -22,19 +23,6 @@ interface WorkspaceIntegrationSecretRow {
   iv: string;
   authTag: string;
   encryptionVersion: number;
-}
-
-export interface WorkspaceIntegrationFieldSummary {
-  key: IntegrationFieldKey;
-  label: string;
-  hasValue: boolean;
-  maskedValue: string | null;
-}
-
-export interface WorkspaceIntegrationSummary {
-  integration: IntegrationKey;
-  label: string;
-  fields: Array<WorkspaceIntegrationFieldSummary>;
 }
 
 type DbClient = ReturnType<typeof getDb>;
