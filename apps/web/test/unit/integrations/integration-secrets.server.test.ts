@@ -16,19 +16,6 @@ const {
 
 vi.mock('@/init', () => ({
   getDb: getDbMock,
-}));
-
-vi.mock('@/policy/workspace-capabilities.server', () => ({
-  requireWorkspaceCapabilityForUser: requireWorkspaceCapabilityForUserMock,
-}));
-
-vi.mock('@/integrations/integration-crypto.server', () => ({
-  encryptIntegrationSecret: encryptIntegrationSecretMock,
-  decryptIntegrationSecret: decryptIntegrationSecretMock,
-  maskIntegrationSecret: maskIntegrationSecretMock,
-}));
-
-vi.mock('@workspace/db-schema', () => ({
   workspaceIntegrationSecrets: {
     id: 'id',
     workspaceId: 'workspaceId',
@@ -40,6 +27,16 @@ vi.mock('@workspace/db-schema', () => ({
     encryptionVersion: 'encryptionVersion',
     updatedAt: 'updatedAt',
   },
+}));
+
+vi.mock('@/policy/workspace-capabilities.server', () => ({
+  requireWorkspaceCapabilityForUser: requireWorkspaceCapabilityForUserMock,
+}));
+
+vi.mock('@/integrations/integration-crypto.server', () => ({
+  encryptIntegrationSecret: encryptIntegrationSecretMock,
+  decryptIntegrationSecret: decryptIntegrationSecretMock,
+  maskIntegrationSecret: maskIntegrationSecretMock,
 }));
 
 vi.mock('drizzle-orm', async (importOriginal) => {

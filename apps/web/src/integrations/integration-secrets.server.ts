@@ -1,6 +1,5 @@
 import crypto from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
-import { workspaceIntegrationSecrets } from '@workspace/db-schema';
 import {
   INTEGRATION_DEFINITIONS,
   isIntegrationFieldKey,
@@ -13,7 +12,7 @@ import {
   encryptIntegrationSecret,
   maskIntegrationSecret,
 } from './integration-crypto.server';
-import { getDb } from '@/init';
+import { getDb, workspaceIntegrationSecrets } from '@/init';
 import { requireWorkspaceCapabilityForUser } from '@/policy/workspace-capabilities.server';
 
 interface WorkspaceIntegrationSecretRow {
