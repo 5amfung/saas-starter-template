@@ -4,7 +4,10 @@ import {
   BILLING_OPERATIONS,
   WORKSPACE_OPERATIONS,
 } from '@workspace/logging/operations';
-import { normalizeLogContext } from '@workspace/logging/request-context';
+import {
+  normalizeLogContext,
+  normalizeLogPayload,
+} from '@workspace/logging/request-context';
 
 describe('normalizeLogContext', () => {
   it('keeps only defined observability fields', () => {
@@ -20,6 +23,28 @@ describe('normalizeLogContext', () => {
       route: '/api/auth/sign-in',
       workspaceId: 'ws_123',
     });
+  });
+});
+
+describe('normalizeLogPayload', () => {
+  it('returns observability context only once for object payloads', () => {
+    expect(
+      normalizeLogPayload({
+        route: '/api/auth/get-session',
+        operation: 'GET /api/auth/get-session',
+        statusCode: 200,
+        durationMs: 56,
+      })
+    ).toEqual({
+      route: '/api/auth/get-session',
+      operation: 'GET /api/auth/get-session',
+      statusCode: 200,
+      durationMs: 56,
+    });
+  });
+
+  it('wraps primitive payloads in a data field', () => {
+    expect(normalizeLogPayload('hello')).toEqual({ data: 'hello' });
   });
 });
 
