@@ -62,7 +62,7 @@
 - Create: `packages/integrations/tsconfig.json`
 - Create: `packages/integrations/src/index.ts`
 
-- [ ] **Step 1: Create the package manifest**
+- [x] **Step 1: Create the package manifest**
 
 Add `packages/integrations/package.json`:
 
@@ -96,7 +96,7 @@ Add `packages/integrations/package.json`:
 }
 ```
 
-- [ ] **Step 2: Create the package tsconfig**
+- [x] **Step 2: Create the package tsconfig**
 
 Add `packages/integrations/tsconfig.json`:
 
@@ -114,7 +114,7 @@ Add `packages/integrations/tsconfig.json`:
 }
 ```
 
-- [ ] **Step 3: Create the initial public barrel**
+- [x] **Step 3: Create the initial public barrel**
 
 Add `packages/integrations/src/index.ts`:
 
@@ -124,7 +124,7 @@ export * from './types';
 export * from './workspace-integrations';
 ```
 
-- [ ] **Step 4: Verify the package is discovered**
+- [x] **Step 4: Verify the package is discovered**
 
 Run:
 
@@ -134,7 +134,7 @@ pnpm --filter @workspace/integrations typecheck
 
 Expected: the package resolves in the workspace; temporary failures should only be from modules not yet created.
 
-- [ ] **Step 5: Commit the scaffold**
+- [x] **Step 5: Commit the scaffold**
 
 ```bash
 git add packages/integrations
@@ -153,7 +153,7 @@ git commit -m "feat(integrations): scaffold shared integrations package"
 - Modify: `apps/web/src/integrations/integration-crypto.server.ts`
 - Modify: `apps/web/src/integrations/integration-secrets.types.ts`
 
-- [ ] **Step 1: Add failing package crypto tests**
+- [x] **Step 1: Add failing package crypto tests**
 
 Create `packages/integrations/test/unit/crypto.test.ts`:
 
@@ -186,7 +186,7 @@ describe('integration crypto', () => {
 });
 ```
 
-- [ ] **Step 2: Implement shared definitions, types, and crypto**
+- [x] **Step 2: Implement shared definitions, types, and crypto**
 
 Move the current app-local logic into:
 
@@ -204,7 +204,7 @@ export function encryptIntegrationSecret(value: string, encryptionKey: string) {
 
 Do not read `process.env` directly inside the package.
 
-- [ ] **Step 3: Convert app-local files into thin re-exports or remove them**
+- [x] **Step 3: Convert app-local files into thin re-exports or remove them**
 
 Update these app-local files to become transitional wrappers, or delete them if callers can be switched immediately:
 
@@ -220,7 +220,7 @@ export * from '@workspace/integrations';
 
 only where that does not over-export unrelated APIs into app code.
 
-- [ ] **Step 4: Run focused package and web tests**
+- [x] **Step 4: Run focused package and web tests**
 
 Run:
 
@@ -231,7 +231,7 @@ pnpm --filter @workspace/web test -- test/unit/integrations/integration-crypto.s
 
 Expected: package crypto tests pass and app-local crypto consumers still compile or pass after adapter updates.
 
-- [ ] **Step 5: Commit the shared definitions/crypto extraction**
+- [x] **Step 5: Commit the shared definitions/crypto extraction**
 
 ```bash
 git add packages/integrations apps/web/src/integrations apps/web/test/unit/integrations/integration-crypto.server.test.ts
@@ -248,7 +248,7 @@ git commit -m "refactor(integrations): move definitions and crypto into package"
 - Modify: `apps/web/src/integrations/integration-secrets.server.ts`
 - Modify: `apps/web/test/unit/integrations/integration-secrets.server.test.ts`
 
-- [ ] **Step 1: Add failing package operation tests**
+- [x] **Step 1: Add failing package operation tests**
 
 Create `packages/integrations/test/unit/workspace-integrations.test.ts` with mocked DB coverage for:
 
@@ -270,7 +270,7 @@ await updateWorkspaceIntegrationValues({
 });
 ```
 
-- [ ] **Step 2: Implement package repository and application operations**
+- [x] **Step 2: Implement package repository and application operations**
 
 In `packages/integrations/src/repository.ts`, own raw DB queries against `workspaceIntegrationSecrets`.
 
@@ -290,7 +290,7 @@ updateWorkspaceIntegrationValues(input);
 
 Each function should accept `db` and `encryptionKey` explicitly.
 
-- [ ] **Step 3: Thin down the web server adapter**
+- [x] **Step 3: Thin down the web server adapter**
 
 Refactor `apps/web/src/integrations/integration-secrets.server.ts` so it only:
 
@@ -301,7 +301,7 @@ Refactor `apps/web/src/integrations/integration-secrets.server.ts` so it only:
 
 It should stop owning raw DB queries, crypto, and field-definition logic.
 
-- [ ] **Step 4: Update unit tests to match the thinner adapter seam**
+- [x] **Step 4: Update unit tests to match the thinner adapter seam**
 
 Adjust `apps/web/test/unit/integrations/integration-secrets.server.test.ts` so it mocks package-level functions instead of DB internals where appropriate.
 
@@ -314,7 +314,7 @@ pnpm --filter @workspace/web test -- test/unit/integrations/integration-secrets.
 
 Expected: the package owns operation logic; the web app tests prove capability-enforcing delegation only.
 
-- [ ] **Step 5: Commit the shared operations extraction**
+- [x] **Step 5: Commit the shared operations extraction**
 
 ```bash
 git add packages/integrations apps/web/src/integrations/integration-secrets.server.ts apps/web/test/unit/integrations
@@ -329,7 +329,7 @@ git commit -m "refactor(integrations): move secret operations into package"
 - Modify: `.dependency-cruiser.cjs` if needed
 - Verify: `apps/web/src/integrations/integration-secrets.server.ts`
 
-- [ ] **Step 1: Remove the temporary schema re-export from init**
+- [x] **Step 1: Remove the temporary schema re-export from init**
 
 Delete the line:
 
@@ -339,7 +339,7 @@ export { workspaceIntegrationSecrets } from '@workspace/db-schema';
 
 from `apps/web/src/init.ts`.
 
-- [ ] **Step 2: Confirm the app no longer imports raw db-schema for integrations**
+- [x] **Step 2: Confirm the app no longer imports raw db-schema for integrations**
 
 Run:
 
@@ -349,7 +349,7 @@ rg -n "workspaceIntegrationSecrets|@workspace/db-schema" apps/web/src/integratio
 
 Expected: integration feature code imports `@workspace/integrations`, not `@workspace/db-schema`, except in explicitly allowed legacy modules unrelated to this refactor.
 
-- [ ] **Step 3: Run boundary verification**
+- [x] **Step 3: Run boundary verification**
 
 Run:
 
@@ -359,7 +359,7 @@ pnpm run check:boundaries
 
 Expected: PASS with no direct-app-to-db-schema violation for integrations.
 
-- [ ] **Step 4: Commit the boundary cleanup**
+- [x] **Step 4: Commit the boundary cleanup**
 
 ```bash
 git add apps/web/src/init.ts apps/web/src/integrations .dependency-cruiser.cjs
@@ -375,7 +375,7 @@ git commit -m "fix(web): remove integration schema export workaround"
 - Verify: `apps/web/src/routes/_protected/ws/$workspaceId/integrations.tsx`
 - Verify: `apps/web/src/components/integrations/**`
 
-- [ ] **Step 1: Run focused package and app tests together**
+- [x] **Step 1: Run focused package and app tests together**
 
 Run:
 
@@ -386,7 +386,7 @@ pnpm --filter @workspace/web test -- test/unit/integrations/integration-crypto.s
 
 Expected: PASS across package and app coverage.
 
-- [ ] **Step 2: Run repo-level type and boundary checks**
+- [x] **Step 2: Run repo-level type and boundary checks**
 
 Run:
 
@@ -397,7 +397,7 @@ pnpm run check:boundaries
 
 Expected: PASS.
 
-- [ ] **Step 3: Verify schema sync remains unchanged**
+- [x] **Step 3: Verify schema sync remains unchanged**
 
 Run:
 
@@ -408,7 +408,7 @@ git diff --exit-code packages/db-schema/drizzle packages/db-schema/src/app.schem
 
 Expected: no schema drift and no new migration, because this refactor does not change the table.
 
-- [ ] **Step 4: Record the resulting ownership model**
+- [x] **Step 4: Record the resulting ownership model**
 
 Confirm in the implementation summary that:
 
@@ -416,7 +416,13 @@ Confirm in the implementation summary that:
 - `apps/web` is now a thin adapter and UI consumer
 - `apps/admin` and `apps/api-server` can adopt the same package API next without new schema exceptions
 
-- [ ] **Step 5: Commit any final verification-only adjustments**
+Implementation summary:
+
+- `packages/integrations` now owns integration definitions, shared types, AES-256-GCM crypto helpers, repository access to `workspaceIntegrationSecrets`, and the secure list/reveal/update operations behind an explicit `db` + `encryptionKey` API.
+- `apps/web` now consumes that package from thin server adapters that perform session-aware capability checks, resolve `getDb()`, read `WORKSPACE_SECRET_ENCRYPTION_KEY`, and delegate to the shared package, while the route and component layer remains unchanged as the UI consumer.
+- `apps/admin` and `apps/api-server` can adopt `@workspace/integrations` next without introducing new direct `db-schema` imports or repeating secret-handling logic.
+
+- [x] **Step 5: Commit any final verification-only adjustments**
 
 ```bash
 git add .
