@@ -19,6 +19,7 @@
     "hono": "^4.12.12"
   },
   "devDependencies": {
+    "@tsconfig/node24": "^24.0.4",
     "@types/node": "^25.2.2",
     "@workspace/eslint-config": "workspace:*",
     "tsx": "^4.20.6",
