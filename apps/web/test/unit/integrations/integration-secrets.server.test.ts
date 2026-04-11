@@ -1,79 +1,52 @@
-import { mockDbChain, mockDbInsertChain } from '../../mocks/db';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  getWorkspaceIntegrationsSummary,
+  revealWorkspaceIntegrationSecretValue,
+  updateWorkspaceIntegrationSecretValues,
+} from '@/integrations/integration-secrets.server';
+
+const ENCRYPTION_KEY = Buffer.alloc(32, 7).toString('base64');
 
 const {
   getDbMock,
+  getWorkspaceIntegrationSummariesMock,
   requireWorkspaceCapabilityForUserMock,
-  encryptIntegrationSecretMock,
-  decryptIntegrationSecretMock,
-  maskIntegrationSecretMock,
+  revealWorkspaceIntegrationValueMock,
+  updateWorkspaceIntegrationValuesMock,
 } = vi.hoisted(() => ({
   getDbMock: vi.fn(),
+  getWorkspaceIntegrationSummariesMock: vi.fn(),
   requireWorkspaceCapabilityForUserMock: vi.fn(),
-  encryptIntegrationSecretMock: vi.fn(),
-  decryptIntegrationSecretMock: vi.fn(),
-  maskIntegrationSecretMock: vi.fn(),
+  revealWorkspaceIntegrationValueMock: vi.fn(),
+  updateWorkspaceIntegrationValuesMock: vi.fn(),
+}));
+
+vi.mock('@workspace/integrations', () => ({
+  getWorkspaceIntegrationSummaries: getWorkspaceIntegrationSummariesMock,
+  revealWorkspaceIntegrationValue: revealWorkspaceIntegrationValueMock,
+  updateWorkspaceIntegrationValues: updateWorkspaceIntegrationValuesMock,
 }));
 
 vi.mock('@/init', () => ({
   getDb: getDbMock,
-  workspaceIntegrationSecrets: {
-    id: 'id',
-    workspaceId: 'workspaceId',
-    integration: 'integration',
-    key: 'key',
-    encryptedValue: 'encryptedValue',
-    iv: 'iv',
-    authTag: 'authTag',
-    encryptionVersion: 'encryptionVersion',
-    updatedAt: 'updatedAt',
-  },
 }));
 
 vi.mock('@/policy/workspace-capabilities.server', () => ({
   requireWorkspaceCapabilityForUser: requireWorkspaceCapabilityForUserMock,
 }));
 
-vi.mock('@/integrations/integration-crypto.server', () => ({
-  encryptIntegrationSecret: encryptIntegrationSecretMock,
-  decryptIntegrationSecret: decryptIntegrationSecretMock,
-  maskIntegrationSecret: maskIntegrationSecretMock,
-}));
+describe('integration secret server adapter', () => {
+  const fakeDb = { marker: 'db' };
 
-vi.mock('drizzle-orm', async (importOriginal) => {
-  const actual = await importOriginal<Record<string, unknown>>();
-  return {
-    ...actual,
-    and: vi.fn((...conditions) => ({ conditions })),
-    eq: vi.fn((field, value) => ({ field, value })),
-  };
-});
-
-describe('getWorkspaceIntegrationsSummary', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.WORKSPACE_SECRET_ENCRYPTION_KEY = ENCRYPTION_KEY;
+    getDbMock.mockReturnValue(fakeDb);
+    requireWorkspaceCapabilityForUserMock.mockResolvedValue({});
   });
 
-  it('returns display-safe integration summaries with masked values', async () => {
-    const dbSelectMock = vi.fn();
-    getDbMock.mockReturnValue({ select: dbSelectMock });
-    requireWorkspaceCapabilityForUserMock.mockResolvedValueOnce({
-      canViewIntegrations: true,
-    });
-    mockDbChain(dbSelectMock, [
-      {
-        integration: 'slack',
-        key: 'clientId',
-        encryptedValue: 'enc-id',
-        iv: 'iv-id',
-        authTag: 'tag-id',
-        encryptionVersion: 1,
-      },
-    ]);
-    decryptIntegrationSecretMock.mockReturnValueOnce('client-id-123456');
-    maskIntegrationSecretMock.mockReturnValueOnce('client*********');
-
-    const { getWorkspaceIntegrationsSummary } =
-      await import('@/integrations/integration-secrets.server');
+  it('delegates workspace summary loading after capability checks', async () => {
+    getWorkspaceIntegrationSummariesMock.mockResolvedValueOnce([]);
 
     const result = await getWorkspaceIntegrationsSummary(
       new Headers(),
@@ -87,142 +60,26 @@ describe('getWorkspaceIntegrationsSummary', () => {
       'user-1',
       'canViewIntegrations'
     );
-    expect(result).toEqual([
-      {
-        integration: 'slack',
-        label: 'Slack',
-        fields: [
-          {
-            key: 'clientId',
-            label: 'Client ID',
-            hasValue: true,
-            maskedValue: 'client*********',
-          },
-          {
-            key: 'clientSecret',
-            label: 'Client Secret',
-            hasValue: false,
-            maskedValue: null,
-          },
-        ],
-      },
-    ]);
-  });
-});
-
-describe('revealWorkspaceIntegrationSecretValue', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('requires integration management capability before revealing values', async () => {
-    requireWorkspaceCapabilityForUserMock.mockRejectedValueOnce(
-      new Error('forbidden')
-    );
-
-    const { revealWorkspaceIntegrationSecretValue } =
-      await import('@/integrations/integration-secrets.server');
-
-    await expect(
-      revealWorkspaceIntegrationSecretValue(
-        new Headers(),
-        'ws-1',
-        'user-1',
-        'slack',
-        'clientSecret'
-      )
-    ).rejects.toMatchObject({ message: 'forbidden' });
-  });
-
-  it('reveals one decrypted value', async () => {
-    const dbSelectMock = vi.fn();
-    getDbMock.mockReturnValue({ select: dbSelectMock });
-    requireWorkspaceCapabilityForUserMock.mockResolvedValueOnce({
-      canManageIntegrations: true,
+    expect(getDbMock).toHaveBeenCalledTimes(1);
+    expect(getWorkspaceIntegrationSummariesMock).toHaveBeenCalledWith({
+      db: fakeDb,
+      encryptionKey: ENCRYPTION_KEY,
+      workspaceId: 'ws-1',
     });
-    mockDbChain(dbSelectMock, [
-      {
-        encryptedValue: 'enc-secret',
-        iv: 'iv-secret',
-        authTag: 'tag-secret',
-        encryptionVersion: 1,
-      },
-    ]);
-    decryptIntegrationSecretMock.mockReturnValueOnce('plain-secret');
-
-    const { revealWorkspaceIntegrationSecretValue } =
-      await import('@/integrations/integration-secrets.server');
-
-    await expect(
-      revealWorkspaceIntegrationSecretValue(
-        new Headers(),
-        'ws-1',
-        'user-1',
-        'slack',
-        'clientSecret'
-      )
-    ).resolves.toEqual({ value: 'plain-secret' });
-  });
-});
-
-describe('updateWorkspaceIntegrationSecretValues', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+    expect(result).toEqual([]);
   });
 
-  it('encrypts/upserts saved values and deletes cleared values', async () => {
-    const dbSelectMock = vi.fn();
-    const dbInsertMock = vi.fn();
-    const dbDeleteMock = vi.fn();
-    const deleteWhereMock = vi.fn().mockResolvedValue([]);
-    const transactionMock = vi.fn(async (callback) =>
-      callback({
-        insert: dbInsertMock,
-        delete: dbDeleteMock.mockReturnValue({ where: deleteWhereMock }),
-      })
-    );
-
-    getDbMock.mockReturnValue({
-      select: dbSelectMock,
-      insert: dbInsertMock,
-      delete: dbDeleteMock.mockReturnValue({ where: deleteWhereMock }),
-      transaction: transactionMock,
+  it('delegates value reveal after manage capability checks', async () => {
+    revealWorkspaceIntegrationValueMock.mockResolvedValueOnce({
+      value: 'secret',
     });
-    requireWorkspaceCapabilityForUserMock.mockResolvedValueOnce({
-      canManageIntegrations: true,
-    });
-    mockDbInsertChain(dbInsertMock);
-    encryptIntegrationSecretMock.mockReturnValueOnce({
-      encryptedValue: 'enc-value',
-      iv: 'iv-value',
-      authTag: 'tag-value',
-      encryptionVersion: 1,
-    });
-    mockDbChain(dbSelectMock, [
-      {
-        integration: 'slack',
-        key: 'clientId',
-        encryptedValue: 'enc-value',
-        iv: 'iv-value',
-        authTag: 'tag-value',
-        encryptionVersion: 1,
-      },
-    ]);
-    decryptIntegrationSecretMock.mockReturnValueOnce('client-id-1');
-    maskIntegrationSecretMock.mockReturnValueOnce('client********');
 
-    const { updateWorkspaceIntegrationSecretValues } =
-      await import('@/integrations/integration-secrets.server');
-
-    const result = await updateWorkspaceIntegrationSecretValues(
+    const result = await revealWorkspaceIntegrationSecretValue(
       new Headers(),
       'ws-1',
       'user-1',
       'slack',
-      [
-        { key: 'clientId', value: 'client-id-1' },
-        { key: 'clientSecret', value: '' },
-      ]
+      'clientSecret'
     );
 
     expect(requireWorkspaceCapabilityForUserMock).toHaveBeenCalledWith(
@@ -231,30 +88,53 @@ describe('updateWorkspaceIntegrationSecretValues', () => {
       'user-1',
       'canManageIntegrations'
     );
-    expect(transactionMock).toHaveBeenCalledTimes(1);
-    expect(encryptIntegrationSecretMock).toHaveBeenCalledWith('client-id-1');
-    expect(dbInsertMock).toHaveBeenCalled();
-    expect(dbDeleteMock).toHaveBeenCalled();
-    expect(deleteWhereMock).toHaveBeenCalled();
-    expect(result).toEqual([
-      {
-        integration: 'slack',
-        label: 'Slack',
-        fields: [
-          {
-            key: 'clientId',
-            label: 'Client ID',
-            hasValue: true,
-            maskedValue: 'client********',
-          },
-          {
-            key: 'clientSecret',
-            label: 'Client Secret',
-            hasValue: false,
-            maskedValue: null,
-          },
-        ],
-      },
-    ]);
+    expect(revealWorkspaceIntegrationValueMock).toHaveBeenCalledWith({
+      db: fakeDb,
+      encryptionKey: ENCRYPTION_KEY,
+      workspaceId: 'ws-1',
+      integration: 'slack',
+      key: 'clientSecret',
+    });
+    expect(result).toEqual({ value: 'secret' });
+  });
+
+  it('delegates update after manage capability checks', async () => {
+    updateWorkspaceIntegrationValuesMock.mockResolvedValueOnce([]);
+
+    const result = await updateWorkspaceIntegrationSecretValues(
+      new Headers(),
+      'ws-1',
+      'user-1',
+      'slack',
+      [{ key: 'clientId', value: 'client-id-1' }]
+    );
+
+    expect(requireWorkspaceCapabilityForUserMock).toHaveBeenCalledWith(
+      expect.any(Headers),
+      'ws-1',
+      'user-1',
+      'canManageIntegrations'
+    );
+    expect(updateWorkspaceIntegrationValuesMock).toHaveBeenCalledWith({
+      db: fakeDb,
+      encryptionKey: ENCRYPTION_KEY,
+      workspaceId: 'ws-1',
+      integration: 'slack',
+      values: [{ key: 'clientId', value: 'client-id-1' }],
+    });
+    expect(result).toEqual([]);
+  });
+
+  it('rejects access before calling package helpers', async () => {
+    requireWorkspaceCapabilityForUserMock.mockRejectedValueOnce(
+      new Error('forbidden')
+    );
+
+    await expect(
+      getWorkspaceIntegrationsSummary(new Headers(), 'ws-1', 'user-1')
+    ).rejects.toMatchObject({ message: 'forbidden' });
+
+    expect(getWorkspaceIntegrationSummariesMock).not.toHaveBeenCalled();
+    expect(getDbMock).not.toHaveBeenCalled();
   });
 });
