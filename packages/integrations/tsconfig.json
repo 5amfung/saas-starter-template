@@ -2,10 +2,11 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "types": ["node", "vitest/globals"],
     "paths": {
       "@workspace/integrations/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "test/**/*.ts", "vitest.config.ts"],
   "exclude": ["node_modules", "dist"]
 }
