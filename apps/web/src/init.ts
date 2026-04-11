@@ -4,8 +4,6 @@ import { createDb } from '@workspace/db';
 import * as schema from '@workspace/db-schema';
 import { createEmailClient, createMockEmailClient } from '@workspace/email';
 
-export { workspaceIntegrationSecrets } from '@workspace/db-schema';
-
 let dbSingleton: ReturnType<typeof createDb> | undefined;
 let emailClientSingleton:
   | ReturnType<typeof createEmailClient>
