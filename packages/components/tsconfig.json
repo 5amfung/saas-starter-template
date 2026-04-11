@@ -8,7 +8,13 @@
     "paths": {
       "@workspace/ui/*": ["../../packages/ui/src/*"],
       "@workspace/auth": ["../../packages/auth/src/index.ts"],
-      "@workspace/auth/*": ["../../packages/auth/src/*"]
+      "@workspace/auth/*": ["../../packages/auth/src/*"],
+      "@workspace/logging/operations": [
+        "../../packages/logging/src/operations.ts"
+      ],
+      "@workspace/logging/redaction": [
+        "../../packages/logging/src/redaction.ts"
+      ]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "eslint.config.ts"],

@@ -2,8 +2,8 @@ import { broadcastQueryClient } from '@tanstack/query-broadcast-client-experimen
 import { QueryClient } from '@tanstack/react-query';
 import { createRouter } from '@tanstack/react-router';
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query';
-import { captureRouterError, initObservability } from '@/lib/observability';
 import { routeTree } from './routeTree.gen';
+import { captureRouterError, initObservability } from '@/lib/observability';
 
 export const getRouter = () => {
   initObservability({

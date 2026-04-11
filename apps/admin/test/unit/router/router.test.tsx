@@ -42,12 +42,24 @@ describe('admin router', () => {
     vi.resetModules();
     const { getRouter } = await import('@/router');
     const router = getRouter();
-    const createRouterOptions = createRouterMock.mock.calls[0]?.[0] as {
-      defaultOnCatch: (
-        error: Error,
-        errorInfo: { componentStack: string }
-      ) => void;
-    };
+    expect(createRouterMock).toHaveBeenCalled();
+    const createRouterCalls = createRouterMock.mock.calls as unknown as Array<
+      [
+        {
+          defaultOnCatch: (
+            error: Error,
+            errorInfo: { componentStack: string }
+          ) => void;
+        },
+      ]
+    >;
+    const createRouterOptions = createRouterCalls[0][0];
+    const defaultOnCatch = createRouterOptions.defaultOnCatch;
+
+    expect(defaultOnCatch).toBeTypeOf('function');
+    const error = new Error('router boom');
+    const errorInfo = { componentStack: '\n    at RouteComponent' };
+    defaultOnCatch(error, errorInfo);
 
     expect(router).toEqual({ kind: 'router' });
     expect(initObservabilityMock).toHaveBeenCalledWith({
@@ -56,11 +68,6 @@ describe('admin router', () => {
       dsn: process.env.SENTRY_DSN,
       release: process.env.APP_RELEASE,
     });
-    expect(createRouterOptions.defaultOnCatch).toBeTypeOf('function');
-
-    const error = new Error('router boom');
-    const errorInfo = { componentStack: '\n    at RouteComponent' };
-    createRouterOptions.defaultOnCatch(error, errorInfo);
 
     expect(captureRouterErrorMock).toHaveBeenCalledWith(error, errorInfo);
     expect(setupRouterSsrQueryIntegrationMock).toHaveBeenCalledWith({
