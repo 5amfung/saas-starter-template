@@ -5,6 +5,7 @@ import viteReact from '@vitejs/plugin-react';
 import viteTsConfigPaths from 'vite-tsconfig-paths';
 import tailwindcss from '@tailwindcss/vite';
 import { nitro } from 'nitro/vite';
+import { sentryTanstackStart } from '@sentry/tanstackstart-react/vite';
 
 const config = defineConfig({
   server: {
@@ -40,6 +41,11 @@ const config = defineConfig({
       router: {
         semicolons: true,
       },
+    }),
+    sentryTanstackStart({
+      org: 'self-cdr',
+      project: 'javascript-tanstackstart-react',
+      authToken: process.env.SENTRY_AUTH_TOKEN,
     }),
     viteReact(),
   ],

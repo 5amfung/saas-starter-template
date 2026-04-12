@@ -60,6 +60,7 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@prisma/engines",
+      "@sentry/cli",
       "esbuild",
       "msw",
       "prisma",
@@ -68,7 +69,8 @@
     ],
     "overrides": {
       "@noble/ciphers": "^2.1.1"
-    }
+    },
+    "ignoredBuiltDependencies": []
   },
   "engines": {
     "node": ">=20"
