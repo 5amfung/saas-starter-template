@@ -5,6 +5,8 @@ import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query
 import * as Sentry from '@sentry/tanstackstart-react';
 import { routeTree } from './routeTree.gen';
 
+const sentryEnvironment = import.meta.env.MODE;
+
 export const getRouter = () => {
   const queryClient = new QueryClient();
 
@@ -27,7 +29,21 @@ export const getRouter = () => {
   if (!router.isServer) {
     // TODO
     Sentry.init({
+      debug: true,
       dsn: '',
+      enabled: true,
+      enableLogs: true,
+      environment: sentryEnvironment,
+      integrations: [
+        // Sentry.tanstackRouterBrowserTracingIntegration(router),
+        // Sentry.replayIntegration(),
+        // send console.log, console.warn, and console.error calls as logs to Sentry
+        Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
+      ],
+      // replaysOnErrorSampleRate: 1.0,
+      // replaysSessionSampleRate: 0.1,
+      sendDefaultPii: true,
+      // tracesSampleRate: 1.0,
     });
   }
 
