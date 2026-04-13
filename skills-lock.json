@@ -26,6 +26,11 @@
       "sourceType": "github",
       "computedHash": "dca928180e73ee3dd3bfe1c921b96198c2b7d6733c06bf35c40fa343b4037a55"
     },
+    "sentry-cli": {
+      "source": "cli.sentry.dev",
+      "sourceType": "well-known",
+      "computedHash": "a1c71377f9cf2fa6afdbf4e80ada9a3b1e1b0d2bfd2c39f77437352f5da9dcc7"
+    },
     "setup-api-key": {
       "source": "elevenlabs/skills",
       "sourceType": "github",
