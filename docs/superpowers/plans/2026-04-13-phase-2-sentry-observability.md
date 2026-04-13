@@ -402,7 +402,7 @@ Expected: PASS
 Run: `pnpm --filter @workspace/auth test packages/auth/test/unit/auth.server.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/components/src/auth/signin-form.tsx packages/components/src/auth/signup-form.tsx packages/components/src/auth/forgot-password-form.tsx apps/web/src/routes/accept-invite.tsx packages/auth/src/auth.server.ts apps/web/test/unit/components/auth/signin-form.test.tsx apps/web/test/unit/components/auth/signup-form.test.tsx apps/web/test/unit/components/auth/forgot-password-form.test.tsx packages/auth/test/unit/auth.server.test.ts
