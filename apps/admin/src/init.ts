@@ -3,7 +3,6 @@ import { createAuth } from '@workspace/auth/server';
 import { createDb } from '@workspace/db';
 import * as schema from '@workspace/db-schema';
 import { createEmailClient, createMockEmailClient } from '@workspace/email';
-import { logger } from '@/lib/logger';
 
 let dbSingleton: ReturnType<typeof createDb> | undefined;
 let emailClientSingleton:
@@ -57,7 +56,6 @@ export function getAuth() {
         secretKey: process.env.STRIPE_SECRET_KEY!,
         webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
       },
-      logger,
       getRequestHeaders,
     });
   }

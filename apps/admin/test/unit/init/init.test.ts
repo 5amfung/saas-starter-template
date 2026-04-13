@@ -74,7 +74,6 @@ describe('admin init getters', () => {
         secretKey: process.env.STRIPE_SECRET_KEY,
         webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
       },
-      logger: expect.any(Function),
       getRequestHeaders: expect.any(Function),
     });
   });

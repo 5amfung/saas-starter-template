@@ -29,10 +29,6 @@ vi.mock('sonner', () => ({
   },
 }));
 
-vi.mock('@/lib/logger', () => ({
-  logger: vi.fn(),
-}));
-
 vi.mock('@workspace/ui/components/sidebar', () => ({
   SidebarMenu: ({ children, ...props }: React.ComponentProps<'ul'>) => (
     <ul {...props}>{children}</ul>

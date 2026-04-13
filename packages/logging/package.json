@@ -4,8 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/logger.ts",
-    "./server": "./src/request-logger.server.ts"
+    ".": "./src/request-logger.server.ts"
   },
   "scripts": {
     "lint": "eslint",
@@ -14,7 +13,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@tanstack/react-start": "^1.167.16"
+    "@tanstack/react-start": "^1.167.16",
+    "@sentry/tanstackstart-react": "^10.48.0"
   },
   "devDependencies": {
     "@types/node": "^22.19.15",

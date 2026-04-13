@@ -728,6 +728,9 @@ importers:
 
   packages/logging:
     dependencies:
+      '@sentry/tanstackstart-react':
+        specifier: ^10.48.0
+        version: 10.48.0(react@19.2.4)(rollup@4.60.1)
       '@tanstack/react-start':
         specifier: ^1.167.16
         version: 1.167.16(crossws@0.4.4(srvx@0.11.14))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@7.3.2(@types/node@22.19.15)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3))

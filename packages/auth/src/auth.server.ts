@@ -38,12 +38,6 @@ export interface AuthConfig {
     webhookSecret: string;
   };
   trustedOrigins?: Array<string>;
-  /** Logger callback. Falls back to console.log when not provided. May return a promise for async loggers. */
-  logger?: (
-    level: 'debug' | 'info' | 'warn' | 'error',
-    message: string,
-    meta?: Record<string, unknown>
-  ) => void | Promise<void>;
   /** Returns request headers in the current server context. Used by auth-emails to build email request context. */
   getRequestHeaders?: () => Headers;
 }
@@ -80,7 +74,6 @@ function buildSubscriptionLogPayload(subscription: {
 }
 
 export function createAuth(config: AuthConfig) {
-  const log = config.logger ?? console.log;
   const stripeClient = new Stripe(config.stripe.secretKey);
   const cookiePrefix =
     typeof config.cookiePrefix === 'string' && config.cookiePrefix.length > 0
@@ -239,40 +232,43 @@ export function createAuth(config: AuthConfig) {
             return ownerId === user.id;
           },
           onSubscriptionComplete: async ({ subscription, plan }) => {
-            await log('info', 'subscription complete', {
+            console.log('subscription complete', {
               ...buildSubscriptionLogPayload(subscription),
               planName: plan.name,
             });
+            return Promise.resolve();
           },
           onSubscriptionCreated: async ({ subscription, plan }) => {
-            await log('info', 'subscription created', {
+            console.log('subscription created', {
               ...buildSubscriptionLogPayload(subscription),
               planName: plan.name,
             });
+            return Promise.resolve();
           },
           onSubscriptionUpdate: async ({ subscription }) => {
-            await log(
-              'info',
+            console.log(
               'subscription updated',
               buildSubscriptionLogPayload(subscription)
             );
+            return Promise.resolve();
           },
           onSubscriptionCancel: async ({
             subscription,
             cancellationDetails,
           }) => {
-            await log('info', 'subscription canceled', {
+            console.log('subscription canceled', {
               ...buildSubscriptionLogPayload(subscription),
               reason: cancellationDetails?.reason,
               feedback: cancellationDetails?.feedback,
             });
+            return Promise.resolve();
           },
           onSubscriptionDeleted: async ({ subscription }) => {
-            await log(
-              'info',
+            console.log(
               'subscription deleted',
               buildSubscriptionLogPayload(subscription)
             );
+            return Promise.resolve();
           },
         },
       }),

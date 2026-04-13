@@ -21,7 +21,11 @@ const config = defineConfig({
     },
   },
   plugins: [
-    devtools(),
+    devtools({
+      enhancedLogs: {
+        enabled: false,
+      },
+    }),
     nitro({
       // Inline E2E_MOCK_EMAIL at build time so Rollup can tree-shake the mock
       // email client and related test code from production builds. Only the
