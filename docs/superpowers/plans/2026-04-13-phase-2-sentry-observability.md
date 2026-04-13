@@ -82,7 +82,7 @@
 - Modify: `packages/logging/package.json`
 - Test: `packages/logging/test/unit/operations.test.ts`
 
-- [ ] **Step 1: Write the failing helper tests**
+- [x] **Step 1: Write the failing helper tests**
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -128,7 +128,7 @@ describe('observability helpers', () => {
 Run: `pnpm --filter @workspace/logging test packages/logging/test/unit/operations.test.ts`
 Expected: FAIL with missing module/export errors for `OPERATIONS`, `buildWorkflowAttributes`, or `redactAuthWorkflowAttributes`
 
-- [ ] **Step 3: Add the minimal shared helper implementation**
+- [x] **Step 3: Add the minimal shared helper implementation**
 
 ```ts
 // packages/logging/src/operations.ts
@@ -228,7 +228,7 @@ export { requestLogger } from './request-logger.server';
 }
 ```
 
-- [ ] **Step 4: Run the package tests and typecheck**
+- [x] **Step 4: Run the package tests and typecheck**
 
 Run: `pnpm --filter @workspace/logging test packages/logging/test/unit/operations.test.ts`
 Expected: PASS
@@ -236,7 +236,7 @@ Expected: PASS
 Run: `pnpm --filter @workspace/logging typecheck`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/logging/package.json packages/logging/src/operations.ts packages/logging/src/observability.shared.ts packages/logging/src/client.ts packages/logging/src/server.ts packages/logging/test/unit/operations.test.ts
