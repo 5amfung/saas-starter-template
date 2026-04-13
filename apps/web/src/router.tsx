@@ -33,11 +33,15 @@ export const getRouter = () => {
       integrations: [
         // Send console.log, console.warn, and console.error calls as logs to Sentry
         Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
+        Sentry.replayIntegration(),
         Sentry.tanstackRouterBrowserTracingIntegration(router),
       ],
+      replaysSessionSampleRate: 0.1,
+      replaysOnErrorSampleRate: 1.0,
       sendDefaultPii: true,
       tracePropagationTargets: ['localhost', /^\/api\//],
       tracesSampleRate: 1.0,
+      tunnel: '/tunnel',
     });
   }
 
