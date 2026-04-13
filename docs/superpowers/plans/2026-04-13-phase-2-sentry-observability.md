@@ -679,7 +679,7 @@ git commit -m "feat(workspace): add sentry lifecycle observability"
 - Test: `apps/admin/test/unit/components/admin-entitlement-override-form.test.tsx`
 - Test: `apps/admin/test/integration/components/admin/admin-user-management-flow.integration.test.tsx`
 
-- [ ] **Step 1: Add failing admin observability tests**
+- [x] **Step 1: Add failing admin observability tests**
 
 ```ts
 it('logs admin user update success with target user metadata', async () => {
@@ -726,7 +726,7 @@ it('wraps entitlement override save in a client span', async () => {
 Run: `pnpm --filter @workspace/admin-web test apps/admin/test/unit/admin/workspaces.functions.test.ts apps/admin/test/unit/components/admin/admin-user-form.test.tsx apps/admin/test/unit/components/admin-entitlement-override-form.test.tsx apps/admin/test/integration/components/admin/admin-user-management-flow.integration.test.tsx`
 Expected: FAIL because admin workflow spans/logs are not implemented yet
 
-- [ ] **Step 3: Implement admin instrumentation**
+- [x] **Step 3: Implement admin instrumentation**
 
 ```ts
 // apps/admin/src/admin/users.functions.ts
@@ -776,12 +776,12 @@ await Sentry.startSpan(
 );
 ```
 
-- [ ] **Step 4: Re-run the targeted admin tests**
+- [x] **Step 4: Re-run the targeted admin tests**
 
 Run: `pnpm --filter @workspace/admin-web test apps/admin/test/unit/admin/workspaces.functions.test.ts apps/admin/test/unit/components/admin/admin-user-form.test.tsx apps/admin/test/unit/components/admin-entitlement-override-form.test.tsx apps/admin/test/integration/components/admin/admin-user-management-flow.integration.test.tsx`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/admin/src/admin/users.functions.ts apps/admin/src/admin/workspaces.functions.ts apps/admin/src/components/admin/admin-user-form.tsx apps/admin/src/components/admin/admin-delete-user-dialog.tsx apps/admin/src/components/admin/admin-entitlement-override-form.tsx apps/admin/test/unit/admin/workspaces.functions.test.ts apps/admin/test/unit/components/admin/admin-user-form.test.tsx apps/admin/test/unit/components/admin-entitlement-override-form.test.tsx apps/admin/test/integration/components/admin/admin-user-management-flow.integration.test.tsx

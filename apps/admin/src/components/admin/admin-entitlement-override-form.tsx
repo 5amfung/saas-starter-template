@@ -17,6 +17,11 @@ import { Label } from '@workspace/ui/components/label';
 import { Separator } from '@workspace/ui/components/separator';
 import { Textarea } from '@workspace/ui/components/textarea';
 import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  startWorkflowSpan,
+} from '@workspace/logging/client';
+import {
   FEATURE_METADATA,
   LIMIT_METADATA,
   QUOTA_METADATA,
@@ -53,6 +58,7 @@ type FeatureOverrideState = 'inherit' | 'enabled' | 'disabled';
 // --- Helpers ---
 
 const CARD_FOOTER_CLASS = 'flex justify-end gap-2 pt-6';
+const ADMIN_WORKSPACE_ROUTE = '/workspaces/$workspaceId';
 
 /**
  * Converts a stored numeric override value to the form state.
@@ -93,6 +99,22 @@ export function AdminEntitlementOverrideForm({
   overrides,
 }: AdminEntitlementOverrideFormProps) {
   const queryClient = useQueryClient();
+  const saveWorkflowAttributes = buildWorkflowAttributes(
+    OPERATIONS.ADMIN_WORKSPACE_ENTITLEMENTS_SAVE,
+    {
+      route: ADMIN_WORKSPACE_ROUTE,
+      workspaceId,
+      result: 'attempt',
+    }
+  );
+  const clearWorkflowAttributes = buildWorkflowAttributes(
+    OPERATIONS.ADMIN_WORKSPACE_ENTITLEMENTS_CLEAR,
+    {
+      route: ADMIN_WORKSPACE_ROUTE,
+      workspaceId,
+      result: 'attempt',
+    }
+  );
 
   // Build initial form state from existing overrides.
   const buildInitialState = React.useCallback(() => {
@@ -133,37 +155,48 @@ export function AdminEntitlementOverrideForm({
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const limits: Partial<Record<LimitKey, number>> = {};
-      for (const key of Object.keys(LIMIT_METADATA) as Array<LimitKey>) {
-        const val = fromNumericField(formState.limits[key]);
-        if (val !== undefined) limits[key] = val;
-      }
-
-      const quotas: Partial<Record<QuotaKey, number>> = {};
-      for (const key of Object.keys(QUOTA_METADATA) as Array<QuotaKey>) {
-        const val = fromNumericField(formState.quotas[key]);
-        if (val !== undefined) quotas[key] = val;
-      }
-
-      const features: Partial<Record<FeatureKey, boolean>> = {};
-      for (const key of Object.keys(FEATURE_METADATA) as Array<FeatureKey>) {
-        const value = formState.features[key];
-        if (value === 'enabled') {
-          features[key] = true;
-        } else if (value === 'disabled') {
-          features[key] = false;
-        }
-      }
-
-      await saveEntitlementOverrides({
-        data: {
-          workspaceId,
-          limits: Object.keys(limits).length > 0 ? limits : undefined,
-          features: Object.keys(features).length > 0 ? features : undefined,
-          quotas: Object.keys(quotas).length > 0 ? quotas : undefined,
-          notes: formState.notes || undefined,
+      return startWorkflowSpan(
+        {
+          op: OPERATIONS.ADMIN_WORKSPACE_ENTITLEMENTS_SAVE,
+          name: 'Save entitlement overrides',
+          attributes: saveWorkflowAttributes,
         },
-      });
+        async () => {
+          const limits: Partial<Record<LimitKey, number>> = {};
+          for (const key of Object.keys(LIMIT_METADATA) as Array<LimitKey>) {
+            const val = fromNumericField(formState.limits[key]);
+            if (val !== undefined) limits[key] = val;
+          }
+
+          const quotas: Partial<Record<QuotaKey, number>> = {};
+          for (const key of Object.keys(QUOTA_METADATA) as Array<QuotaKey>) {
+            const val = fromNumericField(formState.quotas[key]);
+            if (val !== undefined) quotas[key] = val;
+          }
+
+          const features: Partial<Record<FeatureKey, boolean>> = {};
+          for (const key of Object.keys(
+            FEATURE_METADATA
+          ) as Array<FeatureKey>) {
+            const value = formState.features[key];
+            if (value === 'enabled') {
+              features[key] = true;
+            } else if (value === 'disabled') {
+              features[key] = false;
+            }
+          }
+
+          await saveEntitlementOverrides({
+            data: {
+              workspaceId,
+              limits: Object.keys(limits).length > 0 ? limits : undefined,
+              features: Object.keys(features).length > 0 ? features : undefined,
+              quotas: Object.keys(quotas).length > 0 ? quotas : undefined,
+              notes: formState.notes || undefined,
+            },
+          });
+        }
+      );
     },
     onSuccess: () => {
       toast.success('Entitlement overrides saved.');
@@ -180,7 +213,16 @@ export function AdminEntitlementOverrideForm({
 
   const clearMutation = useMutation({
     mutationFn: async () => {
-      await clearEntitlementOverrides({ data: { workspaceId } });
+      return startWorkflowSpan(
+        {
+          op: OPERATIONS.ADMIN_WORKSPACE_ENTITLEMENTS_CLEAR,
+          name: 'Clear entitlement overrides',
+          attributes: clearWorkflowAttributes,
+        },
+        async () => {
+          await clearEntitlementOverrides({ data: { workspaceId } });
+        }
+      );
     },
     onSuccess: () => {
       toast.success('All entitlement overrides cleared.');

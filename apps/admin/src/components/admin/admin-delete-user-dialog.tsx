@@ -17,9 +17,15 @@ import {
 } from '@workspace/ui/components/alert-dialog';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
+import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  startWorkflowSpan,
+} from '@workspace/logging/client';
 import { deleteUser } from '@/admin/users.functions';
 
 const CONFIRMATION_TEXT = 'DELETE';
+const ADMIN_USER_ROUTE = '/users/$userId';
 
 interface AdminDeleteUserDialogProps {
   userId: string;
@@ -38,10 +44,27 @@ export function AdminDeleteUserDialog({
   const [confirmation, setConfirmation] = React.useState('');
 
   const isConfirmed = confirmation === CONFIRMATION_TEXT;
+  const workflowAttributes = buildWorkflowAttributes(
+    OPERATIONS.ADMIN_USER_DELETE,
+    {
+      route: ADMIN_USER_ROUTE,
+      targetUserId: userId,
+      result: 'attempt',
+    }
+  );
 
   const mutation = useMutation({
     mutationFn: async () => {
-      await deleteUser({ data: { userId } });
+      return startWorkflowSpan(
+        {
+          op: OPERATIONS.ADMIN_USER_DELETE,
+          name: 'Delete admin user',
+          attributes: workflowAttributes,
+        },
+        async () => {
+          await deleteUser({ data: { userId } });
+        }
+      );
     },
     onSuccess: () => {
       toast.success('User deleted successfully.');

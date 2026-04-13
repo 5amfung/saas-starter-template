@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
 import { AdminUserForm } from '@/components/admin/admin-user-form';
 import { AdminDeleteUserDialog } from '@/components/admin/admin-delete-user-dialog';
+import { OPERATIONS } from '../../../../../../packages/logging/src/operations';
 
 const {
   adminUpdateUserMock,
@@ -11,12 +12,16 @@ const {
   navigateMock,
   mockToastSuccess,
   mockToastError,
+  startSpanMock,
 } = vi.hoisted(() => ({
   adminUpdateUserMock: vi.fn(),
   adminRemoveUserMock: vi.fn(),
   navigateMock: vi.fn(),
   mockToastSuccess: vi.fn(),
   mockToastError: vi.fn(),
+  startSpanMock: vi.fn(async (_options, callback: () => Promise<unknown>) =>
+    callback()
+  ),
 }));
 
 vi.mock('@workspace/auth/client', () => ({
@@ -27,6 +32,15 @@ vi.mock('@/admin/users.functions', () => ({
   updateUser: adminUpdateUserMock,
   deleteUser: adminRemoveUserMock,
 }));
+
+vi.mock('@workspace/logging/client', async (importActual) => {
+  const actual =
+    await importActual<typeof import('@workspace/logging/client')>();
+  return {
+    ...actual,
+    startWorkflowSpan: startSpanMock,
+  };
+});
 
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -82,6 +96,20 @@ describe('Admin user management flow', () => {
           })
         );
       });
+
+      expect(startSpanMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          op: OPERATIONS.ADMIN_USER_UPDATE,
+          name: 'Update admin user',
+          attributes: expect.objectContaining({
+            operation: OPERATIONS.ADMIN_USER_UPDATE,
+            targetUserId: 'user-1',
+            route: '/users/$userId',
+            result: 'attempt',
+          }),
+        }),
+        expect.any(Function)
+      );
     });
 
     it('updates the role to admin and shows a success toast', async () => {
@@ -172,6 +200,20 @@ describe('Admin user management flow', () => {
           expect.objectContaining({ to: '/users' })
         );
       });
+
+      expect(startSpanMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          op: OPERATIONS.ADMIN_USER_DELETE,
+          name: 'Delete admin user',
+          attributes: expect.objectContaining({
+            operation: OPERATIONS.ADMIN_USER_DELETE,
+            targetUserId: 'user-1',
+            route: '/users/$userId',
+            result: 'attempt',
+          }),
+        }),
+        expect.any(Function)
+      );
     });
 
     it('does not enable confirm button with wrong confirmation text', async () => {

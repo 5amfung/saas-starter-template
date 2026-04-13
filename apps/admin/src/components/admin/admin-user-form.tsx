@@ -36,6 +36,11 @@ import { Skeleton } from '@workspace/ui/components/skeleton';
 import { Textarea } from '@workspace/ui/components/textarea';
 import { cn } from '@workspace/ui/lib/utils';
 import { getInitials, toFieldErrorItem } from '@workspace/components/lib';
+import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  startWorkflowSpan,
+} from '@workspace/logging/client';
 import { adminUserFormSchema } from '@/admin/schemas';
 import { updateUser } from '@/admin/users.functions';
 
@@ -67,6 +72,7 @@ const THREE_COLUMN_GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-3';
 const READ_ONLY_INPUT_CLASS = 'bg-muted text-sm';
 const READ_ONLY_MONO_INPUT_CLASS = 'bg-muted font-mono text-sm';
 const CARD_FOOTER_CLASS = 'flex justify-end gap-2 pt-6';
+const ADMIN_USER_ROUTE = '/users/$userId';
 
 type AdminUserUpdatePayload = {
   name: string;
@@ -109,6 +115,14 @@ export function AdminUserForm({
   canManageUsers = true,
 }: AdminUserFormProps) {
   const queryClient = useQueryClient();
+  const workflowAttributes = buildWorkflowAttributes(
+    OPERATIONS.ADMIN_USER_UPDATE,
+    {
+      route: ADMIN_USER_ROUTE,
+      targetUserId: user.id,
+      result: 'attempt',
+    }
+  );
 
   const form = useForm({
     defaultValues: {
@@ -149,12 +163,21 @@ export function AdminUserForm({
 
   const mutation = useMutation({
     mutationFn: async (values: AdminUserUpdatePayload) => {
-      await updateUser({
-        data: {
-          userId: user.id,
-          ...values,
+      return startWorkflowSpan(
+        {
+          op: OPERATIONS.ADMIN_USER_UPDATE,
+          name: 'Update admin user',
+          attributes: workflowAttributes,
         },
-      });
+        async () => {
+          await updateUser({
+            data: {
+              userId: user.id,
+              ...values,
+            },
+          });
+        }
+      );
     },
     onSuccess: (_data, variables) => {
       queryClient.setQueryData(
