@@ -7,22 +7,22 @@ import * as Sentry from '@sentry/tanstackstart-react';
 export const requestLogger = createMiddleware().server(
   async ({ request, next }) => {
     const startTime = Date.now();
+    const path = new URL(request.url).pathname;
 
     try {
       const result = await next();
       const duration = Date.now() - startTime;
 
       console.log(
-        `${request.method} ${request.url} - ${result.response.status} (${duration}ms)`
+        `${request.method} ${path} - ${result.response.status} (${duration}ms)`
       );
 
       return result;
     } catch (error: unknown) {
       const duration = Date.now() - startTime;
       const errMessage = error instanceof Error ? error.message : String(error);
-      const path = new URL(request.url).pathname;
       console.error(
-        `${request.method} ${request.url} - [ERROR] ${errMessage} (${duration}ms)`
+        `${request.method} ${path} - [ERROR] ${errMessage} (${duration}ms)`
       );
       Sentry.captureException(error, {
         tags: {
@@ -32,9 +32,7 @@ export const requestLogger = createMiddleware().server(
         },
         contexts: {
           request_logger: {
-            path,
             duration_ms: duration,
-            request_id: request.headers.get('x-request-id'),
           },
         },
       });
