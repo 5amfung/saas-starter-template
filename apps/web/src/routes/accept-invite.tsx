@@ -3,6 +3,12 @@ import { IconLoader2, IconStack2 } from '@tabler/icons-react';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
 import { z } from 'zod';
 import { authClient } from '@workspace/auth/client';
+import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  startWorkflowSpan,
+  workflowLogger,
+} from '@workspace/logging/client';
 import { Button } from '@workspace/ui/components/button';
 import {
   Card,
@@ -68,6 +74,13 @@ function AcceptInvitePage() {
   const navigate = useNavigate();
   const { id } = Route.useSearch();
   const { data: entry, isPending } = useWebAppEntry();
+  const workflowAttributes = buildWorkflowAttributes(
+    OPERATIONS.AUTH_INVITE_ACCEPT,
+    {
+      route: '/accept-invite',
+      result: 'attempt',
+    }
+  );
   const [state, setState] = React.useState<AcceptState>({
     kind: 'working',
     message: 'Checking invitation...',
@@ -95,31 +108,53 @@ function AcceptInvitePage() {
       didRunRef.current = id;
 
       const returnTo = `/accept-invite?id=${encodeURIComponent(id)}`;
-      const outcome = resolveInviteEntryOutcome(entry);
+      await startWorkflowSpan(
+        {
+          op: OPERATIONS.AUTH_INVITE_ACCEPT,
+          name: 'Accept invitation',
+          attributes: workflowAttributes,
+        },
+        async () => {
+          const outcome = resolveInviteEntryOutcome(entry);
 
-      if (outcome.kind === 'redirectToSignup') {
-        if (outcome.reason === 'unverifiedSession') {
-          await authClient.signOut();
+          if (outcome.kind === 'redirectToSignup') {
+            workflowLogger.info('Auth invite redirected to sign up', {
+              ...workflowAttributes,
+              failureCategory: outcome.reason,
+            });
+            if (outcome.reason === 'unverifiedSession') {
+              await authClient.signOut();
+            }
+            await navigate({ to: '/signup', search: { redirect: returnTo } });
+            return;
+          }
+
+          setState({ kind: 'working', message: 'Accepting invitation...' });
+          const accepted = await authClient.organization.acceptInvitation({
+            invitationId: id,
+          });
+
+          if (accepted.error) {
+            workflowLogger.error('Auth invite acceptance failed', {
+              ...workflowAttributes,
+              result: 'failure',
+              failureCategory: 'accept_invitation_failed',
+            });
+            await authClient.signOut();
+            setState({
+              kind: 'error',
+              message: accepted.error.message ?? 'Failed to accept invitation.',
+            });
+            return;
+          }
+
+          workflowLogger.info('Auth invite accepted', {
+            ...workflowAttributes,
+            result: 'success',
+          });
+          await navigate({ to: '/ws' });
         }
-        await navigate({ to: '/signup', search: { redirect: returnTo } });
-        return;
-      }
-
-      setState({ kind: 'working', message: 'Accepting invitation...' });
-      const accepted = await authClient.organization.acceptInvitation({
-        invitationId: id,
-      });
-
-      if (accepted.error) {
-        await authClient.signOut();
-        setState({
-          kind: 'error',
-          message: accepted.error.message ?? 'Failed to accept invitation.',
-        });
-        return;
-      }
-
-      await navigate({ to: '/ws' });
+      );
     };
 
     void run();

@@ -257,7 +257,7 @@ git commit -m "feat(logging): add shared sentry observability helpers"
 - Test: `apps/web/test/unit/components/auth/forgot-password-form.test.tsx`
 - Test: `packages/auth/test/unit/auth.server.test.ts`
 
-- [ ] **Step 1: Add failing tests for auth workflow logging/spans**
+- [x] **Step 1: Add failing tests for auth workflow logging/spans**
 
 ```ts
 it('logs auth.sign_in failure without leaking email', async () => {
@@ -313,7 +313,7 @@ Expected: FAIL because Sentry workflow logging is not emitted yet
 Run: `pnpm --filter @workspace/auth test packages/auth/test/unit/auth.server.test.ts`
 Expected: FAIL because auth server hooks do not emit enriched Sentry events yet
 
-- [ ] **Step 3: Implement auth instrumentation**
+- [x] **Step 3: Implement auth instrumentation**
 
 ```ts
 // packages/components/src/auth/signin-form.tsx
@@ -394,7 +394,7 @@ Sentry.captureException(error, {
 });
 ```
 
-- [ ] **Step 4: Re-run the targeted auth tests**
+- [x] **Step 4: Re-run the targeted auth tests**
 
 Run: `pnpm --filter @workspace/web test apps/web/test/unit/components/auth/signin-form.test.tsx apps/web/test/unit/components/auth/signup-form.test.tsx apps/web/test/unit/components/auth/forgot-password-form.test.tsx`
 Expected: PASS

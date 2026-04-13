@@ -5,8 +5,6 @@ import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query
 import * as Sentry from '@sentry/tanstackstart-react';
 import { routeTree } from './routeTree.gen';
 
-const sentryEnvironment = import.meta.env.MODE;
-
 export const getRouter = () => {
   const queryClient = new QueryClient();
 

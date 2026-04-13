@@ -15,6 +15,12 @@ import {
   user as userTable,
 } from '@workspace/db-schema';
 import { assertInviteAllowed } from '@workspace/billing';
+import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  startWorkflowSpan,
+  workflowLogger,
+} from '@workspace/logging/server';
 import { createAuthEmails } from './auth-emails.server';
 import { isDuplicateOrganizationError, isSignInPath } from './auth-utils';
 import { createBillingHelpers } from './billing.server';
@@ -182,10 +188,31 @@ export function createAuth(config: AuthConfig) {
         const newSession = ctx.context.newSession;
         if (!newSession) return;
 
-        await config.db
-          .update(userTable)
-          .set({ lastSignInAt: new Date() })
-          .where(eq(userTable.id, newSession.user.id));
+        await startWorkflowSpan(
+          {
+            op: OPERATIONS.AUTH_SIGN_IN,
+            name: 'Record last sign-in time',
+            attributes: buildWorkflowAttributes(OPERATIONS.AUTH_SIGN_IN, {
+              route: ctx.path,
+              userId: newSession.user.id,
+              result: 'attempt',
+            }),
+          },
+          async () => {
+            await config.db
+              .update(userTable)
+              .set({ lastSignInAt: new Date() })
+              .where(eq(userTable.id, newSession.user.id));
+
+            workflowLogger.info('Recorded user sign-in', {
+              ...buildWorkflowAttributes(OPERATIONS.AUTH_SIGN_IN, {
+                route: ctx.path,
+                userId: newSession.user.id,
+                result: 'success',
+              }),
+            });
+          }
+        );
       }),
     },
     databaseHooks: {
@@ -194,20 +221,49 @@ export function createAuth(config: AuthConfig) {
           after: async (user) => {
             const DEFAULT_WORKSPACE_NAME = 'My Workspace';
             const slug = `ws-${crypto.randomUUID().slice(0, 8)}`;
-            try {
-              await auth.api.createOrganization({
-                body: {
-                  name: DEFAULT_WORKSPACE_NAME,
-                  slug,
-                  userId: user.id,
-                },
-              });
-            } catch (error) {
-              if (!isDuplicateOrganizationError(error)) {
-                console.error(error);
-                throw error;
+            await startWorkflowSpan(
+              {
+                op: OPERATIONS.WORKSPACE_CREATE,
+                name: 'Create default workspace',
+                attributes: buildWorkflowAttributes(
+                  OPERATIONS.WORKSPACE_CREATE,
+                  {
+                    userId: user.id,
+                    result: 'attempt',
+                  }
+                ),
+              },
+              async () => {
+                try {
+                  await auth.api.createOrganization({
+                    body: {
+                      name: DEFAULT_WORKSPACE_NAME,
+                      slug,
+                      userId: user.id,
+                    },
+                  });
+
+                  workflowLogger.info('Created default workspace', {
+                    ...buildWorkflowAttributes(OPERATIONS.WORKSPACE_CREATE, {
+                      userId: user.id,
+                      result: 'success',
+                    }),
+                  });
+                } catch (error) {
+                  if (!isDuplicateOrganizationError(error)) {
+                    workflowLogger.error('Failed to create default workspace', {
+                      ...buildWorkflowAttributes(OPERATIONS.WORKSPACE_CREATE, {
+                        userId: user.id,
+                        result: 'failure',
+                        failureCategory: 'auto_create_failed',
+                      }),
+                    });
+                    console.error(error);
+                    throw error;
+                  }
+                }
               }
-            }
+            );
           },
         },
       },
@@ -313,32 +369,89 @@ export function createAuth(config: AuthConfig) {
             }
           },
           beforeCreateInvitation: async ({ organization }) => {
-            try {
-              await assertInviteAllowed({
-                db: config.db,
-                workspaceId: organization.id,
-              });
-            } catch (error) {
-              if (
-                typeof error === 'object' &&
-                error !== null &&
-                'code' in error &&
-                (error as { code?: string }).code === 'LIMIT_EXCEEDED'
-              ) {
-                const metadata =
-                  'metadata' in error &&
-                  typeof (error as { metadata?: unknown }).metadata === 'object'
-                    ? (error as { metadata?: Record<string, unknown> }).metadata
-                    : undefined;
-                const limit = Number(metadata?.limit ?? 0);
-                throw new APIError('FORBIDDEN', {
-                  message: `This workspace has reached its member limit (${limit}). Upgrade the workspace plan to invite more members.`,
-                });
+            await startWorkflowSpan(
+              {
+                op: OPERATIONS.WORKSPACE_MEMBER_INVITE,
+                name: 'Validate workspace invitation entitlement',
+                attributes: buildWorkflowAttributes(
+                  OPERATIONS.WORKSPACE_MEMBER_INVITE,
+                  {
+                    workspaceId: organization.id,
+                    result: 'attempt',
+                  }
+                ),
+              },
+              async () => {
+                try {
+                  await assertInviteAllowed({
+                    db: config.db,
+                    workspaceId: organization.id,
+                  });
+
+                  workflowLogger.info('Workspace invitation allowed', {
+                    ...buildWorkflowAttributes(
+                      OPERATIONS.WORKSPACE_MEMBER_INVITE,
+                      {
+                        workspaceId: organization.id,
+                        result: 'success',
+                      }
+                    ),
+                  });
+                } catch (error) {
+                  if (
+                    typeof error === 'object' &&
+                    error !== null &&
+                    'code' in error &&
+                    (error as { code?: string }).code === 'LIMIT_EXCEEDED'
+                  ) {
+                    workflowLogger.error(
+                      'Workspace invitation blocked by member limit',
+                      {
+                        ...buildWorkflowAttributes(
+                          OPERATIONS.WORKSPACE_MEMBER_INVITE,
+                          {
+                            workspaceId: organization.id,
+                            result: 'failure',
+                            failureCategory: 'member_limit_exceeded',
+                          }
+                        ),
+                      }
+                    );
+
+                    const metadata =
+                      'metadata' in error &&
+                      typeof (error as { metadata?: unknown }).metadata ===
+                        'object'
+                        ? (
+                            error as {
+                              metadata?: Record<string, unknown>;
+                            }
+                          ).metadata
+                        : undefined;
+                    const limit = Number(metadata?.limit ?? 0);
+                    throw new APIError('FORBIDDEN', {
+                      message: `This workspace has reached its member limit (${limit}). Upgrade the workspace plan to invite more members.`,
+                    });
+                  }
+                  workflowLogger.error(
+                    'Unable to validate invitation entitlements',
+                    {
+                      ...buildWorkflowAttributes(
+                        OPERATIONS.WORKSPACE_MEMBER_INVITE,
+                        {
+                          workspaceId: organization.id,
+                          result: 'failure',
+                          failureCategory: 'entitlement_validation_failed',
+                        }
+                      ),
+                    }
+                  );
+                  throw new APIError('FORBIDDEN', {
+                    message: 'Unable to validate invitation entitlements.',
+                  });
+                }
               }
-              throw new APIError('FORBIDDEN', {
-                message: 'Unable to validate invitation entitlements.',
-              });
-            }
+            );
           },
         },
       }),

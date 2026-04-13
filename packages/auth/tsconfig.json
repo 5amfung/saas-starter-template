@@ -8,7 +8,9 @@
       "@workspace/db": ["../db/src/index.ts"],
       "@workspace/db/*": ["../db/src/*"],
       "@workspace/email": ["../email/src/index.ts"],
-      "@workspace/email/*": ["../email/src/*"]
+      "@workspace/email/*": ["../email/src/*"],
+      "@workspace/logging/client": ["../logging/src/client.ts"],
+      "@workspace/logging/server": ["../logging/src/server.ts"]
     }
   },
   "include": [

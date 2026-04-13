@@ -22,6 +22,12 @@ import { FormErrorDisplay } from '../form/form-error-display';
 import { FormSubmitButton } from '../form/form-submit-button';
 import { ValidatedField } from '../form/validated-field';
 import { GoogleSignInButton } from './google-sign-in-button';
+import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  startWorkflowSpan,
+  workflowLogger,
+} from '@workspace/logging/client';
 
 interface SigninFormProps {
   /** URL to redirect to after successful sign-in when no ?redirect param is present. */
@@ -45,30 +51,66 @@ export function SigninForm({
 }: SigninFormProps) {
   const navigate = useNavigate();
   const callbackURL = redirect ?? defaultCallbackUrl;
+  const workflowAttributes = buildWorkflowAttributes(OPERATIONS.AUTH_SIGN_IN, {
+    route: '/signin',
+    result: 'attempt',
+  });
 
   const form = useForm({
     defaultValues: { email: '', password: '' },
     validators: { onBlur: loginSchema, onSubmit: loginSchema },
     onSubmit: async ({ value, formApi }) => {
-      const { error } = await authClient.signIn.email({
-        email: value.email,
-        password: value.password,
-        callbackURL,
-      });
-      if (error) {
-        if (error.status === 403) {
-          navigate({ to: '/verify', search: { email: value.email, redirect } });
-          return;
+      await startWorkflowSpan(
+        {
+          op: OPERATIONS.AUTH_SIGN_IN,
+          name: 'Sign in',
+          attributes: workflowAttributes,
+        },
+        async () => {
+          const { error } = await authClient.signIn.email({
+            email: value.email,
+            password: value.password,
+            callbackURL,
+          });
+
+          if (error) {
+            const failureCategory =
+              error.status === 403
+                ? 'email_verification_required'
+                : error.status === 401
+                  ? 'invalid_credentials'
+                  : 'unexpected_error';
+            workflowLogger.error('Auth sign-in failed', {
+              ...workflowAttributes,
+              result: 'failure',
+              failureCategory,
+            });
+
+            if (error.status === 403) {
+              navigate({
+                to: '/verify',
+                search: { email: value.email, redirect },
+              });
+              return;
+            }
+
+            const message =
+              error.status === 401
+                ? 'Invalid email or password. If you signed up with Google, use "Sign in with Google" or reset your password.'
+                : (error.message ?? 'Something went wrong.');
+            formApi.setErrorMap({
+              ...formApi.state.errorMap,
+              onSubmit: { form: message, fields: {} },
+            });
+            return;
+          }
+
+          workflowLogger.info('Auth sign-in succeeded', {
+            ...workflowAttributes,
+            result: 'success',
+          });
         }
-        const message =
-          error.status === 401
-            ? 'Invalid email or password. If you signed up with Google, use "Sign in with Google" or reset your password.'
-            : (error.message ?? 'Something went wrong.');
-        formApi.setErrorMap({
-          ...formApi.state.errorMap,
-          onSubmit: { form: message, fields: {} },
-        });
-      }
+      );
     },
   });
 

@@ -1,4 +1,5 @@
 import type { AuthConfig } from '../../src/auth.server';
+import { OPERATIONS } from '../../../logging/src/operations';
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks — references used inside vi.mock() definitions.
@@ -14,6 +15,9 @@ const {
   dbUpdateMock,
   stripeMock,
   organizationPluginSpy,
+  startSpanMock,
+  loggerInfoMock,
+  loggerErrorMock,
 } = vi.hoisted(() => {
   const createOrganizationFn = vi.fn();
   const billingHelpers = {
@@ -34,6 +38,9 @@ const {
     where: vi.fn().mockResolvedValue(undefined),
   };
   const dbUpdateFn = vi.fn().mockReturnValue(updateChain);
+  const startSpanFn = vi.fn(
+    async (_options, callback: () => Promise<unknown>) => callback()
+  );
   return {
     createOrganizationMock: createOrganizationFn,
     betterAuthSpy: vi.fn(),
@@ -49,6 +56,9 @@ const {
     dbUpdateMock: dbUpdateFn,
     stripeMock: vi.fn(),
     organizationPluginSpy: vi.fn(),
+    startSpanMock: startSpanFn,
+    loggerInfoMock: vi.fn(),
+    loggerErrorMock: vi.fn(),
   };
 });
 
@@ -124,6 +134,19 @@ vi.mock('@workspace/db-schema', async (importOriginal) => {
       quotas: 'quotas',
     },
   });
+});
+
+vi.mock('@workspace/logging/server', async (importActual) => {
+  const actual =
+    await importActual<typeof import('@workspace/logging/server')>();
+  return {
+    ...actual,
+    startWorkflowSpan: startSpanMock,
+    workflowLogger: {
+      info: loggerInfoMock,
+      error: loggerErrorMock,
+    },
+  };
 });
 
 vi.mock('../../src/billing.server', () => ({
@@ -227,6 +250,26 @@ describe('createAuth', () => {
           slug: expect.stringMatching(/^ws-[a-f0-9]{8}$/),
         }),
       });
+      expect(startSpanMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          op: OPERATIONS.WORKSPACE_CREATE,
+          name: 'Create default workspace',
+          attributes: expect.objectContaining({
+            operation: OPERATIONS.WORKSPACE_CREATE,
+            userId: 'user_new',
+            result: 'attempt',
+          }),
+        }),
+        expect.any(Function)
+      );
+      expect(loggerInfoMock).toHaveBeenCalledWith(
+        'Created default workspace',
+        expect.objectContaining({
+          operation: OPERATIONS.WORKSPACE_CREATE,
+          userId: 'user_new',
+          result: 'success',
+        })
+      );
     });
 
     it('swallows duplicate organization errors silently', async () => {
@@ -257,6 +300,15 @@ describe('createAuth', () => {
 
       await expect(hook({ id: 'user_err' })).rejects.toThrow(
         'Connection refused'
+      );
+      expect(loggerErrorMock).toHaveBeenCalledWith(
+        'Failed to create default workspace',
+        expect.objectContaining({
+          operation: OPERATIONS.WORKSPACE_CREATE,
+          userId: 'user_err',
+          result: 'failure',
+          failureCategory: 'auto_create_failed',
+        })
       );
       consoleSpy.mockRestore();
     });
@@ -431,6 +483,14 @@ describe('createAuth', () => {
           organization: { id: 'org_starter' },
         })
       ).resolves.toBeUndefined();
+      expect(loggerInfoMock).toHaveBeenCalledWith(
+        'Workspace invitation allowed',
+        expect.objectContaining({
+          operation: OPERATIONS.WORKSPACE_MEMBER_INVITE,
+          workspaceId: 'org_starter',
+          result: 'success',
+        })
+      );
     });
 
     it('throws FORBIDDEN when at the member limit', async () => {
@@ -456,6 +516,15 @@ describe('createAuth', () => {
           organization: { id: 'org_free' },
         })
       ).rejects.toThrow('reached its member limit');
+      expect(loggerErrorMock).toHaveBeenCalledWith(
+        'Workspace invitation blocked by member limit',
+        expect.objectContaining({
+          operation: OPERATIONS.WORKSPACE_MEMBER_INVITE,
+          workspaceId: 'org_free',
+          result: 'failure',
+          failureCategory: 'member_limit_exceeded',
+        })
+      );
     });
 
     it('throws FORBIDDEN when over the member limit', async () => {
@@ -545,6 +614,28 @@ describe('createAuth', () => {
       });
 
       expect(dbUpdateMock).toHaveBeenCalled();
+      expect(startSpanMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          op: OPERATIONS.AUTH_SIGN_IN,
+          name: 'Record last sign-in time',
+          attributes: expect.objectContaining({
+            operation: OPERATIONS.AUTH_SIGN_IN,
+            route: '/sign-in/email',
+            userId: 'user_signin',
+            result: 'attempt',
+          }),
+        }),
+        expect.any(Function)
+      );
+      expect(loggerInfoMock).toHaveBeenCalledWith(
+        'Recorded user sign-in',
+        expect.objectContaining({
+          operation: OPERATIONS.AUTH_SIGN_IN,
+          route: '/sign-in/email',
+          userId: 'user_signin',
+          result: 'success',
+        })
+      );
     });
 
     it('skips update when path is not a sign-in path', async () => {

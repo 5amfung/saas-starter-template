@@ -4,9 +4,18 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
 import { ForgotPasswordForm } from '@workspace/components/auth';
+import { OPERATIONS } from '../../../../../../packages/logging/src/operations';
 
 const { requestPasswordReset } = vi.hoisted(() => ({
   requestPasswordReset: vi.fn(),
+}));
+
+const { startSpanMock, loggerInfoMock, loggerErrorMock } = vi.hoisted(() => ({
+  startSpanMock: vi.fn(async (_options, callback: () => Promise<unknown>) =>
+    callback()
+  ),
+  loggerInfoMock: vi.fn(),
+  loggerErrorMock: vi.fn(),
 }));
 
 vi.mock('@workspace/auth/client', () => ({
@@ -14,6 +23,19 @@ vi.mock('@workspace/auth/client', () => ({
     requestPasswordReset,
   },
 }));
+
+vi.mock('@workspace/logging/client', async (importActual) => {
+  const actual =
+    await importActual<typeof import('@workspace/logging/client')>();
+  return {
+    ...actual,
+    startWorkflowSpan: startSpanMock,
+    workflowLogger: {
+      info: loggerInfoMock,
+      error: loggerErrorMock,
+    },
+  };
+});
 
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -61,6 +83,27 @@ describe('ForgotPasswordForm', () => {
         expect.objectContaining({ email: 'test@example.com' })
       );
     });
+
+    expect(startSpanMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        op: OPERATIONS.AUTH_PASSWORD_RESET_REQUEST,
+        name: 'Request password reset',
+        attributes: expect.objectContaining({
+          operation: OPERATIONS.AUTH_PASSWORD_RESET_REQUEST,
+          route: '/forgot-password',
+          result: 'attempt',
+        }),
+      }),
+      expect.any(Function)
+    );
+    expect(loggerInfoMock).toHaveBeenCalledWith(
+      'Password reset requested',
+      expect.objectContaining({
+        operation: OPERATIONS.AUTH_PASSWORD_RESET_REQUEST,
+        route: '/forgot-password',
+        result: 'success',
+      })
+    );
   });
 
   it('shows success card with check your email message', async () => {
@@ -102,6 +145,20 @@ describe('ForgotPasswordForm', () => {
     await waitFor(() => {
       expect(screen.getByText(/rate limited/i)).toBeInTheDocument();
     });
+
+    expect(loggerErrorMock).toHaveBeenCalledWith(
+      'Password reset request failed',
+      expect.objectContaining({
+        operation: OPERATIONS.AUTH_PASSWORD_RESET_REQUEST,
+        route: '/forgot-password',
+        result: 'failure',
+        failureCategory: 'reset_request_failed',
+      })
+    );
+    expect(loggerErrorMock).not.toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ email: 'test@example.com' })
+    );
   });
 
   it('disables button while submitting', async () => {
