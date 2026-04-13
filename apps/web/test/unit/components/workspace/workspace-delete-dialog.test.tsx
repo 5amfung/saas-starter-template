@@ -1,12 +1,19 @@
 // @vitest-environment jsdom
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { OPERATIONS } from '@workspace/logging/client';
 import { renderWithProviders } from '@workspace/test-utils';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
 
 const { setActiveMock, assignMock } = vi.hoisted(() => ({
   setActiveMock: vi.fn(),
   assignMock: vi.fn(),
+}));
+
+const { startSpanMock, loggerInfoMock, loggerErrorMock } = vi.hoisted(() => ({
+  startSpanMock: vi.fn((_, callback: () => unknown) => callback()),
+  loggerInfoMock: vi.fn(),
+  loggerErrorMock: vi.fn(),
 }));
 
 vi.mock('@workspace/auth/client', () => ({
@@ -16,6 +23,19 @@ vi.mock('@workspace/auth/client', () => ({
     },
   },
 }));
+
+vi.mock('@workspace/logging/client', async (importActual) => {
+  const actual =
+    await importActual<typeof import('@workspace/logging/client')>();
+  return {
+    ...actual,
+    startWorkflowSpan: startSpanMock,
+    workflowLogger: {
+      info: loggerInfoMock,
+      error: loggerErrorMock,
+    },
+  };
+});
 
 vi.mock('sonner', () => ({
   toast: {
@@ -138,11 +158,33 @@ describe('WorkspaceDeleteDialog', () => {
       expect(assignMock).toHaveBeenCalledWith('/ws/ws-456/overview');
     });
 
+    expect(startSpanMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        op: OPERATIONS.WORKSPACE_DELETE,
+        name: 'Delete workspace',
+        attributes: expect.objectContaining({
+          operation: OPERATIONS.WORKSPACE_DELETE,
+          workspaceId: 'ws-123',
+          result: 'attempt',
+        }),
+      }),
+      expect.any(Function)
+    );
+
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith(
         'Workspace deleted successfully.'
       );
     });
+
+    expect(loggerInfoMock).toHaveBeenCalledWith(
+      'Workspace deleted',
+      expect.objectContaining({
+        operation: OPERATIONS.WORKSPACE_DELETE,
+        workspaceId: 'ws-123',
+        result: 'success',
+      })
+    );
   });
 
   it('shows an error toast when setActive fails after deletion succeeds', async () => {
@@ -170,6 +212,16 @@ describe('WorkspaceDeleteDialog', () => {
       );
     });
 
+    expect(loggerErrorMock).toHaveBeenCalledWith(
+      'Workspace deletion failed',
+      expect.objectContaining({
+        operation: OPERATIONS.WORKSPACE_DELETE,
+        workspaceId: 'ws-123',
+        result: 'failure',
+        failureCategory: 'activation_failed',
+      })
+    );
+
     expect(assignMock).not.toHaveBeenCalled();
     expect(toast.success).not.toHaveBeenCalled();
   });
@@ -191,6 +243,16 @@ describe('WorkspaceDeleteDialog', () => {
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Permission denied');
     });
+
+    expect(loggerErrorMock).toHaveBeenCalledWith(
+      'Workspace deletion failed',
+      expect.objectContaining({
+        operation: OPERATIONS.WORKSPACE_DELETE,
+        workspaceId: 'ws-123',
+        result: 'failure',
+        failureCategory: 'delete_failed',
+      })
+    );
 
     expect(
       screen.getByRole('button', { name: /confirm delete/i })

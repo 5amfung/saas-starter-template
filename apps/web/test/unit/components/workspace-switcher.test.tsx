@@ -2,21 +2,31 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
+import { OPERATIONS } from '@workspace/logging/client';
 import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 
 // ── Hoisted mocks ────────────────────────────────────────────────────────────
 
-const { setActiveMock, createOrgMock, navigateMock, toast } = vi.hoisted(
-  () => ({
-    setActiveMock: vi.fn(),
-    createOrgMock: vi.fn(),
-    navigateMock: vi.fn(),
-    toast: {
-      success: vi.fn(),
-      error: vi.fn(),
-    },
-  })
-);
+const {
+  setActiveMock,
+  createOrgMock,
+  navigateMock,
+  startSpanMock,
+  loggerInfoMock,
+  loggerErrorMock,
+  toast,
+} = vi.hoisted(() => ({
+  setActiveMock: vi.fn(),
+  createOrgMock: vi.fn(),
+  navigateMock: vi.fn(),
+  startSpanMock: vi.fn((_, callback: () => unknown) => callback()),
+  loggerInfoMock: vi.fn(),
+  loggerErrorMock: vi.fn(),
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
 
@@ -28,6 +38,19 @@ vi.mock('@workspace/auth/client', () => ({
     },
   },
 }));
+
+vi.mock('@workspace/logging/client', async (importActual) => {
+  const actual =
+    await importActual<typeof import('@workspace/logging/client')>();
+  return {
+    ...actual,
+    startWorkflowSpan: startSpanMock,
+    workflowLogger: {
+      info: loggerInfoMock,
+      error: loggerErrorMock,
+    },
+  };
+});
 
 vi.mock('@tanstack/react-router', async () => {
   const actual = await import('@tanstack/react-router');
@@ -348,6 +371,27 @@ describe('WorkspaceSwitcher', () => {
       expect(toast.success).toHaveBeenCalledWith('Workspace created.');
     });
 
+    expect(startSpanMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        op: OPERATIONS.WORKSPACE_CREATE,
+        name: 'Create workspace',
+        attributes: expect.objectContaining({
+          operation: OPERATIONS.WORKSPACE_CREATE,
+          result: 'attempt',
+        }),
+      }),
+      expect.any(Function)
+    );
+
+    expect(loggerInfoMock).toHaveBeenCalledWith(
+      'Workspace created',
+      expect.objectContaining({
+        operation: OPERATIONS.WORKSPACE_CREATE,
+        workspaceId: 'ws-new',
+        result: 'success',
+      })
+    );
+
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith({
         to: '/ws/$workspaceId/overview',
@@ -385,5 +429,14 @@ describe('WorkspaceSwitcher', () => {
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Creation failed');
     });
+
+    expect(loggerErrorMock).toHaveBeenCalledWith(
+      'Workspace creation failed',
+      expect.objectContaining({
+        operation: OPERATIONS.WORKSPACE_CREATE,
+        result: 'failure',
+        failureCategory: 'create_failed',
+      })
+    );
   });
 });

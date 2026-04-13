@@ -3,6 +3,11 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { authClient } from '@workspace/auth/client';
 import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  workflowLogger,
+} from '@workspace/logging/client';
+import {
   DEFAULT_INVITE_ROLES,
   INVITATION_PAGE_SIZE_DEFAULT,
   VALID_ORG_ROLES,
@@ -16,6 +21,8 @@ import {
   cancelWorkspaceInvitation,
   inviteWorkspaceMember,
 } from '@/workspace/workspace-members.functions';
+
+const WORKFLOW_ROUTE = 'workspace-invitations';
 
 export function useInvitationsTable(workspaceId: string) {
   const [page, setPage] = React.useState(1);
@@ -66,6 +73,29 @@ export function useInvitationsTable(workspaceId: string) {
           workspaceId,
         },
       });
+    },
+    onSuccess: async (_data, variables) => {
+      workflowLogger.info(
+        'Workspace invitation sent',
+        buildWorkflowAttributes(OPERATIONS.WORKSPACE_MEMBER_INVITE, {
+          route: WORKFLOW_ROUTE,
+          workspaceId,
+          memberRole: variables.role,
+          result: 'success',
+        })
+      );
+    },
+    onError: (_error, variables) => {
+      workflowLogger.error(
+        'Workspace invitation failed',
+        buildWorkflowAttributes(OPERATIONS.WORKSPACE_MEMBER_INVITE, {
+          route: WORKFLOW_ROUTE,
+          workspaceId,
+          memberRole: variables.role,
+          result: 'failure',
+          failureCategory: 'invite_failed',
+        })
+      );
     },
   });
 

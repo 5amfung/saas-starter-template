@@ -18,6 +18,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@workspace/ui/components/select';
+import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  startWorkflowSpan,
+  workflowLogger,
+} from '@workspace/logging/client';
 import type { InviteRole } from '@/workspace/workspace-members.types';
 
 interface WorkspaceInviteDialogProps {
@@ -31,6 +37,8 @@ interface WorkspaceInviteDialogProps {
   onRoleChange: (role: InviteRole) => void;
   onSubmit: () => void;
 }
+
+const WORKFLOW_ROUTE = 'workspace-invite-dialog';
 
 export function WorkspaceInviteDialog({
   open,
@@ -97,7 +105,51 @@ export function WorkspaceInviteDialog({
             disabled={isPending}
             onClick={(event) => {
               event.preventDefault();
-              onSubmit();
+              void startWorkflowSpan(
+                {
+                  op: OPERATIONS.WORKSPACE_MEMBER_INVITE,
+                  name: 'Invite workspace member',
+                  attributes: buildWorkflowAttributes(
+                    OPERATIONS.WORKSPACE_MEMBER_INVITE,
+                    {
+                      route: WORKFLOW_ROUTE,
+                      memberRole: role,
+                      result: 'attempt',
+                    }
+                  ),
+                },
+                async () => {
+                  workflowLogger.info(
+                    'Workspace invitation submitted',
+                    buildWorkflowAttributes(
+                      OPERATIONS.WORKSPACE_MEMBER_INVITE,
+                      {
+                        route: WORKFLOW_ROUTE,
+                        memberRole: role,
+                        result: 'attempt',
+                      }
+                    )
+                  );
+
+                  try {
+                    await Promise.resolve(onSubmit());
+                  } catch (error) {
+                    workflowLogger.error(
+                      'Workspace invitation failed',
+                      buildWorkflowAttributes(
+                        OPERATIONS.WORKSPACE_MEMBER_INVITE,
+                        {
+                          route: WORKFLOW_ROUTE,
+                          memberRole: role,
+                          result: 'failure',
+                          failureCategory: 'submission_failed',
+                        }
+                      )
+                    );
+                    throw error;
+                  }
+                }
+              );
             }}
           >
             {isPending ? (

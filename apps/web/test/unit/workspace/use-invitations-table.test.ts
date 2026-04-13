@@ -1,19 +1,26 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createHookWrapper } from '@workspace/test-utils';
+import { OPERATIONS } from '@workspace/logging/client';
 import { useInvitationsTable } from '@/workspace/use-invitations-table';
 import {
   cancelWorkspaceInvitation,
   inviteWorkspaceMember,
 } from '@/workspace/workspace-members.functions';
 
-const { listInvitationsMock, mockToastSuccess, mockToastError } = vi.hoisted(
-  () => ({
-    listInvitationsMock: vi.fn(),
-    mockToastSuccess: vi.fn(),
-    mockToastError: vi.fn(),
-  })
-);
+const {
+  listInvitationsMock,
+  mockToastSuccess,
+  mockToastError,
+  loggerInfoMock,
+  loggerErrorMock,
+} = vi.hoisted(() => ({
+  listInvitationsMock: vi.fn(),
+  mockToastSuccess: vi.fn(),
+  mockToastError: vi.fn(),
+  loggerInfoMock: vi.fn(),
+  loggerErrorMock: vi.fn(),
+}));
 
 vi.mock('@workspace/auth/client', () => ({
   authClient: {
@@ -27,6 +34,18 @@ vi.mock('@/workspace/workspace-members.functions', () => ({
   inviteWorkspaceMember: vi.fn(),
   cancelWorkspaceInvitation: vi.fn(),
 }));
+
+vi.mock('@workspace/logging/client', async (importActual) => {
+  const actual =
+    await importActual<typeof import('@workspace/logging/client')>();
+  return {
+    ...actual,
+    workflowLogger: {
+      info: loggerInfoMock,
+      error: loggerErrorMock,
+    },
+  };
+});
 
 vi.mock('sonner', () => ({
   toast: { success: mockToastSuccess, error: mockToastError },
@@ -328,6 +347,15 @@ describe('useInvitationsTable', () => {
       });
 
       expect(mockToastSuccess).toHaveBeenCalledWith('Invitation sent.');
+      expect(loggerInfoMock).toHaveBeenCalledWith(
+        'Workspace invitation sent',
+        expect.objectContaining({
+          operation: OPERATIONS.WORKSPACE_MEMBER_INVITE,
+          workspaceId: WORKSPACE_ID,
+          memberRole: 'admin',
+          result: 'success',
+        })
+      );
       expect(result.current.inviteDialog.open).toBe(false);
       expect(result.current.inviteDialog.draft.email).toBe('');
     });
@@ -352,6 +380,16 @@ describe('useInvitationsTable', () => {
         await result.current.inviteDialog.onSubmit();
       });
       expect(mockToastError).toHaveBeenCalledWith('Already invited');
+      expect(loggerErrorMock).toHaveBeenCalledWith(
+        'Workspace invitation failed',
+        expect.objectContaining({
+          operation: OPERATIONS.WORKSPACE_MEMBER_INVITE,
+          workspaceId: WORKSPACE_ID,
+          memberRole: 'member',
+          result: 'failure',
+          failureCategory: 'invite_failed',
+        })
+      );
     });
   });
 

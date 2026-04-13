@@ -541,7 +541,7 @@ const handlePortalOpen = () =>
 Run: `pnpm --filter @workspace/web test apps/web/test/unit/billing/billing.functions.test.ts apps/web/test/unit/components/billing/billing-page.test.tsx`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/billing/billing.functions.ts apps/web/src/components/billing/billing-page.tsx apps/web/test/unit/billing/billing.functions.test.ts apps/web/test/unit/components/billing/billing-page.test.tsx
@@ -563,7 +563,7 @@ git commit -m "feat(billing): add sentry workflow observability"
 - Test: `apps/web/test/integration/components/workspace/workspace-invite-flow.integration.test.tsx`
 - Test: `apps/web/test/integration/components/workspace/workspace-lifecycle-flow.integration.test.tsx`
 
-- [ ] **Step 1: Add failing workspace observability tests**
+- [x] **Step 1: Add failing workspace observability tests**
 
 ```ts
 it('logs workspace creation success with operation metadata', async () => {
@@ -601,7 +601,7 @@ it('logs member removal failure with workspace metadata', async () => {
 Run: `pnpm --filter @workspace/web test apps/web/test/unit/components/workspace-switcher.test.tsx apps/web/test/unit/components/workspace/workspace-delete-dialog.test.tsx apps/web/test/unit/workspace/use-members-table.test.ts apps/web/test/integration/components/workspace/workspace-invite-flow.integration.test.tsx apps/web/test/integration/components/workspace/workspace-lifecycle-flow.integration.test.tsx`
 Expected: FAIL because workspace spans/logs are not emitted yet
 
-- [ ] **Step 3: Implement workspace instrumentation**
+- [x] **Step 3: Implement workspace instrumentation**
 
 ```ts
 // apps/web/src/components/workspace-switcher.tsx
@@ -653,7 +653,7 @@ Sentry.startSpan(
 );
 ```
 
-- [ ] **Step 4: Re-run the targeted workspace tests**
+- [x] **Step 4: Re-run the targeted workspace tests**
 
 Run: `pnpm --filter @workspace/web test apps/web/test/unit/components/workspace-switcher.test.tsx apps/web/test/unit/components/workspace/workspace-delete-dialog.test.tsx apps/web/test/unit/workspace/use-members-table.test.ts apps/web/test/integration/components/workspace/workspace-invite-flow.integration.test.tsx apps/web/test/integration/components/workspace/workspace-lifecycle-flow.integration.test.tsx`
 Expected: PASS

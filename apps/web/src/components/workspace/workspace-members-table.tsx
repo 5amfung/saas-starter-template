@@ -30,6 +30,11 @@ import {
 } from '@workspace/components/lib';
 import { useColumnSort } from '@workspace/components/hooks';
 import { SortableHeader, TablePagination } from '@workspace/components/layout';
+import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  startWorkflowSpan,
+} from '@workspace/logging/client';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import { WorkspaceTransferOwnershipDialog } from '@/components/workspace/workspace-transfer-ownership-dialog';
 import { TypedConfirmDialog } from '@/components/shared/typed-confirm-dialog';
@@ -69,12 +74,29 @@ type PendingAction =
   | {
       type: 'remove';
       memberId: string;
+      userId: string;
       email: string;
     }
   | {
       type: 'leave';
     }
   | null;
+
+const WORKFLOW_ROUTE = 'workspace-members-table';
+
+function buildWorkspaceMembershipSpanAttributes(
+  operation: (typeof OPERATIONS)[keyof typeof OPERATIONS],
+  result: 'attempt' | 'success' | 'failure',
+  currentUserId: string | null,
+  targetUserId?: string
+) {
+  return buildWorkflowAttributes(operation, {
+    route: WORKFLOW_ROUTE,
+    userId: currentUserId ?? undefined,
+    targetUserId,
+    result,
+  });
+}
 
 function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
   return (
@@ -139,7 +161,19 @@ export function WorkspaceMembersTable({
 
     try {
       beginSubmission();
-      const result = onRemoveMember(pendingAction.memberId);
+      const result = startWorkflowSpan(
+        {
+          op: OPERATIONS.WORKSPACE_MEMBER_REMOVE,
+          name: 'Remove workspace member',
+          attributes: buildWorkspaceMembershipSpanAttributes(
+            OPERATIONS.WORKSPACE_MEMBER_REMOVE,
+            'attempt',
+            currentUserId,
+            pendingAction.userId
+          ),
+        },
+        () => onRemoveMember(pendingAction.memberId)
+      );
 
       if (isPromiseLike(result)) {
         return Promise.resolve(result).then(
@@ -161,6 +195,7 @@ export function WorkspaceMembersTable({
   }, [
     beginSubmission,
     closePendingAction,
+    currentUserId,
     onRemoveMember,
     pendingAction,
     resetSubmissionState,
@@ -177,7 +212,18 @@ export function WorkspaceMembersTable({
 
     try {
       beginSubmission();
-      const result = onLeave();
+      const result = startWorkflowSpan(
+        {
+          op: OPERATIONS.WORKSPACE_MEMBER_LEAVE,
+          name: 'Leave workspace',
+          attributes: buildWorkspaceMembershipSpanAttributes(
+            OPERATIONS.WORKSPACE_MEMBER_LEAVE,
+            'attempt',
+            currentUserId
+          ),
+        },
+        () => onLeave()
+      );
 
       if (isPromiseLike(result)) {
         return Promise.resolve(result).then(
@@ -199,6 +245,7 @@ export function WorkspaceMembersTable({
   }, [
     beginSubmission,
     closePendingAction,
+    currentUserId,
     onLeave,
     pendingAction,
     resetSubmissionState,
@@ -292,6 +339,7 @@ export function WorkspaceMembersTable({
                         setPendingAction({
                           type: 'remove',
                           memberId: id,
+                          userId,
                           email,
                         })
                       }
@@ -484,7 +532,19 @@ export function WorkspaceMembersTable({
         onTransfer={async () => {
           if (!transferTarget || !onTransferOwnership) return;
 
-          await onTransferOwnership(transferTarget.id);
+          await startWorkflowSpan(
+            {
+              op: OPERATIONS.WORKSPACE_TRANSFER_OWNERSHIP,
+              name: 'Transfer workspace ownership',
+              attributes: buildWorkspaceMembershipSpanAttributes(
+                OPERATIONS.WORKSPACE_TRANSFER_OWNERSHIP,
+                'attempt',
+                currentUserId,
+                transferTarget.userId
+              ),
+            },
+            () => onTransferOwnership(transferTarget.id)
+          );
           setTransferTarget(null);
         }}
       />

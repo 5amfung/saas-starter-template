@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { OPERATIONS } from '@workspace/logging/client';
 import { renderWithProviders } from '@workspace/test-utils';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
 
@@ -14,6 +15,12 @@ const { setActiveMock } = vi.hoisted(() => ({
   setActiveMock: vi.fn().mockResolvedValue({ error: null }),
 }));
 
+const { startSpanMock, loggerInfoMock, loggerErrorMock } = vi.hoisted(() => ({
+  startSpanMock: vi.fn((_, callback: () => unknown) => callback()),
+  loggerInfoMock: vi.fn(),
+  loggerErrorMock: vi.fn(),
+}));
+
 vi.mock('@workspace/auth/client', () => ({
   authClient: {
     organization: {
@@ -21,6 +28,19 @@ vi.mock('@workspace/auth/client', () => ({
     },
   },
 }));
+
+vi.mock('@workspace/logging/client', async (importActual) => {
+  const actual =
+    await importActual<typeof import('@workspace/logging/client')>();
+  return {
+    ...actual,
+    startWorkflowSpan: startSpanMock,
+    workflowLogger: {
+      info: loggerInfoMock,
+      error: loggerErrorMock,
+    },
+  };
+});
 
 vi.mock('sonner', () => ({
   toast: { success: mockToastSuccess, error: mockToastError },
@@ -80,6 +100,19 @@ describe('Workspace lifecycle flow', () => {
         expect(defaultProps.onDelete).toHaveBeenCalledTimes(1);
       });
 
+      expect(startSpanMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          op: OPERATIONS.WORKSPACE_DELETE,
+          name: 'Delete workspace',
+          attributes: expect.objectContaining({
+            operation: OPERATIONS.WORKSPACE_DELETE,
+            workspaceId: 'ws-1',
+            result: 'attempt',
+          }),
+        }),
+        expect.any(Function)
+      );
+
       // Verify success toast and document navigation.
       await waitFor(() => {
         expect(setActiveMock).toHaveBeenCalledWith({ organizationId: 'ws-2' });
@@ -88,6 +121,15 @@ describe('Workspace lifecycle flow', () => {
         );
         expect(assignMock).toHaveBeenCalledWith('/ws/ws-2/overview');
       });
+
+      expect(loggerInfoMock).toHaveBeenCalledWith(
+        'Workspace deleted',
+        expect.objectContaining({
+          operation: OPERATIONS.WORKSPACE_DELETE,
+          workspaceId: 'ws-1',
+          result: 'success',
+        })
+      );
     });
 
     it('shows error toast when deletion fails', async () => {
@@ -114,6 +156,16 @@ describe('Workspace lifecycle flow', () => {
           'Cannot delete personal workspace'
         );
       });
+
+      expect(loggerErrorMock).toHaveBeenCalledWith(
+        'Workspace deletion failed',
+        expect.objectContaining({
+          operation: OPERATIONS.WORKSPACE_DELETE,
+          workspaceId: 'ws-1',
+          result: 'failure',
+          failureCategory: 'delete_failed',
+        })
+      );
     });
 
     it('disables delete button when isDisabled is true', () => {
@@ -175,6 +227,16 @@ describe('Workspace lifecycle flow', () => {
           'Failed to find an active workspace after deletion.'
         );
       });
+
+      expect(loggerErrorMock).toHaveBeenCalledWith(
+        'Workspace deletion failed',
+        expect.objectContaining({
+          operation: OPERATIONS.WORKSPACE_DELETE,
+          workspaceId: 'ws-1',
+          result: 'failure',
+          failureCategory: 'delete_failed',
+        })
+      );
     });
   });
 });

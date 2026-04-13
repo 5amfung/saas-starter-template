@@ -10,6 +10,11 @@ import { toast } from 'sonner';
 import { authClient } from '@workspace/auth/client';
 import { useSessionQuery } from '@workspace/components/hooks';
 import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  workflowLogger,
+} from '@workspace/logging/client';
+import {
   MEMBER_PAGE_SIZE_DEFAULT,
   withPendingId,
 } from './workspace-members.types';
@@ -25,6 +30,26 @@ import {
   removeWorkspaceMember,
   transferWorkspaceOwnership,
 } from '@/workspace/workspace-members.functions';
+
+const WORKFLOW_ROUTE = 'workspace-members';
+
+function buildWorkspaceMembershipAttributes(
+  operation: (typeof OPERATIONS)[keyof typeof OPERATIONS],
+  result: 'attempt' | 'success' | 'failure',
+  workspaceId: string,
+  currentUserId: string | null,
+  failureCategory?: string,
+  targetUserId?: string
+) {
+  return buildWorkflowAttributes(operation, {
+    route: WORKFLOW_ROUTE,
+    workspaceId,
+    userId: currentUserId ?? undefined,
+    targetUserId,
+    result,
+    ...(failureCategory ? { failureCategory } : {}),
+  });
+}
 
 export function useMembersTable(
   workspaceId: string,
@@ -114,8 +139,27 @@ export function useMembersTable(
     onSuccess: () => {
       toast.success('You have left the workspace.');
       void navigate({ to: '/ws' });
+      workflowLogger.info(
+        'Workspace left',
+        buildWorkspaceMembershipAttributes(
+          OPERATIONS.WORKSPACE_MEMBER_LEAVE,
+          'success',
+          workspaceId,
+          currentUserId
+        )
+      );
     },
     onError: (error) => {
+      workflowLogger.error(
+        'Workspace leave failed',
+        buildWorkspaceMembershipAttributes(
+          OPERATIONS.WORKSPACE_MEMBER_LEAVE,
+          'failure',
+          workspaceId,
+          currentUserId,
+          'leave_failed'
+        )
+      );
       toast.error(error.message || 'Failed to leave workspace.');
     },
   });
@@ -132,6 +176,28 @@ export function useMembersTable(
     onSuccess: async () => {
       toast.success('Membership removed.');
       await membersQuery.refetch();
+      workflowLogger.info(
+        'Workspace member removed',
+        buildWorkspaceMembershipAttributes(
+          OPERATIONS.WORKSPACE_MEMBER_REMOVE,
+          'success',
+          workspaceId,
+          currentUserId
+        )
+      );
+    },
+    onError: (error) => {
+      workflowLogger.error(
+        'Workspace member removal failed',
+        buildWorkspaceMembershipAttributes(
+          OPERATIONS.WORKSPACE_MEMBER_REMOVE,
+          'failure',
+          workspaceId,
+          currentUserId,
+          'removal_failed'
+        )
+      );
+      toast.error(error.message || 'Failed to remove membership.');
     },
   });
 
@@ -157,6 +223,28 @@ export function useMembersTable(
         router.invalidate({ sync: true }),
       ]);
       await membersQuery.refetch();
+      workflowLogger.info(
+        'Workspace ownership transferred',
+        buildWorkspaceMembershipAttributes(
+          OPERATIONS.WORKSPACE_TRANSFER_OWNERSHIP,
+          'success',
+          workspaceId,
+          currentUserId
+        )
+      );
+    },
+    onError: (error) => {
+      workflowLogger.error(
+        'Workspace ownership transfer failed',
+        buildWorkspaceMembershipAttributes(
+          OPERATIONS.WORKSPACE_TRANSFER_OWNERSHIP,
+          'failure',
+          workspaceId,
+          currentUserId,
+          'transfer_failed'
+        )
+      );
+      toast.error(error.message || 'Failed to transfer workspace ownership.');
     },
   });
 
@@ -187,12 +275,8 @@ export function useMembersTable(
         await withPendingId(setRemovingMemberId, memberId, async () => {
           await removeMemberMutation.mutateAsync(memberId);
         });
-      } catch (error) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : 'Failed to remove membership.'
-        );
+      } catch {
+        return;
       }
     },
     onTransferOwnership: async (memberId: string) => {
@@ -200,12 +284,8 @@ export function useMembersTable(
         await withPendingId(setTransferringMemberId, memberId, async () => {
           await transferOwnershipMutation.mutateAsync(memberId);
         });
-      } catch (error) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : 'Failed to transfer workspace ownership.'
-        );
+      } catch {
+        return;
       }
     },
     onLeave: async () => {
