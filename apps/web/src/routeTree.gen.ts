@@ -17,6 +17,7 @@ import { Route as AuthRouteImport } from './routes/_auth';
 import { Route as IndexRouteImport } from './routes/index';
 import { Route as VerifyEmailChangeEmailTokenRouteImport } from './routes/verify-email-change.$emailToken';
 import { Route as ProtectedWsRouteImport } from './routes/_protected/ws';
+import { Route as ProtectedSentryTestRouteImport } from './routes/_protected/sentry-test';
 import { Route as AuthVerifyRouteImport } from './routes/_auth/verify';
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup';
 import { Route as AuthSigninRouteImport } from './routes/_auth/signin';
@@ -72,6 +73,11 @@ const VerifyEmailChangeEmailTokenRoute =
 const ProtectedWsRoute = ProtectedWsRouteImport.update({
   id: '/ws',
   path: '/ws',
+  getParentRoute: () => ProtectedRoute,
+} as any);
+const ProtectedSentryTestRoute = ProtectedSentryTestRouteImport.update({
+  id: '/sentry-test',
+  path: '/sentry-test',
   getParentRoute: () => ProtectedRoute,
 } as any);
 const AuthVerifyRoute = AuthVerifyRouteImport.update({
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/signin': typeof AuthSigninRoute;
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
+  '/sentry-test': typeof ProtectedSentryTestRoute;
   '/ws': typeof ProtectedWsRouteWithChildren;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/account': typeof ProtectedAccountAccountRoute;
@@ -201,6 +208,7 @@ export interface FileRoutesByTo {
   '/signin': typeof AuthSigninRoute;
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
+  '/sentry-test': typeof ProtectedSentryTestRoute;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/account': typeof ProtectedAccountAccountRoute;
   '/billing': typeof ProtectedAccountBillingRoute;
@@ -228,6 +236,7 @@ export interface FileRoutesById {
   '/_auth/signin': typeof AuthSigninRoute;
   '/_auth/signup': typeof AuthSignupRoute;
   '/_auth/verify': typeof AuthVerifyRoute;
+  '/_protected/sentry-test': typeof ProtectedSentryTestRoute;
   '/_protected/ws': typeof ProtectedWsRouteWithChildren;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/_protected/_account/account': typeof ProtectedAccountAccountRoute;
@@ -255,6 +264,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/verify'
+    | '/sentry-test'
     | '/ws'
     | '/verify-email-change/$emailToken'
     | '/account'
@@ -280,6 +290,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/verify'
+    | '/sentry-test'
     | '/verify-email-change/$emailToken'
     | '/account'
     | '/billing'
@@ -306,6 +317,7 @@ export interface FileRouteTypes {
     | '/_auth/signin'
     | '/_auth/signup'
     | '/_auth/verify'
+    | '/_protected/sentry-test'
     | '/_protected/ws'
     | '/verify-email-change/$emailToken'
     | '/_protected/_account/account'
@@ -390,6 +402,13 @@ declare module '@tanstack/react-router' {
       path: '/ws';
       fullPath: '/ws';
       preLoaderRoute: typeof ProtectedWsRouteImport;
+      parentRoute: typeof ProtectedRoute;
+    };
+    '/_protected/sentry-test': {
+      id: '/_protected/sentry-test';
+      path: '/sentry-test';
+      fullPath: '/sentry-test';
+      preLoaderRoute: typeof ProtectedSentryTestRouteImport;
       parentRoute: typeof ProtectedRoute;
     };
     '/_auth/verify': {
@@ -569,6 +588,7 @@ const ProtectedWsRouteWithChildren = ProtectedWsRoute._addFileChildren(
 );
 
 interface ProtectedRouteChildren {
+  ProtectedSentryTestRoute: typeof ProtectedSentryTestRoute;
   ProtectedWsRoute: typeof ProtectedWsRouteWithChildren;
   ProtectedAccountAccountRoute: typeof ProtectedAccountAccountRoute;
   ProtectedAccountBillingRoute: typeof ProtectedAccountBillingRoute;
@@ -576,6 +596,7 @@ interface ProtectedRouteChildren {
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
+  ProtectedSentryTestRoute: ProtectedSentryTestRoute,
   ProtectedWsRoute: ProtectedWsRouteWithChildren,
   ProtectedAccountAccountRoute: ProtectedAccountAccountRoute,
   ProtectedAccountBillingRoute: ProtectedAccountBillingRoute,
