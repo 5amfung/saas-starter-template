@@ -27,23 +27,23 @@ export const getRouter = () => {
   });
 
   if (!router.isServer) {
-    // TODO
     Sentry.init({
-      debug: true,
-      dsn: '',
+      dsn: import.meta.env.VITE_SENTRY_DSN,
       enabled: true,
       enableLogs: true,
-      environment: sentryEnvironment,
+      environment: import.meta.env.MODE,
       integrations: [
-        // Sentry.tanstackRouterBrowserTracingIntegration(router),
-        // Sentry.replayIntegration(),
-        // send console.log, console.warn, and console.error calls as logs to Sentry
+        // Send console.log, console.warn, and console.error calls as logs to Sentry
         Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
+        Sentry.replayIntegration(),
+        Sentry.tanstackRouterBrowserTracingIntegration(router),
       ],
-      // replaysOnErrorSampleRate: 1.0,
-      // replaysSessionSampleRate: 0.1,
+      replaysSessionSampleRate: 0.1,
+      replaysOnErrorSampleRate: 1.0,
       sendDefaultPii: true,
-      // tracesSampleRate: 1.0,
+      tracePropagationTargets: ['localhost', /^\/api\//],
+      tracesSampleRate: 1.0,
+      tunnel: '/tunnel',
     });
   }
 

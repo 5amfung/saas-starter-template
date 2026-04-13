@@ -1,18 +1,16 @@
 import * as Sentry from '@sentry/tanstackstart-react';
 
-const environment = process.env.NODE_ENV ?? 'development';
-
-// TODO
 Sentry.init({
-  debug: false,
-  dsn: '',
+  dsn: process.env.SENTRY_DSN,
   enabled: true,
   enableLogs: true,
-  environment,
+  environment: process.env.NODE_ENV ?? 'development',
   integrations: [
-    // send console.log, console.warn, and console.error calls as logs to Sentry
+    // Send console.log, console.warn, and console.error calls as logs to Sentry
     Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
   ],
   sendDefaultPii: true,
-  // tracesSampleRate: 1.0,
+  tracePropagationTargets: ['localhost', /^\/api\//],
+  tracesSampleRate: 1.0,
+  tunnel: '/tunnel',
 });
