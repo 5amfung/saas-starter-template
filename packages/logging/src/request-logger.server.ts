@@ -22,8 +22,7 @@ export const requestLogger = createMiddleware().server(
       const errMessage = error instanceof Error ? error.message : String(error);
       const path = new URL(request.url).pathname;
       console.error(
-        `${request.method} ${request.url} - ${errMessage} (${duration}ms):`,
-        error
+        `${request.method} ${request.url} - [ERROR] ${errMessage} (${duration}ms)`
       );
       Sentry.captureException(error, {
         tags: {
