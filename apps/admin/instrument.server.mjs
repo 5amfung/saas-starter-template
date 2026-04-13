@@ -5,7 +5,7 @@ Sentry.init({
   enabled: true,
   sendDefaultPii: true,
   enableLogs: true,
-  debug: true,
+  debug: false,
   environment: 'development',
   integrations: [
     // send console.log, console.warn, and console.error calls as logs to Sentry
