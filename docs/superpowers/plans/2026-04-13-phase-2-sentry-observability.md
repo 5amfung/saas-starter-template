@@ -809,7 +809,7 @@ describe('@workspace/logging exports', () => {
 });
 ```
 
-- [ ] **Step 2: Run targeted typecheck and test commands**
+- [x] **Step 2: Run targeted typecheck and test commands**
 
 Run: `pnpm --filter @workspace/logging typecheck`
 Expected: PASS
@@ -823,7 +823,7 @@ Expected: PASS
 Run: `pnpm --filter @workspace/admin-web test apps/admin/test/unit/admin/workspaces.functions.test.ts apps/admin/test/unit/components/admin/admin-user-form.test.tsx apps/admin/test/unit/components/admin-entitlement-override-form.test.tsx`
 Expected: PASS
 
-- [ ] **Step 3: Run boundary and app typechecks**
+- [x] **Step 3: Run boundary and app typechecks**
 
 Run: `pnpm run check:boundaries`
 Expected: PASS
