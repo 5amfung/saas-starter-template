@@ -6,8 +6,12 @@ import viteTsConfigPaths from 'vite-tsconfig-paths';
 import tailwindcss from '@tailwindcss/vite';
 import { nitro } from 'nitro/vite';
 import { sentryTanstackStart } from '@sentry/tanstackstart-react/vite';
+import { sentryVitePlugin } from '@sentry/vite-plugin';
 
 const config = defineConfig({
+  build: {
+    sourcemap: true,
+  },
   server: {
     watch: {
       // Prevent chokidar from following pnpm symlinks into the global store
@@ -42,12 +46,17 @@ const config = defineConfig({
         semicolons: true,
       },
     }),
+    viteReact(),
     sentryTanstackStart({
-      org: 'self-cdr',
-      project: 'javascript-tanstackstart-react',
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
       authToken: process.env.SENTRY_AUTH_TOKEN,
     }),
-    viteReact(),
+    sentryVitePlugin({
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+    }),
   ],
 });
 

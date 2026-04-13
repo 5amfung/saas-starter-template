@@ -39,6 +39,7 @@
     "clean": "npkill"
   },
   "devDependencies": {
+    "@sentry/vite-plugin": "^5.2.0",
     "@workspace/eslint-config": "workspace:*",
     "dependency-cruiser": "^17.3.10",
     "eslint": "^9.39.4",

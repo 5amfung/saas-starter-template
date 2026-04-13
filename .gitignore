@@ -83,3 +83,6 @@ playwright-report/
 /playwright/.auth/
 .playwright-mcp/
 /.playwright-cli/
+
+# Sentry Config File
+.env.sentry-build-plugin
