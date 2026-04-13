@@ -25,6 +25,7 @@ export const getRouter = () => {
   });
 
   if (!router.isServer) {
+    // TODO
     Sentry.init({
       dsn: '',
     });
