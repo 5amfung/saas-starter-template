@@ -8,6 +8,7 @@ import { BillingPage } from '@/components/billing/billing-page';
 // ── Hoisted mocks ────────────────────────────────────────────────────────────
 
 const {
+  startSpanMock,
   getWorkspaceBillingData,
   getWorkspaceInvoices,
   createWorkspaceCheckoutSession,
@@ -17,6 +18,7 @@ const {
   reactivateWorkspaceSubscription,
   toast,
 } = vi.hoisted(() => ({
+  startSpanMock: vi.fn((_, callback) => callback()),
   getWorkspaceBillingData: vi.fn(),
   getWorkspaceInvoices: vi.fn(),
   createWorkspaceCheckoutSession: vi.fn(),
@@ -31,6 +33,28 @@ const {
 }));
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
+
+vi.mock('@sentry/tanstackstart-react', () => ({
+  startSpan: startSpanMock,
+}));
+
+vi.mock('@workspace/logging/client', () => ({
+  OPERATIONS: {
+    BILLING_CHECKOUT_CREATE_SESSION: 'billing.checkout.create_session',
+    BILLING_PORTAL_CREATE_SESSION: 'billing.portal.create_session',
+    BILLING_SUBSCRIPTION_CANCEL: 'billing.subscription.cancel',
+    BILLING_SUBSCRIPTION_DOWNGRADE: 'billing.subscription.downgrade',
+    BILLING_SUBSCRIPTION_REACTIVATE: 'billing.subscription.reactivate',
+  },
+  buildWorkflowAttributes: (
+    operation: string,
+    attributes: Record<string, unknown>
+  ) => ({
+    operation,
+    operationFamily: operation.split('.')[0],
+    ...attributes,
+  }),
+}));
 
 vi.mock('@/billing/billing.functions', () => ({
   getWorkspaceBillingData,
@@ -374,6 +398,18 @@ describe('BillingPage', () => {
     await waitFor(() => {
       expect(window.location.href).toBe('https://billing.stripe.com/portal123');
     });
+    expect(startSpanMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        op: 'billing.portal.create_session',
+        name: 'Open billing portal',
+        attributes: expect.objectContaining({
+          operation: 'billing.portal.create_session',
+          workspaceId: TEST_WORKSPACE_ID,
+          result: 'attempt',
+        }),
+      }),
+      expect.any(Function)
+    );
   });
 
   it('shows success toast and does not redirect on reactivate success', async () => {

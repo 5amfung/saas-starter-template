@@ -12,6 +12,9 @@ import {
 } from '@/billing/billing.functions';
 
 const {
+  startSpanMock,
+  loggerInfoMock,
+  loggerErrorMock,
   getAuthMock,
   requireVerifiedSessionMock,
   requireWorkspaceCapabilityForUserMock,
@@ -25,6 +28,9 @@ const {
   checkWorkspaceEntitlementMock,
   getInvoicesForWorkspaceMock,
 } = vi.hoisted(() => ({
+  startSpanMock: vi.fn((_, callback) => callback()),
+  loggerInfoMock: vi.fn(),
+  loggerErrorMock: vi.fn(),
   getAuthMock: vi.fn(),
   requireVerifiedSessionMock: vi.fn(),
   requireWorkspaceCapabilityForUserMock: vi.fn(),
@@ -40,6 +46,32 @@ const {
 }));
 
 vi.mock('@tanstack/react-start', () => createServerFnMock());
+
+vi.mock('@sentry/tanstackstart-react', () => ({
+  startSpan: startSpanMock,
+  logger: {
+    info: loggerInfoMock,
+    error: loggerErrorMock,
+  },
+}));
+
+vi.mock('@workspace/logging/server', () => ({
+  OPERATIONS: {
+    BILLING_CHECKOUT_CREATE_SESSION: 'billing.checkout.create_session',
+    BILLING_PORTAL_CREATE_SESSION: 'billing.portal.create_session',
+    BILLING_SUBSCRIPTION_CANCEL: 'billing.subscription.cancel',
+    BILLING_SUBSCRIPTION_DOWNGRADE: 'billing.subscription.downgrade',
+    BILLING_SUBSCRIPTION_REACTIVATE: 'billing.subscription.reactivate',
+  },
+  buildWorkflowAttributes: (
+    operation: string,
+    attributes: Record<string, unknown>
+  ) => ({
+    operation,
+    operationFamily: operation.split('.')[0],
+    ...attributes,
+  }),
+}));
 
 vi.mock('@tanstack/react-start/server', () => ({
   getRequestHeaders: getRequestHeadersMock,
@@ -221,6 +253,28 @@ describe('createWorkspaceCheckoutSession', () => {
       },
     });
     expect(result).toEqual(checkout);
+    expect(startSpanMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        op: 'billing.checkout.create_session',
+        name: 'Create billing checkout session',
+        attributes: expect.objectContaining({
+          operation: 'billing.checkout.create_session',
+          workspaceId: TEST_WORKSPACE_ID,
+          planId: 'starter',
+          result: 'attempt',
+        }),
+      }),
+      expect.any(Function)
+    );
+    expect(loggerInfoMock).toHaveBeenCalledWith(
+      'Billing checkout session created',
+      expect.objectContaining({
+        operation: 'billing.checkout.create_session',
+        workspaceId: TEST_WORKSPACE_ID,
+        planId: 'starter',
+        result: 'success',
+      })
+    );
   });
 
   it('rejects checkout for enterprise plans', async () => {
@@ -249,6 +303,15 @@ describe('createWorkspaceCheckoutSession', () => {
       'enterprise',
       false,
       undefined
+    );
+    expect(loggerErrorMock).toHaveBeenCalledWith(
+      'Billing checkout session failed',
+      expect.objectContaining({
+        operation: 'billing.checkout.create_session',
+        workspaceId: TEST_WORKSPACE_ID,
+        planId: 'enterprise',
+        result: 'failure',
+      })
     );
   });
 });
@@ -313,6 +376,26 @@ describe('createWorkspacePortalSession', () => {
       data: { workspaceId: TEST_WORKSPACE_ID },
     });
     expect(result).toEqual(portal);
+    expect(startSpanMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        op: 'billing.portal.create_session',
+        name: 'Create billing portal session',
+        attributes: expect.objectContaining({
+          operation: 'billing.portal.create_session',
+          workspaceId: TEST_WORKSPACE_ID,
+          result: 'attempt',
+        }),
+      }),
+      expect.any(Function)
+    );
+    expect(loggerInfoMock).toHaveBeenCalledWith(
+      'Billing portal session created',
+      expect.objectContaining({
+        operation: 'billing.portal.create_session',
+        workspaceId: TEST_WORKSPACE_ID,
+        result: 'success',
+      })
+    );
   });
 });
 
@@ -434,6 +517,26 @@ describe('reactivateWorkspaceSubscription', () => {
       data: { workspaceId: TEST_WORKSPACE_ID },
     });
     expect(actual).toEqual(result);
+    expect(startSpanMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        op: 'billing.subscription.reactivate',
+        name: 'Reactivate billing subscription',
+        attributes: expect.objectContaining({
+          operation: 'billing.subscription.reactivate',
+          workspaceId: TEST_WORKSPACE_ID,
+          result: 'attempt',
+        }),
+      }),
+      expect.any(Function)
+    );
+    expect(loggerInfoMock).toHaveBeenCalledWith(
+      'Billing subscription reactivated',
+      expect.objectContaining({
+        operation: 'billing.subscription.reactivate',
+        workspaceId: TEST_WORKSPACE_ID,
+        result: 'success',
+      })
+    );
   });
 });
 
@@ -554,6 +657,28 @@ describe('downgradeWorkspaceSubscription', () => {
       false,
       'sub_123'
     );
+    expect(startSpanMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        op: 'billing.subscription.downgrade',
+        name: 'Schedule billing downgrade',
+        attributes: expect.objectContaining({
+          operation: 'billing.subscription.downgrade',
+          workspaceId: TEST_WORKSPACE_ID,
+          planId: 'starter',
+          result: 'attempt',
+        }),
+      }),
+      expect.any(Function)
+    );
+    expect(loggerInfoMock).toHaveBeenCalledWith(
+      'Billing subscription downgrade scheduled',
+      expect.objectContaining({
+        operation: 'billing.subscription.downgrade',
+        workspaceId: TEST_WORKSPACE_ID,
+        planId: 'starter',
+        result: 'success',
+      })
+    );
   });
 });
 
@@ -598,6 +723,26 @@ describe('cancelWorkspaceSubscription', () => {
     expect(cancelWorkspaceSubscriptionMock).toHaveBeenCalledWith(
       headers,
       TEST_WORKSPACE_ID
+    );
+    expect(startSpanMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        op: 'billing.subscription.cancel',
+        name: 'Cancel billing subscription',
+        attributes: expect.objectContaining({
+          operation: 'billing.subscription.cancel',
+          workspaceId: TEST_WORKSPACE_ID,
+          result: 'attempt',
+        }),
+      }),
+      expect.any(Function)
+    );
+    expect(loggerInfoMock).toHaveBeenCalledWith(
+      'Billing subscription cancellation scheduled',
+      expect.objectContaining({
+        operation: 'billing.subscription.cancel',
+        workspaceId: TEST_WORKSPACE_ID,
+        result: 'success',
+      })
     );
   });
 });

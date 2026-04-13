@@ -1,8 +1,10 @@
 import { createServerFn } from '@tanstack/react-start';
 import { getRequestHeaders } from '@tanstack/react-start/server';
+import * as Sentry from '@sentry/tanstackstart-react';
 import * as z from 'zod';
 import { PLANS } from '@workspace/billing';
 import type { PlanId } from '@workspace/billing';
+import { OPERATIONS, buildWorkflowAttributes } from '@workspace/logging/server';
 import {
   cancelWorkspaceSubscription as cancelWorkspaceSubscriptionServer,
   checkWorkspaceEntitlement as checkWorkspaceEntitlementServer,
@@ -18,6 +20,43 @@ import { requireWorkspaceCapabilityForUser } from '@/policy/workspace-capabiliti
 import { getAuth } from '@/init';
 
 type BillingCapability = 'canViewBilling' | 'canManageBilling';
+type BillingWorkflowOutcome = 'attempt' | 'success' | 'failure';
+
+const BILLING_ROUTE = '/ws/$workspaceId/billing';
+
+function buildBillingWorkflowAttributes(
+  operation: (typeof OPERATIONS)[keyof typeof OPERATIONS],
+  attributes: {
+    workspaceId: string;
+    planId?: PlanId;
+    result: BillingWorkflowOutcome;
+  }
+) {
+  return buildWorkflowAttributes(operation, {
+    route: BILLING_ROUTE,
+    ...attributes,
+  });
+}
+
+function startBillingWorkflowSpan<T>(
+  operation: (typeof OPERATIONS)[keyof typeof OPERATIONS],
+  name: string,
+  attributes: {
+    workspaceId: string;
+    planId?: PlanId;
+    result: BillingWorkflowOutcome;
+  },
+  callback: () => Promise<T>
+) {
+  return Sentry.startSpan(
+    {
+      op: operation,
+      name,
+      attributes: buildBillingWorkflowAttributes(operation, attributes),
+    },
+    callback
+  );
+}
 
 async function requireWorkspaceBillingCapability(
   workspaceId: string,
@@ -69,16 +108,54 @@ const upgradeInput = z.object({
 export const createWorkspaceCheckoutSession = createServerFn()
   .inputValidator(upgradeInput)
   .handler(async ({ data }) => {
-    const headers = await requireWorkspaceBillingCapability(
-      data.workspaceId,
-      'canManageBilling'
-    );
-    return createCheckoutForWorkspace(
-      headers,
-      data.workspaceId,
-      data.planId,
-      data.annual,
-      data.subscriptionId
+    return startBillingWorkflowSpan(
+      OPERATIONS.BILLING_CHECKOUT_CREATE_SESSION,
+      'Create billing checkout session',
+      {
+        workspaceId: data.workspaceId,
+        planId: data.planId,
+        result: 'attempt',
+      },
+      async () => {
+        try {
+          const headers = await requireWorkspaceBillingCapability(
+            data.workspaceId,
+            'canManageBilling'
+          );
+          const result = await createCheckoutForWorkspace(
+            headers,
+            data.workspaceId,
+            data.planId,
+            data.annual,
+            data.subscriptionId
+          );
+          Sentry.logger.info(
+            'Billing checkout session created',
+            buildBillingWorkflowAttributes(
+              OPERATIONS.BILLING_CHECKOUT_CREATE_SESSION,
+              {
+                workspaceId: data.workspaceId,
+                planId: data.planId,
+                result: 'success',
+              }
+            )
+          );
+          return result;
+        } catch (error) {
+          Sentry.logger.error(
+            'Billing checkout session failed',
+            buildBillingWorkflowAttributes(
+              OPERATIONS.BILLING_CHECKOUT_CREATE_SESSION,
+              {
+                workspaceId: data.workspaceId,
+                planId: data.planId,
+                result: 'failure',
+              }
+            )
+          );
+          throw error;
+        }
+      }
     );
   });
 
@@ -88,11 +165,49 @@ export const createWorkspaceCheckoutSession = createServerFn()
 export const createWorkspacePortalSession = createServerFn()
   .inputValidator(z.object({ workspaceId: z.string() }))
   .handler(async ({ data }) => {
-    const headers = await requireWorkspaceBillingCapability(
-      data.workspaceId,
-      'canManageBilling'
+    return startBillingWorkflowSpan(
+      OPERATIONS.BILLING_PORTAL_CREATE_SESSION,
+      'Create billing portal session',
+      {
+        workspaceId: data.workspaceId,
+        result: 'attempt',
+      },
+      async () => {
+        try {
+          const headers = await requireWorkspaceBillingCapability(
+            data.workspaceId,
+            'canManageBilling'
+          );
+          const result = await createWorkspaceBillingPortal(
+            headers,
+            data.workspaceId
+          );
+          Sentry.logger.info(
+            'Billing portal session created',
+            buildBillingWorkflowAttributes(
+              OPERATIONS.BILLING_PORTAL_CREATE_SESSION,
+              {
+                workspaceId: data.workspaceId,
+                result: 'success',
+              }
+            )
+          );
+          return result;
+        } catch (error) {
+          Sentry.logger.error(
+            'Billing portal session failed',
+            buildBillingWorkflowAttributes(
+              OPERATIONS.BILLING_PORTAL_CREATE_SESSION,
+              {
+                workspaceId: data.workspaceId,
+                result: 'failure',
+              }
+            )
+          );
+          throw error;
+        }
+      }
     );
-    return createWorkspaceBillingPortal(headers, data.workspaceId);
   });
 
 /**
@@ -114,11 +229,49 @@ export const getWorkspaceBillingData = createServerFn()
 export const reactivateWorkspaceSubscription = createServerFn()
   .inputValidator(z.object({ workspaceId: z.string() }))
   .handler(async ({ data }) => {
-    const headers = await requireWorkspaceBillingCapability(
-      data.workspaceId,
-      'canManageBilling'
+    return startBillingWorkflowSpan(
+      OPERATIONS.BILLING_SUBSCRIPTION_REACTIVATE,
+      'Reactivate billing subscription',
+      {
+        workspaceId: data.workspaceId,
+        result: 'attempt',
+      },
+      async () => {
+        try {
+          const headers = await requireWorkspaceBillingCapability(
+            data.workspaceId,
+            'canManageBilling'
+          );
+          const result = await reactivateWorkspaceSubscriptionServer(
+            headers,
+            data.workspaceId
+          );
+          Sentry.logger.info(
+            'Billing subscription reactivated',
+            buildBillingWorkflowAttributes(
+              OPERATIONS.BILLING_SUBSCRIPTION_REACTIVATE,
+              {
+                workspaceId: data.workspaceId,
+                result: 'success',
+              }
+            )
+          );
+          return result;
+        } catch (error) {
+          Sentry.logger.error(
+            'Billing subscription reactivation failed',
+            buildBillingWorkflowAttributes(
+              OPERATIONS.BILLING_SUBSCRIPTION_REACTIVATE,
+              {
+                workspaceId: data.workspaceId,
+                result: 'failure',
+              }
+            )
+          );
+          throw error;
+        }
+      }
     );
-    return reactivateWorkspaceSubscriptionServer(headers, data.workspaceId);
   });
 
 const downgradeInput = z.object({
@@ -134,16 +287,54 @@ const downgradeInput = z.object({
 export const downgradeWorkspaceSubscription = createServerFn()
   .inputValidator(downgradeInput)
   .handler(async ({ data }) => {
-    const headers = await requireWorkspaceBillingCapability(
-      data.workspaceId,
-      'canManageBilling'
-    );
-    return downgradeWorkspaceSubscriptionServer(
-      headers,
-      data.workspaceId,
-      data.planId,
-      data.annual,
-      data.subscriptionId
+    return startBillingWorkflowSpan(
+      OPERATIONS.BILLING_SUBSCRIPTION_DOWNGRADE,
+      'Schedule billing downgrade',
+      {
+        workspaceId: data.workspaceId,
+        planId: data.planId,
+        result: 'attempt',
+      },
+      async () => {
+        try {
+          const headers = await requireWorkspaceBillingCapability(
+            data.workspaceId,
+            'canManageBilling'
+          );
+          const result = await downgradeWorkspaceSubscriptionServer(
+            headers,
+            data.workspaceId,
+            data.planId,
+            data.annual,
+            data.subscriptionId
+          );
+          Sentry.logger.info(
+            'Billing subscription downgrade scheduled',
+            buildBillingWorkflowAttributes(
+              OPERATIONS.BILLING_SUBSCRIPTION_DOWNGRADE,
+              {
+                workspaceId: data.workspaceId,
+                planId: data.planId,
+                result: 'success',
+              }
+            )
+          );
+          return result;
+        } catch (error) {
+          Sentry.logger.error(
+            'Billing subscription downgrade failed',
+            buildBillingWorkflowAttributes(
+              OPERATIONS.BILLING_SUBSCRIPTION_DOWNGRADE,
+              {
+                workspaceId: data.workspaceId,
+                planId: data.planId,
+                result: 'failure',
+              }
+            )
+          );
+          throw error;
+        }
+      }
     );
   });
 
@@ -153,11 +344,49 @@ export const downgradeWorkspaceSubscription = createServerFn()
 export const cancelWorkspaceSubscription = createServerFn()
   .inputValidator(z.object({ workspaceId: z.string() }))
   .handler(async ({ data }) => {
-    const headers = await requireWorkspaceBillingCapability(
-      data.workspaceId,
-      'canManageBilling'
+    return startBillingWorkflowSpan(
+      OPERATIONS.BILLING_SUBSCRIPTION_CANCEL,
+      'Cancel billing subscription',
+      {
+        workspaceId: data.workspaceId,
+        result: 'attempt',
+      },
+      async () => {
+        try {
+          const headers = await requireWorkspaceBillingCapability(
+            data.workspaceId,
+            'canManageBilling'
+          );
+          const result = await cancelWorkspaceSubscriptionServer(
+            headers,
+            data.workspaceId
+          );
+          Sentry.logger.info(
+            'Billing subscription cancellation scheduled',
+            buildBillingWorkflowAttributes(
+              OPERATIONS.BILLING_SUBSCRIPTION_CANCEL,
+              {
+                workspaceId: data.workspaceId,
+                result: 'success',
+              }
+            )
+          );
+          return result;
+        } catch (error) {
+          Sentry.logger.error(
+            'Billing subscription cancellation failed',
+            buildBillingWorkflowAttributes(
+              OPERATIONS.BILLING_SUBSCRIPTION_CANCEL,
+              {
+                workspaceId: data.workspaceId,
+                result: 'failure',
+              }
+            )
+          );
+          throw error;
+        }
+      }
     );
-    return cancelWorkspaceSubscriptionServer(headers, data.workspaceId);
   });
 
 const checkEntitlementInput = z.object({

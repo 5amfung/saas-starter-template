@@ -418,7 +418,7 @@ git commit -m "feat(auth): add sentry workflow instrumentation"
 - Test: `apps/web/test/unit/billing/billing.functions.test.ts`
 - Test: `apps/web/test/unit/components/billing/billing-page.test.tsx`
 
-- [ ] **Step 1: Add failing billing observability tests**
+- [x] **Step 1: Add failing billing observability tests**
 
 ```ts
 it('logs checkout creation failure with operation metadata', async () => {
@@ -462,7 +462,7 @@ it('wraps portal launch in a client span', async () => {
 Run: `pnpm --filter @workspace/web test apps/web/test/unit/billing/billing.functions.test.ts apps/web/test/unit/components/billing/billing-page.test.tsx`
 Expected: FAIL because billing spans/logs are not emitted yet
 
-- [ ] **Step 3: Add billing instrumentation**
+- [x] **Step 3: Add billing instrumentation**
 
 ```ts
 // apps/web/src/billing/billing.functions.ts
@@ -536,7 +536,7 @@ const handlePortalOpen = () =>
   );
 ```
 
-- [ ] **Step 4: Re-run the billing tests**
+- [x] **Step 4: Re-run the billing tests**
 
 Run: `pnpm --filter @workspace/web test apps/web/test/unit/billing/billing.functions.test.ts apps/web/test/unit/components/billing/billing-page.test.tsx`
 Expected: PASS
