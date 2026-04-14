@@ -1,6 +1,8 @@
+import { getTableConfig } from 'drizzle-orm/pg-core';
 import {
   notificationPreferences,
   notificationPreferencesRelations,
+  workspaceIntegrationSecrets,
 } from '../../src/app.schema';
 import {
   invitation,
@@ -47,6 +49,68 @@ describe('notificationPreferences table', () => {
 
   it('defines a relation to user', () => {
     expect(notificationPreferencesRelations).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// app.schema.ts — workspaceIntegrationSecret
+// ---------------------------------------------------------------------------
+
+describe('workspaceIntegrationSecrets table', () => {
+  it('is exported from the app schema', () => {
+    expect(schema.workspaceIntegrationSecrets).toBeDefined();
+  });
+
+  it.each([
+    'id',
+    'workspaceId',
+    'integration',
+    'key',
+    'encryptedValue',
+    'iv',
+    'authTag',
+    'encryptionVersion',
+    'createdAt',
+    'updatedAt',
+  ] as const)('has %s column', (column) => {
+    expect(workspaceIntegrationSecrets[column]).toBeDefined();
+  });
+
+  it('has workspaceId as a non-null column', () => {
+    expect(workspaceIntegrationSecrets.workspaceId.dataType).toBe('string');
+    expect(workspaceIntegrationSecrets.workspaceId.notNull).toBe(true);
+  });
+
+  it('has encryptionVersion as a non-null integer defaulting to 1', () => {
+    expect(workspaceIntegrationSecrets.encryptionVersion.dataType).toBe(
+      'number'
+    );
+    expect(workspaceIntegrationSecrets.encryptionVersion.notNull).toBe(true);
+    expect(workspaceIntegrationSecrets.encryptionVersion.hasDefault).toBe(true);
+  });
+
+  it('has createdAt and updatedAt as non-null timestamps with defaults', () => {
+    expect(workspaceIntegrationSecrets.createdAt.dataType).toBe('date');
+    expect(workspaceIntegrationSecrets.createdAt.notNull).toBe(true);
+    expect(workspaceIntegrationSecrets.createdAt.hasDefault).toBe(true);
+
+    expect(workspaceIntegrationSecrets.updatedAt.dataType).toBe('date');
+    expect(workspaceIntegrationSecrets.updatedAt.notNull).toBe(true);
+    expect(workspaceIntegrationSecrets.updatedAt.hasDefault).toBe(true);
+  });
+
+  it('defines the composite unique index on workspaceId, integration, and key', () => {
+    const tableConfig = getTableConfig(workspaceIntegrationSecrets);
+    const index = tableConfig.indexes.find(
+      (entry) =>
+        entry.config.name === 'workspace_integration_secret_workspace_key_uidx'
+    );
+
+    expect(index).toBeDefined();
+    expect(index?.config.unique).toBe(true);
+    expect(
+      index?.config.columns.map((column) => (column as { name: string }).name)
+    ).toEqual(['workspace_id', 'integration', 'key']);
   });
 });
 
@@ -154,5 +218,6 @@ describe('db package exports', () => {
   it('exports schema with auth and app tables', () => {
     expect(schema.user).toBeDefined();
     expect(schema.notificationPreferences).toBeDefined();
+    expect(schema.workspaceIntegrationSecrets).toBeDefined();
   });
 });
