@@ -34,7 +34,7 @@ export default defineConfig({
       // errors caused by Rollup opening hundreds of source files inside
       // Playwright's process tree.
       command:
-        'node --env-file=.env --import .output/server/instrument.server.mjs .output/server/index.mjs',
+        'node --env-file=.env --import ./.output/server/instrument.server.mjs ./.output/server/index.mjs',
       url: 'http://localhost:3000',
       reuseExistingServer: true,
       env: {
