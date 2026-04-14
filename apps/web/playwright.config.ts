@@ -33,7 +33,8 @@ export default defineConfig({
       // Separating build from serve avoids EMFILE (too many open files)
       // errors caused by Rollup opening hundreds of source files inside
       // Playwright's process tree.
-      command: 'node --env-file=.env .output/server/index.mjs',
+      command:
+        'node --env-file=.env --import .output/server/instrument.server.mjs .output/server/index.mjs',
       url: 'http://localhost:3000',
       reuseExistingServer: true,
       env: {
