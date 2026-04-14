@@ -1,6 +1,6 @@
 ---
 name: verify-check-test
-description: Verify repository changes by running the root validation loop for this monorepo, fixing failures, and repeating until verification is clean. Use when finishing non-trivial work in this repo, when a user asks to "run check and test", "fix CI", "verify output", or phrases verification as `pnpm run check test` and expects the repo-native `pnpm run check:boundaries`, `pnpm run lint`, `pnpm run typecheck`, and `pnpm test` workflow.
+description: Verify repository changes by running the root validation loop for this monorepo, fixing failures, and repeating until verification is clean. Use when finishing non-trivial work in this repo, when a user asks to "run check and test", "fix CI", "verify output", or phrases verification as `pnpm run check test` and expects the repo-native `pnpm run check:boundaries`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run build`, and `pnpm test` workflow.
 ---
 
 # Verify Check Test
@@ -16,6 +16,7 @@ Run the repository verification loop from the repo root, fix failures, and do no
   pnpm run check:boundaries
   pnpm run lint
   pnpm run typecheck
+  pnpm run build
   pnpm test
   ```
 - Inspect `git status --short` before making fixes so you do not trample unrelated user changes.
@@ -40,12 +41,19 @@ Run the repository verification loop from the repo root, fix failures, and do no
    pnpm run typecheck
    ```
 8. If `pnpm run typecheck` fails, fix the type error at the root cause, rerun the narrowest affected `pnpm --filter ... typecheck` when known, otherwise rerun `pnpm run typecheck`, and continue only once it passes.
-9. Once all three check steps pass, run:
+9. Once the boundary, lint, and typecheck steps pass, run:
    ```bash
-   pnpm test
+   pnpm run build
    ```
-10. If `pnpm test` fails, identify the owning app or package, fix the problem, rerun the smallest relevant test scope first, then rerun `pnpm test`.
-11. Finish only after `pnpm run check:boundaries`, `pnpm run lint`, `pnpm run typecheck`, and `pnpm test` all pass in the current workspace state.
+10. If `pnpm run build` fails, fix the build issue at the root cause, rerun the narrowest relevant build command if obvious, otherwise rerun `pnpm run build`, and continue only once it passes.
+11. Once the check and build steps pass, run:
+
+```bash
+pnpm test
+```
+
+12. If `pnpm test` fails, identify the owning app or package, fix the problem, rerun the smallest relevant test scope first, then rerun `pnpm test`.
+13. Finish only after `pnpm run check:boundaries`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run build`, and `pnpm test` all pass in the current workspace state.
 
 ## Failure-handling guidance
 
@@ -63,11 +71,13 @@ Run the repository verification loop from the repo root, fix failures, and do no
 - If imports, public exports, or package boundaries changed, include `pnpm run check:boundaries`.
 - If lint-related files changed, include `pnpm run lint`.
 - If shared types changed, include the relevant package/app typecheck before rerunning the full root sequence.
+- If route generation, bundling, or app/package integration changed, include `pnpm run build`.
 - Always end with:
   ```bash
   pnpm run check:boundaries
   pnpm run lint
   pnpm run typecheck
+  pnpm run build
   pnpm test
   ```
 
@@ -78,6 +88,7 @@ When reporting back:
 - state whether `pnpm run check:boundaries` passed
 - state whether `pnpm run lint` passed
 - state whether `pnpm run typecheck` passed
+- state whether `pnpm run build` passed
 - state whether `pnpm test` passed
 - summarize the root-cause fixes briefly
 - call out any verification gaps if you could not complete the loop
