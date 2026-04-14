@@ -163,7 +163,7 @@ git commit -m "refactor(auth): use shared slug generator for signup workspaces"
 - Modify: `apps/web/test/unit/components/workspace-switcher.test.tsx:343-400`
 - Modify: `apps/web/test/unit/workspace/workspace.test.ts:1-60`
 
-- [ ] **Step 1: Write the failing web tests**
+- [x] **Step 1: Write the failing web tests**
 
 In `apps/web/test/unit/components/workspace-switcher.test.tsx`, add an assertion inside `it('creates workspace and navigates on success', ...)`:
 
@@ -193,12 +193,12 @@ describe('pickDefaultWorkspace', () => {
 });
 ```
 
-- [ ] **Step 2: Run the affected web tests to verify they fail**
+- [x] **Step 2: Run the affected web tests to verify they fail**
 
 Run: `pnpm --filter @workspace/web test -- test/unit/components/workspace-switcher.test.tsx test/unit/workspace/workspace.test.ts`
 Expected: FAIL because `workspace-switcher.tsx` still uses `buildWorkspaceSlug(name)` and the workspace utility test file still references removed slug helpers
 
-- [ ] **Step 3: Switch the web app to the shared utility**
+- [x] **Step 3: Switch the web app to the shared utility**
 
 Update `apps/web/src/components/workspace-switcher.tsx` imports to use the auth utility:
 
@@ -236,12 +236,12 @@ export function pickDefaultWorkspace<T extends { id: string }>(
 }
 ```
 
-- [ ] **Step 4: Run the affected web tests to verify they pass**
+- [x] **Step 4: Run the affected web tests to verify they pass**
 
 Run: `pnpm --filter @workspace/web test -- test/unit/components/workspace-switcher.test.tsx test/unit/workspace/workspace.test.ts`
 Expected: PASS, including the new create-organization slug assertion
 
-- [ ] **Step 5: Commit the web migration**
+- [x] **Step 5: Commit the web migration**
 
 Run:
 

@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { generateSlug } from '@workspace/auth';
 import { authClient } from '@workspace/auth/client';
 import {
   OPERATIONS,
@@ -38,7 +39,7 @@ import {
   useSidebar,
 } from '@workspace/ui/components/sidebar';
 import { addWorkspaceToList } from '@/workspace/workspace.mutations';
-import { buildWorkspaceSlug } from '@/workspace/workspace';
+import { pickWorkspaceForSwitcher } from '@/workspace/workspace';
 import { WORKSPACE_LIST_QUERY_KEY } from '@/workspace/workspace.queries';
 
 const workspaceNameSchema = z
@@ -91,16 +92,14 @@ export function WorkspaceSwitcher({
     }
   };
 
-  const matchedWorkspace = workspaces.find(
-    (workspace) => workspace.id === activeWorkspaceId
-  );
-  const fallbackWorkspace = activeWorkspaceId ? null : workspaces[0];
-  const activeWorkspace = matchedWorkspace ??
-    fallbackWorkspace ?? {
-      id: 'placeholder-workspace',
-      name: '',
-      logo: <IconPlus className="size-4" />,
-    };
+  const activeWorkspace = pickWorkspaceForSwitcher(
+    workspaces,
+    activeWorkspaceId
+  ) ?? {
+    id: 'placeholder-workspace',
+    name: '',
+    logo: <IconPlus className="size-4" />,
+  };
 
   const setActiveMutation = useMutation({
     mutationFn: async (organizationId: string) => {
@@ -125,16 +124,17 @@ export function WorkspaceSwitcher({
 
   const createWorkspaceMutation = useMutation({
     mutationFn: async (name: string) => {
+      const slug = generateSlug();
       const { data, error } = await authClient.organization.create({
         name,
-        slug: buildWorkspaceSlug(name),
+        slug,
       });
       if (error) throw new Error(error.message);
       if (!data.id) throw new Error('Failed to create workspace.');
       return {
         ...data,
         name,
-        slug: data.slug,
+        slug: data.slug ?? slug,
       };
     },
     onSuccess: async (workspace) => {
