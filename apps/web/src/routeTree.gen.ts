@@ -35,6 +35,7 @@ import { Route as ProtectedWsWorkspaceIdSettingsRouteImport } from './routes/_pr
 import { Route as ProtectedWsWorkspaceIdProjectsRouteImport } from './routes/_protected/ws/$workspaceId/projects';
 import { Route as ProtectedWsWorkspaceIdOverviewRouteImport } from './routes/_protected/ws/$workspaceId/overview';
 import { Route as ProtectedWsWorkspaceIdMembersRouteImport } from './routes/_protected/ws/$workspaceId/members';
+import { Route as ProtectedWsWorkspaceIdIntegrationsRouteImport } from './routes/_protected/ws/$workspaceId/integrations';
 import { Route as ProtectedWsWorkspaceIdBillingRouteImport } from './routes/_protected/ws/$workspaceId/billing';
 
 const TestSentryRoute = TestSentryRouteImport.update({
@@ -171,6 +172,12 @@ const ProtectedWsWorkspaceIdMembersRoute =
     path: '/members',
     getParentRoute: () => ProtectedWsWorkspaceIdRoute,
   } as any);
+const ProtectedWsWorkspaceIdIntegrationsRoute =
+  ProtectedWsWorkspaceIdIntegrationsRouteImport.update({
+    id: '/integrations',
+    path: '/integrations',
+    getParentRoute: () => ProtectedWsWorkspaceIdRoute,
+  } as any);
 const ProtectedWsWorkspaceIdBillingRoute =
   ProtectedWsWorkspaceIdBillingRouteImport.update({
     id: '/billing',
@@ -200,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/api/test/emails': typeof ApiTestEmailsRoute;
   '/ws/': typeof ProtectedWsIndexRoute;
   '/ws/$workspaceId/billing': typeof ProtectedWsWorkspaceIdBillingRoute;
+  '/ws/$workspaceId/integrations': typeof ProtectedWsWorkspaceIdIntegrationsRoute;
   '/ws/$workspaceId/members': typeof ProtectedWsWorkspaceIdMembersRoute;
   '/ws/$workspaceId/overview': typeof ProtectedWsWorkspaceIdOverviewRoute;
   '/ws/$workspaceId/projects': typeof ProtectedWsWorkspaceIdProjectsRoute;
@@ -226,6 +234,7 @@ export interface FileRoutesByTo {
   '/api/test/emails': typeof ApiTestEmailsRoute;
   '/ws': typeof ProtectedWsIndexRoute;
   '/ws/$workspaceId/billing': typeof ProtectedWsWorkspaceIdBillingRoute;
+  '/ws/$workspaceId/integrations': typeof ProtectedWsWorkspaceIdIntegrationsRoute;
   '/ws/$workspaceId/members': typeof ProtectedWsWorkspaceIdMembersRoute;
   '/ws/$workspaceId/overview': typeof ProtectedWsWorkspaceIdOverviewRoute;
   '/ws/$workspaceId/projects': typeof ProtectedWsWorkspaceIdProjectsRoute;
@@ -256,6 +265,7 @@ export interface FileRoutesById {
   '/api/test/emails': typeof ApiTestEmailsRoute;
   '/_protected/ws/': typeof ProtectedWsIndexRoute;
   '/_protected/ws/$workspaceId/billing': typeof ProtectedWsWorkspaceIdBillingRoute;
+  '/_protected/ws/$workspaceId/integrations': typeof ProtectedWsWorkspaceIdIntegrationsRoute;
   '/_protected/ws/$workspaceId/members': typeof ProtectedWsWorkspaceIdMembersRoute;
   '/_protected/ws/$workspaceId/overview': typeof ProtectedWsWorkspaceIdOverviewRoute;
   '/_protected/ws/$workspaceId/projects': typeof ProtectedWsWorkspaceIdProjectsRoute;
@@ -285,6 +295,7 @@ export interface FileRouteTypes {
     | '/api/test/emails'
     | '/ws/'
     | '/ws/$workspaceId/billing'
+    | '/ws/$workspaceId/integrations'
     | '/ws/$workspaceId/members'
     | '/ws/$workspaceId/overview'
     | '/ws/$workspaceId/projects'
@@ -311,6 +322,7 @@ export interface FileRouteTypes {
     | '/api/test/emails'
     | '/ws'
     | '/ws/$workspaceId/billing'
+    | '/ws/$workspaceId/integrations'
     | '/ws/$workspaceId/members'
     | '/ws/$workspaceId/overview'
     | '/ws/$workspaceId/projects'
@@ -340,6 +352,7 @@ export interface FileRouteTypes {
     | '/api/test/emails'
     | '/_protected/ws/'
     | '/_protected/ws/$workspaceId/billing'
+    | '/_protected/ws/$workspaceId/integrations'
     | '/_protected/ws/$workspaceId/members'
     | '/_protected/ws/$workspaceId/overview'
     | '/_protected/ws/$workspaceId/projects'
@@ -544,6 +557,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedWsWorkspaceIdMembersRouteImport;
       parentRoute: typeof ProtectedWsWorkspaceIdRoute;
     };
+    '/_protected/ws/$workspaceId/integrations': {
+      id: '/_protected/ws/$workspaceId/integrations';
+      path: '/integrations';
+      fullPath: '/ws/$workspaceId/integrations';
+      preLoaderRoute: typeof ProtectedWsWorkspaceIdIntegrationsRouteImport;
+      parentRoute: typeof ProtectedWsWorkspaceIdRoute;
+    };
     '/_protected/ws/$workspaceId/billing': {
       id: '/_protected/ws/$workspaceId/billing';
       path: '/billing';
@@ -574,6 +594,7 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren);
 
 interface ProtectedWsWorkspaceIdRouteChildren {
   ProtectedWsWorkspaceIdBillingRoute: typeof ProtectedWsWorkspaceIdBillingRoute;
+  ProtectedWsWorkspaceIdIntegrationsRoute: typeof ProtectedWsWorkspaceIdIntegrationsRoute;
   ProtectedWsWorkspaceIdMembersRoute: typeof ProtectedWsWorkspaceIdMembersRoute;
   ProtectedWsWorkspaceIdOverviewRoute: typeof ProtectedWsWorkspaceIdOverviewRoute;
   ProtectedWsWorkspaceIdProjectsRoute: typeof ProtectedWsWorkspaceIdProjectsRoute;
@@ -583,6 +604,8 @@ interface ProtectedWsWorkspaceIdRouteChildren {
 const ProtectedWsWorkspaceIdRouteChildren: ProtectedWsWorkspaceIdRouteChildren =
   {
     ProtectedWsWorkspaceIdBillingRoute: ProtectedWsWorkspaceIdBillingRoute,
+    ProtectedWsWorkspaceIdIntegrationsRoute:
+      ProtectedWsWorkspaceIdIntegrationsRoute,
     ProtectedWsWorkspaceIdMembersRoute: ProtectedWsWorkspaceIdMembersRoute,
     ProtectedWsWorkspaceIdOverviewRoute: ProtectedWsWorkspaceIdOverviewRoute,
     ProtectedWsWorkspaceIdProjectsRoute: ProtectedWsWorkspaceIdProjectsRoute,

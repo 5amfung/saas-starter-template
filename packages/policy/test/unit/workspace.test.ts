@@ -23,7 +23,9 @@ describe('evaluateWorkspaceCapabilities', () => {
     expect(capabilities.canViewMembers).toBe(true);
     expect(capabilities.canViewSettings).toBe(false);
     expect(capabilities.canViewBilling).toBe(false);
+    expect(capabilities.canViewIntegrations).toBe(false);
     expect(capabilities.canInviteMembers).toBe(false);
+    expect(capabilities.canManageIntegrations).toBe(false);
     expect(capabilities.deleteWorkspaceBlockedReason).toBe('not-owner');
   });
 
@@ -37,7 +39,31 @@ describe('evaluateWorkspaceCapabilities', () => {
     expect(capabilities.canViewBilling).toBe(true);
     expect(capabilities.canManageBilling).toBe(true);
     expect(capabilities.canInviteMembers).toBe(true);
+    expect(capabilities.canViewIntegrations).toBe(false);
+    expect(capabilities.canManageIntegrations).toBe(false);
     expect(capabilities.deleteWorkspaceBlockedReason).toBe('not-owner');
+  });
+
+  it('grants admins and owners integration access only on active subscriptions', () => {
+    const adminCapabilities = evaluateWorkspaceCapabilities(
+      baseContext({
+        workspaceRole: 'admin',
+        hasActiveSubscription: true,
+      })
+    );
+
+    expect(adminCapabilities.canViewIntegrations).toBe(true);
+    expect(adminCapabilities.canManageIntegrations).toBe(true);
+
+    const ownerCapabilities = evaluateWorkspaceCapabilities(
+      baseContext({
+        workspaceRole: 'owner',
+        hasActiveSubscription: true,
+      })
+    );
+
+    expect(ownerCapabilities.canViewIntegrations).toBe(true);
+    expect(ownerCapabilities.canManageIntegrations).toBe(true);
   });
 
   it('allows owners to delete only when not last workspace and no active subscription', () => {
@@ -96,6 +122,9 @@ describe('evaluateWorkspaceCapabilities', () => {
 
     expect(hasWorkspaceCapability(capabilities, 'canManageBilling')).toBe(true);
     expect(hasWorkspaceCapability(capabilities, 'canDeleteWorkspace')).toBe(
+      false
+    );
+    expect(hasWorkspaceCapability(capabilities, 'canManageIntegrations')).toBe(
       false
     );
   });

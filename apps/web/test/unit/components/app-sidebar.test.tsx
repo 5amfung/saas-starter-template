@@ -7,14 +7,14 @@ import { AppSidebar } from '@/components/app-sidebar';
 const {
   useSessionMock,
   useActiveOrganizationMock,
-  useWorkspaceAccessCapabilitiesQueryMock,
+  useWorkspaceCapabilitiesQueryMock,
   useRouterStateMock,
   useWorkspaceListQueryMock,
   useWorkspaceDetailQueryMock,
 } = vi.hoisted(() => ({
   useSessionMock: vi.fn(),
   useActiveOrganizationMock: vi.fn(),
-  useWorkspaceAccessCapabilitiesQueryMock: vi.fn(),
+  useWorkspaceCapabilitiesQueryMock: vi.fn(),
   useRouterStateMock: vi.fn(),
   useWorkspaceListQueryMock: vi.fn(),
   useWorkspaceDetailQueryMock: vi.fn(),
@@ -30,7 +30,7 @@ vi.mock('@workspace/auth/client', () => ({
 }));
 
 vi.mock('@/policy/workspace-capabilities', () => ({
-  useWorkspaceAccessCapabilitiesQuery: useWorkspaceAccessCapabilitiesQueryMock,
+  useWorkspaceCapabilitiesQuery: useWorkspaceCapabilitiesQueryMock,
 }));
 
 vi.mock('@tanstack/react-router', async () => {
@@ -135,8 +135,12 @@ beforeEach(() => {
       select: (state: { location: { pathname: string } }) => string;
     }) => select({ location: { pathname: '/' } })
   );
-  useWorkspaceAccessCapabilitiesQueryMock.mockReturnValue({
-    data: { canViewBilling: true, canViewSettings: true },
+  useWorkspaceCapabilitiesQueryMock.mockReturnValue({
+    data: {
+      canViewBilling: true,
+      canViewSettings: true,
+      canViewIntegrations: true,
+    },
   });
   useWorkspaceListQueryMock.mockReturnValue({ data: mockOrgs });
   useWorkspaceDetailQueryMock.mockReturnValue({ data: null });
@@ -222,7 +226,7 @@ describe('AppSidebar', () => {
 
     expect(screen.getByTestId('nav-main')).toHaveAttribute(
       'data-item-count',
-      '5'
+      '6'
     );
     expect(screen.getByRole('link', { name: 'Billing' })).toHaveAttribute(
       'href',
@@ -230,10 +234,34 @@ describe('AppSidebar', () => {
     );
   });
 
+  it('shows Integrations between Members and Billing when allowed', async () => {
+    useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
+
+    await renderSidebar();
+
+    const links = screen.getAllByRole('link').map((link) => link.textContent);
+    expect(links).toEqual([
+      'Overview',
+      'Projects',
+      'Members',
+      'Integrations',
+      'Billing',
+      'Settings',
+    ]);
+    expect(screen.getByRole('link', { name: 'Integrations' })).toHaveAttribute(
+      'href',
+      '/ws/ws-1/integrations'
+    );
+  });
+
   it('hides Settings nav item when workspace capabilities deny settings access', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
-    useWorkspaceAccessCapabilitiesQueryMock.mockReturnValue({
-      data: { canViewBilling: true, canViewSettings: false },
+    useWorkspaceCapabilitiesQueryMock.mockReturnValue({
+      data: {
+        canViewBilling: true,
+        canViewSettings: false,
+        canViewIntegrations: true,
+      },
     });
 
     await renderSidebar();
@@ -286,18 +314,42 @@ describe('AppSidebar', () => {
 
   it('hides Billing nav item when workspace capabilities deny billing access', async () => {
     useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
-    useWorkspaceAccessCapabilitiesQueryMock.mockReturnValue({
-      data: { canViewBilling: false, canViewSettings: true },
+    useWorkspaceCapabilitiesQueryMock.mockReturnValue({
+      data: {
+        canViewBilling: false,
+        canViewSettings: true,
+        canViewIntegrations: true,
+      },
     });
 
     await renderSidebar();
 
     expect(screen.getByTestId('nav-main')).toHaveAttribute(
       'data-item-count',
-      '4'
+      '5'
     );
     expect(
       screen.queryByRole('link', { name: 'Billing' })
     ).not.toBeInTheDocument();
+  });
+
+  it('hides Integrations nav item when workspace capabilities deny integration access', async () => {
+    useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
+    useWorkspaceCapabilitiesQueryMock.mockReturnValue({
+      data: {
+        canViewBilling: true,
+        canViewSettings: true,
+        canViewIntegrations: false,
+      },
+    });
+
+    await renderSidebar();
+
+    expect(
+      screen.queryByRole('link', { name: 'Integrations' })
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(
+      ['Overview', 'Projects', 'Members', 'Billing', 'Settings']
+    );
   });
 });

@@ -8,6 +8,7 @@ import {
   IconHelp,
   IconHome,
   IconNotification,
+  IconPlugConnected,
   IconSearch,
   IconSettings,
   IconStack2,
@@ -28,7 +29,7 @@ import {
   NavUserSkeleton,
 } from '@workspace/components/layout';
 import { NavMain } from '@/components/nav-main';
-import { useWorkspaceAccessCapabilitiesQuery } from '@/policy/workspace-capabilities';
+import { useWorkspaceCapabilitiesQuery } from '@/policy/workspace-capabilities';
 import {
   useWorkspaceDetailQuery,
   useWorkspaceListQuery,
@@ -76,7 +77,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: activeWorkspace } = useWorkspaceDetailQuery(activeWorkspaceId);
 
   const { data: activeWorkspaceCapabilities } =
-    useWorkspaceAccessCapabilitiesQuery(activeWorkspaceId);
+    useWorkspaceCapabilitiesQuery(activeWorkspaceId);
 
   const navMain = activeWorkspaceId
     ? [
@@ -95,6 +96,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: `/ws/${activeWorkspaceId}/members`,
           icon: <IconUsers />,
         },
+        ...(activeWorkspaceCapabilities?.canViewIntegrations
+          ? [
+              {
+                title: 'Integrations',
+                url: `/ws/${activeWorkspaceId}/integrations`,
+                icon: <IconPlugConnected />,
+              },
+            ]
+          : []),
         ...(activeWorkspaceCapabilities?.canViewBilling
           ? [
               {

@@ -40,6 +40,9 @@ export default defineConfig({
       env: {
         DISABLE_SENTRY: 'true',
         PORT: '3000',
+        WORKSPACE_SECRET_ENCRYPTION_KEY:
+          process.env.WORKSPACE_SECRET_ENCRYPTION_KEY ??
+          'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
       },
       stderr: 'pipe',
     },
