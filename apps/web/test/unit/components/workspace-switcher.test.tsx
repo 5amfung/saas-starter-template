@@ -350,7 +350,7 @@ describe('WorkspaceSwitcher', () => {
     const user = userEvent.setup();
     generateSlugMock.mockReturnValue('shared-slug-1234');
     createOrgMock.mockResolvedValue({
-      data: { id: 'ws-new' },
+      data: { id: 'ws-new', slug: 'shared-slug-1234' },
       error: null,
     });
     setActiveMock.mockResolvedValue({ error: null });

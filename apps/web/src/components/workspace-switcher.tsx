@@ -134,7 +134,7 @@ export function WorkspaceSwitcher({
       return {
         ...data,
         name,
-        slug: data.slug ?? slug,
+        slug: data.slug,
       };
     },
     onSuccess: async (workspace) => {
