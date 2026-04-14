@@ -20,7 +20,7 @@
 - Create: `packages/auth/src/slug.ts`
 - Create: `packages/auth/test/unit/slug.test.ts`
 
-- [ ] **Step 1: Write the failing utility test**
+- [x] **Step 1: Write the failing utility test**
 
 Create `packages/auth/test/unit/slug.test.ts` with:
 
@@ -46,12 +46,12 @@ describe('generateSlug', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `pnpm --filter @workspace/auth test -- test/unit/slug.test.ts`
 Expected: FAIL with module-not-found or export-not-found errors for `../../src/slug`
 
-- [ ] **Step 3: Add the dependency and utility module**
+- [x] **Step 3: Add the dependency and utility module**
 
 Update the root `package.json` and `packages/auth/package.json` so `random-word-slugs` is available to `@workspace/auth`.
 
@@ -80,12 +80,12 @@ Update `packages/auth/src/index.ts` with:
 export { generateSlug } from './slug';
 ```
 
-- [ ] **Step 4: Run the utility test to verify it passes**
+- [x] **Step 4: Run the utility test to verify it passes**
 
 Run: `pnpm --filter @workspace/auth test -- test/unit/slug.test.ts`
 Expected: PASS with 3 passing assertions
 
-- [ ] **Step 5: Commit the utility slice**
+- [x] **Step 5: Commit the utility slice**
 
 Run:
 
