@@ -1,9 +1,9 @@
+import { getTableConfig } from 'drizzle-orm/pg-core';
 import {
   notificationPreferences,
   notificationPreferencesRelations,
   workspaceIntegrationSecrets,
 } from '../../src/app.schema';
-import { getTableConfig } from 'drizzle-orm/pg-core';
 import {
   invitation,
   member,

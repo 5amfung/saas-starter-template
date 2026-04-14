@@ -5,13 +5,13 @@ import * as z from 'zod';
 import {
   INTEGRATION_KEYS,
   isIntegrationFieldKeyForIntegration,
-  type IntegrationFieldKey,
 } from './integration-definitions';
 import {
   getWorkspaceIntegrationsSummary,
   revealWorkspaceIntegrationSecretValue,
   updateWorkspaceIntegrationSecretValues,
 } from './integration-secrets.server';
+import type { IntegrationFieldKey } from './integration-definitions';
 import { getAuth } from '@/init';
 
 const workspaceIntegrationInput = z.object({

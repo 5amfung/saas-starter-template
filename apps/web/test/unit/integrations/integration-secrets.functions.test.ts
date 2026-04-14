@@ -29,9 +29,9 @@ vi.mock('@tanstack/react-start', () => ({
         return builder;
       },
       handler(fn: (input: { data: unknown }) => unknown) {
-        return async (input: { data: unknown }) => {
+        return (input: { data: unknown }) => {
           const data = validator ? validator.parse(input.data) : input.data;
-          return fn({ data });
+          return Promise.resolve(fn({ data }));
         };
       },
     };
@@ -95,34 +95,62 @@ describe('integration secret server functions', () => {
     expect(result).toEqual({ value: 'secret' });
   });
 
-  it('rejects invalid reveal key combinations at the input layer', async () => {
-    await expect(
+  it('rejects invalid reveal key combinations at the input layer', () => {
+    let thrownError: unknown;
+
+    expect(() => {
       revealWorkspaceIntegrationValue({
         data: {
           workspaceId: 'ws-1',
           integration: 'slack',
           key: 'botToken',
         },
-      })
-    ).rejects.toMatchObject({
-      name: 'ZodError',
-    });
+      });
+    }).toThrow();
+
+    try {
+      revealWorkspaceIntegrationValue({
+        data: {
+          workspaceId: 'ws-1',
+          integration: 'slack',
+          key: 'botToken',
+        },
+      });
+    } catch (error) {
+      thrownError = error;
+    }
+
+    expect(thrownError).toMatchObject({ name: 'ZodError' });
 
     expect(revealWorkspaceIntegrationSecretValueMock).not.toHaveBeenCalled();
   });
 
-  it('rejects invalid update keys before reaching the server helper', async () => {
-    await expect(
+  it('rejects invalid update keys before reaching the server helper', () => {
+    let thrownError: unknown;
+
+    expect(() => {
       updateWorkspaceIntegrationValues({
         data: {
           workspaceId: 'ws-1',
           integration: 'slack',
           values: [{ key: 'botToken', value: 'secret' }],
         },
-      })
-    ).rejects.toMatchObject({
-      name: 'ZodError',
-    });
+      });
+    }).toThrow();
+
+    try {
+      updateWorkspaceIntegrationValues({
+        data: {
+          workspaceId: 'ws-1',
+          integration: 'slack',
+          values: [{ key: 'botToken', value: 'secret' }],
+        },
+      });
+    } catch (error) {
+      thrownError = error;
+    }
+
+    expect(thrownError).toMatchObject({ name: 'ZodError' });
 
     expect(updateWorkspaceIntegrationSecretValuesMock).not.toHaveBeenCalled();
   });

@@ -56,7 +56,7 @@ export function IntegrationSecretFieldRow({
   }, [hasValue, maskedValue, value]);
 
   const saveMutation = useMutation({
-    mutationFn: (value: string) => onSave(fieldKey, value),
+    mutationFn: (nextValue: string) => onSave(fieldKey, nextValue),
     onError: (error) => {
       toast.error(getErrorMessage(error, `Failed to save ${label}.`));
     },

@@ -2,9 +2,9 @@ import {
   decryptIntegrationSecret as decryptIntegrationSecretFromPackage,
   encryptIntegrationSecret as encryptIntegrationSecretFromPackage,
   maskIntegrationSecret,
-  type EncryptedIntegrationSecret,
 } from '@workspace/integrations';
 import { getWorkspaceIntegrationEncryptionKey } from './integration-encryption-key.server';
+import type { EncryptedIntegrationSecret } from '@workspace/integrations';
 
 export type { EncryptedIntegrationSecret };
 

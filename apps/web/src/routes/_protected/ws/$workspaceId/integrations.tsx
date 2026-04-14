@@ -48,9 +48,7 @@ function WorkspaceIntegrationsPage() {
       }),
   });
 
-  const slack = integrationsQuery.data?.find(
-    (integration) => integration.integration === 'slack'
-  );
+  const slack = integrationsQuery.data?.[0];
 
   if (!workspace) {
     return null;
