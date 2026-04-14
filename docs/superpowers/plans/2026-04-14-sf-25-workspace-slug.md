@@ -101,7 +101,7 @@ git commit -m "feat(auth): add shared slug generator"
 - Modify: `packages/auth/src/auth.server.ts:221-244`
 - Modify: `packages/auth/test/unit/auth.server.test.ts:233-253`
 
-- [ ] **Step 1: Write the failing auth test assertion**
+- [x] **Step 1: Write the failing auth test assertion**
 
 In `packages/auth/test/unit/auth.server.test.ts`, replace the old slug expectation:
 
@@ -115,12 +115,12 @@ with:
 slug: expect.stringMatching(/^[a-z]+-[a-z]+-[a-z]+-[a-z0-9]{4}$/),
 ```
 
-- [ ] **Step 2: Run the auth test to verify it fails**
+- [x] **Step 2: Run the auth test to verify it fails**
 
 Run: `pnpm --filter @workspace/auth test -- test/unit/auth.server.test.ts`
 Expected: FAIL because `packages/auth/src/auth.server.ts` still sends `ws-<hex>`
 
-- [ ] **Step 3: Replace the signup slug generation**
+- [x] **Step 3: Replace the signup slug generation**
 
 Update `packages/auth/src/auth.server.ts` to import the shared utility and use it:
 
@@ -140,12 +140,12 @@ with:
 const slug = generateSlug();
 ```
 
-- [ ] **Step 4: Run the auth test to verify it passes**
+- [x] **Step 4: Run the auth test to verify it passes**
 
 Run: `pnpm --filter @workspace/auth test -- test/unit/auth.server.test.ts`
 Expected: PASS, including the updated workspace-creation assertion
 
-- [ ] **Step 5: Commit the auth migration**
+- [x] **Step 5: Commit the auth migration**
 
 Run:
 

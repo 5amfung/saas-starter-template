@@ -16,6 +16,7 @@ const {
   dbUpdateMock,
   stripeMock,
   organizationPluginSpy,
+  generateSlugMock,
   startSpanMock,
   loggerInfoMock,
   loggerErrorMock,
@@ -57,6 +58,7 @@ const {
     dbUpdateMock: dbUpdateFn,
     stripeMock: vi.fn(),
     organizationPluginSpy: vi.fn(),
+    generateSlugMock: vi.fn(),
     startSpanMock: startSpanFn,
     loggerInfoMock: vi.fn(),
     loggerErrorMock: vi.fn(),
@@ -157,6 +159,10 @@ vi.mock('../../src/auth-emails.server', () => ({
   createAuthEmails: createAuthEmailsMock,
 }));
 
+vi.mock('../../src/slug', () => ({
+  generateSlug: generateSlugMock,
+}));
+
 // ---------------------------------------------------------------------------
 // Helpers to create a test config and extract hooks.
 // ---------------------------------------------------------------------------
@@ -233,9 +239,10 @@ describe('createAuth', () => {
   // ─── databaseHooks.user.create.after ────────────────────────────────
 
   describe('user create hook — auto-create personal workspace', () => {
-    it('creates an organization with default name and ws- slug', async () => {
+    it('passes the generated slug through to organization creation', async () => {
       const createAuth = await importCreateAuth();
       createOrganizationMock.mockResolvedValueOnce({});
+      generateSlugMock.mockReturnValueOnce('alpha-bravo-charlie-d1e2');
 
       createAuth(buildTestConfig());
       const config = betterAuthSpy.mock.calls[0][0] as BetterAuthConfig;
@@ -247,7 +254,7 @@ describe('createAuth', () => {
         body: expect.objectContaining({
           name: 'My Workspace',
           userId: 'user_new',
-          slug: expect.stringMatching(/^ws-[a-f0-9]{8}$/),
+          slug: 'alpha-bravo-charlie-d1e2',
         }),
       });
       expect(startSpanMock).toHaveBeenCalledWith(
@@ -272,18 +279,67 @@ describe('createAuth', () => {
       );
     });
 
-    it('swallows duplicate organization errors silently', async () => {
+    it('retries duplicate slug collisions and eventually succeeds', async () => {
       const createAuth = await importCreateAuth();
-      createOrganizationMock.mockRejectedValueOnce(
-        new Error('Organization slug already exists')
-      );
+      generateSlugMock
+        .mockReturnValueOnce('alpha-bravo-charlie-d1e2')
+        .mockReturnValueOnce('delta-echo-foxtrot-a1b2');
+      createOrganizationMock
+        .mockRejectedValueOnce(new Error('Organization slug already exists'))
+        .mockResolvedValueOnce({});
 
       createAuth(buildTestConfig());
       const config = betterAuthSpy.mock.calls[0][0] as BetterAuthConfig;
       const hook = config.databaseHooks!.user!.create!.after!;
 
-      // Should not throw.
       await expect(hook({ id: 'user_dup' })).resolves.toBeUndefined();
+
+      expect(generateSlugMock).toHaveBeenCalledTimes(2);
+      expect(createOrganizationMock).toHaveBeenNthCalledWith(1, {
+        body: expect.objectContaining({
+          name: 'My Workspace',
+          userId: 'user_dup',
+          slug: 'alpha-bravo-charlie-d1e2',
+        }),
+      });
+      expect(createOrganizationMock).toHaveBeenNthCalledWith(2, {
+        body: expect.objectContaining({
+          name: 'My Workspace',
+          userId: 'user_dup',
+          slug: 'delta-echo-foxtrot-a1b2',
+        }),
+      });
+      expect(loggerInfoMock).toHaveBeenCalledWith(
+        'Created default workspace',
+        expect.objectContaining({
+          operation: OPERATIONS.WORKSPACE_CREATE,
+          userId: 'user_dup',
+          result: 'success',
+        })
+      );
+    });
+
+    it('swallows duplicate collisions after exhausting retries', async () => {
+      const createAuth = await importCreateAuth();
+      generateSlugMock
+        .mockReturnValueOnce('alpha-bravo-charlie-d1e2')
+        .mockReturnValueOnce('delta-echo-foxtrot-a1b2')
+        .mockReturnValueOnce('golf-hotel-india-c3d4');
+      createOrganizationMock
+        .mockRejectedValueOnce(new Error('Organization slug already exists'))
+        .mockRejectedValueOnce(new Error('Organization slug already exists'))
+        .mockRejectedValueOnce(new Error('Organization slug already exists'));
+
+      createAuth(buildTestConfig());
+      const config = betterAuthSpy.mock.calls[0][0] as BetterAuthConfig;
+      const hook = config.databaseHooks!.user!.create!.after!;
+
+      await expect(hook({ id: 'user_dup_all' })).resolves.toBeUndefined();
+
+      expect(generateSlugMock).toHaveBeenCalledTimes(3);
+      expect(createOrganizationMock).toHaveBeenCalledTimes(3);
+      expect(loggerInfoMock).not.toHaveBeenCalled();
+      expect(loggerErrorMock).not.toHaveBeenCalled();
     });
 
     it('re-throws non-duplicate errors', async () => {

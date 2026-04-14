@@ -24,10 +24,14 @@ import {
 import { createAuthEmails } from './auth-emails.server';
 import { isDuplicateOrganizationError, isSignInPath } from './auth-utils';
 import { createBillingHelpers } from './billing.server';
+import { generateSlug } from './slug';
 import { PLANS } from './plans';
 import type { PlanId } from './plans';
 import type { EmailClient } from '@workspace/email';
 import type { Database } from '@workspace/db';
+
+const DEFAULT_WORKSPACE_NAME = 'My Workspace';
+const DEFAULT_WORKSPACE_SLUG_ATTEMPTS = 3;
 
 export interface AuthConfig {
   db: Database;
@@ -219,8 +223,6 @@ export function createAuth(config: AuthConfig) {
       user: {
         create: {
           after: async (user) => {
-            const DEFAULT_WORKSPACE_NAME = 'My Workspace';
-            const slug = `ws-${crypto.randomUUID().slice(0, 8)}`;
             await startWorkflowSpan(
               {
                 op: OPERATIONS.WORKSPACE_CREATE,
@@ -234,32 +236,47 @@ export function createAuth(config: AuthConfig) {
                 ),
               },
               async () => {
-                try {
-                  await auth.api.createOrganization({
-                    body: {
-                      name: DEFAULT_WORKSPACE_NAME,
-                      slug,
-                      userId: user.id,
-                    },
-                  });
+                for (
+                  let attempt = 1;
+                  attempt <= DEFAULT_WORKSPACE_SLUG_ATTEMPTS;
+                  attempt += 1
+                ) {
+                  const slug = generateSlug();
 
-                  workflowLogger.info('Created default workspace', {
-                    ...buildWorkflowAttributes(OPERATIONS.WORKSPACE_CREATE, {
-                      userId: user.id,
-                      result: 'success',
-                    }),
-                  });
-                } catch (error) {
-                  if (!isDuplicateOrganizationError(error)) {
-                    workflowLogger.error('Failed to create default workspace', {
+                  try {
+                    await auth.api.createOrganization({
+                      body: {
+                        name: DEFAULT_WORKSPACE_NAME,
+                        slug,
+                        userId: user.id,
+                      },
+                    });
+
+                    workflowLogger.info('Created default workspace', {
                       ...buildWorkflowAttributes(OPERATIONS.WORKSPACE_CREATE, {
                         userId: user.id,
-                        result: 'failure',
-                        failureCategory: 'auto_create_failed',
+                        result: 'success',
                       }),
                     });
-                    console.error(error);
-                    throw error;
+                    return;
+                  } catch (error) {
+                    if (!isDuplicateOrganizationError(error)) {
+                      workflowLogger.error(
+                        'Failed to create default workspace',
+                        {
+                          ...buildWorkflowAttributes(
+                            OPERATIONS.WORKSPACE_CREATE,
+                            {
+                              userId: user.id,
+                              result: 'failure',
+                              failureCategory: 'auto_create_failed',
+                            }
+                          ),
+                        }
+                      );
+                      console.error(error);
+                      throw error;
+                    }
                   }
                 }
               }
