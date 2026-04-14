@@ -45,6 +45,11 @@ describe('integration secret server adapter', () => {
     requireWorkspaceCapabilityForUserMock.mockResolvedValue({});
   });
 
+  afterEach(() => {
+    delete process.env.WORKSPACE_SECRET_ENCRYPTION_KEY;
+    delete process.env.BETTER_AUTH_SECRET;
+  });
+
   it('delegates workspace summary loading after capability checks', async () => {
     getWorkspaceIntegrationSummariesMock.mockResolvedValueOnce([]);
 
@@ -136,5 +141,23 @@ describe('integration secret server adapter', () => {
 
     expect(getWorkspaceIntegrationSummariesMock).not.toHaveBeenCalled();
     expect(getDbMock).not.toHaveBeenCalled();
+  });
+
+  it('fails early when the dedicated key is missing', async () => {
+    delete process.env.WORKSPACE_SECRET_ENCRYPTION_KEY;
+
+    const error = await updateWorkspaceIntegrationSecretValues(
+      new Headers(),
+      'ws-1',
+      'user-1',
+      'slack',
+      [{ key: 'clientId', value: 'client-id-1' }]
+    ).catch((caught) => caught);
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toMatch(
+      /WORKSPACE_SECRET_ENCRYPTION_KEY is required/i
+    );
+    expect(updateWorkspaceIntegrationValuesMock).not.toHaveBeenCalled();
   });
 });

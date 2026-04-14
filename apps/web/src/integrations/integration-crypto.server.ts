@@ -4,15 +4,7 @@ import {
   maskIntegrationSecret,
   type EncryptedIntegrationSecret,
 } from '@workspace/integrations';
-
-function getIntegrationEncryptionKey() {
-  const raw = process.env.WORKSPACE_SECRET_ENCRYPTION_KEY;
-  if (!raw) {
-    throw new Error('WORKSPACE_SECRET_ENCRYPTION_KEY is required.');
-  }
-
-  return raw;
-}
+import { getWorkspaceIntegrationEncryptionKey } from './integration-encryption-key.server';
 
 export type { EncryptedIntegrationSecret };
 
@@ -21,7 +13,7 @@ export function encryptIntegrationSecret(
 ): EncryptedIntegrationSecret {
   return encryptIntegrationSecretFromPackage(
     value,
-    getIntegrationEncryptionKey()
+    getWorkspaceIntegrationEncryptionKey()
   );
 }
 
@@ -30,7 +22,7 @@ export function decryptIntegrationSecret(
 ): string {
   return decryptIntegrationSecretFromPackage(
     encrypted,
-    getIntegrationEncryptionKey()
+    getWorkspaceIntegrationEncryptionKey()
   );
 }
 

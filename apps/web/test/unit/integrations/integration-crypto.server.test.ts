@@ -38,7 +38,7 @@ describe('integration crypto helpers', () => {
     ).toBe('slack-client-secret');
   });
 
-  it('throws when the encryption key is missing', async () => {
+  it('throws when the dedicated encryption key is missing', async () => {
     delete process.env.WORKSPACE_SECRET_ENCRYPTION_KEY;
     const cryptoModule =
       await import('@/integrations/integration-crypto.server');

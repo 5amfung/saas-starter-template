@@ -5,6 +5,7 @@ import {
   type IntegrationFieldKey,
   type IntegrationKey,
 } from '@workspace/integrations';
+import { getWorkspaceIntegrationEncryptionKey } from './integration-encryption-key.server';
 import { getDb } from '@/init';
 import { requireWorkspaceCapabilityForUser } from '@/policy/workspace-capabilities.server';
 
@@ -36,7 +37,7 @@ export async function getWorkspaceIntegrationsSummary(
 
   return getWorkspaceIntegrationSummaries({
     db: getDb(),
-    encryptionKey: process.env.WORKSPACE_SECRET_ENCRYPTION_KEY!,
+    encryptionKey: getWorkspaceIntegrationEncryptionKey(),
     workspaceId,
   });
 }
@@ -57,7 +58,7 @@ export async function revealWorkspaceIntegrationSecretValue(
 
   return revealWorkspaceIntegrationValueFromPackage({
     db: getDb(),
-    encryptionKey: process.env.WORKSPACE_SECRET_ENCRYPTION_KEY!,
+    encryptionKey: getWorkspaceIntegrationEncryptionKey(),
     workspaceId,
     integration,
     key,
@@ -80,7 +81,7 @@ export async function updateWorkspaceIntegrationSecretValues(
 
   return updateWorkspaceIntegrationValuesFromPackage({
     db: getDb(),
-    encryptionKey: process.env.WORKSPACE_SECRET_ENCRYPTION_KEY!,
+    encryptionKey: getWorkspaceIntegrationEncryptionKey(),
     workspaceId,
     integration,
     values,
