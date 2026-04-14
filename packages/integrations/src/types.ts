@@ -12,6 +12,7 @@ export interface WorkspaceIntegrationFieldSummary {
   label: string;
   hasValue: boolean;
   maskedValue: string | null;
+  value: string | null;
 }
 
 export interface WorkspaceIntegrationSummary {

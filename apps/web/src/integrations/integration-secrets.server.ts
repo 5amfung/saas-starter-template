@@ -2,10 +2,12 @@ import {
   getWorkspaceIntegrationSummaries,
   revealWorkspaceIntegrationValue as revealWorkspaceIntegrationValueFromPackage,
   updateWorkspaceIntegrationValues as updateWorkspaceIntegrationValuesFromPackage,
-  type IntegrationFieldKey,
-  type IntegrationKey,
 } from '@workspace/integrations';
 import { getWorkspaceIntegrationEncryptionKey } from './integration-encryption-key.server';
+import type {
+  IntegrationFieldKey,
+  IntegrationKey,
+} from '@workspace/integrations';
 import { getDb } from '@/init';
 import { requireWorkspaceCapabilityForUser } from '@/policy/workspace-capabilities.server';
 
@@ -15,7 +17,7 @@ async function requireIntegrationCapability(
   userId: string,
   capability: 'canViewIntegrations' | 'canManageIntegrations'
 ) {
-  await requireWorkspaceCapabilityForUser(
+  return requireWorkspaceCapabilityForUser(
     headers,
     workspaceId,
     userId,
@@ -28,7 +30,7 @@ export async function getWorkspaceIntegrationsSummary(
   workspaceId: string,
   userId: string
 ) {
-  await requireIntegrationCapability(
+  const capabilities = await requireIntegrationCapability(
     headers,
     workspaceId,
     userId,
@@ -38,6 +40,7 @@ export async function getWorkspaceIntegrationsSummary(
   return getWorkspaceIntegrationSummaries({
     db: getDb(),
     encryptionKey: getWorkspaceIntegrationEncryptionKey(),
+    includeValues: capabilities.canManageIntegrations,
     workspaceId,
   });
 }

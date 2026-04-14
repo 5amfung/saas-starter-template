@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { IconEye, IconLoader2 } from '@tabler/icons-react';
+import { IconEye, IconEyeOff, IconLoader2 } from '@tabler/icons-react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@workspace/ui/components/button';
@@ -17,7 +17,7 @@ interface IntegrationSecretFieldRowProps {
   integration: IntegrationKey;
   label: string;
   maskedValue: string | null;
-  onReveal: (fieldKey: IntegrationFieldKey) => Promise<string | null>;
+  value: string | null;
   onSave: (fieldKey: IntegrationFieldKey, value: string) => Promise<void>;
 }
 
@@ -32,38 +32,28 @@ export function IntegrationSecretFieldRow({
   integration,
   label,
   maskedValue,
-  onReveal,
+  value,
   onSave,
 }: IntegrationSecretFieldRowProps) {
   const [savedMaskedValue, setSavedMaskedValue] = React.useState(
     maskedValue ?? ''
   );
-  const [savedComparableValue, setSavedComparableValue] = React.useState(
-    maskedValue ?? ''
-  );
+  const [savedValue, setSavedValue] = React.useState(value ?? '');
   const [draftValue, setDraftValue] = React.useState(maskedValue ?? '');
-  const [isRevealed, setIsRevealed] = React.useState(false);
+  const [draftComparableValue, setDraftComparableValue] = React.useState(
+    value ?? ''
+  );
+  const [isHidden, setIsHidden] = React.useState(hasValue);
 
   React.useEffect(() => {
     const nextMaskedValue = maskedValue ?? '';
+    const nextValue = value ?? '';
     setSavedMaskedValue(nextMaskedValue);
-    setSavedComparableValue(nextMaskedValue);
+    setSavedValue(nextValue);
     setDraftValue(nextMaskedValue);
-    setIsRevealed(false);
-  }, [maskedValue]);
-
-  const revealMutation = useMutation({
-    mutationFn: () => onReveal(fieldKey),
-    onSuccess: (value) => {
-      const revealedValue = value ?? '';
-      setSavedComparableValue(revealedValue);
-      setDraftValue(revealedValue);
-      setIsRevealed(true);
-    },
-    onError: (error) => {
-      toast.error(getErrorMessage(error, `Failed to reveal ${label}.`));
-    },
-  });
+    setDraftComparableValue(nextValue);
+    setIsHidden(Boolean(hasValue));
+  }, [hasValue, maskedValue, value]);
 
   const saveMutation = useMutation({
     mutationFn: (value: string) => onSave(fieldKey, value),
@@ -72,15 +62,34 @@ export function IntegrationSecretFieldRow({
     },
   });
 
-  const comparisonValue = isRevealed ? savedComparableValue : savedMaskedValue;
-  const isDirty = draftValue !== comparisonValue;
-  const isBusy = revealMutation.isPending || saveMutation.isPending;
-  const revealDisabled = !canManage || !hasValue || isBusy;
-  const actionDisabled = !canManage || isBusy;
+  const isDirty = draftComparableValue !== savedValue;
+  const actionDisabled = !canManage || saveMutation.isPending;
+  const toggleHiddenDisabled =
+    !canManage || !hasValue || saveMutation.isPending;
+
+  const handleDraftChange = (nextValue: string) => {
+    setDraftValue(nextValue);
+    setDraftComparableValue(nextValue);
+    setIsHidden(false);
+  };
+
+  const handleToggleHidden = () => {
+    if (isHidden) {
+      setDraftValue(draftComparableValue);
+      setIsHidden(false);
+      return;
+    }
+
+    setDraftValue(
+      draftComparableValue ? maskValueForDisplay(draftComparableValue) : ''
+    );
+    setIsHidden(true);
+  };
 
   const handleCancel = () => {
     setDraftValue(savedMaskedValue);
-    setIsRevealed(false);
+    setDraftComparableValue(savedValue);
+    setIsHidden(Boolean(hasValue));
   };
 
   return (
@@ -101,8 +110,8 @@ export function IntegrationSecretFieldRow({
         <Input
           id={`${integration}-${fieldKey}`}
           value={draftValue}
-          disabled={!canManage || isBusy}
-          onChange={(event) => setDraftValue(event.target.value)}
+          disabled={!canManage || saveMutation.isPending}
+          onChange={(event) => handleDraftChange(event.target.value)}
           autoComplete="off"
           data-1p-ignore
           spellCheck={false}
@@ -114,14 +123,14 @@ export function IntegrationSecretFieldRow({
           type="button"
           variant="outline"
           size="sm"
-          aria-label={`Reveal ${label}`}
-          disabled={revealDisabled}
-          onClick={() => revealMutation.mutate()}
+          aria-label={`${isHidden ? 'Reveal' : 'Hide'} ${label}`}
+          disabled={toggleHiddenDisabled}
+          onClick={handleToggleHidden}
         >
-          {revealMutation.isPending ? (
-            <IconLoader2 className="size-4 animate-spin" />
-          ) : (
+          {isHidden ? (
             <IconEye className="size-4" />
+          ) : (
+            <IconEyeOff className="size-4" />
           )}
         </Button>
         <Button
@@ -139,7 +148,7 @@ export function IntegrationSecretFieldRow({
           size="sm"
           aria-label={`Save ${label}`}
           disabled={actionDisabled || !isDirty}
-          onClick={() => saveMutation.mutate(draftValue)}
+          onClick={() => saveMutation.mutate(draftComparableValue)}
         >
           {saveMutation.isPending ? (
             <IconLoader2 className="size-4 animate-spin" />
@@ -150,4 +159,11 @@ export function IntegrationSecretFieldRow({
       </div>
     </div>
   );
+}
+
+function maskValueForDisplay(value: string): string {
+  const visiblePrefixLength = Math.min(6, Math.max(0, value.length - 1));
+  const visiblePrefix = value.slice(0, visiblePrefixLength);
+  const hiddenLength = Math.max(4, value.length - visiblePrefix.length);
+  return `${visiblePrefix}${'*'.repeat(hiddenLength)}`;
 }

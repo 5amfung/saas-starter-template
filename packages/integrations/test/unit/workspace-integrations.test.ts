@@ -122,16 +122,50 @@ describe('workspace integrations operations', () => {
             label: 'Client ID',
             hasValue: true,
             maskedValue: 'client*********',
+            value: null,
           },
           {
             key: 'clientSecret',
             label: 'Client Secret',
             hasValue: false,
             maskedValue: null,
+            value: null,
           },
         ],
       },
     ]);
+  });
+
+  it('includes plaintext values when explicitly requested', async () => {
+    const { db, selectMock } = createDbMock();
+
+    mockSelectRows(selectMock, [
+      {
+        integration: 'slack',
+        key: 'clientId',
+        encryptedValue: 'enc-id',
+        iv: 'iv-id',
+        authTag: 'tag-id',
+        encryptionVersion: 1,
+      },
+    ]);
+    decryptIntegrationSecretMock.mockReturnValueOnce('client-id-123456');
+    maskIntegrationSecretMock.mockReturnValueOnce('client*********');
+
+    const result = await getWorkspaceIntegrationSummaries({
+      db: db as Parameters<typeof getWorkspaceIntegrationSummaries>[0]['db'],
+      encryptionKey: ENCRYPTION_KEY,
+      workspaceId: 'ws-1',
+      includeValues: true,
+    });
+
+    expect(result[0]?.fields[0]).toEqual({
+      key: 'clientId',
+      label: 'Client ID',
+      hasValue: true,
+      maskedValue: 'client*********',
+      value: 'client-id-123456',
+    });
   });
 
   it('reveals one stored value', async () => {
@@ -223,12 +257,14 @@ describe('workspace integrations operations', () => {
             label: 'Client ID',
             hasValue: true,
             maskedValue: 'client********',
+            value: 'client-id-1',
           },
           {
             key: 'clientSecret',
             label: 'Client Secret',
             hasValue: false,
             maskedValue: null,
+            value: null,
           },
         ],
       },

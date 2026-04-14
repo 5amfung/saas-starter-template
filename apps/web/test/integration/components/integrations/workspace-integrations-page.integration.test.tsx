@@ -6,14 +6,12 @@ import { Route } from '@/routes/_protected/ws/$workspaceId/integrations';
 
 const {
   getWorkspaceIntegrationsMock,
-  revealWorkspaceIntegrationValueMock,
   updateWorkspaceIntegrationValuesMock,
   useWorkspaceDetailQueryMock,
   mockToastSuccess,
   mockToastError,
 } = vi.hoisted(() => ({
   getWorkspaceIntegrationsMock: vi.fn(),
-  revealWorkspaceIntegrationValueMock: vi.fn(),
   updateWorkspaceIntegrationValuesMock: vi.fn(),
   useWorkspaceDetailQueryMock: vi.fn(),
   mockToastSuccess: vi.fn(),
@@ -22,7 +20,6 @@ const {
 
 vi.mock('@/integrations/integration-secrets.functions', () => ({
   getWorkspaceIntegrations: getWorkspaceIntegrationsMock,
-  revealWorkspaceIntegrationValue: revealWorkspaceIntegrationValueMock,
   updateWorkspaceIntegrationValues: updateWorkspaceIntegrationValuesMock,
 }));
 
@@ -59,20 +56,19 @@ describe('WorkspaceIntegrationsPage integration', () => {
             key: 'clientId',
             label: 'Client ID',
             hasValue: true,
-            maskedValue: 'abc123••••••',
+            maskedValue: 'abc123******',
+            value: 'abc123secret',
           },
           {
             key: 'clientSecret',
             label: 'Client Secret',
             hasValue: true,
-            maskedValue: 'def456••••••',
+            maskedValue: 'def456******',
+            value: 'def456secret',
           },
         ],
       },
     ]);
-    revealWorkspaceIntegrationValueMock.mockResolvedValue({
-      value: 'plain-id',
-    });
     updateWorkspaceIntegrationValuesMock.mockResolvedValue(undefined);
   });
 
@@ -94,8 +90,8 @@ describe('WorkspaceIntegrationsPage integration', () => {
     expect(screen.getByTestId('integrations-page-layout')).toHaveClass(
       'max-w-2xl'
     );
-    expect(screen.getByLabelText('Client ID')).toHaveValue('abc123••••••');
-    expect(screen.getByLabelText('Client Secret')).toHaveValue('def456••••••');
+    expect(screen.getByLabelText('Client ID')).toHaveValue('abc123******');
+    expect(screen.getByLabelText('Client Secret')).toHaveValue('def456******');
     expect(
       screen.getByRole('button', { name: 'Save Client ID' })
     ).toBeDisabled();
@@ -104,78 +100,34 @@ describe('WorkspaceIntegrationsPage integration', () => {
     ).toBeDisabled();
   });
 
-  it('reveals a saved value through the Task 3 server function when permitted', async () => {
+  it('toggles a saved value locally between masked and revealed states', async () => {
     const user = userEvent.setup();
     renderWithProviders(<PageComponent />);
 
     await screen.findByRole('heading', { name: 'Slack' });
     await user.click(screen.getByRole('button', { name: 'Reveal Client ID' }));
+    expect(screen.getByLabelText('Client ID')).toHaveValue('abc123secret');
+    expect(
+      screen.getByRole('button', { name: 'Hide Client ID' })
+    ).toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(revealWorkspaceIntegrationValueMock).toHaveBeenCalledWith({
-        data: {
-          workspaceId: 'ws-1',
-          integration: 'slack',
-          key: 'clientId',
-        },
-      });
-    });
-
-    expect(screen.getByLabelText('Client ID')).toHaveValue('plain-id');
+    await user.click(screen.getByRole('button', { name: 'Hide Client ID' }));
+    expect(screen.getByLabelText('Client ID')).toHaveValue('abc123******');
+    expect(
+      screen.getByRole('button', { name: 'Reveal Client ID' })
+    ).toBeInTheDocument();
   });
 
-  it('locks the input while a reveal request is pending so edits cannot race the response', async () => {
+  it('reveals instantly without a loading state or reveal request', async () => {
     const user = userEvent.setup();
-    let resolveReveal: ((value: { value: string | null }) => void) | null =
-      null;
-    revealWorkspaceIntegrationValueMock.mockImplementation(
-      () =>
-        new Promise<{ value: string | null }>((resolve) => {
-          resolveReveal = resolve;
-        })
-    );
-
     renderWithProviders(<PageComponent />);
 
     const clientIdInput = await screen.findByLabelText('Client ID');
     await user.click(screen.getByRole('button', { name: 'Reveal Client ID' }));
-
-    await waitFor(() => {
-      expect(clientIdInput).toBeDisabled();
-    });
-
+    expect(clientIdInput).toHaveValue('abc123secret');
     expect(
-      screen.getByRole('button', { name: 'Save Client ID' })
-    ).toBeDisabled();
-    expect(
-      screen.getByRole('button', { name: 'Cancel Client ID' })
-    ).toBeDisabled();
-
-    expect(resolveReveal).not.toBeNull();
-    resolveReveal!({ value: 'plain-id' });
-
-    await waitFor(() => {
-      expect(clientIdInput).toHaveValue('plain-id');
-      expect(clientIdInput).toBeEnabled();
-    });
-  });
-
-  it('shows an error toast and keeps the masked value when reveal fails', async () => {
-    const user = userEvent.setup();
-    revealWorkspaceIntegrationValueMock.mockRejectedValue(
-      new Error('Reveal failed.')
-    );
-
-    renderWithProviders(<PageComponent />);
-
-    const clientIdInput = await screen.findByLabelText('Client ID');
-    await user.click(screen.getByRole('button', { name: 'Reveal Client ID' }));
-
-    await waitFor(() => {
-      expect(mockToastError).toHaveBeenCalledWith('Reveal failed.');
-    });
-
-    expect(clientIdInput).toHaveValue('abc123••••••');
+      screen.queryByTestId('integration-field-loading')
+    ).not.toBeInTheDocument();
   });
 
   it('enables save only after a field changes and cancel restores the saved masked state', async () => {
@@ -202,7 +154,7 @@ describe('WorkspaceIntegrationsPage integration', () => {
     await user.click(cancelButton);
 
     await waitFor(() => {
-      expect(clientIdInput).toHaveValue('abc123••••••');
+      expect(clientIdInput).toHaveValue('abc123******');
     });
     expect(saveButton).toBeDisabled();
     expect(cancelButton).toBeDisabled();
@@ -221,13 +173,15 @@ describe('WorkspaceIntegrationsPage integration', () => {
               key: 'clientId',
               label: 'Client ID',
               hasValue: true,
-              maskedValue: 'abc123••••••',
+              maskedValue: 'abc123******',
+              value: 'abc123secret',
             },
             {
               key: 'clientSecret',
               label: 'Client Secret',
               hasValue: true,
-              maskedValue: 'def456••••••',
+              maskedValue: 'def456******',
+              value: 'def456secret',
             },
           ],
         },
@@ -241,13 +195,15 @@ describe('WorkspaceIntegrationsPage integration', () => {
               key: 'clientId',
               label: 'Client ID',
               hasValue: true,
-              maskedValue: 'update••••••',
+              maskedValue: 'update***********',
+              value: 'updated-client-id',
             },
             {
               key: 'clientSecret',
               label: 'Client Secret',
               hasValue: true,
-              maskedValue: 'def456••••••',
+              maskedValue: 'def456******',
+              value: 'def456secret',
             },
           ],
         },
@@ -271,7 +227,9 @@ describe('WorkspaceIntegrationsPage integration', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Client ID')).toHaveValue('update••••••');
+      expect(screen.getByLabelText('Client ID')).toHaveValue(
+        'update***********'
+      );
     });
     expect(
       screen.getByRole('button', { name: 'Save Client ID' })

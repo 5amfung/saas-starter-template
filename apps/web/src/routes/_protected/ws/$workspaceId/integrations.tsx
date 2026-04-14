@@ -1,15 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, notFound } from '@tanstack/react-router';
 import { toast } from 'sonner';
+import type { IntegrationFieldKey } from '@/integrations/integration-definitions';
+import type { WorkspaceIntegrationSummary } from '@/integrations/integration-secrets.types';
 import { IntegrationCard } from '@/components/integrations/integration-card';
 import { IntegrationSecretFieldRow } from '@/components/integrations/integration-secret-field-row';
 import {
   getWorkspaceIntegrations,
-  revealWorkspaceIntegrationValue,
   updateWorkspaceIntegrationValues,
 } from '@/integrations/integration-secrets.functions';
-import type { IntegrationFieldKey } from '@/integrations/integration-definitions';
-import type { WorkspaceIntegrationSummary } from '@/integrations/integration-secrets.types';
 import { getWorkspaceCapabilities } from '@/policy/workspace-capabilities.functions';
 import { useWorkspaceDetailQuery } from '@/workspace/workspace.queries';
 
@@ -57,18 +56,6 @@ function WorkspaceIntegrationsPage() {
     return null;
   }
 
-  const handleReveal = async (fieldKey: IntegrationFieldKey) => {
-    const result = await revealWorkspaceIntegrationValue({
-      data: {
-        workspaceId,
-        integration: 'slack',
-        key: fieldKey,
-      },
-    });
-
-    return result.value;
-  };
-
   const handleSave = async (fieldKey: IntegrationFieldKey, value: string) => {
     await updateWorkspaceIntegrationValues({
       data: {
@@ -107,7 +94,7 @@ function WorkspaceIntegrationsPage() {
               integration="slack"
               label={field.label}
               maskedValue={field.maskedValue}
-              onReveal={handleReveal}
+              value={field.value}
               onSave={handleSave}
             />
           ))}

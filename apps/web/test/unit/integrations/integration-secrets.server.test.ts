@@ -42,7 +42,9 @@ describe('integration secret server adapter', () => {
     vi.clearAllMocks();
     process.env.WORKSPACE_SECRET_ENCRYPTION_KEY = ENCRYPTION_KEY;
     getDbMock.mockReturnValue(fakeDb);
-    requireWorkspaceCapabilityForUserMock.mockResolvedValue({});
+    requireWorkspaceCapabilityForUserMock.mockResolvedValue({
+      canManageIntegrations: true,
+    });
   });
 
   afterEach(() => {
@@ -69,9 +71,26 @@ describe('integration secret server adapter', () => {
     expect(getWorkspaceIntegrationSummariesMock).toHaveBeenCalledWith({
       db: fakeDb,
       encryptionKey: ENCRYPTION_KEY,
+      includeValues: true,
       workspaceId: 'ws-1',
     });
     expect(result).toEqual([]);
+  });
+
+  it('omits plaintext values for viewers without manage capability', async () => {
+    requireWorkspaceCapabilityForUserMock.mockResolvedValueOnce({
+      canManageIntegrations: false,
+    });
+    getWorkspaceIntegrationSummariesMock.mockResolvedValueOnce([]);
+
+    await getWorkspaceIntegrationsSummary(new Headers(), 'ws-1', 'user-1');
+
+    expect(getWorkspaceIntegrationSummariesMock).toHaveBeenCalledWith({
+      db: fakeDb,
+      encryptionKey: ENCRYPTION_KEY,
+      includeValues: false,
+      workspaceId: 'ws-1',
+    });
   });
 
   it('delegates value reveal after manage capability checks', async () => {

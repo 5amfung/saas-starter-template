@@ -60,7 +60,8 @@ function toSummaries(
     authTag: string;
     encryptionVersion: number;
   }>,
-  encryptionKey: string
+  encryptionKey: string,
+  includeValues = false
 ): Array<WorkspaceIntegrationSummary> {
   const rowByField = new Map(
     workspaceSecretRows.map(
@@ -83,6 +84,7 @@ function toSummaries(
           label: field.label,
           hasValue: false,
           maskedValue: null,
+          value: null,
         };
       }
 
@@ -92,6 +94,7 @@ function toSummaries(
         label: field.label,
         hasValue: true,
         maskedValue: maskIntegrationSecret(plaintext),
+        value: includeValues ? plaintext : null,
       };
     }),
   }));
@@ -101,9 +104,12 @@ export async function getWorkspaceIntegrationSummaries({
   db,
   encryptionKey,
   workspaceId,
-}: BaseInput): Promise<Array<WorkspaceIntegrationSummary>> {
+  includeValues = false,
+}: BaseInput & {
+  includeValues?: boolean;
+}): Promise<Array<WorkspaceIntegrationSummary>> {
   const rows = await listWorkspaceIntegrationSecretRows(db, workspaceId);
-  return toSummaries(rows, encryptionKey);
+  return toSummaries(rows, encryptionKey, includeValues);
 }
 
 export async function revealWorkspaceIntegrationValue({
@@ -178,5 +184,6 @@ export async function updateWorkspaceIntegrationValues({
     db,
     encryptionKey,
     workspaceId,
+    includeValues: true,
   });
 }
