@@ -1,79 +1,108 @@
 export {};
 
-const {
-  createAuthMock,
-  createDbMock,
-  createEmailClientMock,
-  createMockEmailClientMock,
-} = vi.hoisted(() => ({
-  createAuthMock: vi.fn(),
-  createDbMock: vi.fn(),
-  createEmailClientMock: vi.fn(),
-  createMockEmailClientMock: vi.fn(),
+const { getWorkspaceMock, listWorkspacesMock } = vi.hoisted(() => ({
+  getWorkspaceMock: vi.fn(),
+  listWorkspacesMock: vi.fn(),
 }));
 
-vi.mock('@workspace/auth/server', () => ({
-  createAuth: createAuthMock,
+vi.mock('@/admin/workspaces-query.functions', () => ({
+  getWorkspace: getWorkspaceMock,
+  listWorkspaces: listWorkspacesMock,
 }));
 
-vi.mock('@workspace/db', () => ({
-  createDb: createDbMock,
-}));
-
-vi.mock('@workspace/email', () => ({
-  createEmailClient: createEmailClientMock,
-  createMockEmailClient: createMockEmailClientMock,
-}));
-
-describe('admin workspace query keys', () => {
+describe('admin workspaces queries', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('builds a stable list key from admin workspace filters', async () => {
-    const { adminWorkspaceListQueryKey } =
+  it('builds list query options that normalize paging results', async () => {
+    listWorkspacesMock.mockResolvedValueOnce({
+      workspaces: [{ id: 'ws-1', name: 'Acme' }],
+      total: 23,
+    });
+
+    const { adminWorkspaceListQueryOptions } =
       await import('@/admin/workspaces.queries');
 
-    expect(
-      adminWorkspaceListQueryKey({
-        page: 2,
-        pageSize: 25,
-        search: 'acme',
-        filter: 'enterprise',
-        sortBy: 'name',
-        sortDirection: 'asc',
-      })
-    ).toEqual([
+    const options = adminWorkspaceListQueryOptions({
+      page: 3,
+      pageSize: 10,
+      search: 'acme',
+      filter: 'enterprise',
+      sortBy: 'createdAt',
+      sortDirection: 'desc',
+    });
+
+    expect(options.queryKey).toEqual([
       'admin',
       'workspaces',
-      2,
-      25,
+      3,
+      10,
       'acme',
       'enterprise',
-      'name',
-      'asc',
+      'createdAt',
+      'desc',
     ]);
+
+    const listQueryFn = options.queryFn as unknown as () => Promise<{
+      workspaces: Array<{ id: string; name: string }>;
+      total: number;
+      page: number;
+      pageSize: number;
+      totalPages: number;
+    }>;
+
+    await expect(listQueryFn()).resolves.toEqual({
+      workspaces: [{ id: 'ws-1', name: 'Acme' }],
+      total: 23,
+      page: 3,
+      pageSize: 10,
+      totalPages: 3,
+    });
+
+    expect(listWorkspacesMock).toHaveBeenCalledWith({
+      data: {
+        search: 'acme',
+        filter: 'enterprise',
+        limit: 10,
+        offset: 20,
+        sortBy: 'createdAt',
+        sortDirection: 'desc',
+      },
+    });
   });
 
-  it('builds a stable detail key', async () => {
-    const { ADMIN_WORKSPACE_DETAIL_QUERY_KEY } =
-      await import('@/admin/workspaces.queries');
+  it('builds detail query options that call the workspace bridge lazily', async () => {
+    getWorkspaceMock.mockResolvedValueOnce({ id: 'ws-1', name: 'Acme' });
+
+    const {
+      adminWorkspaceDetailQueryOptions,
+      ADMIN_WORKSPACE_DETAIL_QUERY_KEY,
+    } = await import('@/admin/workspaces.queries');
 
     expect(ADMIN_WORKSPACE_DETAIL_QUERY_KEY('ws-1')).toEqual([
       'admin',
       'workspace',
       'ws-1',
     ]);
-  });
 
-  it('statically imports the real query module without constructing app services', async () => {
-    vi.resetModules();
+    const options = adminWorkspaceDetailQueryOptions('ws-1');
 
-    await import('@/admin/workspaces.queries');
+    expect(options.queryKey).toEqual(['admin', 'workspace', 'ws-1']);
+    expect(options.retry).toBe(false);
 
-    expect(createDbMock).not.toHaveBeenCalled();
-    expect(createEmailClientMock).not.toHaveBeenCalled();
-    expect(createMockEmailClientMock).not.toHaveBeenCalled();
-    expect(createAuthMock).not.toHaveBeenCalled();
+    const detailQueryFn = options.queryFn as unknown as () => Promise<{
+      id: string;
+      name: string;
+    }>;
+
+    await expect(detailQueryFn()).resolves.toEqual({
+      id: 'ws-1',
+      name: 'Acme',
+    });
+
+    expect(getWorkspaceMock).toHaveBeenCalledWith({
+      data: { workspaceId: 'ws-1' },
+    });
   });
 });
