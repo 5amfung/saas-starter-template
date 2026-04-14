@@ -8,6 +8,7 @@
 export type { AuthConfig, Auth } from './auth.server';
 export * from './permissions';
 export { isRecord } from './auth-utils';
+export { generateSlug } from './slug';
 export type {
   PlanId,
   PlanDefinition,

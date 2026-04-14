@@ -11,6 +11,7 @@ import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 const {
   setActiveMock,
   createOrgMock,
+  generateSlugMock,
   navigateMock,
   startSpanMock,
   loggerInfoMock,
@@ -19,6 +20,7 @@ const {
 } = vi.hoisted(() => ({
   setActiveMock: vi.fn(),
   createOrgMock: vi.fn(),
+  generateSlugMock: vi.fn(),
   navigateMock: vi.fn(),
   startSpanMock: vi.fn((_, callback: () => unknown) => callback()),
   loggerInfoMock: vi.fn(),
@@ -38,6 +40,10 @@ vi.mock('@workspace/auth/client', () => ({
       create: createOrgMock,
     },
   },
+}));
+
+vi.mock('@workspace/auth', () => ({
+  generateSlug: generateSlugMock,
 }));
 
 vi.mock('@workspace/logging/client', async (importActual) => {
@@ -342,8 +348,9 @@ describe('WorkspaceSwitcher', () => {
 
   it('creates workspace and navigates on success', async () => {
     const user = userEvent.setup();
+    generateSlugMock.mockReturnValue('shared-slug-1234');
     createOrgMock.mockResolvedValue({
-      data: { id: 'ws-new' },
+      data: { id: 'ws-new', slug: 'shared-slug-1234' },
       error: null,
     });
     setActiveMock.mockResolvedValue({ error: null });
@@ -370,6 +377,13 @@ describe('WorkspaceSwitcher', () => {
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith('Workspace created.');
     });
+
+    expect(generateSlugMock).toHaveBeenCalledTimes(1);
+    expect(createOrgMock).toHaveBeenCalledWith({
+      name: 'New Workspace',
+      slug: 'shared-slug-1234',
+    });
+    expect(createOrgMock.mock.calls[0]?.[0].slug).toBe('shared-slug-1234');
 
     expect(startSpanMock).toHaveBeenCalledWith(
       expect.objectContaining({
