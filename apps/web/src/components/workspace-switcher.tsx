@@ -6,6 +6,12 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { authClient } from '@workspace/auth/client';
 import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  startWorkflowSpan,
+  workflowLogger,
+} from '@workspace/logging/client';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -42,6 +48,21 @@ const workspaceNameSchema = z
   .regex(/^[a-zA-Z0-9_\- ]+$/, {
     error: 'Only letters, numbers, spaces, -, and _ are allowed.',
   });
+
+const WORKFLOW_ROUTE = 'workspace-switcher';
+
+function buildWorkspaceCreateAttributes(
+  result: 'attempt' | 'success' | 'failure',
+  workspaceId?: string,
+  failureCategory?: string
+) {
+  return buildWorkflowAttributes(OPERATIONS.WORKSPACE_CREATE, {
+    route: WORKFLOW_ROUTE,
+    workspaceId,
+    result,
+    ...(failureCategory ? { failureCategory } : {}),
+  });
+}
 
 export function WorkspaceSwitcher({
   workspaces,
@@ -121,6 +142,14 @@ export function WorkspaceSwitcher({
         organizationId: workspace.id,
       });
       if (error) {
+        workflowLogger.error(
+          'Workspace creation failed',
+          buildWorkspaceCreateAttributes(
+            'failure',
+            workspace.id,
+            'activation_failed'
+          )
+        );
         toast.error(
           error.message || 'Workspace was created but could not be activated.'
         );
@@ -147,6 +176,10 @@ export function WorkspaceSwitcher({
       setWorkspaceName('');
       setValidationError(null);
       setIsCreateDialogOpen(false);
+      workflowLogger.info(
+        'Workspace created',
+        buildWorkspaceCreateAttributes('success', workspace.id)
+      );
       toast.success('Workspace created.');
       navigate({
         to: '/ws/$workspaceId/overview',
@@ -154,6 +187,10 @@ export function WorkspaceSwitcher({
       });
     },
     onError: (error) => {
+      workflowLogger.error(
+        'Workspace creation failed',
+        buildWorkspaceCreateAttributes('failure', undefined, 'create_failed')
+      );
       toast.error(error.message || 'Failed to create workspace.');
     },
   });
@@ -277,7 +314,14 @@ export function WorkspaceSwitcher({
                   return;
                 }
                 setValidationError(null);
-                createWorkspaceMutation.mutate(result.data);
+                void startWorkflowSpan(
+                  {
+                    op: OPERATIONS.WORKSPACE_CREATE,
+                    name: 'Create workspace',
+                    attributes: buildWorkspaceCreateAttributes('attempt'),
+                  },
+                  () => createWorkspaceMutation.mutateAsync(result.data)
+                );
               }}
             >
               {createWorkspaceMutation.isPending && (

@@ -1,10 +1,14 @@
+import { OPERATIONS } from '@workspace/logging/server';
 import { createServerFnMock } from '../../mocks/server-fn';
+import type * as LoggingServer from '@workspace/logging/server';
 import {
   clearEntitlementOverrides,
-  getWorkspace,
-  listWorkspaces,
   saveEntitlementOverrides,
 } from '@/admin/workspaces.functions';
+import {
+  getWorkspace,
+  listWorkspaces,
+} from '@/admin/workspaces-query.functions';
 
 const {
   requireCurrentAdminAppCapabilityMock,
@@ -12,12 +16,20 @@ const {
   getWorkspaceDetailMock,
   upsertEntitlementOverridesMock,
   deleteEntitlementOverridesMock,
+  startSpanMock,
+  loggerInfoMock,
+  loggerErrorMock,
 } = vi.hoisted(() => ({
   requireCurrentAdminAppCapabilityMock: vi.fn(),
   listWorkspacesWithPlanMock: vi.fn(),
   getWorkspaceDetailMock: vi.fn(),
   upsertEntitlementOverridesMock: vi.fn(),
   deleteEntitlementOverridesMock: vi.fn(),
+  startSpanMock: vi.fn(async (_options, callback: () => Promise<unknown>) =>
+    callback()
+  ),
+  loggerInfoMock: vi.fn(),
+  loggerErrorMock: vi.fn(),
 }));
 
 vi.mock('@tanstack/react-start', () => createServerFnMock());
@@ -32,6 +44,18 @@ vi.mock('@/admin/workspaces.server', () => ({
   upsertEntitlementOverrides: upsertEntitlementOverridesMock,
   deleteEntitlementOverrides: deleteEntitlementOverridesMock,
 }));
+
+vi.mock('@workspace/logging/server', async (importActual) => {
+  const actual = await importActual<typeof LoggingServer>();
+  return {
+    ...actual,
+    startWorkflowSpan: startSpanMock,
+    workflowLogger: {
+      info: loggerInfoMock,
+      error: loggerErrorMock,
+    },
+  };
+});
 
 describe('listWorkspaces', () => {
   beforeEach(() => {
@@ -123,6 +147,30 @@ describe('saveEntitlementOverrides', () => {
         data: { workspaceId: 'ws-1', limits: { members: 50 } },
       })
     ).rejects.toMatchObject({ message: 'Forbidden' });
+
+    expect(startSpanMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        op: OPERATIONS.ADMIN_WORKSPACE_ENTITLEMENTS_SAVE,
+        name: 'Save entitlement overrides',
+        attributes: expect.objectContaining({
+          operation: OPERATIONS.ADMIN_WORKSPACE_ENTITLEMENTS_SAVE,
+          workspaceId: 'ws-1',
+          route: '/workspaces/$workspaceId',
+          result: 'attempt',
+        }),
+      }),
+      expect.any(Function)
+    );
+    expect(loggerErrorMock).toHaveBeenCalledWith(
+      'Admin entitlement overrides save failed',
+      expect.objectContaining({
+        operation: OPERATIONS.ADMIN_WORKSPACE_ENTITLEMENTS_SAVE,
+        workspaceId: 'ws-1',
+        route: '/workspaces/$workspaceId',
+        result: 'failure',
+        failureCategory: 'mutation_failed',
+      })
+    );
   });
 
   it('passes validated input to upsertEntitlementOverrides', async () => {
@@ -143,6 +191,15 @@ describe('saveEntitlementOverrides', () => {
       limits: { members: 50 },
       features: { sso: true },
     });
+    expect(loggerInfoMock).toHaveBeenCalledWith(
+      'Admin entitlement overrides saved',
+      expect.objectContaining({
+        operation: OPERATIONS.ADMIN_WORKSPACE_ENTITLEMENTS_SAVE,
+        workspaceId: 'ws-1',
+        route: '/workspaces/$workspaceId',
+        result: 'success',
+      })
+    );
   });
 
   it('returns success', async () => {
@@ -167,6 +224,30 @@ describe('clearEntitlementOverrides', () => {
     await expect(
       clearEntitlementOverrides({ data: { workspaceId: 'ws-1' } })
     ).rejects.toMatchObject({ message: 'Forbidden' });
+
+    expect(startSpanMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        op: OPERATIONS.ADMIN_WORKSPACE_ENTITLEMENTS_CLEAR,
+        name: 'Clear entitlement overrides',
+        attributes: expect.objectContaining({
+          operation: OPERATIONS.ADMIN_WORKSPACE_ENTITLEMENTS_CLEAR,
+          workspaceId: 'ws-1',
+          route: '/workspaces/$workspaceId',
+          result: 'attempt',
+        }),
+      }),
+      expect.any(Function)
+    );
+    expect(loggerErrorMock).toHaveBeenCalledWith(
+      'Admin entitlement overrides clear failed',
+      expect.objectContaining({
+        operation: OPERATIONS.ADMIN_WORKSPACE_ENTITLEMENTS_CLEAR,
+        workspaceId: 'ws-1',
+        route: '/workspaces/$workspaceId',
+        result: 'failure',
+        failureCategory: 'mutation_failed',
+      })
+    );
   });
 
   it('passes workspaceId to deleteEntitlementOverrides', async () => {
@@ -177,6 +258,15 @@ describe('clearEntitlementOverrides', () => {
       'canManageEntitlementOverrides'
     );
     expect(deleteEntitlementOverridesMock).toHaveBeenCalledWith('ws-1');
+    expect(loggerInfoMock).toHaveBeenCalledWith(
+      'Admin entitlement overrides cleared',
+      expect.objectContaining({
+        operation: OPERATIONS.ADMIN_WORKSPACE_ENTITLEMENTS_CLEAR,
+        workspaceId: 'ws-1',
+        route: '/workspaces/$workspaceId',
+        result: 'success',
+      })
+    );
   });
 
   it('returns success', async () => {

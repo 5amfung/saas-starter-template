@@ -15,6 +15,12 @@ import {
   FieldGroup,
   FieldSeparator,
 } from '@workspace/ui/components/field';
+import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  startWorkflowSpan,
+  workflowLogger,
+} from '@workspace/logging/client';
 import { Input } from '@workspace/ui/components/input';
 import { FormErrorDisplay } from '../form/form-error-display';
 import { FormSubmitButton } from '../form/form-submit-button';
@@ -33,29 +39,55 @@ export function SignupForm({
 }: SignupFormProps) {
   const navigate = useNavigate();
   const callbackURL = redirect ?? defaultCallbackUrl;
+  const workflowAttributes = buildWorkflowAttributes(OPERATIONS.AUTH_SIGN_UP, {
+    route: '/signup',
+    result: 'attempt',
+  });
 
   const form = useForm({
     defaultValues: { email: '', password: '', confirmPassword: '' },
     validators: { onBlur: signupSchema, onSubmit: signupSchema },
     onSubmit: async ({ value, formApi }) => {
-      const { error } = await authClient.signUp.email({
-        email: value.email,
-        password: value.password,
-        name: value.email.split('@')[0] ?? '',
-        callbackURL,
-      });
-      if (error) {
-        const message =
-          error.status === 422
-            ? 'An account with this email already exists. Try signing in with Google or reset your password.'
-            : (error.message ?? 'Something went wrong.');
-        formApi.setErrorMap({
-          ...formApi.state.errorMap,
-          onSubmit: { form: message, fields: {} },
-        });
-        return;
-      }
-      navigate({ to: '/verify', search: { email: value.email, redirect } });
+      await startWorkflowSpan(
+        {
+          op: OPERATIONS.AUTH_SIGN_UP,
+          name: 'Sign up',
+          attributes: workflowAttributes,
+        },
+        async () => {
+          const { error } = await authClient.signUp.email({
+            email: value.email,
+            password: value.password,
+            name: value.email.split('@')[0] ?? '',
+            callbackURL,
+          });
+          if (error) {
+            const failureCategory =
+              error.status === 422 ? 'account_exists' : 'unexpected_error';
+            workflowLogger.error('Auth sign-up failed', {
+              ...workflowAttributes,
+              result: 'failure',
+              failureCategory,
+            });
+
+            const message =
+              error.status === 422
+                ? 'An account with this email already exists. Try signing in with Google or reset your password.'
+                : (error.message ?? 'Something went wrong.');
+            formApi.setErrorMap({
+              ...formApi.state.errorMap,
+              onSubmit: { form: message, fields: {} },
+            });
+            return;
+          }
+
+          workflowLogger.info('Auth sign-up succeeded', {
+            ...workflowAttributes,
+            result: 'success',
+          });
+          navigate({ to: '/verify', search: { email: value.email, redirect } });
+        }
+      );
     },
   });
 

@@ -5,7 +5,8 @@
     "**/*.tsx",
     "eslint.config.js",
     "prettier.config.js",
-    "vite.config.js"
+    "vite.config.js",
+    "src/routes/test-sentry.tss"
   ],
   "compilerOptions": {
     "jsx": "react-jsx",
@@ -25,10 +26,9 @@
       "@workspace/auth/*": ["../../packages/auth/src/*"],
       "@workspace/components/*": ["../../packages/components/src/*/index.ts"],
       "@workspace/policy": ["../../packages/policy/src/index.ts"],
-      "@workspace/logging": ["../../packages/logging/src/logger.ts"],
-      "@workspace/logging/server": [
-        "../../packages/logging/src/request-logger.server.ts"
-      ],
+      "@workspace/logging": ["../../packages/logging/src/server.ts"],
+      "@workspace/logging/client": ["../../packages/logging/src/client.ts"],
+      "@workspace/logging/server": ["../../packages/logging/src/server.ts"],
       "@workspace/test-utils": ["../../packages/test-utils/src/index.ts"]
     }
   }

@@ -1,8 +1,21 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type * as LoggingClient from '@workspace/logging/client';
 import type { InviteRole } from '@/workspace/workspace-members.types';
 import { WorkspaceInviteDialog } from '@/components/workspace/workspace-invite-dialog';
+
+vi.mock('@workspace/logging/client', async (importActual) => {
+  const actual = await importActual<typeof LoggingClient>();
+  return {
+    ...actual,
+    startWorkflowSpan: vi.fn((_, callback: () => unknown) => callback()),
+    workflowLogger: {
+      info: vi.fn(),
+      error: vi.fn(),
+    },
+  };
+});
 
 const DEFAULT_ROLES: ReadonlyArray<InviteRole> = ['member', 'admin'];
 

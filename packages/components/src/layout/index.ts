@@ -7,3 +7,4 @@ export * from './site-header';
 export * from './sortable-header';
 export * from './table-pagination';
 export * from './theme-provider';
+export * from './app-error-boundary';

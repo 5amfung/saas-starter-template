@@ -3,6 +3,8 @@ import * as React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { OPERATIONS } from '@workspace/logging/client';
+import type * as LoggingClient from '@workspace/logging/client';
 import { AdminEntitlementOverrideForm } from '@/components/admin/admin-entitlement-override-form';
 import { ADMIN_WORKSPACE_DETAIL_QUERY_KEY } from '@/admin/workspaces.queries';
 
@@ -12,10 +14,24 @@ const { saveEntitlementOverridesMock, clearEntitlementOverridesMock } =
     clearEntitlementOverridesMock: vi.fn(),
   }));
 
+const { startSpanMock } = vi.hoisted(() => ({
+  startSpanMock: vi.fn(async (_options, callback: () => Promise<unknown>) =>
+    callback()
+  ),
+}));
+
 vi.mock('@/admin/workspaces.functions', () => ({
   saveEntitlementOverrides: saveEntitlementOverridesMock,
   clearEntitlementOverrides: clearEntitlementOverridesMock,
 }));
+
+vi.mock('@workspace/logging/client', async (importActual) => {
+  const actual = await importActual<typeof LoggingClient>();
+  return {
+    ...actual,
+    startWorkflowSpan: startSpanMock,
+  };
+});
 
 vi.mock('sonner', () => ({
   toast: {
@@ -105,6 +121,20 @@ describe('AdminEntitlementOverrideForm', () => {
         },
       });
     });
+
+    expect(startSpanMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        op: OPERATIONS.ADMIN_WORKSPACE_ENTITLEMENTS_SAVE,
+        name: 'Save entitlement overrides',
+        attributes: expect.objectContaining({
+          operation: OPERATIONS.ADMIN_WORKSPACE_ENTITLEMENTS_SAVE,
+          workspaceId: 'ws_123',
+          route: '/workspaces/$workspaceId',
+          result: 'attempt',
+        }),
+      }),
+      expect.any(Function)
+    );
   });
 
   it('can revert an explicit true feature override back to inherit', async () => {
@@ -132,6 +162,20 @@ describe('AdminEntitlementOverrideForm', () => {
         },
       });
     });
+
+    expect(startSpanMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        op: OPERATIONS.ADMIN_WORKSPACE_ENTITLEMENTS_SAVE,
+        name: 'Save entitlement overrides',
+        attributes: expect.objectContaining({
+          operation: OPERATIONS.ADMIN_WORKSPACE_ENTITLEMENTS_SAVE,
+          workspaceId: 'ws_123',
+          route: '/workspaces/$workspaceId',
+          result: 'attempt',
+        }),
+      }),
+      expect.any(Function)
+    );
   });
 
   it('can force a feature override to false from a previously true override', async () => {
@@ -213,5 +257,42 @@ describe('AdminEntitlementOverrideForm', () => {
         queryKey: ADMIN_WORKSPACE_DETAIL_QUERY_KEY('ws_123'),
       });
     });
+  });
+
+  it('wraps clear all overrides in a workflow span', async () => {
+    const user = userEvent.setup();
+
+    renderForm({
+      limits: null,
+      features: null,
+      quotas: null,
+      notes: null,
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: /clear all overrides/i })
+    );
+
+    await waitFor(() => {
+      expect(clearEntitlementOverridesMock).toHaveBeenCalledWith({
+        data: {
+          workspaceId: 'ws_123',
+        },
+      });
+    });
+
+    expect(startSpanMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        op: OPERATIONS.ADMIN_WORKSPACE_ENTITLEMENTS_CLEAR,
+        name: 'Clear entitlement overrides',
+        attributes: expect.objectContaining({
+          operation: OPERATIONS.ADMIN_WORKSPACE_ENTITLEMENTS_CLEAR,
+          workspaceId: 'ws_123',
+          route: '/workspaces/$workspaceId',
+          result: 'attempt',
+        }),
+      }),
+      expect.any(Function)
+    );
   });
 });

@@ -1,16 +1,32 @@
 // @vitest-environment jsdom
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { OPERATIONS } from '@workspace/logging/client';
 import { renderWithProviders } from '@workspace/test-utils';
+import type * as LoggingClient from '@workspace/logging/client';
 import { AdminUserForm } from '@/components/admin/admin-user-form';
 
 const { updateUserMock } = vi.hoisted(() => ({
   updateUserMock: vi.fn(),
 }));
 
+const { startSpanMock } = vi.hoisted(() => ({
+  startSpanMock: vi.fn(async (_options, callback: () => Promise<unknown>) =>
+    callback()
+  ),
+}));
+
 vi.mock('@/admin/users.functions', () => ({
   updateUser: updateUserMock,
 }));
+
+vi.mock('@workspace/logging/client', async (importActual) => {
+  const actual = await importActual<typeof LoggingClient>();
+  return {
+    ...actual,
+    startWorkflowSpan: startSpanMock,
+  };
+});
 
 const mockUser = {
   id: 'user-1',
@@ -90,6 +106,20 @@ describe('AdminUserForm', () => {
         })
       );
     });
+
+    expect(startSpanMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        op: OPERATIONS.ADMIN_USER_UPDATE,
+        name: 'Update admin user',
+        attributes: expect.objectContaining({
+          operation: OPERATIONS.ADMIN_USER_UPDATE,
+          targetUserId: 'user-1',
+          route: '/users/$userId',
+          result: 'attempt',
+        }),
+      }),
+      expect.any(Function)
+    );
   });
 
   it('renders the form in read-only mode without edit capability', () => {

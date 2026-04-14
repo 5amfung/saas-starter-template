@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { Link } from '@tanstack/react-router';
+import { forgotPasswordSchema } from '@workspace/auth/schemas';
 import {
   Card,
   CardContent,
@@ -13,8 +14,13 @@ import {
   FieldDescription,
   FieldGroup,
 } from '@workspace/ui/components/field';
+import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  startWorkflowSpan,
+  workflowLogger,
+} from '@workspace/logging/client';
 import { Input } from '@workspace/ui/components/input';
-import { forgotPasswordSchema } from '@workspace/auth/schemas';
 import { authClient } from '@workspace/auth/client';
 import { FormErrorDisplay } from '../form/form-error-display';
 import { FormSubmitButton } from '../form/form-submit-button';
@@ -22,6 +28,13 @@ import { ValidatedField } from '../form/validated-field';
 
 export function ForgotPasswordForm() {
   const [isSuccess, setIsSuccess] = useState(false);
+  const workflowAttributes = buildWorkflowAttributes(
+    OPERATIONS.AUTH_PASSWORD_RESET_REQUEST,
+    {
+      route: '/forgot-password',
+      result: 'attempt',
+    }
+  );
 
   const form = useForm({
     defaultValues: { email: '' },
@@ -30,19 +43,38 @@ export function ForgotPasswordForm() {
       onSubmit: forgotPasswordSchema,
     },
     onSubmit: async ({ value, formApi }) => {
-      const { error } = await authClient.requestPasswordReset({
-        email: value.email,
-        redirectTo: '/reset-password',
-      });
-      if (error) {
-        const message = error.message ?? 'Something went wrong.';
-        formApi.setErrorMap({
-          ...formApi.state.errorMap,
-          onSubmit: { form: message, fields: {} },
-        });
-        return;
-      }
-      setIsSuccess(true);
+      await startWorkflowSpan(
+        {
+          op: OPERATIONS.AUTH_PASSWORD_RESET_REQUEST,
+          name: 'Request password reset',
+          attributes: workflowAttributes,
+        },
+        async () => {
+          const { error } = await authClient.requestPasswordReset({
+            email: value.email,
+            redirectTo: '/reset-password',
+          });
+          if (error) {
+            workflowLogger.error('Password reset request failed', {
+              ...workflowAttributes,
+              result: 'failure',
+              failureCategory: 'reset_request_failed',
+            });
+            const message = error.message ?? 'Something went wrong.';
+            formApi.setErrorMap({
+              ...formApi.state.errorMap,
+              onSubmit: { form: message, fields: {} },
+            });
+            return;
+          }
+
+          workflowLogger.info('Password reset requested', {
+            ...workflowAttributes,
+            result: 'success',
+          });
+          setIsSuccess(true);
+        }
+      );
     },
   });
 

@@ -3,9 +3,10 @@
   "compilerOptions": {
     "types": ["node"],
     "paths": {
-      "@workspace/logging": ["./src/logger.ts"],
-      "@workspace/logging/server": ["./src/request-logger.server.ts"]
+      "@workspace/logging": ["./src/server.ts"],
+      "@workspace/logging/client": ["./src/client.ts"],
+      "@workspace/logging/server": ["./src/server.ts"]
     }
   },
-  "include": ["src/**/*.ts", "eslint.config.ts"]
+  "include": ["src/**/*.ts", "test/**/*.ts", "eslint.config.ts"]
 }

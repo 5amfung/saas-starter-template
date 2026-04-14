@@ -39,6 +39,7 @@
     "clean": "npkill"
   },
   "devDependencies": {
+    "@sentry/vite-plugin": "^5.2.0",
     "@workspace/eslint-config": "workspace:*",
     "dependency-cruiser": "^17.3.10",
     "eslint": "^9.39.4",
@@ -60,6 +61,7 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@prisma/engines",
+      "@sentry/cli",
       "esbuild",
       "msw",
       "prisma",
@@ -68,7 +70,8 @@
     ],
     "overrides": {
       "@noble/ciphers": "^2.1.1"
-    }
+    },
+    "ignoredBuiltDependencies": []
   },
   "engines": {
     "node": ">=20"

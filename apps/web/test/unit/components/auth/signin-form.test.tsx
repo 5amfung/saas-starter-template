@@ -1,13 +1,23 @@
 // @vitest-environment jsdom
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { OPERATIONS } from '@workspace/logging/client';
 import { renderWithProviders } from '@workspace/test-utils';
 import { SigninForm } from '@workspace/components/auth';
+import type * as LoggingClient from '@workspace/logging/client';
 
 const { signInEmail, signUpEmail, navigate } = vi.hoisted(() => ({
   signInEmail: vi.fn(),
   signUpEmail: vi.fn(),
   navigate: vi.fn(),
+}));
+
+const { startSpanMock, loggerInfoMock, loggerErrorMock } = vi.hoisted(() => ({
+  startSpanMock: vi.fn(async (_options, callback: () => Promise<unknown>) =>
+    callback()
+  ),
+  loggerInfoMock: vi.fn(),
+  loggerErrorMock: vi.fn(),
 }));
 
 vi.mock('@workspace/auth/client', () => ({
@@ -16,6 +26,18 @@ vi.mock('@workspace/auth/client', () => ({
     signUp: { email: signUpEmail },
   },
 }));
+
+vi.mock('@workspace/logging/client', async (importActual) => {
+  const actual = await importActual<typeof LoggingClient>();
+  return {
+    ...actual,
+    startWorkflowSpan: startSpanMock,
+    workflowLogger: {
+      info: loggerInfoMock,
+      error: loggerErrorMock,
+    },
+  };
+});
 
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal()),
@@ -94,6 +116,32 @@ describe('SigninForm', () => {
         screen.getByText(/invalid email or password/i)
       ).toBeInTheDocument();
     });
+
+    expect(startSpanMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        op: OPERATIONS.AUTH_SIGN_IN,
+        name: 'Sign in',
+        attributes: expect.objectContaining({
+          operation: OPERATIONS.AUTH_SIGN_IN,
+          route: '/signin',
+          result: 'attempt',
+        }),
+      }),
+      expect.any(Function)
+    );
+    expect(loggerErrorMock).toHaveBeenCalledWith(
+      'Auth sign-in failed',
+      expect.objectContaining({
+        operation: OPERATIONS.AUTH_SIGN_IN,
+        route: '/signin',
+        result: 'failure',
+        failureCategory: 'invalid_credentials',
+      })
+    );
+    expect(loggerErrorMock).not.toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ email: 'test@example.com' })
+    );
   });
 
   it('shows generic error message on non-401/403 error', async () => {

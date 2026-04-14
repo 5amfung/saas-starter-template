@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import * as Sentry from '@sentry/tanstackstart-react';
 import { toast } from 'sonner';
 import { getFreePlan, getPlanById } from '@workspace/billing';
 import { Card, CardContent } from '@workspace/ui/components/card';
 import { SESSION_QUERY_KEY } from '@workspace/components/hooks';
+import { OPERATIONS, buildWorkflowAttributes } from '@workspace/logging/client';
 import { BillingDowngradeBanner } from './billing-downgrade-banner';
 import { BillingDowngradeConfirmDialog } from './billing-downgrade-confirm-dialog';
 import { BillingInvoiceTable } from './billing-invoice-table';
@@ -27,6 +29,43 @@ const PAGE_LAYOUT_CLASS =
   'mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 md:py-6 lg:px-6';
 
 type BillingPageProps = { workspaceId: string; workspaceName: string };
+type BillingWorkflowOutcome = 'attempt' | 'success' | 'failure';
+
+const BILLING_ROUTE = '/ws/$workspaceId/billing';
+
+function buildBillingWorkflowAttributes(
+  operation: (typeof OPERATIONS)[keyof typeof OPERATIONS],
+  attributes: {
+    workspaceId: string;
+    planId?: PlanId;
+    result: BillingWorkflowOutcome;
+  }
+) {
+  return buildWorkflowAttributes(operation, {
+    route: BILLING_ROUTE,
+    ...attributes,
+  });
+}
+
+function startBillingWorkflowSpan<T>(
+  operation: (typeof OPERATIONS)[keyof typeof OPERATIONS],
+  name: string,
+  attributes: {
+    workspaceId: string;
+    planId?: PlanId;
+    result: BillingWorkflowOutcome;
+  },
+  callback: () => Promise<T>
+) {
+  return Sentry.startSpan(
+    {
+      op: operation,
+      name,
+      attributes: buildBillingWorkflowAttributes(operation, attributes),
+    },
+    callback
+  );
+}
 
 export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
   const queryClient = useQueryClient();
@@ -47,7 +86,16 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
   });
 
   const manageMutation = useMutation({
-    mutationFn: () => createWorkspacePortalSession({ data: { workspaceId } }),
+    mutationFn: () =>
+      startBillingWorkflowSpan(
+        OPERATIONS.BILLING_PORTAL_CREATE_SESSION,
+        'Open billing portal',
+        {
+          workspaceId,
+          result: 'attempt',
+        },
+        () => createWorkspacePortalSession({ data: { workspaceId } })
+      ),
     onSuccess: (result) => {
       if (result.url) {
         window.location.href = result.url;
@@ -68,9 +116,19 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
       annual: boolean;
       subscriptionId?: string;
     }) =>
-      createWorkspaceCheckoutSession({
-        data: { workspaceId, planId, annual, subscriptionId },
-      }),
+      startBillingWorkflowSpan(
+        OPERATIONS.BILLING_CHECKOUT_CREATE_SESSION,
+        'Create billing checkout session',
+        {
+          workspaceId,
+          planId,
+          result: 'attempt',
+        },
+        () =>
+          createWorkspaceCheckoutSession({
+            data: { workspaceId, planId, annual, subscriptionId },
+          })
+      ),
     onMutate: ({ planId }) => {
       setUpgradingPlanId(planId);
     },
@@ -89,7 +147,15 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
 
   const reactivateMutation = useMutation({
     mutationFn: () =>
-      reactivateWorkspaceSubscription({ data: { workspaceId } }),
+      startBillingWorkflowSpan(
+        OPERATIONS.BILLING_SUBSCRIPTION_REACTIVATE,
+        'Reactivate billing subscription',
+        {
+          workspaceId,
+          result: 'attempt',
+        },
+        () => reactivateWorkspaceSubscription({ data: { workspaceId } })
+      ),
     onSuccess: () => {
       toast.success('Subscription reactivated.');
       void queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
@@ -145,9 +211,19 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
       annual: boolean;
       subscriptionId: string;
     }) =>
-      downgradeWorkspaceSubscription({
-        data: { workspaceId, planId, annual, subscriptionId },
-      }),
+      startBillingWorkflowSpan(
+        OPERATIONS.BILLING_SUBSCRIPTION_DOWNGRADE,
+        'Schedule billing downgrade',
+        {
+          workspaceId,
+          planId,
+          result: 'attempt',
+        },
+        () =>
+          downgradeWorkspaceSubscription({
+            data: { workspaceId, planId, annual, subscriptionId },
+          })
+      ),
     onSuccess: (_result, { planId }) => {
       toast.success('Downgrade scheduled.');
       setDowngradeTarget(null);
@@ -173,7 +249,16 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
   });
 
   const cancelMutation = useMutation({
-    mutationFn: () => cancelWorkspaceSubscription({ data: { workspaceId } }),
+    mutationFn: () =>
+      startBillingWorkflowSpan(
+        OPERATIONS.BILLING_SUBSCRIPTION_CANCEL,
+        'Cancel billing subscription',
+        {
+          workspaceId,
+          result: 'attempt',
+        },
+        () => cancelWorkspaceSubscription({ data: { workspaceId } })
+      ),
     onSuccess: () => {
       toast.success('Subscription will cancel at period end.');
       setDowngradeTarget(null);

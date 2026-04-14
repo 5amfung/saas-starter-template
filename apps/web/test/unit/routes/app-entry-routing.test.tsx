@@ -112,38 +112,50 @@ describe('web app entry route helpers', () => {
   });
 
   it('sends root guests to sign-in', async () => {
-    const { getIndexRedirectTarget } = await import('@/routes/index');
+    const { getWebAppEntryRedirectTarget } =
+      await import('@/policy/web-app-entry.shared');
 
     expect(
-      getIndexRedirectTarget({
-        kind: 'redirect',
-        to: '/signin',
-        capabilities: capabilities({ mustSignIn: true }),
-      })
+      getWebAppEntryRedirectTarget(
+        {
+          kind: 'redirect',
+          to: '/signin',
+          capabilities: capabilities({ mustSignIn: true }),
+        },
+        'root'
+      )
     ).toBe('/signin');
   });
 
   it('sends root unverified users to verify', async () => {
-    const { getIndexRedirectTarget } = await import('@/routes/index');
+    const { getWebAppEntryRedirectTarget } =
+      await import('@/policy/web-app-entry.shared');
 
     expect(
-      getIndexRedirectTarget({
-        kind: 'redirect',
-        to: '/verify',
-        capabilities: capabilities({ mustVerifyEmail: true }),
-      })
+      getWebAppEntryRedirectTarget(
+        {
+          kind: 'redirect',
+          to: '/verify',
+          capabilities: capabilities({ mustVerifyEmail: true }),
+        },
+        'root'
+      )
     ).toBe('/verify');
   });
 
   it('sends root entered users to the workspace shell', async () => {
-    const { getIndexRedirectTarget } = await import('@/routes/index');
+    const { getWebAppEntryRedirectTarget } =
+      await import('@/policy/web-app-entry.shared');
 
     expect(
-      getIndexRedirectTarget({
-        kind: 'canEnterWebApp',
-        activeWorkspaceId: 'ws-1',
-        capabilities: capabilities({ canEnterWebApp: true }),
-      })
+      getWebAppEntryRedirectTarget(
+        {
+          kind: 'canEnterWebApp',
+          activeWorkspaceId: 'ws-1',
+          capabilities: capabilities({ canEnterWebApp: true }),
+        },
+        'root'
+      )
     ).toBe('/ws');
   });
 

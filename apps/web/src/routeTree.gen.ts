@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root';
+import { Route as TestSentryRouteImport } from './routes/test-sentry';
 import { Route as PingRouteImport } from './routes/ping';
 import { Route as HealthRouteImport } from './routes/health';
 import { Route as AcceptInviteRouteImport } from './routes/accept-invite';
@@ -16,6 +17,7 @@ import { Route as ProtectedRouteImport } from './routes/_protected';
 import { Route as AuthRouteImport } from './routes/_auth';
 import { Route as IndexRouteImport } from './routes/index';
 import { Route as VerifyEmailChangeEmailTokenRouteImport } from './routes/verify-email-change.$emailToken';
+import { Route as ApiSentryExampleRouteImport } from './routes/api/sentry-example';
 import { Route as ProtectedWsRouteImport } from './routes/_protected/ws';
 import { Route as AuthVerifyRouteImport } from './routes/_auth/verify';
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup';
@@ -35,6 +37,11 @@ import { Route as ProtectedWsWorkspaceIdOverviewRouteImport } from './routes/_pr
 import { Route as ProtectedWsWorkspaceIdMembersRouteImport } from './routes/_protected/ws/$workspaceId/members';
 import { Route as ProtectedWsWorkspaceIdBillingRouteImport } from './routes/_protected/ws/$workspaceId/billing';
 
+const TestSentryRoute = TestSentryRouteImport.update({
+  id: '/test-sentry',
+  path: '/test-sentry',
+  getParentRoute: () => rootRouteImport,
+} as any);
 const PingRoute = PingRouteImport.update({
   id: '/ping',
   path: '/ping',
@@ -69,6 +76,11 @@ const VerifyEmailChangeEmailTokenRoute =
     path: '/verify-email-change/$emailToken',
     getParentRoute: () => rootRouteImport,
   } as any);
+const ApiSentryExampleRoute = ApiSentryExampleRouteImport.update({
+  id: '/api/sentry-example',
+  path: '/api/sentry-example',
+  getParentRoute: () => rootRouteImport,
+} as any);
 const ProtectedWsRoute = ProtectedWsRouteImport.update({
   id: '/ws',
   path: '/ws',
@@ -171,12 +183,14 @@ export interface FileRoutesByFullPath {
   '/accept-invite': typeof AcceptInviteRoute;
   '/health': typeof HealthRoute;
   '/ping': typeof PingRoute;
+  '/test-sentry': typeof TestSentryRoute;
   '/forgot-password': typeof AuthForgotPasswordRoute;
   '/reset-password': typeof AuthResetPasswordRoute;
   '/signin': typeof AuthSigninRoute;
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
   '/ws': typeof ProtectedWsRouteWithChildren;
+  '/api/sentry-example': typeof ApiSentryExampleRoute;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/account': typeof ProtectedAccountAccountRoute;
   '/billing': typeof ProtectedAccountBillingRoute;
@@ -196,11 +210,13 @@ export interface FileRoutesByTo {
   '/accept-invite': typeof AcceptInviteRoute;
   '/health': typeof HealthRoute;
   '/ping': typeof PingRoute;
+  '/test-sentry': typeof TestSentryRoute;
   '/forgot-password': typeof AuthForgotPasswordRoute;
   '/reset-password': typeof AuthResetPasswordRoute;
   '/signin': typeof AuthSigninRoute;
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
+  '/api/sentry-example': typeof ApiSentryExampleRoute;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/account': typeof ProtectedAccountAccountRoute;
   '/billing': typeof ProtectedAccountBillingRoute;
@@ -223,12 +239,14 @@ export interface FileRoutesById {
   '/accept-invite': typeof AcceptInviteRoute;
   '/health': typeof HealthRoute;
   '/ping': typeof PingRoute;
+  '/test-sentry': typeof TestSentryRoute;
   '/_auth/forgot-password': typeof AuthForgotPasswordRoute;
   '/_auth/reset-password': typeof AuthResetPasswordRoute;
   '/_auth/signin': typeof AuthSigninRoute;
   '/_auth/signup': typeof AuthSignupRoute;
   '/_auth/verify': typeof AuthVerifyRoute;
   '/_protected/ws': typeof ProtectedWsRouteWithChildren;
+  '/api/sentry-example': typeof ApiSentryExampleRoute;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/_protected/_account/account': typeof ProtectedAccountAccountRoute;
   '/_protected/_account/billing': typeof ProtectedAccountBillingRoute;
@@ -250,12 +268,14 @@ export interface FileRouteTypes {
     | '/accept-invite'
     | '/health'
     | '/ping'
+    | '/test-sentry'
     | '/forgot-password'
     | '/reset-password'
     | '/signin'
     | '/signup'
     | '/verify'
     | '/ws'
+    | '/api/sentry-example'
     | '/verify-email-change/$emailToken'
     | '/account'
     | '/billing'
@@ -275,11 +295,13 @@ export interface FileRouteTypes {
     | '/accept-invite'
     | '/health'
     | '/ping'
+    | '/test-sentry'
     | '/forgot-password'
     | '/reset-password'
     | '/signin'
     | '/signup'
     | '/verify'
+    | '/api/sentry-example'
     | '/verify-email-change/$emailToken'
     | '/account'
     | '/billing'
@@ -301,12 +323,14 @@ export interface FileRouteTypes {
     | '/accept-invite'
     | '/health'
     | '/ping'
+    | '/test-sentry'
     | '/_auth/forgot-password'
     | '/_auth/reset-password'
     | '/_auth/signin'
     | '/_auth/signup'
     | '/_auth/verify'
     | '/_protected/ws'
+    | '/api/sentry-example'
     | '/verify-email-change/$emailToken'
     | '/_protected/_account/account'
     | '/_protected/_account/billing'
@@ -329,6 +353,8 @@ export interface RootRouteChildren {
   AcceptInviteRoute: typeof AcceptInviteRoute;
   HealthRoute: typeof HealthRoute;
   PingRoute: typeof PingRoute;
+  TestSentryRoute: typeof TestSentryRoute;
+  ApiSentryExampleRoute: typeof ApiSentryExampleRoute;
   VerifyEmailChangeEmailTokenRoute: typeof VerifyEmailChangeEmailTokenRoute;
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
   ApiTestEmailsRoute: typeof ApiTestEmailsRoute;
@@ -336,6 +362,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/test-sentry': {
+      id: '/test-sentry';
+      path: '/test-sentry';
+      fullPath: '/test-sentry';
+      preLoaderRoute: typeof TestSentryRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/ping': {
       id: '/ping';
       path: '/ping';
@@ -383,6 +416,13 @@ declare module '@tanstack/react-router' {
       path: '/verify-email-change/$emailToken';
       fullPath: '/verify-email-change/$emailToken';
       preLoaderRoute: typeof VerifyEmailChangeEmailTokenRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/api/sentry-example': {
+      id: '/api/sentry-example';
+      path: '/api/sentry-example';
+      fullPath: '/api/sentry-example';
+      preLoaderRoute: typeof ApiSentryExampleRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     '/_protected/ws': {
@@ -593,6 +633,8 @@ const rootRouteChildren: RootRouteChildren = {
   AcceptInviteRoute: AcceptInviteRoute,
   HealthRoute: HealthRoute,
   PingRoute: PingRoute,
+  TestSentryRoute: TestSentryRoute,
+  ApiSentryExampleRoute: ApiSentryExampleRoute,
   VerifyEmailChangeEmailTokenRoute: VerifyEmailChangeEmailTokenRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiTestEmailsRoute: ApiTestEmailsRoute,
@@ -602,10 +644,11 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>();
 
 import type { getRouter } from './router.tsx';
-import type { createStart } from '@tanstack/react-start';
+import type { startInstance } from './start.ts';
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true;
     router: Awaited<ReturnType<typeof getRouter>>;
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>;
   }
 }

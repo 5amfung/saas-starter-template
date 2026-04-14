@@ -4,6 +4,8 @@ import {
   createHookWrapper,
   createMockSessionResponse,
 } from '@workspace/test-utils';
+import { OPERATIONS } from '@workspace/logging/client';
+import type * as LoggingClient from '@workspace/logging/client';
 import { useMembersTable } from '@/workspace/use-members-table';
 import {
   leaveWorkspace,
@@ -20,6 +22,8 @@ const {
   mockToastSuccess,
   mockToastError,
   useSessionQueryMock,
+  loggerInfoMock,
+  loggerErrorMock,
 } = vi.hoisted(() => ({
   listMembersMock: vi.fn(),
   navigateMock: vi.fn(),
@@ -29,6 +33,8 @@ const {
   mockToastSuccess: vi.fn(),
   mockToastError: vi.fn(),
   useSessionQueryMock: vi.fn(),
+  loggerInfoMock: vi.fn(),
+  loggerErrorMock: vi.fn(),
 }));
 
 vi.mock('@workspace/auth/client', () => ({
@@ -71,6 +77,17 @@ vi.mock('@/workspace/workspace-members.functions', () => ({
   removeWorkspaceMember: vi.fn(),
   transferWorkspaceOwnership: vi.fn(),
 }));
+
+vi.mock('@workspace/logging/client', async (importActual) => {
+  const actual = await importActual<typeof LoggingClient>();
+  return {
+    ...actual,
+    workflowLogger: {
+      info: loggerInfoMock,
+      error: loggerErrorMock,
+    },
+  };
+});
 
 vi.mock('sonner', () => ({
   toast: { success: mockToastSuccess, error: mockToastError },
@@ -309,6 +326,14 @@ describe('useMembersTable', () => {
         'You have left the workspace.'
       );
       expect(navigateMock).toHaveBeenCalledWith({ to: '/ws' });
+      expect(loggerInfoMock).toHaveBeenCalledWith(
+        'Workspace left',
+        expect.objectContaining({
+          operation: OPERATIONS.WORKSPACE_MEMBER_LEAVE,
+          workspaceId: WORKSPACE_ID,
+          result: 'success',
+        })
+      );
     });
 
     it('on error: shows error toast', async () => {
@@ -322,6 +347,15 @@ describe('useMembersTable', () => {
       });
 
       expect(mockToastError).toHaveBeenCalled();
+      expect(loggerErrorMock).toHaveBeenCalledWith(
+        'Workspace leave failed',
+        expect.objectContaining({
+          operation: OPERATIONS.WORKSPACE_MEMBER_LEAVE,
+          workspaceId: WORKSPACE_ID,
+          result: 'failure',
+          failureCategory: 'leave_failed',
+        })
+      );
     });
   });
 
@@ -355,6 +389,14 @@ describe('useMembersTable', () => {
       });
 
       expect(mockToastSuccess).toHaveBeenCalledWith('Membership removed.');
+      expect(loggerInfoMock).toHaveBeenCalledWith(
+        'Workspace member removed',
+        expect.objectContaining({
+          operation: OPERATIONS.WORKSPACE_MEMBER_REMOVE,
+          workspaceId: WORKSPACE_ID,
+          result: 'success',
+        })
+      );
     });
 
     it('on error: shows error toast', async () => {
@@ -370,6 +412,16 @@ describe('useMembersTable', () => {
       await waitFor(() => {
         expect(mockToastError).toHaveBeenCalled();
       });
+
+      expect(loggerErrorMock).toHaveBeenCalledWith(
+        'Workspace member removal failed',
+        expect.objectContaining({
+          operation: OPERATIONS.WORKSPACE_MEMBER_REMOVE,
+          workspaceId: WORKSPACE_ID,
+          result: 'failure',
+          failureCategory: 'removal_failed',
+        })
+      );
     });
 
     it('tracks removingMemberId during mutation', async () => {
@@ -462,6 +514,14 @@ describe('useMembersTable', () => {
       expect(routerInvalidateMock).toHaveBeenCalledWith({
         sync: true,
       });
+      expect(loggerInfoMock).toHaveBeenCalledWith(
+        'Workspace ownership transferred',
+        expect.objectContaining({
+          operation: OPERATIONS.WORKSPACE_TRANSFER_OWNERSHIP,
+          workspaceId: WORKSPACE_ID,
+          result: 'success',
+        })
+      );
     });
 
     it('tracks transferringMemberId during mutation', async () => {
@@ -505,6 +565,15 @@ describe('useMembersTable', () => {
       });
 
       expect(mockToastError).toHaveBeenCalledWith('Transfer blocked');
+      expect(loggerErrorMock).toHaveBeenCalledWith(
+        'Workspace ownership transfer failed',
+        expect.objectContaining({
+          operation: OPERATIONS.WORKSPACE_TRANSFER_OWNERSHIP,
+          workspaceId: WORKSPACE_ID,
+          result: 'failure',
+          failureCategory: 'transfer_failed',
+        })
+      );
     });
   });
 });

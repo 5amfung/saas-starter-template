@@ -10,15 +10,19 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { Toaster } from '@workspace/ui/components/sonner';
 import appCss from '@workspace/ui/globals.css?url';
 import {
+  AppErrorBoundary,
   NotFound,
   ThemeProvider,
   useTheme,
 } from '@workspace/components/layout';
+import { withErrorBoundary } from '@sentry/tanstackstart-react';
 import type { QueryClient } from '@tanstack/react-query';
 
 interface RouterContext {
   queryClient: QueryClient;
 }
+
+export const SentryAppErrorBoundary = withErrorBoundary(AppErrorBoundary, {});
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   head: () => ({
@@ -44,6 +48,13 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
   shellComponent: RootDocument,
   notFoundComponent: NotFound,
+  errorComponent: ({ error }) => (
+    <SentryAppErrorBoundary
+      error={error}
+      title="Admin page error"
+      message="The admin portal ran into an unexpected problem."
+    />
+  ),
 });
 
 /** Passes the resolved theme from ThemeProvider to the UI Toaster. */

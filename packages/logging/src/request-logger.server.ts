@@ -1,32 +1,42 @@
 import { createMiddleware } from '@tanstack/react-start';
-
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+import * as Sentry from '@sentry/tanstackstart-react';
 
 /**
- * Creates a server-side request logger middleware using the provided log function.
  * Logs method, URL, status, and duration for every request.
  */
-export function createRequestLogger(
-  log: (level: LogLevel, message: string, data?: unknown) => void
-) {
-  return createMiddleware().server(async ({ request, next }) => {
+export const requestLogger = createMiddleware().server(
+  async ({ request, next }) => {
     const startTime = Date.now();
+    const path = new URL(request.url).pathname;
+
     try {
       const result = await next();
       const duration = Date.now() - startTime;
-      log(
-        'info',
-        `${request.method} ${request.url} - ${result.response.status} (${duration}ms)`
+
+      console.log(
+        `${request.method} ${path} - ${result.response.status} (${duration}ms)`
       );
+
       return result;
-    } catch (error) {
+    } catch (error: unknown) {
       const duration = Date.now() - startTime;
-      log(
-        'error',
-        `${request.method} ${request.url} - Error (${duration}ms):`,
-        error
+      const errMessage = error instanceof Error ? error.message : String(error);
+      console.error(
+        `${request.method} ${path} - [ERROR] ${errMessage} (${duration}ms)`
       );
+      Sentry.captureException(error, {
+        tags: {
+          method: request.method,
+          path,
+          source: 'request-logger',
+        },
+        contexts: {
+          request_logger: {
+            duration_ms: duration,
+          },
+        },
+      });
       throw error;
     }
-  });
-}
+  }
+);

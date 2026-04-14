@@ -29,10 +29,6 @@ vi.mock('sonner', () => ({
   },
 }));
 
-vi.mock('@/lib/logger', () => ({
-  logger: vi.fn(),
-}));
-
 vi.mock('@workspace/ui/components/sidebar', () => ({
   SidebarMenu: ({ children, ...props }: React.ComponentProps<'ul'>) => (
     <ul {...props}>{children}</ul>
@@ -180,6 +176,9 @@ describe('NavUser', () => {
   it('shows error toast when sign out fails', async () => {
     const { toast } = await import('sonner');
     const user = userEvent.setup();
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
     signOutMock.mockRejectedValue(new Error('Network error'));
 
     render(<NavUser user={defaultUser} />);
@@ -191,6 +190,12 @@ describe('NavUser', () => {
         'Logout failed. Please try again.'
       );
     });
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Logout failed',
+      expect.any(Error)
+    );
+    consoleErrorSpy.mockRestore();
   });
 
   it('navigates to account page when Account is clicked', async () => {
