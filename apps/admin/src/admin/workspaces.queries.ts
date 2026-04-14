@@ -3,7 +3,10 @@ import {
   queryOptions,
   useQuery,
 } from '@tanstack/react-query';
-import { getWorkspace, listWorkspaces } from '@/admin/workspaces.functions';
+import {
+  getWorkspace,
+  listWorkspaces,
+} from '@/admin/workspaces-query.functions';
 
 type FilterTab = 'all' | 'self-serve' | 'enterprise';
 

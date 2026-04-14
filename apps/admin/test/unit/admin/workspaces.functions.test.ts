@@ -3,10 +3,12 @@ import { createServerFnMock } from '../../mocks/server-fn';
 import type * as LoggingServer from '@workspace/logging/server';
 import {
   clearEntitlementOverrides,
-  getWorkspace,
-  listWorkspaces,
   saveEntitlementOverrides,
 } from '@/admin/workspaces.functions';
+import {
+  getWorkspace,
+  listWorkspaces,
+} from '@/admin/workspaces-query.functions';
 
 const {
   requireCurrentAdminAppCapabilityMock,
