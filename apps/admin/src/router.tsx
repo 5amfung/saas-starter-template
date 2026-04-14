@@ -24,7 +24,12 @@ export const getRouter = () => {
     notFoundMode: 'root',
   });
 
-  if (!router.isServer) {
+  const sentryEnabled =
+    !import.meta.env.VITEST &&
+    import.meta.env.MODE !== 'test' &&
+    import.meta.env.VITE_DISABLE_SENTRY !== 'true';
+
+  if (!router.isServer && sentryEnabled) {
     Sentry.init({
       dsn: import.meta.env.VITE_SENTRY_DSN,
       enabled: true,

@@ -38,6 +38,7 @@ export default defineConfig({
       url: 'http://localhost:3000',
       reuseExistingServer: true,
       env: {
+        DISABLE_SENTRY: 'true',
         PORT: '3000',
       },
       stderr: 'pipe',

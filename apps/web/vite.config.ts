@@ -8,6 +8,8 @@ import { nitro } from 'nitro/vite';
 import { sentryTanstackStart } from '@sentry/tanstackstart-react/vite';
 import { sentryVitePlugin } from '@sentry/vite-plugin';
 
+const sentryEnabled = process.env.VITE_DISABLE_SENTRY !== 'true';
+
 const config = defineConfig({
   build: {
     sourcemap: true,
@@ -51,16 +53,20 @@ const config = defineConfig({
       },
     }),
     viteReact(),
-    sentryTanstackStart({
-      authToken: process.env.SENTRY_AUTH_TOKEN,
-      org: process.env.SENTRY_ORG,
-      project: process.env.SENTRY_PROJECT,
-    }),
-    sentryVitePlugin({
-      authToken: process.env.SENTRY_AUTH_TOKEN,
-      org: process.env.SENTRY_ORG,
-      project: process.env.SENTRY_PROJECT,
-    }),
+    ...(sentryEnabled
+      ? [
+          sentryTanstackStart({
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+            org: process.env.SENTRY_ORG,
+            project: process.env.SENTRY_PROJECT,
+          }),
+          sentryVitePlugin({
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+            org: process.env.SENTRY_ORG,
+            project: process.env.SENTRY_PROJECT,
+          }),
+        ]
+      : []),
   ],
 });
 
