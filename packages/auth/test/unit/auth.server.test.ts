@@ -1,5 +1,6 @@
+import { OPERATIONS } from '@workspace/logging/server';
+import type * as LoggingServer from '@workspace/logging/server';
 import type { AuthConfig } from '../../src/auth.server';
-import { OPERATIONS } from '../../../logging/src/operations';
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks — references used inside vi.mock() definitions.
@@ -137,8 +138,7 @@ vi.mock('@workspace/db-schema', async (importOriginal) => {
 });
 
 vi.mock('@workspace/logging/server', async (importActual) => {
-  const actual =
-    await importActual<typeof import('@workspace/logging/server')>();
+  const actual = await importActual<typeof LoggingServer>();
   return {
     ...actual,
     startWorkflowSpan: startSpanMock,

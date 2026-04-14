@@ -1,7 +1,4 @@
-import {
-  type WorkflowOperation,
-  type WorkflowOperationFamily,
-} from './operations';
+import type { WorkflowOperation, WorkflowOperationFamily } from './operations';
 
 export type WorkflowResult = 'attempt' | 'success' | 'failure';
 
@@ -45,14 +42,10 @@ export function buildWorkflowAttributes(
   operation: WorkflowOperation,
   attributes: WorkflowAttributes = {}
 ): WorkflowAttributesShape {
-  const safeAttributes = Object.fromEntries(
-    Object.entries(attributes).filter(([, value]) => value !== undefined)
-  ) as WorkflowAttributes;
-
   return {
     operation,
     operationFamily: getWorkflowOperationFamily(operation),
-    ...safeAttributes,
+    ...attributes,
   };
 }
 

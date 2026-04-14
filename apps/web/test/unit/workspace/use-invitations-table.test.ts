@@ -2,6 +2,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createHookWrapper } from '@workspace/test-utils';
 import { OPERATIONS } from '@workspace/logging/client';
+import type * as LoggingClient from '@workspace/logging/client';
 import { useInvitationsTable } from '@/workspace/use-invitations-table';
 import {
   cancelWorkspaceInvitation,
@@ -36,8 +37,7 @@ vi.mock('@/workspace/workspace-members.functions', () => ({
 }));
 
 vi.mock('@workspace/logging/client', async (importActual) => {
-  const actual =
-    await importActual<typeof import('@workspace/logging/client')>();
+  const actual = await importActual<typeof LoggingClient>();
   return {
     ...actual,
     workflowLogger: {

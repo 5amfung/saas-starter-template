@@ -3,9 +3,10 @@ import * as React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { OPERATIONS } from '@workspace/logging/client';
+import type * as LoggingClient from '@workspace/logging/client';
 import { AdminEntitlementOverrideForm } from '@/components/admin/admin-entitlement-override-form';
 import { ADMIN_WORKSPACE_DETAIL_QUERY_KEY } from '@/admin/workspaces.queries';
-import { OPERATIONS } from '../../../../../packages/logging/src/operations';
 
 const { saveEntitlementOverridesMock, clearEntitlementOverridesMock } =
   vi.hoisted(() => ({
@@ -25,8 +26,7 @@ vi.mock('@/admin/workspaces.functions', () => ({
 }));
 
 vi.mock('@workspace/logging/client', async (importActual) => {
-  const actual =
-    await importActual<typeof import('@workspace/logging/client')>();
+  const actual = await importActual<typeof LoggingClient>();
   return {
     ...actual,
     startWorkflowSpan: startSpanMock,

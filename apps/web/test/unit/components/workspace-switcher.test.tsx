@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithProviders } from '@workspace/test-utils';
 import { OPERATIONS } from '@workspace/logging/client';
+import { renderWithProviders } from '@workspace/test-utils';
+import type * as LoggingClient from '@workspace/logging/client';
 import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 
 // ── Hoisted mocks ────────────────────────────────────────────────────────────
@@ -40,8 +41,7 @@ vi.mock('@workspace/auth/client', () => ({
 }));
 
 vi.mock('@workspace/logging/client', async (importActual) => {
-  const actual =
-    await importActual<typeof import('@workspace/logging/client')>();
+  const actual = await importActual<typeof LoggingClient>();
   return {
     ...actual,
     startWorkflowSpan: startSpanMock,

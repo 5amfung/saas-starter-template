@@ -3,6 +3,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { OPERATIONS } from '@workspace/logging/client';
 import { renderWithProviders } from '@workspace/test-utils';
+import type * as LoggingClient from '@workspace/logging/client';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
 
 const { assignMock, mockToastSuccess, mockToastError } = vi.hoisted(() => ({
@@ -30,8 +31,7 @@ vi.mock('@workspace/auth/client', () => ({
 }));
 
 vi.mock('@workspace/logging/client', async (importActual) => {
-  const actual =
-    await importActual<typeof import('@workspace/logging/client')>();
+  const actual = await importActual<typeof LoggingClient>();
   return {
     ...actual,
     startWorkflowSpan: startSpanMock,

@@ -8,5 +8,5 @@
       "@workspace/logging/server": ["./src/server.ts"]
     }
   },
-  "include": ["src/**/*.ts", "eslint.config.ts"]
+  "include": ["src/**/*.ts", "test/**/*.ts", "eslint.config.ts"]
 }

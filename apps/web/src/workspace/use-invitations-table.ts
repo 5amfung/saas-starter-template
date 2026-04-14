@@ -74,7 +74,7 @@ export function useInvitationsTable(workspaceId: string) {
         },
       });
     },
-    onSuccess: async (_data, variables) => {
+    onSuccess: (_data, variables) => {
       workflowLogger.info(
         'Workspace invitation sent',
         buildWorkflowAttributes(OPERATIONS.WORKSPACE_MEMBER_INVITE, {

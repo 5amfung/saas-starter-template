@@ -1,5 +1,6 @@
+import { OPERATIONS } from '@workspace/logging/server';
 import { createServerFnMock } from '../../mocks/server-fn';
-import { OPERATIONS } from '../../../../../packages/logging/src/operations';
+import type * as LoggingServer from '@workspace/logging/server';
 import {
   clearEntitlementOverrides,
   getWorkspace,
@@ -43,8 +44,7 @@ vi.mock('@/admin/workspaces.server', () => ({
 }));
 
 vi.mock('@workspace/logging/server', async (importActual) => {
-  const actual =
-    await importActual<typeof import('@workspace/logging/server')>();
+  const actual = await importActual<typeof LoggingServer>();
   return {
     ...actual,
     startWorkflowSpan: startSpanMock,

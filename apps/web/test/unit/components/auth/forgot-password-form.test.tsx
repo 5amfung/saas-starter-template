@@ -2,9 +2,10 @@
 // apps/web/test/unit/components/auth/forgot-password-form.test.tsx
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { OPERATIONS } from '@workspace/logging/client';
 import { renderWithProviders } from '@workspace/test-utils';
 import { ForgotPasswordForm } from '@workspace/components/auth';
-import { OPERATIONS } from '../../../../../../packages/logging/src/operations';
+import type * as LoggingClient from '@workspace/logging/client';
 
 const { requestPasswordReset } = vi.hoisted(() => ({
   requestPasswordReset: vi.fn(),
@@ -25,8 +26,7 @@ vi.mock('@workspace/auth/client', () => ({
 }));
 
 vi.mock('@workspace/logging/client', async (importActual) => {
-  const actual =
-    await importActual<typeof import('@workspace/logging/client')>();
+  const actual = await importActual<typeof LoggingClient>();
   return {
     ...actual,
     startWorkflowSpan: startSpanMock,
