@@ -18,6 +18,7 @@
     "@tanstack/react-router": "^1.168.10",
     "@tanstack/react-table": "^8.21.3",
     "@workspace/auth": "workspace:*",
+    "@workspace/logging": "workspace:*",
     "@workspace/ui": "workspace:*",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
