@@ -8,6 +8,10 @@ vi.mock('random-word-slugs', () => ({
 describe('generateSlug', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.doMock('random-word-slugs', () => ({
+      generateSlug: vi.fn(() => 'bold-blue-sparrow'),
+    }));
+    vi.resetModules();
   });
 
   it('returns three random-word-slugs words plus a 4-char base36 suffix', () => {
@@ -34,5 +38,17 @@ describe('generateSlug', () => {
     const slug2 = generateSlug();
 
     expect(slug1).not.toBe(slug2);
+  });
+
+  it('loads the real random-word-slugs helper when unmocked', async () => {
+    vi.doUnmock('random-word-slugs');
+    vi.resetModules();
+
+    const { generateSlug: realGenerateSlug } = await import('../../src/slug');
+
+    const slug = realGenerateSlug();
+
+    expect(slug).toMatch(/^[a-z]+-[a-z]+-[a-z]+-[a-z0-9]{4}$/);
+    expect(slug).not.toBe('bold-blue-sparrow');
   });
 });

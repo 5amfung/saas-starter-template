@@ -236,6 +236,7 @@ export function createAuth(config: AuthConfig) {
                 ),
               },
               async () => {
+                let createdDefaultWorkspace = false;
                 for (
                   let attempt = 1;
                   attempt <= DEFAULT_WORKSPACE_SLUG_ATTEMPTS;
@@ -251,6 +252,7 @@ export function createAuth(config: AuthConfig) {
                         userId: user.id,
                       },
                     });
+                    createdDefaultWorkspace = true;
 
                     workflowLogger.info('Created default workspace', {
                       ...buildWorkflowAttributes(OPERATIONS.WORKSPACE_CREATE, {
@@ -278,6 +280,19 @@ export function createAuth(config: AuthConfig) {
                       throw error;
                     }
                   }
+                }
+
+                if (!createdDefaultWorkspace) {
+                  workflowLogger.error(
+                    'Failed to create default workspace after exhausting duplicate slug retries',
+                    {
+                      ...buildWorkflowAttributes(OPERATIONS.WORKSPACE_CREATE, {
+                        userId: user.id,
+                        result: 'failure',
+                        failureCategory: 'duplicate_slug_collision_exhausted',
+                      }),
+                    }
+                  );
                 }
               }
             );

@@ -319,7 +319,7 @@ describe('createAuth', () => {
       );
     });
 
-    it('swallows duplicate collisions after exhausting retries', async () => {
+    it('logs duplicate exhaustion and still resolves after exhausting retries', async () => {
       const createAuth = await importCreateAuth();
       generateSlugMock
         .mockReturnValueOnce('alpha-bravo-charlie-d1e2')
@@ -339,7 +339,15 @@ describe('createAuth', () => {
       expect(generateSlugMock).toHaveBeenCalledTimes(3);
       expect(createOrganizationMock).toHaveBeenCalledTimes(3);
       expect(loggerInfoMock).not.toHaveBeenCalled();
-      expect(loggerErrorMock).not.toHaveBeenCalled();
+      expect(loggerErrorMock).toHaveBeenCalledWith(
+        'Failed to create default workspace after exhausting duplicate slug retries',
+        expect.objectContaining({
+          operation: OPERATIONS.WORKSPACE_CREATE,
+          userId: 'user_dup_all',
+          result: 'failure',
+          failureCategory: 'duplicate_slug_collision_exhausted',
+        })
+      );
     });
 
     it('re-throws non-duplicate errors', async () => {

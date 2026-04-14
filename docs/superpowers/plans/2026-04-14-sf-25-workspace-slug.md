@@ -260,27 +260,27 @@ git commit -m "refactor(web): use shared slug generator for workspace creation"
 - Verify only: `packages/auth/src/auth.server.ts`
 - Verify only: `apps/web/src/components/workspace-switcher.tsx`
 
-- [ ] **Step 1: Run package-level tests together**
+- [x] **Step 1: Run package-level tests together**
 
 Run: `pnpm --filter @workspace/auth test -- test/unit/slug.test.ts test/unit/auth.server.test.ts`
 Expected: PASS
 
-- [ ] **Step 2: Run affected web tests**
+- [x] **Step 2: Run affected web tests**
 
 Run: `pnpm --filter @workspace/web test -- test/unit/components/workspace-switcher.test.tsx test/unit/workspace/workspace.test.ts`
 Expected: PASS
 
-- [ ] **Step 3: Run boundary checks**
+- [x] **Step 3: Run boundary checks**
 
 Run: `pnpm run check:boundaries`
 Expected: PASS with no new dependency-cruiser violations from importing `@workspace/auth` into `apps/web`
 
-- [ ] **Step 4: Run targeted typechecking**
+- [x] **Step 4: Run targeted typechecking**
 
 Run: `pnpm --filter @workspace/auth typecheck && pnpm --filter @workspace/web typecheck`
 Expected: PASS
 
-- [ ] **Step 5: Commit the verification checkpoint**
+- [x] **Step 5: Commit the verification checkpoint**
 
 Run:
 
