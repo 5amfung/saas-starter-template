@@ -5,6 +5,7 @@ import {
   workspaceIntegrationSecrets,
 } from '../../src/app.schema';
 import {
+  apikey,
   invitation,
   member,
   organization,
@@ -168,6 +169,27 @@ describe('auth schema tables', () => {
     it('has plan and referenceId as non-null', () => {
       expect(subscription.plan.notNull).toBe(true);
       expect(subscription.referenceId.notNull).toBe(true);
+    });
+  });
+
+  describe('apikey table', () => {
+    it.each(['configId', 'referenceId', 'enabled', 'key'] as const)(
+      'has %s column',
+      (column) => {
+        expect(apikey[column]).toBeDefined();
+      }
+    );
+
+    it('defines the api key lookup index for organization provisioning queries', () => {
+      const tableConfig = getTableConfig(apikey);
+      const index = tableConfig.indexes.find(
+        (entry) => entry.config.name === 'apikey_lookup_idx'
+      );
+
+      expect(index).toBeDefined();
+      expect(
+        index?.config.columns.map((column) => (column as { name: string }).name)
+      ).toEqual(['config_id', 'reference_id', 'enabled']);
     });
   });
 

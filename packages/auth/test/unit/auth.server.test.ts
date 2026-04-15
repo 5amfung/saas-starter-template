@@ -8,6 +8,7 @@ import type { AuthConfig } from '../../src/auth.server';
 
 const {
   createOrganizationMock,
+  apiKeyPluginSpy,
   betterAuthSpy,
   createBillingHelpersMock,
   billingMock,
@@ -45,6 +46,7 @@ const {
   );
   return {
     createOrganizationMock: createOrganizationFn,
+    apiKeyPluginSpy: vi.fn(),
     betterAuthSpy: vi.fn(),
     createBillingHelpersMock: vi.fn().mockReturnValue(billingHelpers),
     billingMock: billingHelpers,
@@ -68,6 +70,13 @@ const {
 // ---------------------------------------------------------------------------
 // Module mocks.
 // ---------------------------------------------------------------------------
+
+vi.mock('@better-auth/api-key', () => ({
+  apiKey: apiKeyPluginSpy.mockImplementation((configs) => ({
+    _type: 'api-key-plugin',
+    _configs: configs,
+  })),
+}));
 
 vi.mock('better-auth/minimal', () => ({
   betterAuth: betterAuthSpy.mockImplementation((config: unknown) => {
@@ -204,6 +213,12 @@ interface BetterAuthConfig {
 function getOrganizationPluginOpts() {
   const call = organizationPluginSpy.mock.calls[0];
   return call[0] as {
+    ac: { statements: { apiKey: Array<string> } };
+    roles: {
+      owner: { statements: { apiKey: Array<string> } };
+      admin: { statements: { apiKey: Array<string> } };
+      member: { statements: { apiKey: Array<string> } };
+    };
     organizationHooks: {
       beforeDeleteOrganization: (args: {
         organization: { id: string };
@@ -773,6 +788,49 @@ describe('createAuth', () => {
         'sk_test',
         expect.any(Object)
       );
+    });
+  });
+
+  describe('plugin wiring', () => {
+    it('registers the system-managed organization api key config', async () => {
+      const createAuth = await importCreateAuth();
+
+      createAuth(buildTestConfig());
+
+      expect(apiKeyPluginSpy).toHaveBeenCalledWith([
+        expect.objectContaining({
+          configId: 'system-managed',
+          references: 'organization',
+        }),
+      ]);
+    });
+
+    it('passes organization api key access control into the organization plugin', async () => {
+      const createAuth = await importCreateAuth();
+
+      createAuth(buildTestConfig());
+
+      const opts = getOrganizationPluginOpts();
+
+      expect(opts.ac.statements.apiKey).toEqual([
+        'create',
+        'read',
+        'update',
+        'delete',
+      ]);
+      expect(opts.roles.owner.statements.apiKey).toEqual([
+        'create',
+        'read',
+        'update',
+        'delete',
+      ]);
+      expect(opts.roles.admin.statements.apiKey).toEqual([
+        'create',
+        'read',
+        'update',
+        'delete',
+      ]);
+      expect(opts.roles.member.statements.apiKey).toEqual(['read']);
     });
   });
 });
