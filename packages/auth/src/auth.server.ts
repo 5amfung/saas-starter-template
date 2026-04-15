@@ -1,3 +1,4 @@
+import { apiKey } from '@better-auth/api-key';
 import { stripe } from '@better-auth/stripe';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
@@ -24,6 +25,7 @@ import {
 import { createAuthEmails } from './auth-emails.server';
 import { isDuplicateOrganizationError, isSignInPath } from './auth-utils';
 import { createBillingHelpers } from './billing.server';
+import { organizationAccessControl, organizationRoles } from './permissions';
 import { generateSlug } from './slug';
 import { PLANS } from './plans';
 import type { PlanId } from './plans';
@@ -301,6 +303,12 @@ export function createAuth(config: AuthConfig) {
       },
     },
     plugins: [
+      apiKey([
+        {
+          configId: 'system-managed',
+          references: 'organization',
+        },
+      ]),
       stripe({
         stripeClient,
         stripeWebhookSecret: config.stripe.webhookSecret,
@@ -364,6 +372,8 @@ export function createAuth(config: AuthConfig) {
         storeInDatabase: true,
       }),
       organizationPlugin({
+        ac: organizationAccessControl,
+        roles: organizationRoles,
         allowUserToCreateOrganization: true,
         creatorRole: 'owner',
         requireEmailVerificationOnInvitation: true,

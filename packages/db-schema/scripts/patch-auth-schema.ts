@@ -31,6 +31,9 @@ const TABLE_INDEXES: Record<string, Array<string>> = {
     'index("user_lastSignInAt_idx").on(table.lastSignInAt)',
   ],
   session: ['index("session_token_idx").on(table.token)'],
+  apikey: [
+    'index("apikey_lookup_idx").on(table.configId, table.referenceId, table.enabled)',
+  ],
   subscription: [
     'index("subscription_referenceId_idx").on(table.referenceId)',
     'index("subscription_stripeCustomerId_idx").on(table.stripeCustomerId)',
