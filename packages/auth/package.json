@@ -23,7 +23,6 @@
   },
   "dependencies": {
     "@better-auth/api-key": "1.6.3",
-    "@better-auth/core": "1.6.3",
     "@better-auth/stripe": "1.6.3",
     "@tanstack/react-router": "^1.168.10",
     "@workspace/billing": "workspace:*",
