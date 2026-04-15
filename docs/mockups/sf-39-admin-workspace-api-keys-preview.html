@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SF-39 Admin Workspace API Keys Preview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #eef2f6;
+        --panel: rgba(255, 255, 255, 0.92);
+        --panel-strong: #ffffff;
+        --line: rgba(15, 23, 42, 0.1);
+        --line-strong: rgba(15, 23, 42, 0.18);
+        --text: #0f172a;
+        --muted: #526072;
+        --accent: #0f766e;
+        --accent-soft: rgba(15, 118, 110, 0.1);
+        --danger: #b42318;
+        --danger-soft: rgba(180, 35, 24, 0.1);
+        --badge: #f8fafc;
+        --shadow: 0 30px 80px rgba(15, 23, 42, 0.12);
+        --radius: 24px;
+        --radius-sm: 16px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background:
+          radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 28%),
+          radial-gradient(circle at top right, rgba(14, 116, 144, 0.1), transparent 30%),
+          linear-gradient(180deg, #f9fbfd 0%, var(--bg) 100%);
+        color: var(--text);
+        font-family: 'Manrope', sans-serif;
+      }
+
+      body {
+        padding: 40px 20px 72px;
+      }
+
+      .shell {
+        margin: 0 auto;
+        max-width: 980px;
+      }
+
+      .hero {
+        position: relative;
+        margin-bottom: 22px;
+        padding: 28px 30px;
+        border: 1px solid rgba(15, 118, 110, 0.14);
+        border-radius: 30px;
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(243, 248, 249, 0.86)),
+          var(--panel);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .hero::after {
+        content: '';
+        position: absolute;
+        inset: auto -90px -110px auto;
+        width: 240px;
+        height: 240px;
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(15, 118, 110, 0.16), transparent 70%);
+      }
+
+      .hero-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        align-items: flex-start;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 10px;
+        color: var(--accent);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .eyebrow::before {
+        content: '';
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 0 0 8px rgba(15, 118, 110, 0.08);
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      .hero h1 {
+        font-size: clamp(2rem, 4vw, 3.3rem);
+        line-height: 0.96;
+        letter-spacing: -0.05em;
+        max-width: 10ch;
+      }
+
+      .hero p {
+        margin-top: 14px;
+        max-width: 60ch;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.76);
+        color: var(--text);
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      .chip strong {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.82rem;
+      }
+
+      .preview {
+        display: grid;
+        gap: 18px;
+      }
+
+      .card {
+        position: relative;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--panel);
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+        backdrop-filter: blur(16px);
+      }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+        padding: 26px 28px 18px;
+      }
+
+      .card-title {
+        font-size: 1.18rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+
+      .card-subtitle {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 0.95rem;
+        line-height: 1.5;
+      }
+
+      .card-body {
+        padding: 0 28px 28px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .field {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: var(--panel-strong);
+        padding: 14px 16px;
+      }
+
+      .field label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--muted);
+        font-size: 0.83rem;
+        font-weight: 700;
+      }
+
+      .field .value {
+        font-size: 0.98rem;
+        font-weight: 700;
+      }
+
+      .mono {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.9rem;
+      }
+
+      .status-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 12px;
+        border-radius: 999px;
+        background: var(--badge);
+        border: 1px solid var(--line);
+        font-size: 0.84rem;
+        font-weight: 800;
+      }
+
+      .badge.success {
+        background: rgba(15, 118, 110, 0.1);
+        color: #0f766e;
+        border-color: rgba(15, 118, 110, 0.16);
+      }
+
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 18px;
+      }
+
+      .toolbar-copy {
+        color: var(--muted);
+        font-size: 0.95rem;
+        line-height: 1.5;
+      }
+
+      .button {
+        appearance: none;
+        border: 0;
+        border-radius: 14px;
+        padding: 12px 16px;
+        font: inherit;
+        font-weight: 800;
+        cursor: pointer;
+        transition:
+          transform 120ms ease,
+          box-shadow 120ms ease,
+          background 120ms ease;
+      }
+
+      .button:hover {
+        transform: translateY(-1px);
+      }
+
+      .button.primary {
+        background: linear-gradient(135deg, #115e59, #0f766e);
+        color: white;
+        box-shadow: 0 18px 28px rgba(15, 118, 110, 0.22);
+      }
+
+      .button.secondary {
+        background: rgba(15, 23, 42, 0.05);
+        color: var(--text);
+        border: 1px solid var(--line);
+      }
+
+      .button.danger {
+        background: var(--danger-soft);
+        color: var(--danger);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      thead th {
+        padding: 12px 14px;
+        text-align: left;
+        color: var(--muted);
+        font-size: 0.8rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      tbody td {
+        padding: 18px 14px;
+        border-top: 1px solid var(--line);
+        vertical-align: top;
+      }
+
+      tbody tr {
+        background: rgba(255, 255, 255, 0.42);
+      }
+
+      tbody tr:hover {
+        background: rgba(15, 118, 110, 0.04);
+      }
+
+      .key-name {
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+
+      .subcopy {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 0.88rem;
+        line-height: 1.45;
+      }
+
+      .key-fragment {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.04);
+        border: 1px solid rgba(15, 23, 42, 0.06);
+      }
+
+      .action-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-end;
+      }
+
+      .muted-block {
+        margin-top: 16px;
+        padding: 15px 16px;
+        border-radius: 16px;
+        background: linear-gradient(180deg, rgba(15, 118, 110, 0.06), rgba(15, 118, 110, 0.03));
+        color: #134e4a;
+        font-size: 0.9rem;
+        line-height: 1.55;
+      }
+
+      dialog {
+        width: min(560px, calc(100vw - 32px));
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 28px;
+        padding: 0;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 28px 90px rgba(15, 23, 42, 0.28);
+      }
+
+      dialog::backdrop {
+        background: rgba(15, 23, 42, 0.42);
+        backdrop-filter: blur(6px);
+      }
+
+      .dialog-body {
+        padding: 28px;
+      }
+
+      .dialog-title {
+        font-size: 1.4rem;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+      }
+
+      .dialog-copy {
+        margin-top: 10px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .form-grid {
+        display: grid;
+        gap: 14px;
+        margin-top: 22px;
+      }
+
+      .input-shell {
+        padding: 14px 16px;
+        border: 1px solid var(--line-strong);
+        border-radius: 16px;
+        background: white;
+      }
+
+      .input-shell label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--muted);
+        font-size: 0.83rem;
+        font-weight: 700;
+      }
+
+      .input-shell input,
+      .input-shell textarea {
+        width: 100%;
+        border: 0;
+        outline: 0;
+        color: var(--text);
+        font: inherit;
+        background: transparent;
+      }
+
+      .input-shell textarea {
+        min-height: 88px;
+        resize: vertical;
+      }
+
+      .hint {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      .dialog-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 22px;
+      }
+
+      .danger-banner {
+        margin-top: 22px;
+        padding: 14px 16px;
+        border-radius: 16px;
+        background: var(--danger-soft);
+        color: #7a271a;
+        font-size: 0.92rem;
+        line-height: 1.55;
+      }
+
+      .footer-note {
+        margin-top: 18px;
+        color: var(--muted);
+        font-size: 0.88rem;
+        text-align: center;
+      }
+
+      @media (max-width: 760px) {
+        body {
+          padding: 20px 12px 40px;
+        }
+
+        .hero,
+        .card-header,
+        .card-body,
+        .dialog-body {
+          padding-left: 18px;
+          padding-right: 18px;
+        }
+
+        .hero-top,
+        .toolbar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        table,
+        thead,
+        tbody,
+        th,
+        td,
+        tr {
+          display: block;
+        }
+
+        thead {
+          display: none;
+        }
+
+        tbody td {
+          padding: 10px 0;
+          border-top: 0;
+        }
+
+        tbody tr {
+          padding: 16px 0;
+          border-top: 1px solid var(--line);
+          background: transparent;
+        }
+
+        .action-stack {
+          align-items: stretch;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div class="hero-top">
+          <div>
+            <div class="eyebrow">SF-39 Preview</div>
+            <h1>Admin Workspace API Keys</h1>
+            <p>
+              Single-page HTML mockup for the new section on the Admin workspace
+              details page. This mirrors the current card-based admin layout and
+              previews the two required interactions: generating a new
+              `system-managed` key and hard-deleting an existing key.
+            </p>
+            <div class="chip-row">
+              <div class="chip">Placement <strong>after Subscription</strong></div>
+              <div class="chip">Partition <strong>configId: system-managed</strong></div>
+              <div class="chip">Deletion <strong>hard delete</strong></div>
+            </div>
+          </div>
+          <button class="button primary" id="hero-open">Generate New Key</button>
+        </div>
+      </section>
+
+      <section class="preview">
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Workspace Info</h2>
+              <p class="card-subtitle">
+                Existing card shown for context so the new section has a realistic
+                placement.
+              </p>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="grid">
+              <div class="field">
+                <label>Name</label>
+                <div class="value">Acme Robotics</div>
+              </div>
+              <div class="field">
+                <label>Slug</label>
+                <div class="value mono">acme-robotics</div>
+              </div>
+              <div class="field">
+                <label>Workspace ID</label>
+                <div class="value mono">org_01HZY1N9GZ8B8SP5H4Q2A6R9P1</div>
+              </div>
+              <div class="field">
+                <label>Members</label>
+                <div class="value">14</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Subscription</h2>
+              <p class="card-subtitle">
+                Current section in the admin detail page. The API Keys card drops in
+                directly below this.
+              </p>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="grid">
+              <div class="field">
+                <label>Plan</label>
+                <div class="value">Pro</div>
+              </div>
+              <div class="field">
+                <label>Status</label>
+                <div class="status-row">
+                  <span class="badge success">Active</span>
+                  <span class="badge">Seats: 14</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">API Keys</h2>
+              <p class="card-subtitle">
+                Keys owned by this workspace. All rows shown here are scoped to the
+                workspace and partitioned under the single configuration
+                `system-managed`.
+              </p>
+            </div>
+            <button class="button primary" id="section-open">Generate New Key</button>
+          </div>
+          <div class="card-body">
+            <div class="toolbar">
+              <div class="toolbar-copy">
+                Keep the section operationally clear for admins: visible key label,
+                masked secret fragment, owner context, and a straightforward delete
+                affordance.
+              </div>
+              <span class="badge">2 active keys</span>
+            </div>
+
+            <table aria-label="Workspace API keys">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Key</th>
+                  <th>Configuration</th>
+                  <th>Created</th>
+                  <th aria-label="Actions"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div class="key-name">Production Ingestion</div>
+                    <div class="subcopy">Created by admin@acme.io</div>
+                  </td>
+                  <td>
+                    <div class="key-fragment mono">sk_live_acm3 •••• 7H9Q</div>
+                    <div class="subcopy">Masked after creation</div>
+                  </td>
+                  <td>
+                    <span class="badge">system-managed</span>
+                  </td>
+                  <td>
+                    <div class="key-name">Apr 10, 2026</div>
+                    <div class="subcopy">11:24 AM PT</div>
+                  </td>
+                  <td>
+                    <div class="action-stack">
+                      <button class="button secondary">Copy ID</button>
+                      <button class="button danger delete-trigger" data-key="Production Ingestion">
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="key-name">Sandbox Sync</div>
+                    <div class="subcopy">Created by owner@acme.io</div>
+                  </td>
+                  <td>
+                    <div class="key-fragment mono">sk_live_acm3 •••• 2L4M</div>
+                    <div class="subcopy">Last used 2 hours ago</div>
+                  </td>
+                  <td>
+                    <span class="badge">system-managed</span>
+                  </td>
+                  <td>
+                    <div class="key-name">Apr 13, 2026</div>
+                    <div class="subcopy">8:02 AM PT</div>
+                  </td>
+                  <td>
+                    <div class="action-stack">
+                      <button class="button secondary">Copy ID</button>
+                      <button class="button danger delete-trigger" data-key="Sandbox Sync">
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="muted-block">
+              Preview choice: the section keeps admin language explicit rather than
+              abstracting it away. Surfacing `system-managed` makes it easier for ops
+              users to understand why all keys fall under one config and avoids a
+              hidden rule that only exists in backend data.
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <p class="footer-note">
+        Open this file in a browser and use the buttons to preview both modal states.
+      </p>
+    </main>
+
+    <dialog id="generate-dialog">
+      <form method="dialog" class="dialog-body">
+        <h2 class="dialog-title">Generate new key</h2>
+        <p class="dialog-copy">
+          Admin creates a new workspace-owned API key. In the actual product flow,
+          this would create a hard-scoped Better Auth key under
+          `configId: system-managed` for this workspace.
+        </p>
+
+        <div class="form-grid">
+          <div class="input-shell">
+            <label for="key-name">Key name</label>
+            <input id="key-name" type="text" value="Quarterly Data Export" />
+          </div>
+
+          <div class="input-shell">
+            <label for="key-notes">Usage notes</label>
+            <textarea id="key-notes">Used by Acme's nightly export worker for finance reconciliation.</textarea>
+          </div>
+        </div>
+
+        <p class="hint">
+          Suggested post-create behavior for the real app: reveal the raw key once,
+          then return to the list with only masked fragments visible.
+        </p>
+
+        <div class="dialog-footer">
+          <button class="button secondary" value="cancel">Cancel</button>
+          <button class="button primary" value="default">Generate key</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="delete-dialog">
+      <form method="dialog" class="dialog-body">
+        <h2 class="dialog-title">Delete API key</h2>
+        <p class="dialog-copy">
+          You are about to permanently remove
+          <strong id="delete-key-name">Production Ingestion</strong>. This action is
+          a hard delete and cannot be undone.
+        </p>
+
+        <div class="danger-banner">
+          If any external system still depends on this secret, requests will fail
+          immediately after deletion. That tradeoff is intentionally made explicit
+          because the ticket calls for hard delete, not soft-disable.
+        </div>
+
+        <div class="dialog-footer">
+          <button class="button secondary" value="cancel">Cancel</button>
+          <button class="button danger" value="default">Delete</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script>
+      const generateDialog = document.getElementById('generate-dialog');
+      const deleteDialog = document.getElementById('delete-dialog');
+      const deleteKeyName = document.getElementById('delete-key-name');
+
+      document.getElementById('hero-open').addEventListener('click', () => {
+        generateDialog.showModal();
+      });
+
+      document.getElementById('section-open').addEventListener('click', () => {
+        generateDialog.showModal();
+      });
+
+      document.querySelectorAll('.delete-trigger').forEach((button) => {
+        button.addEventListener('click', () => {
+          deleteKeyName.textContent = button.dataset.key;
+          deleteDialog.showModal();
+        });
+      });
+    </script>
+  </body>
+</html>
