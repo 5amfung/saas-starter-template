@@ -1,5 +1,6 @@
 import {
   E2E_ADMIN_FILTER_USERS,
+  E2E_ADMIN_MUTATION_FIXTURES,
   E2E_ADMIN_WORKSPACES,
   E2E_BASELINE_USERS,
   E2E_PLATFORM_ADMIN,
@@ -17,4 +18,5 @@ export const adminFixtures = {
     banned: E2E_ADMIN_FILTER_USERS.banned,
   },
   workspaces: E2E_ADMIN_WORKSPACES,
+  mutations: E2E_ADMIN_MUTATION_FIXTURES,
 };

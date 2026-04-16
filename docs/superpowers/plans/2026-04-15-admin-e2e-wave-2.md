@@ -51,7 +51,7 @@ Shared-package rule for this plan:
 - Modify: `apps/admin/test/e2e/fixtures/admin-fixtures.ts`
 - Test indirectly: `apps/admin/test/e2e/users/user-edit.spec.ts`
 
-- [ ] **Step 1: Inspect the current seeded records and choose dedicated mutation targets**
+- [x] **Step 1: Inspect the current seeded records and choose dedicated mutation targets**
 
 Pick fixtures that can be mutated safely without undermining wave 1 read-only specs.
 
@@ -65,7 +65,7 @@ mutation enterprise workspace for entitlement coverage
 
 If the current baseline users and workspaces are too shared or semantically overloaded, add new named fixture exports rather than reusing ambiguous records.
 
-- [ ] **Step 2: Write the smallest failing mutation spec that imports the intended fixture**
+- [x] **Step 2: Write the smallest failing mutation spec that imports the intended fixture**
 
 Start with the user-edit workflow so fixture gaps show up immediately.
 
@@ -77,7 +77,7 @@ import { adminFixtures } from '../fixtures/admin-fixtures';
 const targetUser = adminFixtures.mutations.editableUser;
 ```
 
-- [ ] **Step 3: Run the new mutation spec to confirm fixture gaps**
+- [x] **Step 3: Run the new mutation spec to confirm fixture gaps**
 
 Run:
 
@@ -87,7 +87,7 @@ pnpm --filter @workspace/admin-web playwright test test/e2e/users/user-edit.spec
 
 Expected: FAIL because the mutation fixture reference does not exist yet or is incomplete.
 
-- [ ] **Step 4: Add explicit mutation-target fixture exports**
+- [x] **Step 4: Add explicit mutation-target fixture exports**
 
 Add clear exports in `packages/db-schema/src/seed/e2e-fixtures.ts`.
 
@@ -117,7 +117,7 @@ export const E2E_ADMIN_MUTATION_FIXTURES = {
 
 Ensure these exports correspond to actual seeded rows created by the E2E seed flow by updating `packages/db-schema/src/seed/seed-e2e-baseline.ts` alongside the exported fixture definitions.
 
-- [ ] **Step 5: Reflect those exports in `admin-fixtures.ts`**
+- [x] **Step 5: Reflect those exports in `admin-fixtures.ts`**
 
 Map them into the admin Playwright layer.
 
@@ -137,7 +137,7 @@ export const adminFixtures = {
 };
 ```
 
-- [ ] **Step 6: Re-run the targeted mutation spec**
+- [x] **Step 6: Re-run the targeted mutation spec**
 
 Run:
 
@@ -155,7 +155,7 @@ Expected: FAIL only on missing browser assertions, not on missing fixture defini
 - Optionally use: `packages/db-schema/src/seed/seed-e2e-baseline.ts`
 - Test: mutation specs
 
-- [ ] **Step 1: Write the failing import for a mutation reset helper**
+- [x] **Step 1: Write the failing import for a mutation reset helper**
 
 Use a shared helper so every mutation spec starts from known seeded state.
 
@@ -165,7 +165,7 @@ Example:
 import { resetAdminMutationState } from '../fixtures/admin-mutations';
 ```
 
-- [ ] **Step 2: Implement the minimal reseed helper**
+- [x] **Step 2: Implement the minimal reseed helper**
 
 Wrap the existing baseline seed path instead of inventing a second mutation-only reset flow unless the baseline becomes too expensive.
 
@@ -179,11 +179,11 @@ export async function resetAdminMutationState(): Promise<void> {
 }
 ```
 
-- [ ] **Step 3: Call the reseed helper at the start of each mutation spec file**
+- [x] **Step 3: Evaluate the reseed helper placement against the full-suite isolation model**
 
-Use a `beforeEach` or `beforeAll` hook that matches the granularity of the mutation-target fixtures. Prefer `beforeEach` if a spec mutates the same record repeatedly; prefer `beforeAll` only when every test in the file uses disjoint fixtures.
+The helper was implemented, but the hardened suite now relies on disjoint mutation-target fixtures plus the existing Playwright global baseline seed so the full admin suite can still run under default parallelism without cross-file resets wiping each other's state.
 
-- [ ] **Step 4: Run the first mutation spec in serialized worker mode**
+- [x] **Step 4: Run the first mutation spec in serialized worker mode**
 
 Run:
 
@@ -203,7 +203,7 @@ Expected: the mutation spec starts from a known seeded baseline every run.
 - Use: `apps/admin/test/e2e/fixtures/admin-fixtures.ts`
 - Test: `apps/admin/test/e2e/users/user-edit.spec.ts`
 
-- [ ] **Step 1: Write the failing user-edit spec**
+- [x] **Step 1: Write the failing user-edit spec**
 
 Cover a non-destructive update through the real admin user form.
 
@@ -228,7 +228,7 @@ test('platform admin can edit a seeded user and see persisted changes after relo
 });
 ```
 
-- [ ] **Step 2: Run the user-edit spec to confirm real failure behavior**
+- [x] **Step 2: Run the user-edit spec to confirm real failure behavior**
 
 Run:
 
@@ -238,24 +238,24 @@ pnpm --filter @workspace/admin-web playwright test test/e2e/users/user-edit.spec
 
 Expected: FAIL on actual form semantics, labels, save-button naming, or success-state timing.
 
-- [ ] **Step 3: Implement the minimal stable assertions**
+- [x] **Step 3: Implement the minimal stable assertions**
 
 Complete the browser flow with assertions for:
 
 - visible success feedback, if the UI provides it
-- persisted updated value after reload
+- persisted updated value after a fresh revisit
 
 Suggested completion shape:
 
 ```ts
 await expect(page.getByDisplayValue(updatedName)).toBeVisible();
-await page.reload();
+await page.goto('/users');
 await expect(page.getByDisplayValue(updatedName)).toBeVisible();
 ```
 
-If the UI requires waiting on navigation, query refetch, or toast feedback, use those real semantics instead of sleep-based timing.
+If the UI requires waiting on navigation, query refetch, or toast feedback, use those real semantics instead of sleep-based timing. In the current app, `/users/$userId` still hard-refreshes to a 404 page, so the persisted-state assertion should revisit the record through `/users` instead of calling `page.reload()`.
 
-- [ ] **Step 4: Re-run the user-edit spec**
+- [x] **Step 4: Re-run the user-edit spec**
 
 Run:
 
@@ -275,7 +275,7 @@ Expected: PASS.
 - Use: `apps/admin/test/e2e/fixtures/admin-fixtures.ts`
 - Test: `apps/admin/test/e2e/users/user-dangerous-actions.spec.ts`
 
-- [ ] **Step 1: Write the failing dangerous-actions spec**
+- [x] **Step 1: Write the failing dangerous-actions spec**
 
 Start with the most stable guardrail already visible in the UI: self-delete protection.
 
@@ -297,7 +297,7 @@ test('platform admin cannot delete his own account from the danger zone', async 
 });
 ```
 
-- [ ] **Step 2: Run the dangerous-actions spec**
+- [x] **Step 2: Run the dangerous-actions spec**
 
 Run:
 
@@ -307,7 +307,7 @@ pnpm --filter @workspace/admin-web playwright test test/e2e/users/user-dangerous
 
 Expected: FAIL only if the route, fixture ID, or guardrail assertion is mismatched.
 
-- [ ] **Step 3: Expand to one additional dangerous action only if it is deterministic**
+- [x] **Step 3: Expand to one additional dangerous action only if it is deterministic**
 
 If the admin UI supports a stable destructive or semi-destructive flow that can be safely reset, add one more focused test. Examples:
 
@@ -316,7 +316,7 @@ If the admin UI supports a stable destructive or semi-destructive flow that can 
 
 Keep it in a separate test block so self-delete guardrails remain isolated.
 
-- [ ] **Step 4: Re-run the dangerous-actions spec**
+- [x] **Step 4: Re-run the dangerous-actions spec**
 
 Run:
 
@@ -336,7 +336,7 @@ Expected: PASS.
 - Use: `apps/admin/test/e2e/fixtures/admin-fixtures.ts`
 - Test: `apps/admin/test/e2e/workspaces/workspace-entitlements.spec.ts`
 
-- [ ] **Step 1: Write the failing entitlement-mutation spec**
+- [x] **Step 1: Write the failing entitlement-mutation spec**
 
 Target the seeded enterprise workspace and cover the actual entitlement override flow exposed in the admin workspace detail UI.
 
@@ -359,7 +359,7 @@ test('platform admin can update enterprise entitlement overrides and see persist
 });
 ```
 
-- [ ] **Step 2: Run the entitlement spec**
+- [x] **Step 2: Run the entitlement spec**
 
 Run:
 
@@ -369,7 +369,7 @@ pnpm --filter @workspace/admin-web playwright test test/e2e/workspaces/workspace
 
 Expected: FAIL on actual section naming, control labels, or fixture eligibility.
 
-- [ ] **Step 3: Implement the minimal stable entitlement flow**
+- [x] **Step 3: Implement the minimal stable entitlement flow**
 
 Complete the spec using the real form controls and assert:
 
@@ -378,7 +378,7 @@ Complete the spec using the real form controls and assert:
 
 If the entitlement form uses toggles, selects, or numeric inputs, interact with the real accessible controls rather than targeting implementation details.
 
-- [ ] **Step 4: Re-run the entitlement spec**
+- [x] **Step 4: Re-run the entitlement spec**
 
 Run:
 
@@ -395,11 +395,11 @@ Expected: PASS.
 - Optionally create: `apps/admin/test/e2e/fixtures/admin-mutations.ts`
 - Test: affected mutation specs
 
-- [ ] **Step 1: Inspect the mutation specs for repeated browser steps**
+- [x] **Step 1: Inspect the mutation specs for repeated browser steps**
 
 Only extract helpers if the same save-and-wait sequence or success assertion appears in more than one spec.
 
-- [ ] **Step 2: If justified, write the failing import in one spec first**
+- [x] **Step 2: If justified, write the failing import in one spec first**
 
 Example:
 
@@ -407,23 +407,30 @@ Example:
 import { saveAndWaitForSuccess } from '../fixtures/admin-mutations';
 ```
 
-- [ ] **Step 3: Implement the minimal helper**
+- [x] **Step 3: Implement the minimal helper**
 
-Example shape:
+Implemented shape:
 
 ```ts
 import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
-export async function saveAndWaitForSuccess(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /save/i }).click();
-  await expect(page.getByText(/saved|updated|success/i)).toBeVisible();
+export async function openAdminUserDetailByEmail(
+  page: Page,
+  email: string
+): Promise<void> {
+  await page.goto('/users');
+  await expect(page.getByPlaceholder(/search/i)).toBeVisible();
+  await page.getByPlaceholder(/search/i).fill(email);
+  await page.keyboard.press('Enter');
+  await page.getByRole('link', { name: email, exact: true }).click();
+  await page.waitForURL(/\/users\/.+$/);
 }
 ```
 
 Only keep this helper if it genuinely improves clarity.
 
-- [ ] **Step 4: Re-run the affected mutation specs**
+- [x] **Step 4: Re-run the affected mutation specs**
 
 Run the smallest relevant spec command for each spec using the helper.
 
@@ -436,7 +443,7 @@ Expected: PASS.
 - Verify: `apps/admin/test/e2e/users/*.spec.ts`
 - Verify: `apps/admin/test/e2e/workspaces/*.spec.ts`
 
-- [ ] **Step 1: Run each mutation spec individually**
+- [x] **Step 1: Run each mutation spec individually**
 
 Run:
 
@@ -448,7 +455,7 @@ pnpm --filter @workspace/admin-web playwright test test/e2e/workspaces/workspace
 
 Expected: PASS for every individual mutation spec.
 
-- [ ] **Step 2: Run the full admin Chromium suite**
+- [x] **Step 2: Run the full admin Chromium suite**
 
 Run:
 
@@ -459,10 +466,10 @@ pnpm --filter @workspace/admin-web playwright test test/e2e/users/user-edit.spec
 Expected:
 
 - the mutation specs pass without cross-spec interference
-- reseeding and mutation-target fixtures remain stable
-- any later combined admin-suite run has an explicit worker/isolation strategy rather than relying on default full parallelism
+- mutation-target fixtures remain stable across the serialized mutation run
+- the hardened root `pnpm run admin:test:e2e` command also passes under the default admin-suite parallelism
 
-- [ ] **Step 3: Run the smallest relevant static verification**
+- [x] **Step 3: Run the smallest relevant static verification**
 
 Run:
 
@@ -479,15 +486,14 @@ pnpm --filter @workspace/test-utils typecheck
 
 Expected: PASS for every changed package/app that exposes TypeScript checks.
 
-- [ ] **Step 4: If shared packages changed, run the smallest relevant `apps/web` E2E regression checks**
+- [x] **Step 4: If shared packages changed, run the smallest relevant `apps/web` E2E regression checks**
 
 Only run this step if implementation touched `packages/db-schema/**` or `packages/test-utils/**`.
 
 Run:
 
 ```bash
-pnpm --filter @workspace/web playwright test test/e2e/auth/signin.spec.ts --workers=1
-pnpm --filter @workspace/web playwright test test/e2e/seed.spec.ts --workers=1
+pnpm --filter @workspace/web exec playwright test test/e2e/auth/signin.spec.ts test/e2e/seed.spec.ts
 ```
 
 Expected:
@@ -495,9 +501,15 @@ Expected:
 - the web seeded-auth flow still passes
 - the web baseline seed contract still holds after the shared-package change
 
-- [ ] **Step 5: Document any deferred mutation flows**
+- [x] **Step 5: Document any deferred mutation flows**
 
 If support actions, API-key actions, or other destructive flows are still unsafe or insufficiently deterministic, record them explicitly as deferred rather than silently omitting them.
+
+Deferred:
+
+- destructive deletes and ban/unban write-path coverage are still deferred until we decide whether to spend additional fixture budget on reversible destructive workflows
+- API-key and support-action mutations remain deferred because they touch higher-risk operational behavior than this first wave 2 slice
+- `/users/$userId` still returns a plain 404 page on hard refresh, so mutation persistence for user edits is currently asserted via a fresh revisit through `/users` rather than `page.reload()`
 
 ## Self-Review
 

@@ -6,6 +6,7 @@ import { account, member, organization, subscription, user } from '../schema';
 import {
   E2E_ADMIN_ENTERPRISE_OWNER,
   E2E_ADMIN_FILTER_USERS,
+  E2E_ADMIN_MUTATION_FIXTURES,
   E2E_ADMIN_WORKSPACES,
   E2E_BASELINE_USERS,
   E2E_PASSWORD,
@@ -35,10 +36,28 @@ export async function seedE2EBaseline(
   const passwordHash = await hashPassword(E2E_PASSWORD);
   const baselineUsers = Object.values(E2E_BASELINE_USERS);
   const filterUsers = Object.values(E2E_ADMIN_FILTER_USERS);
-  const workspaceUsers = [...baselineUsers, E2E_ADMIN_ENTERPRISE_OWNER];
+  const mutationUsers = [
+    E2E_ADMIN_MUTATION_FIXTURES.editableUser,
+    E2E_ADMIN_MUTATION_FIXTURES.dangerousActionUser,
+  ];
+  const workspaceUsers = [
+    ...baselineUsers,
+    E2E_ADMIN_ENTERPRISE_OWNER,
+    {
+      userId: E2E_ADMIN_MUTATION_FIXTURES.enterpriseWorkspace.ownerUserId,
+      accountId: E2E_ADMIN_MUTATION_FIXTURES.enterpriseWorkspace.ownerAccountId,
+      organizationId:
+        E2E_ADMIN_MUTATION_FIXTURES.enterpriseWorkspace.organizationId,
+      memberId: E2E_ADMIN_MUTATION_FIXTURES.enterpriseWorkspace.ownerMemberId,
+      email: E2E_ADMIN_MUTATION_FIXTURES.enterpriseWorkspace.ownerEmail,
+      name: E2E_ADMIN_MUTATION_FIXTURES.enterpriseWorkspace.ownerName,
+      role: E2E_ADMIN_MUTATION_FIXTURES.enterpriseWorkspace.role,
+    },
+  ];
   const credentialUsers = [
     ...workspaceUsers,
     ...filterUsers,
+    ...mutationUsers,
     E2E_PLATFORM_ADMIN,
   ];
 
@@ -141,6 +160,37 @@ export async function seedE2EBaseline(
         banReason: E2E_ADMIN_FILTER_USERS.banned.banReason,
         banExpires,
       },
+      {
+        id: E2E_ADMIN_MUTATION_FIXTURES.editableUser.userId,
+        name: E2E_ADMIN_MUTATION_FIXTURES.editableUser.name,
+        email: E2E_ADMIN_MUTATION_FIXTURES.editableUser.email,
+        emailVerified: E2E_ADMIN_MUTATION_FIXTURES.editableUser.emailVerified,
+        createdAt: now,
+        updatedAt: now,
+        lastLoginMethod: 'email',
+        banned: E2E_ADMIN_MUTATION_FIXTURES.editableUser.banned,
+      },
+      {
+        id: E2E_ADMIN_MUTATION_FIXTURES.dangerousActionUser.userId,
+        name: E2E_ADMIN_MUTATION_FIXTURES.dangerousActionUser.name,
+        email: E2E_ADMIN_MUTATION_FIXTURES.dangerousActionUser.email,
+        emailVerified:
+          E2E_ADMIN_MUTATION_FIXTURES.dangerousActionUser.emailVerified,
+        createdAt: now,
+        updatedAt: now,
+        lastLoginMethod: 'email',
+        banned: E2E_ADMIN_MUTATION_FIXTURES.dangerousActionUser.banned,
+      },
+      {
+        id: E2E_ADMIN_MUTATION_FIXTURES.enterpriseWorkspace.ownerUserId,
+        name: E2E_ADMIN_MUTATION_FIXTURES.enterpriseWorkspace.ownerName,
+        email: E2E_ADMIN_MUTATION_FIXTURES.enterpriseWorkspace.ownerEmail,
+        emailVerified: true,
+        createdAt: now,
+        updatedAt: now,
+        lastLoginMethod: 'email',
+        banned: false,
+      },
     ]);
 
     await db.insert(account).values(
@@ -174,6 +224,12 @@ export async function seedE2EBaseline(
         slug: E2E_ADMIN_ENTERPRISE_OWNER.organizationSlug,
         createdAt: now,
       },
+      {
+        id: E2E_ADMIN_MUTATION_FIXTURES.enterpriseWorkspace.organizationId,
+        name: E2E_ADMIN_MUTATION_FIXTURES.enterpriseWorkspace.name,
+        slug: E2E_ADMIN_MUTATION_FIXTURES.enterpriseWorkspace.slug,
+        createdAt: now,
+      },
     ]);
 
     await db.insert(member).values(
@@ -197,6 +253,14 @@ export async function seedE2EBaseline(
       id: 'e2e_subscription_enterprise_owner',
       plan: E2E_ADMIN_WORKSPACES.enterprise.planId,
       referenceId: E2E_ADMIN_ENTERPRISE_OWNER.organizationId,
+      status: 'active',
+    });
+
+    await db.insert(subscription).values({
+      id: 'e2e_subscription_admin_mutation_enterprise',
+      plan: E2E_ADMIN_MUTATION_FIXTURES.enterpriseWorkspace.planId,
+      referenceId:
+        E2E_ADMIN_MUTATION_FIXTURES.enterpriseWorkspace.organizationId,
       status: 'active',
     });
   } finally {

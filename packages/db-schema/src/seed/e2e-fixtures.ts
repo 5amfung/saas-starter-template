@@ -94,6 +94,39 @@ export const E2E_ADMIN_FILTER_USERS = {
   },
 };
 
+export const E2E_ADMIN_MUTATION_FIXTURES = {
+  editableUser: {
+    userId: 'e2e_user_admin_editable',
+    accountId: 'e2e_account_admin_editable',
+    email: 'admin-editable@e2e.local',
+    name: 'E2E Editable User',
+    role: 'user' as const,
+    emailVerified: true,
+    banned: false,
+  },
+  dangerousActionUser: {
+    userId: 'e2e_user_admin_danger',
+    accountId: 'e2e_account_admin_danger',
+    email: 'admin-danger@e2e.local',
+    name: 'E2E Danger User',
+    role: 'user' as const,
+    emailVerified: true,
+    banned: false,
+  },
+  enterpriseWorkspace: {
+    organizationId: 'e2e_org_admin_mutation_enterprise',
+    name: 'E2E Mutation Enterprise Workspace',
+    slug: 'e2e-mutation-enterprise',
+    ownerUserId: 'e2e_user_admin_mutation_enterprise_owner',
+    ownerAccountId: 'e2e_account_admin_mutation_enterprise_owner',
+    ownerMemberId: 'e2e_member_admin_mutation_enterprise_owner',
+    ownerEmail: 'owner-mutation-enterprise@e2e.local',
+    ownerName: 'E2E Mutation Enterprise Owner',
+    planId: 'enterprise' as const,
+    role: 'owner' as const,
+  },
+};
+
 export const E2E_ADMIN_WORKSPACES = {
   owner: {
     organizationId: E2E_BASELINE_USERS.owner.organizationId,
