@@ -3,6 +3,8 @@ import { createServerFnMock } from '../../mocks/server-fn';
 import type * as LoggingServer from '@workspace/logging/server';
 import {
   clearEntitlementOverrides,
+  createAdminWorkspaceApiKey,
+  deleteAdminWorkspaceApiKey,
   saveEntitlementOverrides,
 } from '@/admin/workspaces.functions';
 import {
@@ -14,8 +16,10 @@ const {
   requireCurrentAdminAppCapabilityMock,
   listWorkspacesWithPlanMock,
   getWorkspaceDetailMock,
+  createWorkspaceApiKeyMock,
   upsertEntitlementOverridesMock,
   deleteEntitlementOverridesMock,
+  deleteWorkspaceApiKeyMock,
   startSpanMock,
   loggerInfoMock,
   loggerErrorMock,
@@ -23,8 +27,10 @@ const {
   requireCurrentAdminAppCapabilityMock: vi.fn(),
   listWorkspacesWithPlanMock: vi.fn(),
   getWorkspaceDetailMock: vi.fn(),
+  createWorkspaceApiKeyMock: vi.fn(),
   upsertEntitlementOverridesMock: vi.fn(),
   deleteEntitlementOverridesMock: vi.fn(),
+  deleteWorkspaceApiKeyMock: vi.fn(),
   startSpanMock: vi.fn(async (_options, callback: () => Promise<unknown>) =>
     callback()
   ),
@@ -41,8 +47,10 @@ vi.mock('@/policy/admin-app-capabilities.server', () => ({
 vi.mock('@/admin/workspaces.server', () => ({
   listWorkspacesWithPlan: listWorkspacesWithPlanMock,
   getWorkspaceDetail: getWorkspaceDetailMock,
+  createWorkspaceApiKey: createWorkspaceApiKeyMock,
   upsertEntitlementOverrides: upsertEntitlementOverridesMock,
   deleteEntitlementOverrides: deleteEntitlementOverridesMock,
+  deleteWorkspaceApiKey: deleteWorkspaceApiKeyMock,
 }));
 
 vi.mock('@workspace/logging/server', async (importActual) => {
@@ -212,6 +220,74 @@ describe('saveEntitlementOverrides', () => {
   });
 });
 
+describe('createAdminWorkspaceApiKey', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('rejects when support-action capability guard throws', async () => {
+    requireCurrentAdminAppCapabilityMock.mockRejectedValueOnce(
+      new Error('Forbidden')
+    );
+
+    await expect(
+      createAdminWorkspaceApiKey({
+        data: { workspaceId: 'ws-1', accessMode: 'read_only' },
+      })
+    ).rejects.toMatchObject({ message: 'Forbidden' });
+
+    expect(loggerErrorMock).toHaveBeenCalledWith(
+      'Admin workspace api key create failed',
+      expect.objectContaining({
+        operation: OPERATIONS.ADMIN_WORKSPACE_API_KEY_CREATE,
+        workspaceId: 'ws-1',
+        route: '/workspaces/$workspaceId',
+        result: 'failure',
+        failureCategory: 'mutation_failed',
+      })
+    );
+  });
+
+  it('passes validated input to createWorkspaceApiKey', async () => {
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
+    createWorkspaceApiKeyMock.mockResolvedValueOnce({
+      id: 'key-1',
+      key: 'r_secret_123',
+      start: 'secret',
+      prefix: 'r_',
+    });
+
+    const result = await createAdminWorkspaceApiKey({
+      data: { workspaceId: 'ws-1', accessMode: 'read_only' },
+    });
+
+    expect(requireCurrentAdminAppCapabilityMock).toHaveBeenCalledWith(
+      'canPerformSupportActions'
+    );
+    expect(createWorkspaceApiKeyMock).toHaveBeenCalledWith({
+      workspaceId: 'ws-1',
+      accessMode: 'read_only',
+    });
+    expect(loggerInfoMock).toHaveBeenCalledWith(
+      'Admin workspace api key created',
+      expect.objectContaining({
+        operation: OPERATIONS.ADMIN_WORKSPACE_API_KEY_CREATE,
+        workspaceId: 'ws-1',
+        route: '/workspaces/$workspaceId',
+        result: 'success',
+        apiKeyId: 'key-1',
+      })
+    );
+    expect(result).toEqual({
+      success: true,
+      apiKeyId: 'key-1',
+      generatedKey: 'r_secret_123',
+      keyStart: 'secret',
+      keyPrefix: 'r_',
+    });
+  });
+});
+
 describe('clearEntitlementOverrides', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -275,6 +351,64 @@ describe('clearEntitlementOverrides', () => {
     const result = await clearEntitlementOverrides({
       data: { workspaceId: 'ws-1' },
     });
+    expect(result).toEqual({ success: true });
+  });
+});
+
+describe('deleteAdminWorkspaceApiKey', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('rejects when support-action capability guard throws', async () => {
+    requireCurrentAdminAppCapabilityMock.mockRejectedValueOnce(
+      new Error('Forbidden')
+    );
+
+    await expect(
+      deleteAdminWorkspaceApiKey({
+        data: { workspaceId: 'ws-1', apiKeyId: 'key-1' },
+      })
+    ).rejects.toMatchObject({ message: 'Forbidden' });
+
+    expect(loggerErrorMock).toHaveBeenCalledWith(
+      'Admin workspace api key delete failed',
+      expect.objectContaining({
+        operation: OPERATIONS.ADMIN_WORKSPACE_API_KEY_DELETE,
+        workspaceId: 'ws-1',
+        route: '/workspaces/$workspaceId',
+        result: 'failure',
+        failureCategory: 'mutation_failed',
+        apiKeyId: 'key-1',
+      })
+    );
+  });
+
+  it('passes validated input to deleteWorkspaceApiKey', async () => {
+    requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
+    deleteWorkspaceApiKeyMock.mockResolvedValueOnce(undefined);
+
+    const result = await deleteAdminWorkspaceApiKey({
+      data: { workspaceId: 'ws-1', apiKeyId: 'key-1' },
+    });
+
+    expect(requireCurrentAdminAppCapabilityMock).toHaveBeenCalledWith(
+      'canPerformSupportActions'
+    );
+    expect(deleteWorkspaceApiKeyMock).toHaveBeenCalledWith({
+      workspaceId: 'ws-1',
+      apiKeyId: 'key-1',
+    });
+    expect(loggerInfoMock).toHaveBeenCalledWith(
+      'Admin workspace api key deleted',
+      expect.objectContaining({
+        operation: OPERATIONS.ADMIN_WORKSPACE_API_KEY_DELETE,
+        workspaceId: 'ws-1',
+        route: '/workspaces/$workspaceId',
+        result: 'success',
+        apiKeyId: 'key-1',
+      })
+    );
     expect(result).toEqual({ success: true });
   });
 });

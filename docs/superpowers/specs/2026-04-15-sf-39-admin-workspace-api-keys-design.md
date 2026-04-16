@@ -203,8 +203,8 @@ Avoid wording like:
 
 Recommended derived names:
 
-- `Read only` -> `Read only`
-- `Read and Write` -> `Read and Write`
+- `Read only` -> `Read API Key`
+- `Read and Write` -> `Read & Write API Key`
 
 If the implementation later needs more backend-friendly labels, keep that translation internal to the server layer rather than reintroducing freeform naming into the dialog.
 

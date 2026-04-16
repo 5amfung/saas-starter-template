@@ -5,6 +5,8 @@ export const OPERATIONS = {
   AUTH_SIGN_UP: 'auth.sign_up',
   ADMIN_USER_DELETE: 'admin.user.delete',
   ADMIN_USER_UPDATE: 'admin.user.update',
+  ADMIN_WORKSPACE_API_KEY_CREATE: 'admin.workspace.api_key.create',
+  ADMIN_WORKSPACE_API_KEY_DELETE: 'admin.workspace.api_key.delete',
   ADMIN_WORKSPACE_ENTITLEMENTS_CLEAR: 'admin.workspace.entitlements.clear',
   ADMIN_WORKSPACE_ENTITLEMENTS_SAVE: 'admin.workspace.entitlements.save',
   BILLING_CHECKOUT_CREATE_SESSION: 'billing.checkout.create_session',
