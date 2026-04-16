@@ -8,7 +8,7 @@ const sentryEnabled = isServerSentryEnabled();
 
 if (sentryEnabled) {
   Sentry.init({
-    dsn: process.env.SENTRY_DSN,
+    dsn: process.env.VITE_SENTRY_DSN,
     enabled: true,
     enableLogs: true,
     environment: process.env.NODE_ENV ?? 'development',

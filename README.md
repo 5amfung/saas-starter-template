@@ -353,10 +353,9 @@ Common production variables include:
 
 ### Sentry configuration
 
-Runtime error reporting uses:
+Sentry uses this runtime DSN:
 
-- `VITE_SENTRY_DSN` for the browser bundle
-- `SENTRY_DSN` for the server runtime
+- `VITE_SENTRY_DSN` for both the browser bundle and the server runtime
 
 Source map upload during production builds uses:
 
@@ -364,9 +363,14 @@ Source map upload during production builds uses:
 - `SENTRY_ORG`
 - `SENTRY_PROJECT`
 
+Use `VITE_SENTRY_DISABLED=true` to disable Sentry for an app run. The same
+flag is read by browser runtime code, server bootstrap code, and the Vite
+build plugin gating used for source map upload.
+
 Production deploys on Railway or CI should use the normal `build` command.
 The dedicated `build:e2e` command is only for Playwright test builds and
-intentionally skips Sentry source map upload.
+sets `VITE_SENTRY_DISABLED=true` so Sentry stays off during the test build
+and test runtime.
 
 See the [TanStack Start deployment docs](https://tanstack.com/start/latest/docs/framework/react/guide/hosting)
 for additional platform-specific guidance.
