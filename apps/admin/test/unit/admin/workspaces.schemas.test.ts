@@ -1,4 +1,9 @@
-import { entitlementOverrideSchema } from '@/admin/workspaces.schemas';
+import {
+  entitlementOverrideSchema,
+  workspaceApiKeyAccessModeSchema,
+  workspaceApiKeyCreateSchema,
+  workspaceApiKeyDeleteSchema,
+} from '@/admin/workspaces.schemas';
 
 describe('entitlementOverrideSchema', () => {
   const validData = {
@@ -91,5 +96,64 @@ describe('entitlementOverrideSchema', () => {
       expect(result.data.quotas?.storageGb).toBe(100);
       expect(result.data.notes).toBe('Custom enterprise deal');
     }
+  });
+});
+
+describe('workspaceApiKeyAccessModeSchema', () => {
+  it('accepts read-only and read-write modes', () => {
+    expect(workspaceApiKeyAccessModeSchema.parse('read_only')).toBe(
+      'read_only'
+    );
+    expect(workspaceApiKeyAccessModeSchema.parse('read_write')).toBe(
+      'read_write'
+    );
+  });
+
+  it('rejects unknown access modes', () => {
+    expect(() => workspaceApiKeyAccessModeSchema.parse('admin')).toThrow();
+  });
+});
+
+describe('workspaceApiKeyCreateSchema', () => {
+  it('accepts a workspace id with a valid access mode', () => {
+    expect(
+      workspaceApiKeyCreateSchema.parse({
+        workspaceId: 'ws-1',
+        accessMode: 'read_only',
+      })
+    ).toEqual({
+      workspaceId: 'ws-1',
+      accessMode: 'read_only',
+    });
+  });
+
+  it('rejects missing workspace ids', () => {
+    expect(() =>
+      workspaceApiKeyCreateSchema.parse({
+        accessMode: 'read_write',
+      })
+    ).toThrow();
+  });
+});
+
+describe('workspaceApiKeyDeleteSchema', () => {
+  it('accepts a workspace id and api key id', () => {
+    expect(
+      workspaceApiKeyDeleteSchema.parse({
+        workspaceId: 'ws-1',
+        apiKeyId: 'key-1',
+      })
+    ).toEqual({
+      workspaceId: 'ws-1',
+      apiKeyId: 'key-1',
+    });
+  });
+
+  it('rejects missing api key ids', () => {
+    expect(() =>
+      workspaceApiKeyDeleteSchema.parse({
+        workspaceId: 'ws-1',
+      })
+    ).toThrow();
   });
 });

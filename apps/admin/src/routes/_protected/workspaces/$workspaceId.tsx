@@ -18,6 +18,7 @@ import { Label } from '@workspace/ui/components/label';
 import { Separator } from '@workspace/ui/components/separator';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { AdminEntitlementOverrideForm } from '@/components/admin/admin-entitlement-override-form';
+import { AdminWorkspaceApiKeysCard } from '@/components/admin/admin-workspace-api-keys-card';
 import { useAdminWorkspaceDetailQuery } from '@/admin/workspaces.queries';
 import { getAdminAppCapabilities } from '@/policy/admin-app-capabilities.functions';
 import { useAdminAppCapabilities } from '@/policy/admin-app-capabilities';
@@ -191,6 +192,13 @@ function AdminWorkspaceDetailPage() {
               )}
             </CardContent>
           </Card>
+        ) : null}
+
+        {capabilities.canPerformSupportActions ? (
+          <AdminWorkspaceApiKeysCard
+            workspaceId={workspace.id}
+            apiKeys={workspace.apiKeys}
+          />
         ) : null}
 
         {/* Entitlement Overrides — enterprise only */}
