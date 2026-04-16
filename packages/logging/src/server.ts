@@ -7,9 +7,11 @@ export {
 export {
   buildWorkflowAttributes,
   getWorkflowOperationFamily,
+  isBrowserSentryRuntimeEnabled,
   redactAuthWorkflowAttributes,
 } from './observability.shared';
 export type {
+  BrowserSentryRuntimeEnv,
   WorkflowAttributes,
   WorkflowAttributesShape,
   WorkflowResult,

@@ -1,7 +1,10 @@
 import * as Sentry from '@sentry/tanstackstart-react';
 
-const sentryEnabled =
-  process.env.NODE_ENV !== 'test' && process.env.DISABLE_SENTRY !== 'true';
+export function isServerSentryEnabled(env = process.env) {
+  return env.NODE_ENV !== 'test' && env.SENTRY_DISABLED !== 'true';
+}
+
+const sentryEnabled = isServerSentryEnabled();
 
 if (sentryEnabled) {
   Sentry.init({

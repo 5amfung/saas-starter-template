@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "NODE_OPTIONS='--import ./instrument.server.mjs' vite dev --port 3001",
-    "build:e2e": "E2E_MOCK_EMAIL=true VITE_DISABLE_SENTRY=true vite build && cp instrument.server.mjs .output/server",
+    "build:e2e": "E2E_MOCK_EMAIL=true VITE_DISABLE_SENTRY=true VITE_SENTRY_DISABLED=true vite build && cp instrument.server.mjs .output/server",
     "build": "vite build && cp instrument.server.mjs .output/server",
     "start": "node --import ./.output/server/instrument.server.mjs .output/server/index.mjs",
     "preview": "vite preview",
