@@ -119,7 +119,7 @@ describe('AdminWorkspaceApiKeysCard', () => {
       />
     );
 
-    await act(async () => {
+    act(() => {
       generatedKeyDialogProps.current?.onKeyCreated({
         id: 'key-2',
         key: 'r_secret_123',
