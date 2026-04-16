@@ -14,7 +14,7 @@ const sentryBuildCredsPresent = Boolean(
   process.env.SENTRY_PROJECT
 );
 const sentryBuildEnabled =
-  process.env.VITE_DISABLE_SENTRY !== 'true' && sentryBuildCredsPresent;
+  process.env.VITE_SENTRY_DISABLED !== 'true' && sentryBuildCredsPresent;
 
 const config = defineConfig({
   build: {

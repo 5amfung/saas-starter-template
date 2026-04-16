@@ -6,7 +6,7 @@
     "dev": "NODE_OPTIONS='--import ./instrument.server.mjs' vite dev --port 3000",
     "dev:stripe-webhook": "stripe listen --forward-to localhost:3000/api/auth/stripe/webhook",
     "build": "vite build && cp instrument.server.mjs .output/server",
-    "build:e2e": "E2E_MOCK_EMAIL=true VITE_DISABLE_SENTRY=true VITE_SENTRY_DISABLED=true vite build && cp instrument.server.mjs .output/server",
+    "build:e2e": "E2E_MOCK_EMAIL=true VITE_SENTRY_DISABLED=true vite build && cp instrument.server.mjs .output/server",
     "start": "node --import ./.output/server/instrument.server.mjs .output/server/index.mjs",
     "preview": "vite preview",
     "test": "vitest run",
