@@ -1,7 +1,8 @@
-import { type Page, expect, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { signInAsPlatformAdmin } from '../fixtures/admin-auth';
 import { adminFixtures } from '../fixtures/admin-fixtures';
 import { openAdminWorkspaceDetail } from '../fixtures/admin-navigation';
+import type { Page } from '@playwright/test';
 
 async function deleteAllWorkspaceApiKeys(page: Page): Promise<void> {
   const deleteButtons = page.getByRole('button', { name: 'Delete' });
