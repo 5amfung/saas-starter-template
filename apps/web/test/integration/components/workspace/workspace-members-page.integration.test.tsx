@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   createMockSessionResponse,
@@ -123,6 +123,10 @@ describe('WorkspaceMembersPage integration', () => {
       data: buildMembersResponse('admin'),
       error: null,
     });
+    listMembersMock.mockResolvedValue({
+      data: buildMembersResponse('admin'),
+      error: null,
+    });
 
     routerInvalidateMock.mockImplementation(() => {
       loaderData = {
@@ -147,7 +151,9 @@ describe('WorkspaceMembersPage integration', () => {
     });
 
     await user.click(
-      screen.getAllByRole('button', { name: /row actions/i })[1]
+      screen.getByRole('button', {
+        name: /row actions for member@test\.com/i,
+      })
     );
     expect(
       await screen.findByRole('menuitem', { name: /transfer ownership/i })
@@ -181,8 +187,17 @@ describe('WorkspaceMembersPage integration', () => {
       expect(screen.getByText('admin')).toBeInTheDocument();
     });
 
+    await waitFor(() => {
+      expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    });
+
+    const memberRow = screen.getByText('member@test.com').closest('tr');
+    expect(memberRow).not.toBeNull();
+
     await user.click(
-      screen.getAllByRole('button', { name: /row actions/i })[1]
+      within(memberRow!).getByRole('button', {
+        name: /row actions for member@test\.com/i,
+      })
     );
 
     expect(
