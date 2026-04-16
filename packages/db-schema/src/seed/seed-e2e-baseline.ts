@@ -3,7 +3,11 @@ import { hashPassword } from 'better-auth/crypto';
 import { createDb } from '@workspace/db';
 import * as schema from '../schema';
 import { account, member, organization, subscription, user } from '../schema';
-import { E2E_BASELINE_USERS, E2E_PASSWORD } from './e2e-fixtures';
+import {
+  E2E_BASELINE_USERS,
+  E2E_PASSWORD,
+  E2E_PLATFORM_ADMIN,
+} from './e2e-fixtures';
 import { resetE2EState } from './reset-e2e-state';
 
 interface SeedE2EBaselineOptions {
@@ -26,6 +30,7 @@ export async function seedE2EBaseline(
   const now = new Date();
   const passwordHash = await hashPassword(E2E_PASSWORD);
   const baselineUsers = Object.values(E2E_BASELINE_USERS);
+  const credentialUsers = [...baselineUsers, E2E_PLATFORM_ADMIN];
 
   await db.execute(sql`select pg_advisory_lock(${E2E_BASELINE_SEED_LOCK_ID})`);
 
@@ -54,6 +59,17 @@ export async function seedE2EBaseline(
         banned: false,
       },
       {
+        id: E2E_PLATFORM_ADMIN.userId,
+        name: E2E_PLATFORM_ADMIN.name,
+        email: E2E_PLATFORM_ADMIN.email,
+        emailVerified: true,
+        role: E2E_PLATFORM_ADMIN.role,
+        createdAt: now,
+        updatedAt: now,
+        lastLoginMethod: 'email',
+        banned: false,
+      },
+      {
         id: E2E_BASELINE_USERS.member.userId,
         name: E2E_BASELINE_USERS.member.name,
         email: E2E_BASELINE_USERS.member.email,
@@ -76,7 +92,7 @@ export async function seedE2EBaseline(
     ]);
 
     await db.insert(account).values(
-      baselineUsers.map((entry) => ({
+      credentialUsers.map((entry) => ({
         id: entry.accountId,
         accountId: entry.userId,
         providerId: 'credential',

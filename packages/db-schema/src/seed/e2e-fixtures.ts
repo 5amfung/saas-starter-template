@@ -1,5 +1,13 @@
 export const E2E_PASSWORD = 'Password123!';
 
+export const E2E_PLATFORM_ADMIN = {
+  userId: 'e2e_user_platform_admin',
+  accountId: 'e2e_account_platform_admin',
+  email: 'platform-admin@e2e.local',
+  name: 'E2E Platform Admin',
+  role: 'admin' as const,
+};
+
 export const E2E_BASELINE_USERS = {
   owner: {
     userId: 'e2e_user_owner',
