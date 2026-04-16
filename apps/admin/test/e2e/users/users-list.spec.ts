@@ -37,6 +37,10 @@ test.describe('Admin users list', () => {
 
     await page.getByRole('button', { name: /clear search/i }).click();
     await page.getByRole('tab', { name: 'Verified', exact: true }).click();
+    await page
+      .getByPlaceholder(/search/i)
+      .fill(adminFixtures.users.verified.email);
+    await page.keyboard.press('Enter');
 
     await expect(
       page.getByRole('link', {
@@ -51,7 +55,12 @@ test.describe('Admin users list', () => {
       })
     ).toHaveCount(0);
 
+    await page.getByRole('button', { name: /clear search/i }).click();
     await page.getByRole('tab', { name: 'Unverified', exact: true }).click();
+    await page
+      .getByPlaceholder(/search/i)
+      .fill(adminFixtures.users.unverified.email);
+    await page.keyboard.press('Enter');
 
     await expect(
       page.getByRole('link', {
@@ -66,7 +75,12 @@ test.describe('Admin users list', () => {
       })
     ).toHaveCount(0);
 
+    await page.getByRole('button', { name: /clear search/i }).click();
     await page.getByRole('tab', { name: 'Banned', exact: true }).click();
+    await page
+      .getByPlaceholder(/search/i)
+      .fill(adminFixtures.users.banned.email);
+    await page.keyboard.press('Enter');
 
     await expect(
       page.getByRole('link', {
