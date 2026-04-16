@@ -18,6 +18,12 @@ export type WorkflowAttributesShape = WorkflowAttributes & {
   operationFamily: WorkflowOperationFamily;
 };
 
+export type BrowserSentryRuntimeEnv = {
+  MODE?: string;
+  VITEST?: boolean;
+  VITE_SENTRY_DISABLED?: string;
+};
+
 const AUTH_REDACTED_KEYS = new Set([
   'accessToken',
   'authorization',
@@ -60,5 +66,13 @@ export function redactAuthWorkflowAttributes(
 
       return !AUTH_REDACTED_KEYS.has(key);
     })
+  );
+}
+
+export function isBrowserSentryRuntimeEnabled(
+  env: BrowserSentryRuntimeEnv
+): boolean {
+  return (
+    !env.VITEST && env.MODE !== 'test' && env.VITE_SENTRY_DISABLED !== 'true'
   );
 }

@@ -3,6 +3,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { createRouter } from '@tanstack/react-router';
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query';
 import * as Sentry from '@sentry/tanstackstart-react';
+import { isBrowserSentryRuntimeEnabled } from '@workspace/logging/client';
 import { routeTree } from './routeTree.gen';
 
 export const getRouter = () => {
@@ -24,10 +25,7 @@ export const getRouter = () => {
     notFoundMode: 'root',
   });
 
-  const sentryEnabled =
-    !import.meta.env.VITEST &&
-    import.meta.env.MODE !== 'test' &&
-    import.meta.env.VITE_DISABLE_SENTRY !== 'true';
+  const sentryEnabled = isBrowserSentryRuntimeEnabled(import.meta.env);
 
   if (!router.isServer && sentryEnabled) {
     Sentry.init({

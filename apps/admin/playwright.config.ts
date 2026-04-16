@@ -24,7 +24,7 @@ export default defineConfig({
     url: 'http://localhost:3001',
     reuseExistingServer: false,
     env: {
-      DISABLE_SENTRY: 'true',
+      VITE_SENTRY_DISABLED: 'true',
       PORT: '3001',
       WORKSPACE_SECRET_ENCRYPTION_KEY:
         process.env.WORKSPACE_SECRET_ENCRYPTION_KEY ??
