@@ -44,18 +44,30 @@ function BackToUserListButton({ disabled }: { disabled?: boolean }) {
 function AdminUserDetailPage() {
   const { userId } = Route.useParams();
   const sessionQuery = useSessionQuery();
-  const { capabilities } = useAdminAppCapabilities();
+  const { capabilities, isPending: isAdminCapabilitiesPending } =
+    useAdminAppCapabilities();
   const canDeleteTargetUser = capabilities.canDeleteUsers;
   const isSelfDelete = sessionQuery.data?.user.id === userId;
 
   const userQuery = useQuery({
     queryKey: ['admin', 'user', userId],
-    enabled: capabilities.canViewUsers,
+    enabled: !isAdminCapabilitiesPending && capabilities.canViewUsers,
     queryFn: async () => {
       return getUser({ data: { userId } });
     },
     retry: false,
   });
+
+  if (isAdminCapabilitiesPending) {
+    return (
+      <div className={PAGE_LAYOUT_CLASS}>
+        <div className="self-start">
+          <BackToUserListButton disabled />
+        </div>
+        <AdminUserFormSkeleton />
+      </div>
+    );
+  }
 
   if (!capabilities.canViewUsers) {
     throw notFound();
