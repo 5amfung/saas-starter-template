@@ -59,7 +59,7 @@ Shared-package rule for this plan:
 - Modify if needed: `packages/db-schema/src/seed/e2e-fixtures.ts`
 - Test indirectly: `apps/admin/test/e2e/auth/signin.spec.ts`
 
-- [ ] **Step 1: Read the current seeded fixture exports and choose the exact records wave 1 will assert**
+- [x] **Step 1: Read the current seeded fixture exports and choose the exact records wave 1 will assert**
 
 Verify that the plan will consistently assert against:
 
@@ -75,7 +75,7 @@ Also confirm which workspace records are already seeded and whether they are exp
 
 Wave 1 should make this explicit instead of conditional. The workspace specs later in the plan assume `adminFixtures.workspaces.*` exists, so named workspace fixture exports need to be established before those specs are written.
 
-- [ ] **Step 2: Write the smallest failing admin spec that depends on one chosen seeded record**
+- [x] **Step 2: Write the smallest failing admin spec that depends on one chosen seeded record**
 
 Use the existing sign-in spec as the first safety check. Tighten or add one expectation that depends on a known fixture-owned value already exported from `@workspace/db-schema`.
 
@@ -85,7 +85,7 @@ Example target assertion:
 await expect(page.getByText(E2E_PLATFORM_ADMIN.email)).toBeVisible();
 ```
 
-- [ ] **Step 3: Run the targeted sign-in spec to validate fixture assumptions**
+- [x] **Step 3: Run the targeted sign-in spec to validate fixture assumptions**
 
 Run:
 
@@ -99,7 +99,7 @@ Expected:
 - baseline seeding succeeds
 - the sign-in spec passes using fixture-backed credentials
 
-- [ ] **Step 4: If fixture exports are unclear, implement the minimal export cleanup**
+- [x] **Step 4: If fixture exports are unclear, implement the minimal export cleanup**
 
 If needed, add explicit named fixture exports in `packages/db-schema/src/seed/e2e-fixtures.ts` rather than embedding magic values in specs, and update `packages/db-schema/src/seed/seed-e2e-baseline.ts` so those exported records are actually seeded.
 
@@ -125,7 +125,7 @@ export const E2E_ADMIN_WORKSPACES = {
 };
 ```
 
-- [ ] **Step 5: Re-run the same targeted sign-in spec**
+- [x] **Step 5: Re-run the same targeted sign-in spec**
 
 Run:
 
@@ -143,7 +143,7 @@ Expected: PASS with no changes to the behavior of the existing sign-in flow.
 - Optionally modify: `packages/test-utils/src/e2e-auth.ts`
 - Test: `apps/admin/test/e2e/navigation/admin-shell.spec.ts`
 
-- [ ] **Step 1: Write the failing navigation spec using a not-yet-created admin session helper**
+- [x] **Step 1: Write the failing navigation spec using a not-yet-created admin session helper**
 
 Create the new spec with the intended helper usage first.
 
@@ -162,7 +162,7 @@ test('platform admin can navigate between protected shell routes', async ({
 });
 ```
 
-- [ ] **Step 2: Run the new navigation spec to confirm it fails for the right reason**
+- [x] **Step 2: Run the new navigation spec to confirm it fails for the right reason**
 
 Run:
 
@@ -172,7 +172,7 @@ pnpm --filter @workspace/admin-web playwright test test/e2e/navigation/admin-she
 
 Expected: FAIL because `../fixtures/admin-auth` or `signInAsPlatformAdmin` does not exist yet.
 
-- [ ] **Step 3: Implement the minimal admin auth helper**
+- [x] **Step 3: Implement the minimal admin auth helper**
 
 Create `apps/admin/test/e2e/fixtures/admin-auth.ts` with a thin wrapper around seeded auth.
 
@@ -213,7 +213,7 @@ export async function signInAsPlatformAdmin(page: Page): Promise<void> {
 
 If cookie parsing already exists elsewhere in the repo, reuse it instead of duplicating it.
 
-- [ ] **Step 4: Re-run the navigation spec**
+- [x] **Step 4: Re-run the navigation spec**
 
 Run:
 
@@ -223,7 +223,7 @@ pnpm --filter @workspace/admin-web playwright test test/e2e/navigation/admin-she
 
 Expected: FAIL only on the missing navigation assertions, not on authentication setup.
 
-- [ ] **Step 5: Tighten the helper only as needed**
+- [x] **Step 5: Tighten the helper only as needed**
 
 If route visits still require a convenience helper, add a tiny companion helper rather than expanding auth setup too far.
 
@@ -243,7 +243,7 @@ export async function gotoAdminPath(page: Page, path: string): Promise<void> {
 - Create: `apps/admin/test/e2e/navigation/admin-shell.spec.ts`
 - Test: `apps/admin/test/e2e/navigation/admin-shell.spec.ts`
 
-- [ ] **Step 1: Write the full failing navigation assertions**
+- [x] **Step 1: Write the full failing navigation assertions**
 
 Cover:
 
@@ -269,7 +269,7 @@ await page.getByRole('link', { name: 'Workspaces' }).click();
 await page.waitForURL(/\/workspaces$/);
 ```
 
-- [ ] **Step 2: Run the navigation spec**
+- [x] **Step 2: Run the navigation spec**
 
 Run:
 
@@ -279,11 +279,11 @@ pnpm --filter @workspace/admin-web playwright test test/e2e/navigation/admin-she
 
 Expected: FAIL only on assertions that reveal real selector or route-shape mismatches.
 
-- [ ] **Step 3: Implement the minimal spec fixes**
+- [x] **Step 3: Implement the minimal spec fixes**
 
 Adjust selectors or waiting strategy to match the real UI semantics. Prefer role-based selectors and URL assertions over brittle DOM traversal.
 
-- [ ] **Step 4: Re-run the navigation spec**
+- [x] **Step 4: Re-run the navigation spec**
 
 Run:
 
@@ -301,7 +301,7 @@ Expected: PASS.
 - Read: `packages/db-schema/src/seed/e2e-fixtures.ts`
 - Test: `apps/admin/test/e2e/users/users-list.spec.ts`
 
-- [ ] **Step 1: Write a failing users-list spec that imports admin fixture references**
+- [x] **Step 1: Write a failing users-list spec that imports admin fixture references**
 
 Example import usage:
 
@@ -309,7 +309,7 @@ Example import usage:
 import { adminFixtures } from '../fixtures/admin-fixtures';
 ```
 
-- [ ] **Step 2: Run the users-list spec to confirm the missing fixture helper failure**
+- [x] **Step 2: Run the users-list spec to confirm the missing fixture helper failure**
 
 Run:
 
@@ -319,7 +319,7 @@ pnpm --filter @workspace/admin-web playwright test test/e2e/users/users-list.spe
 
 Expected: FAIL because `admin-fixtures.ts` does not exist yet.
 
-- [ ] **Step 3: Implement `admin-fixtures.ts` as a thin mapping layer**
+- [x] **Step 3: Implement `admin-fixtures.ts` as a thin mapping layer**
 
 Suggested shape:
 
@@ -342,7 +342,7 @@ export const adminFixtures = {
 };
 ```
 
-- [ ] **Step 4: Re-run the users-list spec**
+- [x] **Step 4: Re-run the users-list spec**
 
 Run:
 
@@ -361,7 +361,7 @@ Expected: FAIL only on missing page assertions, not fixture imports.
 - Use: `apps/admin/test/e2e/fixtures/admin-fixtures.ts`
 - Test: `apps/admin/test/e2e/users/users-list.spec.ts`
 
-- [ ] **Step 1: Write the failing users-list spec**
+- [x] **Step 1: Write the failing users-list spec**
 
 Cover:
 
@@ -396,7 +396,7 @@ test('users list renders seeded users and supports read-only navigation', async 
 });
 ```
 
-- [ ] **Step 2: Run the users-list spec**
+- [x] **Step 2: Run the users-list spec**
 
 Run:
 
@@ -406,7 +406,7 @@ pnpm --filter @workspace/admin-web playwright test test/e2e/users/users-list.spe
 
 Expected: FAIL on real selector, debounce, or filter behavior differences.
 
-- [ ] **Step 3: Implement the minimal selector and waiting strategy corrections**
+- [x] **Step 3: Implement the minimal selector and waiting strategy corrections**
 
 Use the actual accessible controls exposed by `AdminUserTable`, such as:
 
@@ -416,7 +416,7 @@ Use the actual accessible controls exposed by `AdminUserTable`, such as:
 
 Prefer explicit waits tied to result visibility rather than arbitrary timeouts.
 
-- [ ] **Step 4: Add one deterministic filter assertion**
+- [x] **Step 4: Add one deterministic filter assertion**
 
 Only if seeded fixtures support it, add a read-only filter assertion such as:
 
@@ -429,7 +429,7 @@ await expect(
 
 If the seeded users do not provide predictable filter coverage, skip filter assertions rather than making the test flaky.
 
-- [ ] **Step 5: Re-run the users-list spec**
+- [x] **Step 5: Re-run the users-list spec**
 
 Run:
 
@@ -448,7 +448,7 @@ Expected: PASS.
 - Use: `apps/admin/test/e2e/fixtures/admin-fixtures.ts`
 - Test: `apps/admin/test/e2e/users/user-detail.spec.ts`
 
-- [ ] **Step 1: Write the failing user-detail spec**
+- [x] **Step 1: Write the failing user-detail spec**
 
 Cover direct detail navigation and read-only rendering only.
 
@@ -468,7 +468,7 @@ await expect(
 await expect(page.getByText('Danger Zone')).toBeVisible();
 ```
 
-- [ ] **Step 2: Run the user-detail spec**
+- [x] **Step 2: Run the user-detail spec**
 
 Run:
 
@@ -478,7 +478,7 @@ pnpm --filter @workspace/admin-web playwright test test/e2e/users/user-detail.sp
 
 Expected: FAIL on any mismatch between fixture IDs, form semantics, or page affordances.
 
-- [ ] **Step 3: Implement the minimal assertion corrections**
+- [x] **Step 3: Implement the minimal assertion corrections**
 
 Adjust assertions to the actual semantics of `AdminUserForm`. Keep coverage read-only:
 
@@ -486,7 +486,7 @@ Adjust assertions to the actual semantics of `AdminUserForm`. Keep coverage read
 - no delete confirmation completion
 - no write-path assertions
 
-- [ ] **Step 4: Re-run the user-detail spec**
+- [x] **Step 4: Re-run the user-detail spec**
 
 Run:
 
@@ -505,7 +505,7 @@ Expected: PASS.
 - Use: `apps/admin/test/e2e/fixtures/admin-fixtures.ts`
 - Test: `apps/admin/test/e2e/workspaces/workspaces-list.spec.ts`
 
-- [ ] **Step 1: Write the failing workspaces-list spec**
+- [x] **Step 1: Write the failing workspaces-list spec**
 
 Cover:
 
@@ -525,7 +525,7 @@ await expect(
 ).toBeVisible();
 ```
 
-- [ ] **Step 2: Run the workspaces-list spec**
+- [x] **Step 2: Run the workspaces-list spec**
 
 Run:
 
@@ -535,7 +535,7 @@ pnpm --filter @workspace/admin-web playwright test test/e2e/workspaces/workspace
 
 Expected: FAIL until workspace fixture mapping and selectors are aligned.
 
-- [ ] **Step 3: Implement the minimal fixture or selector support**
+- [x] **Step 3: Implement the minimal fixture or selector support**
 
 By this point workspace fixture mappings should already exist from Task 1 and Task 4. Assert on:
 
@@ -543,7 +543,7 @@ By this point workspace fixture mappings should already exist from Task 1 and Ta
 - plan badge text such as `free`, `pro`, or `enterprise`
 - status badge text when deterministic
 
-- [ ] **Step 4: Add one deterministic filter assertion**
+- [x] **Step 4: Add one deterministic filter assertion**
 
 Only if seeded plans support it, verify `Self-serve` or `Enterprise` tabs narrow the list correctly.
 
@@ -556,7 +556,7 @@ await expect(
 ).toBeVisible();
 ```
 
-- [ ] **Step 5: Re-run the workspaces-list spec**
+- [x] **Step 5: Re-run the workspaces-list spec**
 
 Run:
 
@@ -575,7 +575,7 @@ Expected: PASS.
 - Use: `apps/admin/test/e2e/fixtures/admin-fixtures.ts`
 - Test: `apps/admin/test/e2e/workspaces/workspace-detail.spec.ts`
 
-- [ ] **Step 1: Write the failing workspace-detail spec**
+- [x] **Step 1: Write the failing workspace-detail spec**
 
 Cover direct detail navigation and seeded field rendering only.
 
@@ -594,7 +594,7 @@ await expect(
 ).toBeVisible();
 ```
 
-- [ ] **Step 2: Run the workspace-detail spec**
+- [x] **Step 2: Run the workspace-detail spec**
 
 Run:
 
@@ -604,7 +604,7 @@ pnpm --filter @workspace/admin-web playwright test test/e2e/workspaces/workspace
 
 Expected: FAIL on any mismatch in fixture wiring or section visibility assumptions.
 
-- [ ] **Step 3: Implement the minimal assertion corrections**
+- [x] **Step 3: Implement the minimal assertion corrections**
 
 Add read-only assertions for the deterministic sections that actually render for the seeded fixture:
 
@@ -614,7 +614,7 @@ Add read-only assertions for the deterministic sections that actually render for
 
 Do not submit entitlement overrides or support actions.
 
-- [ ] **Step 4: Re-run the workspace-detail spec**
+- [x] **Step 4: Re-run the workspace-detail spec**
 
 Run:
 
@@ -630,7 +630,7 @@ Expected: PASS.
 
 - Verify: `apps/admin/test/e2e/**`
 
-- [ ] **Step 1: Run each new spec individually**
+- [x] **Step 1: Run each new spec individually**
 
 Run:
 
@@ -644,7 +644,7 @@ pnpm --filter @workspace/admin-web playwright test test/e2e/workspaces/workspace
 
 Expected: PASS for every individual spec.
 
-- [ ] **Step 2: Run the full admin Chromium E2E suite**
+- [x] **Step 2: Run the full admin Chromium E2E suite**
 
 Run:
 
@@ -658,7 +658,7 @@ Expected:
 - global setup validates the mock email client and seeds the baseline
 - all admin E2E specs pass in Chromium
 
-- [ ] **Step 3: Run the smallest relevant static verification**
+- [x] **Step 3: Run the smallest relevant static verification**
 
 Run:
 
@@ -672,15 +672,20 @@ Expected:
 - Playwright lists the expected admin specs
 - admin typecheck passes
 
-- [ ] **Step 4: If shared packages changed, run the smallest relevant `apps/web` E2E regression checks**
+Note: `pnpm --filter @workspace/admin-web test:e2e -- --list` forwards `--list`
+in a way Playwright interprets as a test filter in this repo, so the equivalent
+verification was completed with `pnpm --filter @workspace/admin-web exec
+playwright test --list` after confirming the package-script variant was
+misleading rather than functionally broken.
+
+- [x] **Step 4: If shared packages changed, run the smallest relevant `apps/web` E2E regression checks**
 
 Only run this step if the implementation touched `packages/db-schema/**` or `packages/test-utils/**`.
 
 Run:
 
 ```bash
-pnpm --filter @workspace/web playwright test test/e2e/auth/signin.spec.ts --workers=1
-pnpm --filter @workspace/web playwright test test/e2e/seed.spec.ts --workers=1
+pnpm --filter @workspace/web exec playwright test test/e2e/auth/signin.spec.ts test/e2e/seed.spec.ts
 ```
 
 Expected:
@@ -688,11 +693,15 @@ Expected:
 - the existing web seeded-auth flow still passes
 - the existing web baseline seed assumptions still hold
 
-- [ ] **Step 5: Document any cross-app verification outcome**
+- [x] **Step 5: Document any cross-app verification outcome**
 
 If shared-package edits were made, record whether the web regression checks passed cleanly or required follow-up. If no shared-package edits were made, note that the blast radius stayed admin-local.
 
-- [ ] **Step 4: Document any deferred wave 2 gaps**
+Outcome: shared-package edits in `packages/db-schema` remained additive. The
+existing `apps/web` sign-in spec and `apps/web` seed spec both passed without
+changes, so the baseline web E2E contract remains intact.
+
+- [ ] **Step 6: Document any deferred wave 2 gaps**
 
 Record remaining mutation candidates in the implementation summary or follow-up issue:
 
