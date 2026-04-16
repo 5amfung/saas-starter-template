@@ -30,7 +30,7 @@ interface AdminListUsersResult {
 type AdminAuthApi = ReturnType<typeof getAuth>['api'];
 type AdminApi = Pick<
   AdminAuthApi,
-  'listUsers' | 'adminUpdateUser' | 'removeUser'
+  'getUser' | 'listUsers' | 'adminUpdateUser' | 'removeUser'
 >;
 
 function getAdminApi(): AdminApi {
@@ -77,15 +77,14 @@ export async function listAdminUsers(input: AdminListUsersInput) {
 }
 
 export async function getAdminUserDetail(userId: string) {
-  const data = await listAdminUsers({
-    limit: 1,
-    offset: 0,
-    filterField: 'id',
-    filterValue: userId,
-    filterOperator: 'eq',
+  const headers = getRequestHeaders();
+  const api = getAdminApi();
+  const result = await api.getUser({
+    headers,
+    query: { id: userId },
   });
+  const user = unwrapBetterAuthResult<AdminUserRecord | null>(result);
 
-  const user = data.users.at(0);
   if (!user) {
     throw notFound();
   }
