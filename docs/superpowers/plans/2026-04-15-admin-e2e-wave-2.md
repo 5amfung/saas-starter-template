@@ -253,7 +253,7 @@ await page.goto('/users');
 await expect(page.getByDisplayValue(updatedName)).toBeVisible();
 ```
 
-If the UI requires waiting on navigation, query refetch, or toast feedback, use those real semantics instead of sleep-based timing. In the current app, `/users/$userId` still hard-refreshes to a 404 page, so the persisted-state assertion should revisit the record through `/users` instead of calling `page.reload()`.
+If the UI requires waiting on navigation, query refetch, or toast feedback, use those real semantics instead of sleep-based timing. Where direct-load and hard-refresh behavior is now reliable, prefer `page.reload()` over detouring back through list pages just to re-establish state.
 
 - [x] **Step 4: Re-run the user-edit spec**
 
@@ -508,8 +508,8 @@ If support actions, API-key actions, or other destructive flows are still unsafe
 Deferred:
 
 - destructive deletes and ban/unban write-path coverage are still deferred until we decide whether to spend additional fixture budget on reversible destructive workflows
-- API-key and support-action mutations remain deferred because they touch higher-risk operational behavior than this first wave 2 slice
-- `/users/$userId` still returns a plain 404 page on hard refresh, so mutation persistence for user edits is currently asserted via a fresh revisit through `/users` rather than `page.reload()`
+- workspace API-key support actions are now covered through deterministic create/delete assertions on the dedicated enterprise mutation workspace
+- `/users/$userId` direct load and hard refresh are now covered by dedicated admin detail E2E, so user-edit persistence can rely on `page.reload()`
 
 ## Self-Review
 
