@@ -1,9 +1,7 @@
 import { createServerFn } from '@tanstack/react-start';
-import { getRequestHeaders } from '@tanstack/react-start/server';
-import { redirect } from '@tanstack/react-router';
 import * as z from 'zod';
 import { getWorkspaceLifecycleCapabilitiesForUser } from './workspace-lifecycle-capabilities.server';
-import { getAuth } from '@/init';
+import { requireVerifiedWebSession } from './policy-session.server';
 
 const workspaceLifecycleInput = z.object({
   workspaceId: z.string().min(1),
@@ -12,15 +10,11 @@ const workspaceLifecycleInput = z.object({
 export const getWorkspaceLifecycleCapabilities = createServerFn()
   .inputValidator(workspaceLifecycleInput)
   .handler(async ({ data }) => {
-    const headers = getRequestHeaders();
-    const session = await getAuth().api.getSession({ headers });
-    if (!session || !session.user.emailVerified) {
-      throw redirect({ to: '/signin' });
-    }
+    const { headers, userId } = await requireVerifiedWebSession();
 
     return getWorkspaceLifecycleCapabilitiesForUser(
       headers,
       data.workspaceId,
-      session.user.id
+      userId
     );
   });

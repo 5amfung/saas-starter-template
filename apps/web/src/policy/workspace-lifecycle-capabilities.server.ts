@@ -4,29 +4,23 @@ import {
   evaluateWorkspaceMemberRemovalCapabilities,
   evaluateWorkspaceOwnershipTransferCapabilities,
 } from '@workspace/policy';
+import {
+  getNormalizedWorkspaceRole,
+  hasActiveWorkspaceSubscription,
+  normalizeWorkspaceRole,
+} from './workspace-policy-facts.server';
 import type {
   WorkspaceLifecycleCapabilities,
   WorkspaceLifecycleContext,
   WorkspaceMemberRemovalCapabilities,
   WorkspaceOwnershipTransferCapabilities,
-  WorkspaceRole,
 } from '@workspace/policy';
 import { getWorkspaceBillingData } from '@/billing/billing.server';
 import {
   countOwnedWorkspaces,
   ensureWorkspaceMembership,
-  getActiveMemberRole,
   getWorkspaceMemberById,
 } from '@/workspace/workspace.server';
-
-const ACTIVE_SUBSCRIPTION_STATUSES = new Set(['active', 'trialing']);
-
-function normalizeWorkspaceRole(role: string | null): WorkspaceRole | null {
-  if (role === 'owner' || role === 'admin' || role === 'member') {
-    return role;
-  }
-  return null;
-}
 
 async function getWorkspaceLifecycleContext(
   headers: Headers,
@@ -36,17 +30,15 @@ async function getWorkspaceLifecycleContext(
   await ensureWorkspaceMembership(headers, workspaceId);
 
   const [workspaceRole, ownedWorkspaceCount, billing] = await Promise.all([
-    getActiveMemberRole(headers, workspaceId, userId),
+    getNormalizedWorkspaceRole(headers, workspaceId, userId),
     countOwnedWorkspaces(headers, userId),
     getWorkspaceBillingData(headers, workspaceId),
   ]);
 
   return {
-    actorWorkspaceRole: normalizeWorkspaceRole(workspaceRole),
+    actorWorkspaceRole: workspaceRole,
     ownedWorkspaceCount,
-    hasActiveSubscription:
-      billing.planId !== 'free' &&
-      ACTIVE_SUBSCRIPTION_STATUSES.has(billing.subscription?.status ?? ''),
+    hasActiveSubscription: hasActiveWorkspaceSubscription(billing),
   };
 }
 
@@ -109,7 +101,7 @@ export async function getWorkspaceMemberRemovalCapabilitiesForUser(
   await ensureWorkspaceMembership(headers, workspaceId);
 
   const [workspaceRole, targetMember] = await Promise.all([
-    getActiveMemberRole(headers, workspaceId, userId),
+    getNormalizedWorkspaceRole(headers, workspaceId, userId),
     getWorkspaceMemberById(headers, workspaceId, memberId),
   ]);
 
@@ -120,7 +112,7 @@ export async function getWorkspaceMemberRemovalCapabilitiesForUser(
   }
 
   return evaluateWorkspaceMemberRemovalCapabilities({
-    actorWorkspaceRole: normalizeWorkspaceRole(workspaceRole),
+    actorWorkspaceRole: workspaceRole,
     ownedWorkspaceCount: 0,
     hasActiveSubscription: false,
     targetMemberRole: normalizeWorkspaceRole(targetMember.role),
@@ -159,7 +151,7 @@ export async function getWorkspaceOwnershipTransferCapabilitiesForUser(
   await ensureWorkspaceMembership(headers, workspaceId);
 
   const [workspaceRole, targetMember] = await Promise.all([
-    getActiveMemberRole(headers, workspaceId, userId),
+    getNormalizedWorkspaceRole(headers, workspaceId, userId),
     getWorkspaceMemberById(headers, workspaceId, memberId),
   ]);
 
@@ -177,7 +169,7 @@ export async function getWorkspaceOwnershipTransferCapabilitiesForUser(
   }
 
   return evaluateWorkspaceOwnershipTransferCapabilities({
-    actorWorkspaceRole: normalizeWorkspaceRole(workspaceRole),
+    actorWorkspaceRole: workspaceRole,
     targetMember: {
       targetMemberExists: true,
       targetMemberRole,

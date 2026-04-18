@@ -1,12 +1,10 @@
 import { createServerFn } from '@tanstack/react-start';
-import { getRequestHeaders } from '@tanstack/react-start/server';
-import { redirect } from '@tanstack/react-router';
 import * as z from 'zod';
 import {
   getWorkspaceAccessCapabilitiesForUser,
   getWorkspaceCapabilitiesForUser,
 } from './workspace-capabilities.server';
-import { getAuth } from '@/init';
+import { requireVerifiedWebSession } from './policy-session.server';
 
 const workspaceCapabilitiesInput = z.object({
   workspaceId: z.string().min(1),
@@ -15,30 +13,19 @@ const workspaceCapabilitiesInput = z.object({
 export const getWorkspaceCapabilities = createServerFn()
   .inputValidator(workspaceCapabilitiesInput)
   .handler(async ({ data }) => {
-    const headers = getRequestHeaders();
-    const session = await getAuth().api.getSession({ headers });
-    if (!session || !session.user.emailVerified) {
-      throw redirect({ to: '/signin' });
-    }
-    return getWorkspaceCapabilitiesForUser(
-      headers,
-      data.workspaceId,
-      session.user.id
-    );
+    const { headers, userId } = await requireVerifiedWebSession();
+
+    return getWorkspaceCapabilitiesForUser(headers, data.workspaceId, userId);
   });
 
 export const getWorkspaceAccessCapabilities = createServerFn()
   .inputValidator(workspaceCapabilitiesInput)
   .handler(async ({ data }) => {
-    const headers = getRequestHeaders();
-    const session = await getAuth().api.getSession({ headers });
-    if (!session || !session.user.emailVerified) {
-      throw redirect({ to: '/signin' });
-    }
+    const { headers, userId } = await requireVerifiedWebSession();
 
     return getWorkspaceAccessCapabilitiesForUser(
       headers,
       data.workspaceId,
-      session.user.id
+      userId
     );
   });
