@@ -1,5 +1,6 @@
 import { APIError } from 'better-auth/api';
 import {
+  evaluateWorkspaceAccessCapabilities,
   evaluateWorkspaceCapabilities,
   hasWorkspaceCapability,
 } from '@workspace/policy';
@@ -8,6 +9,7 @@ import {
   hasActiveWorkspaceSubscription,
 } from './workspace-policy-facts.server';
 import type {
+  WorkspaceAccessCapabilities,
   WorkspaceCapabilities,
   WorkspaceCapability,
 } from '@workspace/policy';
@@ -21,7 +23,7 @@ export async function getWorkspaceAccessCapabilitiesForUser(
   headers: Headers,
   workspaceId: string,
   userId: string
-): Promise<WorkspaceCapabilities> {
+): Promise<WorkspaceAccessCapabilities> {
   await ensureWorkspaceMembership(headers, workspaceId);
   const workspaceRole = await getNormalizedWorkspaceRole(
     headers,
@@ -29,14 +31,7 @@ export async function getWorkspaceAccessCapabilitiesForUser(
     userId
   );
 
-  // Access-only checks should not depend on billing state. We force the
-  // delete capability closed here so callers cannot accidentally use this
-  // lightweight snapshot for delete decisions.
-  return evaluateWorkspaceCapabilities({
-    workspaceRole,
-    isLastWorkspace: false,
-    hasActiveSubscription: true,
-  });
+  return evaluateWorkspaceAccessCapabilities(workspaceRole);
 }
 
 export async function getWorkspaceCapabilitiesForUser(

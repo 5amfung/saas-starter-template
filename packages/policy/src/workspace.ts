@@ -27,10 +27,38 @@ export interface WorkspaceCapabilities {
     | null;
 }
 
+export interface WorkspaceAccessCapabilities {
+  workspaceRole: WorkspaceRole | null;
+  canViewOverview: boolean;
+  canViewProjects: boolean;
+  canViewMembers: boolean;
+  canViewSettings: boolean;
+  canViewBilling: boolean;
+  canInviteMembers: boolean;
+  canManageMembers: boolean;
+  canManageSettings: boolean;
+  canManageBilling: boolean;
+}
+
 export type WorkspaceCapability = keyof Omit<
   WorkspaceCapabilities,
   'workspaceRole' | 'deleteWorkspaceBlockedReason'
 >;
+
+const emptyAccessCapabilities = (
+  workspaceRole: WorkspaceRole | null
+): WorkspaceAccessCapabilities => ({
+  workspaceRole,
+  canViewOverview: false,
+  canViewProjects: false,
+  canViewMembers: false,
+  canViewSettings: false,
+  canViewBilling: false,
+  canInviteMembers: false,
+  canManageMembers: false,
+  canManageSettings: false,
+  canManageBilling: false,
+});
 
 const emptyCapabilities = (
   workspaceRole: WorkspaceRole | null
@@ -52,34 +80,54 @@ const emptyCapabilities = (
     workspaceRole === 'owner' ? 'active-subscription' : 'not-owner',
 });
 
+export function evaluateWorkspaceAccessCapabilities(
+  workspaceRole: WorkspaceRole | null
+): WorkspaceAccessCapabilities {
+  if (!workspaceRole) return emptyAccessCapabilities(null);
+
+  if (workspaceRole === 'member') {
+    return {
+      ...emptyAccessCapabilities(workspaceRole),
+      canViewOverview: true,
+      canViewProjects: true,
+      canViewMembers: true,
+    };
+  }
+
+  return {
+    ...emptyAccessCapabilities(workspaceRole),
+    canViewOverview: true,
+    canViewProjects: true,
+    canViewMembers: true,
+    canViewSettings: true,
+    canViewBilling: true,
+    canInviteMembers: true,
+    canManageMembers: true,
+    canManageSettings: true,
+    canManageBilling: true,
+  };
+}
+
 export function evaluateWorkspaceCapabilities(
   context: WorkspacePolicyContext
 ): WorkspaceCapabilities {
   const { workspaceRole, isLastWorkspace, hasActiveSubscription } = context;
   if (!workspaceRole) return emptyCapabilities(null);
 
+  const accessCapabilities = evaluateWorkspaceAccessCapabilities(workspaceRole);
+
   if (workspaceRole === 'member') {
     return {
       ...emptyCapabilities(workspaceRole),
-      canViewOverview: true,
-      canViewProjects: true,
-      canViewMembers: true,
+      ...accessCapabilities,
       deleteWorkspaceBlockedReason: 'not-owner',
     };
   }
 
   const baseAdminCapabilities: WorkspaceCapabilities = {
     ...emptyCapabilities(workspaceRole),
-    canViewOverview: true,
-    canViewProjects: true,
-    canViewMembers: true,
-    canViewSettings: true,
-    canViewBilling: true,
+    ...accessCapabilities,
     canViewIntegrations: hasActiveSubscription,
-    canInviteMembers: true,
-    canManageMembers: true,
-    canManageSettings: true,
-    canManageBilling: true,
     canManageIntegrations: hasActiveSubscription,
     canDeleteWorkspace: false,
     deleteWorkspaceBlockedReason: 'not-owner',
