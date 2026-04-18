@@ -100,7 +100,6 @@ export function createEnteredWebAppEntry(
     capabilities: evaluateWebAppEntryCapabilities({
       hasSession: true,
       emailVerified: true,
-      platformRole: null,
       activeWorkspaceId,
       accessibleWorkspaceCount: 1,
     }),
