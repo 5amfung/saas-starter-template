@@ -61,12 +61,14 @@ export async function seedE2EBaseline(
     E2E_PLATFORM_ADMIN,
   ];
 
-  await db.execute(sql`select pg_advisory_lock(${E2E_BASELINE_SEED_LOCK_ID})`);
+  await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(${E2E_BASELINE_SEED_LOCK_ID})`
+    );
 
-  try {
-    await resetE2EState({ db });
+    await resetE2EState({ db: tx });
 
-    await db.insert(user).values([
+    await tx.insert(user).values([
       {
         id: E2E_BASELINE_USERS.owner.userId,
         name: E2E_BASELINE_USERS.owner.name,
@@ -193,7 +195,7 @@ export async function seedE2EBaseline(
       },
     ]);
 
-    await db.insert(account).values(
+    await tx.insert(account).values(
       credentialUsers.map((entry) => ({
         id: entry.accountId,
         accountId: entry.userId,
@@ -205,7 +207,7 @@ export async function seedE2EBaseline(
       }))
     );
 
-    await db.insert(organization).values([
+    await tx.insert(organization).values([
       {
         id: E2E_BASELINE_USERS.owner.organizationId,
         name: E2E_BASELINE_USERS.owner.organizationName,
@@ -232,7 +234,7 @@ export async function seedE2EBaseline(
       },
     ]);
 
-    await db.insert(member).values(
+    await tx.insert(member).values(
       workspaceUsers.map((entry) => ({
         id: entry.memberId,
         organizationId: entry.organizationId,
@@ -242,30 +244,26 @@ export async function seedE2EBaseline(
       }))
     );
 
-    await db.insert(subscription).values({
+    await tx.insert(subscription).values({
       id: 'e2e_subscription_pro_owner',
       plan: 'pro',
       referenceId: E2E_BASELINE_USERS.proOwner.organizationId,
       status: 'active',
     });
 
-    await db.insert(subscription).values({
+    await tx.insert(subscription).values({
       id: 'e2e_subscription_enterprise_owner',
       plan: E2E_ADMIN_WORKSPACES.enterprise.planId,
       referenceId: E2E_ADMIN_ENTERPRISE_OWNER.organizationId,
       status: 'active',
     });
 
-    await db.insert(subscription).values({
+    await tx.insert(subscription).values({
       id: 'e2e_subscription_admin_mutation_enterprise',
       plan: E2E_ADMIN_MUTATION_FIXTURES.enterpriseWorkspace.planId,
       referenceId:
         E2E_ADMIN_MUTATION_FIXTURES.enterpriseWorkspace.organizationId,
       status: 'active',
     });
-  } finally {
-    await db.execute(
-      sql`select pg_advisory_unlock(${E2E_BASELINE_SEED_LOCK_ID})`
-    );
-  }
+  });
 }

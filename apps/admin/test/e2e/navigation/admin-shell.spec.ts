@@ -8,18 +8,23 @@ test.describe('Admin shell navigation', () => {
     await signInAsPlatformAdmin(page);
 
     await page.goto('/dashboard');
+    const sidebar = page.locator('[data-sidebar="sidebar"]');
 
     await expect(
       page.getByRole('button', { name: /Admin Portal/i })
     ).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Dashboard' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Users' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Workspaces' })).toBeVisible();
+    await expect(
+      sidebar.getByRole('link', { name: 'Dashboard' })
+    ).toBeVisible();
+    await expect(sidebar.getByRole('link', { name: 'Users' })).toBeVisible();
+    await expect(
+      sidebar.getByRole('link', { name: 'Workspaces' })
+    ).toBeVisible();
 
-    await page.getByRole('link', { name: 'Users' }).click();
+    await sidebar.getByRole('link', { name: 'Users' }).click();
     await page.waitForURL(/\/users$/);
 
-    await page.getByRole('link', { name: 'Workspaces' }).click();
+    await sidebar.getByRole('link', { name: 'Workspaces' }).click();
     await page.waitForURL(/\/workspaces$/);
   });
 });
