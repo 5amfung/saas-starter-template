@@ -18,6 +18,7 @@ import { Route as AuthRouteImport } from './routes/_auth';
 import { Route as IndexRouteImport } from './routes/index';
 import { Route as VerifyEmailChangeEmailTokenRouteImport } from './routes/verify-email-change.$emailToken';
 import { Route as ApiSentryExampleRouteImport } from './routes/api/sentry-example';
+import { Route as ApiHelloRouteImport } from './routes/api/hello';
 import { Route as ProtectedWsRouteImport } from './routes/_protected/ws';
 import { Route as AuthVerifyRouteImport } from './routes/_auth/verify';
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup';
@@ -80,6 +81,11 @@ const VerifyEmailChangeEmailTokenRoute =
 const ApiSentryExampleRoute = ApiSentryExampleRouteImport.update({
   id: '/api/sentry-example',
   path: '/api/sentry-example',
+  getParentRoute: () => rootRouteImport,
+} as any);
+const ApiHelloRoute = ApiHelloRouteImport.update({
+  id: '/api/hello',
+  path: '/api/hello',
   getParentRoute: () => rootRouteImport,
 } as any);
 const ProtectedWsRoute = ProtectedWsRouteImport.update({
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
   '/ws': typeof ProtectedWsRouteWithChildren;
+  '/api/hello': typeof ApiHelloRoute;
   '/api/sentry-example': typeof ApiSentryExampleRoute;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/account': typeof ProtectedAccountAccountRoute;
@@ -224,6 +231,7 @@ export interface FileRoutesByTo {
   '/signin': typeof AuthSigninRoute;
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
+  '/api/hello': typeof ApiHelloRoute;
   '/api/sentry-example': typeof ApiSentryExampleRoute;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/account': typeof ProtectedAccountAccountRoute;
@@ -255,6 +263,7 @@ export interface FileRoutesById {
   '/_auth/signup': typeof AuthSignupRoute;
   '/_auth/verify': typeof AuthVerifyRoute;
   '/_protected/ws': typeof ProtectedWsRouteWithChildren;
+  '/api/hello': typeof ApiHelloRoute;
   '/api/sentry-example': typeof ApiSentryExampleRoute;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/_protected/_account/account': typeof ProtectedAccountAccountRoute;
@@ -285,6 +294,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/verify'
     | '/ws'
+    | '/api/hello'
     | '/api/sentry-example'
     | '/verify-email-change/$emailToken'
     | '/account'
@@ -312,6 +322,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/verify'
+    | '/api/hello'
     | '/api/sentry-example'
     | '/verify-email-change/$emailToken'
     | '/account'
@@ -342,6 +353,7 @@ export interface FileRouteTypes {
     | '/_auth/signup'
     | '/_auth/verify'
     | '/_protected/ws'
+    | '/api/hello'
     | '/api/sentry-example'
     | '/verify-email-change/$emailToken'
     | '/_protected/_account/account'
@@ -367,6 +379,7 @@ export interface RootRouteChildren {
   HealthRoute: typeof HealthRoute;
   PingRoute: typeof PingRoute;
   TestSentryRoute: typeof TestSentryRoute;
+  ApiHelloRoute: typeof ApiHelloRoute;
   ApiSentryExampleRoute: typeof ApiSentryExampleRoute;
   VerifyEmailChangeEmailTokenRoute: typeof VerifyEmailChangeEmailTokenRoute;
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
@@ -436,6 +449,13 @@ declare module '@tanstack/react-router' {
       path: '/api/sentry-example';
       fullPath: '/api/sentry-example';
       preLoaderRoute: typeof ApiSentryExampleRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/api/hello': {
+      id: '/api/hello';
+      path: '/api/hello';
+      fullPath: '/api/hello';
+      preLoaderRoute: typeof ApiHelloRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     '/_protected/ws': {
@@ -657,6 +677,7 @@ const rootRouteChildren: RootRouteChildren = {
   HealthRoute: HealthRoute,
   PingRoute: PingRoute,
   TestSentryRoute: TestSentryRoute,
+  ApiHelloRoute: ApiHelloRoute,
   ApiSentryExampleRoute: ApiSentryExampleRoute,
   VerifyEmailChangeEmailTokenRoute: VerifyEmailChangeEmailTokenRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
