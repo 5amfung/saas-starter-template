@@ -1,11 +1,11 @@
 import { createFileRoute, notFound } from '@tanstack/react-router';
 import { BillingPage } from '@/components/billing/billing-page';
-import { getWorkspaceAccessCapabilities } from '@/policy/workspace-capabilities.functions';
+import { getWorkspaceRoleOnlyCapabilities } from '@/policy/workspace-capabilities.functions';
 import { useWorkspaceDetailQuery } from '@/workspace/workspace.queries';
 
 export const Route = createFileRoute('/_protected/ws/$workspaceId/billing')({
   loader: async ({ params }) => {
-    const capabilities = await getWorkspaceAccessCapabilities({
+    const capabilities = await getWorkspaceRoleOnlyCapabilities({
       data: { workspaceId: params.workspaceId },
     });
 

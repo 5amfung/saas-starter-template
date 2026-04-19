@@ -1,7 +1,7 @@
 import { APIError } from 'better-auth/api';
 import {
-  getWorkspaceAccessCapabilitiesForUser,
   getWorkspaceCapabilitiesForUser,
+  getWorkspaceRoleOnlyCapabilitiesForUser,
   requireWorkspaceCapabilityForUser,
 } from '@/policy/workspace-capabilities.server';
 
@@ -68,10 +68,10 @@ describe('workspace-capabilities.server', () => {
     expect(capabilities.canDeleteWorkspace).toBe(false);
   });
 
-  it('loads access capabilities without reading billing facts', async () => {
+  it('loads role-only capabilities without reading billing facts', async () => {
     getActiveMemberRoleMock.mockResolvedValueOnce('admin');
 
-    const capabilities = await getWorkspaceAccessCapabilitiesForUser(
+    const capabilities = await getWorkspaceRoleOnlyCapabilitiesForUser(
       headers,
       'ws-1',
       'user-1'
