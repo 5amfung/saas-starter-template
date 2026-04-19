@@ -1,12 +1,11 @@
 import type { PlatformRole } from './admin-app';
 
-export interface AuthEntryFacts {
+export interface SessionEntryFacts {
   hasSession: boolean;
   emailVerified: boolean;
-  platformRole: PlatformRole | null;
 }
 
-export interface WebAppEntryFacts extends AuthEntryFacts {
+export interface WebAppEntryFacts extends SessionEntryFacts {
   activeWorkspaceId: string | null;
   accessibleWorkspaceCount: number;
 }
@@ -18,7 +17,9 @@ export interface WebAppEntryCapabilities {
   mustResolveWorkspace: boolean;
 }
 
-export interface AdminAppEntryFacts extends AuthEntryFacts {}
+export interface AdminAppEntryFacts extends SessionEntryFacts {
+  platformRole: PlatformRole | null;
+}
 
 export interface AdminAppEntryCapabilities {
   canEnterAdminApp: boolean;

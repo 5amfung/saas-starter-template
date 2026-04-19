@@ -79,7 +79,9 @@ describe('workspace-capabilities.server', () => {
 
     expect(capabilities.workspaceRole).toBe('admin');
     expect(capabilities.canViewBilling).toBe(true);
-    expect(capabilities.canDeleteWorkspace).toBe(false);
+    expect(capabilities.canManageBilling).toBe(true);
+    expect('canDeleteWorkspace' in capabilities).toBe(false);
+    expect('canViewIntegrations' in capabilities).toBe(false);
     expect(getWorkspaceBillingDataMock).not.toHaveBeenCalled();
   });
 

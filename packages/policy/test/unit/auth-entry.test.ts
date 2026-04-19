@@ -13,7 +13,6 @@ describe('evaluateWebAppEntryCapabilities', () => {
     const capabilities = evaluateWebAppEntryCapabilities({
       hasSession: false,
       emailVerified: false,
-      platformRole: null,
       activeWorkspaceId: null,
       accessibleWorkspaceCount: 0,
     } satisfies WebAppEntryFacts);
@@ -28,7 +27,6 @@ describe('evaluateWebAppEntryCapabilities', () => {
     const capabilities = evaluateWebAppEntryCapabilities({
       hasSession: true,
       emailVerified: false,
-      platformRole: 'user',
       activeWorkspaceId: null,
       accessibleWorkspaceCount: 1,
     } satisfies WebAppEntryFacts);
@@ -43,7 +41,6 @@ describe('evaluateWebAppEntryCapabilities', () => {
     const capabilities = evaluateWebAppEntryCapabilities({
       hasSession: true,
       emailVerified: true,
-      platformRole: 'user',
       activeWorkspaceId: null,
       accessibleWorkspaceCount: 2,
     } satisfies WebAppEntryFacts);
@@ -58,7 +55,6 @@ describe('evaluateWebAppEntryCapabilities', () => {
     const capabilities = evaluateWebAppEntryCapabilities({
       hasSession: true,
       emailVerified: true,
-      platformRole: 'user',
       activeWorkspaceId: null,
       accessibleWorkspaceCount: 0,
     } satisfies WebAppEntryFacts);
@@ -73,7 +69,6 @@ describe('evaluateWebAppEntryCapabilities', () => {
     const capabilities = evaluateWebAppEntryCapabilities({
       hasSession: true,
       emailVerified: true,
-      platformRole: 'user',
       activeWorkspaceId: 'workspace_123',
       accessibleWorkspaceCount: 2,
     } satisfies WebAppEntryFacts);

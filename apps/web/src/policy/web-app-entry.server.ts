@@ -33,7 +33,6 @@ export async function getCurrentWebAppEntry(
     return resolveWebAppEntry({
       hasSession: false,
       emailVerified: false,
-      platformRole: null,
       activeWorkspaceId: null,
       accessibleWorkspaceCount: 0,
       preferredWorkspace: null,
@@ -44,7 +43,6 @@ export async function getCurrentWebAppEntry(
     return resolveWebAppEntry({
       hasSession: true,
       emailVerified: false,
-      platformRole: null,
       activeWorkspaceId: getActiveWorkspaceId(session),
       accessibleWorkspaceCount: 0,
       preferredWorkspace: null,
@@ -67,7 +65,6 @@ export async function getCurrentWebAppEntry(
   return resolveWebAppEntry({
     hasSession: true,
     emailVerified: true,
-    platformRole: null,
     activeWorkspaceId: activeWorkspace?.id ?? null,
     accessibleWorkspaceCount: accessibleWorkspaces.length,
     preferredWorkspace,

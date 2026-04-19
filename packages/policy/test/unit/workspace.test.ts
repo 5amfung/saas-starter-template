@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  evaluateWorkspaceAccessCapabilities,
   evaluateWorkspaceCapabilities,
   hasWorkspaceCapability,
 } from '../../src/workspace';
@@ -127,5 +128,39 @@ describe('evaluateWorkspaceCapabilities', () => {
     expect(hasWorkspaceCapability(capabilities, 'canManageIntegrations')).toBe(
       false
     );
+  });
+});
+
+describe('evaluateWorkspaceAccessCapabilities', () => {
+  it('grants members only lightweight read access', () => {
+    const capabilities = evaluateWorkspaceAccessCapabilities('member');
+
+    expect(capabilities.canViewOverview).toBe(true);
+    expect(capabilities.canViewProjects).toBe(true);
+    expect(capabilities.canViewMembers).toBe(true);
+    expect(capabilities.canViewSettings).toBe(false);
+    expect(capabilities.canViewBilling).toBe(false);
+    expect(capabilities.canInviteMembers).toBe(false);
+    expect(capabilities.canManageBilling).toBe(false);
+  });
+
+  it('grants admins and owners access decisions that do not depend on billing state', () => {
+    const adminCapabilities = evaluateWorkspaceAccessCapabilities('admin');
+    const ownerCapabilities = evaluateWorkspaceAccessCapabilities('owner');
+
+    expect(adminCapabilities.canViewSettings).toBe(true);
+    expect(adminCapabilities.canViewBilling).toBe(true);
+    expect(adminCapabilities.canManageBilling).toBe(true);
+    expect(ownerCapabilities.canViewSettings).toBe(true);
+    expect(ownerCapabilities.canViewBilling).toBe(true);
+    expect(ownerCapabilities.canManageBilling).toBe(true);
+  });
+
+  it('returns no access capabilities when the actor has no workspace role', () => {
+    const capabilities = evaluateWorkspaceAccessCapabilities(null);
+
+    expect(
+      Object.entries(capabilities).filter(([, value]) => value === true)
+    ).toEqual([]);
   });
 });

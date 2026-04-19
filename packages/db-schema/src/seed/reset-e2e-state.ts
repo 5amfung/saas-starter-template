@@ -9,9 +9,13 @@ import {
 } from '../schema';
 import * as schema from '../schema';
 
+type DbClient = ReturnType<typeof createDb<typeof schema>>;
+type TransactionDb = Parameters<Parameters<DbClient['transaction']>[0]>[0];
+type ResetE2EDb = DbClient | TransactionDb;
+
 interface ResetE2EStateOptions {
   databaseUrl?: string;
-  db?: ReturnType<typeof createDb<typeof schema>>;
+  db?: ResetE2EDb;
 }
 
 function resolveDatabaseUrl(databaseUrl?: string): string {

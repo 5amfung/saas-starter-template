@@ -5,7 +5,7 @@ import {
 import type {
   AdminAppCapabilities,
   AdminAppEntryCapabilities,
-  AuthEntryFacts,
+  AdminAppEntryFacts,
 } from '@workspace/policy';
 
 export interface AdminAppSessionLike {
@@ -25,13 +25,13 @@ export interface AdminAppEntryRedirect {
   kind: 'redirect';
   to: '/signin' | '/verify';
   search?: { error: 'admin_only' };
-  facts: AuthEntryFacts;
+  facts: AdminAppEntryFacts;
   capabilities: AdminAppEntryCapabilities;
 }
 
 export interface AdminAppEntryAllowed {
   kind: 'canEnterAdminApp';
-  facts: AuthEntryFacts;
+  facts: AdminAppEntryFacts;
   capabilities: AdminAppEntryCapabilities;
 }
 
@@ -46,7 +46,7 @@ export type AdminAppEntryRedirectContext = 'root' | 'guest' | 'protected';
 
 export function getAdminAppEntryFacts(
   session: AdminAppSessionLike | null | undefined
-): AuthEntryFacts {
+): AdminAppEntryFacts {
   const hasSession = Boolean(session?.user);
 
   return {
