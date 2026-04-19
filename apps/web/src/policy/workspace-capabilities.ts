@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import {
-  getWorkspaceAccessCapabilities,
   getWorkspaceCapabilities,
+  getWorkspaceRoleOnlyCapabilities,
 } from './workspace-capabilities.functions';
 
 export const WORKSPACE_CAPABILITIES_QUERY_KEY = (workspaceId: string | null) =>
@@ -33,18 +33,18 @@ export function useWorkspaceCapabilitiesQuery(
   });
 }
 
-export const WORKSPACE_ACCESS_CAPABILITIES_QUERY_KEY = (
+export const WORKSPACE_ROLE_ONLY_CAPABILITIES_QUERY_KEY = (
   workspaceId: string | null
-) => ['workspace', 'access-capabilities', workspaceId] as const;
+) => ['workspace', 'role-only-capabilities', workspaceId] as const;
 
-export function useWorkspaceAccessCapabilitiesQuery(
+export function useWorkspaceRoleOnlyCapabilitiesQuery(
   workspaceId: string | null,
   enabled = true
 ) {
   return useQuery({
-    queryKey: WORKSPACE_ACCESS_CAPABILITIES_QUERY_KEY(workspaceId),
+    queryKey: WORKSPACE_ROLE_ONLY_CAPABILITIES_QUERY_KEY(workspaceId),
     queryFn: () =>
-      getWorkspaceAccessCapabilities({
+      getWorkspaceRoleOnlyCapabilities({
         data: { workspaceId: requireWorkspaceId(workspaceId) },
       }),
     enabled: enabled && isWorkspaceCapabilitiesQueryEnabled(workspaceId),

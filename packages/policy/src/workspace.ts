@@ -27,7 +27,7 @@ export interface WorkspaceCapabilities {
     | null;
 }
 
-export interface WorkspaceAccessCapabilities {
+export interface WorkspaceRoleOnlyCapabilities {
   workspaceRole: WorkspaceRole | null;
   canViewOverview: boolean;
   canViewProjects: boolean;
@@ -47,7 +47,7 @@ export type WorkspaceCapability = keyof Omit<
 
 const emptyAccessCapabilities = (
   workspaceRole: WorkspaceRole | null
-): WorkspaceAccessCapabilities => ({
+): WorkspaceRoleOnlyCapabilities => ({
   workspaceRole,
   canViewOverview: false,
   canViewProjects: false,
@@ -80,9 +80,13 @@ const emptyCapabilities = (
     workspaceRole === 'owner' ? 'active-subscription' : 'not-owner',
 });
 
-export function evaluateWorkspaceAccessCapabilities(
+/**
+ * Evaluates the role-only workspace permission set.
+ * This path depends only on the actor's normalized workspace role.
+ */
+export function evaluateWorkspaceRoleOnlyCapabilities(
   workspaceRole: WorkspaceRole | null
-): WorkspaceAccessCapabilities {
+): WorkspaceRoleOnlyCapabilities {
   if (!workspaceRole) return emptyAccessCapabilities(null);
 
   if (workspaceRole === 'member') {
@@ -114,19 +118,20 @@ export function evaluateWorkspaceCapabilities(
   const { workspaceRole, isLastWorkspace, hasActiveSubscription } = context;
   if (!workspaceRole) return emptyCapabilities(null);
 
-  const accessCapabilities = evaluateWorkspaceAccessCapabilities(workspaceRole);
+  const roleOnlyCapabilities =
+    evaluateWorkspaceRoleOnlyCapabilities(workspaceRole);
 
   if (workspaceRole === 'member') {
     return {
       ...emptyCapabilities(workspaceRole),
-      ...accessCapabilities,
+      ...roleOnlyCapabilities,
       deleteWorkspaceBlockedReason: 'not-owner',
     };
   }
 
   const baseAdminCapabilities: WorkspaceCapabilities = {
     ...emptyCapabilities(workspaceRole),
-    ...accessCapabilities,
+    ...roleOnlyCapabilities,
     canViewIntegrations: hasActiveSubscription,
     canManageIntegrations: hasActiveSubscription,
     canDeleteWorkspace: false,
