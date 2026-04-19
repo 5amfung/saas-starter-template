@@ -486,4 +486,45 @@ describe('admin-app-capabilities.server', () => {
       })
     ).toBe('blocked');
   });
+
+  it('maps protected layout redirects from entry state', async () => {
+    const { getProtectedLayoutRedirectTarget } =
+      await import('@/routes/_protected');
+
+    expect(
+      getProtectedLayoutRedirectTarget({
+        kind: 'redirect',
+        to: '/signin',
+        search: { error: 'admin_only' },
+        capabilities: {
+          canEnterAdminApp: false,
+          mustSignIn: false,
+          mustVerifyEmail: false,
+          isAdminOnlyDenied: true,
+        },
+        facts: {
+          hasSession: true,
+          emailVerified: true,
+          platformRole: 'user',
+        },
+      })
+    ).toEqual({ to: '/signin', search: { error: 'admin_only' } });
+
+    expect(
+      getProtectedLayoutRedirectTarget({
+        kind: 'canEnterAdminApp',
+        capabilities: {
+          canEnterAdminApp: true,
+          mustSignIn: false,
+          mustVerifyEmail: false,
+          isAdminOnlyDenied: false,
+        },
+        facts: {
+          hasSession: true,
+          emailVerified: true,
+          platformRole: 'admin',
+        },
+      })
+    ).toBeNull();
+  });
 });

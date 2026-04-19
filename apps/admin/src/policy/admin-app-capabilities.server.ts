@@ -18,24 +18,26 @@ import type {
 } from './admin-app-capabilities.shared';
 import { getAuth } from '@/init';
 
+async function getCurrentAdminAppSession(
+  headers: Headers = getRequestHeaders()
+): Promise<AdminAppSessionLike | null> {
+  return (await getAuth().api.getSession({
+    headers,
+  })) as AdminAppSessionLike | null;
+}
+
 export async function getCurrentAdminAppEntry(
   headers: Headers = getRequestHeaders()
 ): Promise<AdminAppEntry> {
-  const session = (await getAuth().api.getSession({
-    headers,
-  })) as AdminAppSessionLike | null;
-
-  return getAdminAppEntryForSession(session);
+  return getAdminAppEntryForSession(await getCurrentAdminAppSession(headers));
 }
 
 export async function getCurrentAdminAppCapabilities(
   headers: Headers = getRequestHeaders()
 ): Promise<AdminAppCapabilities> {
-  const session = (await getAuth().api.getSession({
-    headers,
-  })) as AdminAppSessionLike | null;
-
-  return getAdminAppCapabilitiesForSession(session);
+  return getAdminAppCapabilitiesForSession(
+    await getCurrentAdminAppSession(headers)
+  );
 }
 
 export async function requireCurrentAdminAppEntry(

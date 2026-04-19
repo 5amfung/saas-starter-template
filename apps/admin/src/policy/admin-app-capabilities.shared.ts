@@ -44,6 +44,10 @@ export interface AdminAppRedirectOptions {
 
 export type AdminAppEntryRedirectContext = 'root' | 'guest' | 'protected';
 
+const deniedAdminAppCapabilities = evaluateAdminAppCapabilities({
+  platformRole: null,
+});
+
 export function getAdminAppEntryFacts(
   session: AdminAppSessionLike | null | undefined
 ): AdminAppEntryFacts {
@@ -98,33 +102,6 @@ export function getAdminAppEntryForSession(
   };
 }
 
-export function getAdminAppCapabilitiesForEntry(
-  entry: AdminAppEntry
-): AdminAppCapabilities {
-  const capabilities = evaluateAdminAppCapabilities({
-    platformRole: entry.facts.platformRole,
-  });
-
-  if (entry.capabilities.canEnterAdminApp) {
-    return capabilities;
-  }
-
-  return {
-    ...capabilities,
-    canAccessAdminApp: false,
-    canViewDashboard: false,
-    canViewAdminDashboard: false,
-    canViewAnalytics: false,
-    canViewUsers: false,
-    canManageUsers: false,
-    canDeleteUsers: false,
-    canViewWorkspaces: false,
-    canViewWorkspaceBilling: false,
-    canManageEntitlementOverrides: false,
-    canPerformSupportActions: false,
-  };
-}
-
 export function getAdminAppEntryRedirect(
   entry: AdminAppEntry,
   context: AdminAppEntryRedirectContext
@@ -150,5 +127,17 @@ export function getAdminAppEntryRedirect(
 export function getAdminAppCapabilitiesForSession(
   session: AdminAppSessionLike | null | undefined
 ): AdminAppCapabilities {
-  return getAdminAppCapabilitiesForEntry(getAdminAppEntryForSession(session));
+  const facts = getAdminAppEntryFacts(session);
+  const entryCapabilities = evaluateAdminAppEntryCapabilities(facts);
+
+  if (entryCapabilities.canEnterAdminApp) {
+    return evaluateAdminAppCapabilities({
+      platformRole: facts.platformRole,
+    });
+  }
+
+  return {
+    ...deniedAdminAppCapabilities,
+    platformRole: facts.platformRole,
+  };
 }

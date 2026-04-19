@@ -20,15 +20,9 @@ import { Skeleton } from '@workspace/ui/components/skeleton';
 import { AdminEntitlementOverrideForm } from '@/components/admin/admin-entitlement-override-form';
 import { AdminWorkspaceApiKeysCard } from '@/components/admin/admin-workspace-api-keys-card';
 import { useAdminWorkspaceDetailQuery } from '@/admin/workspaces.queries';
-import { getAdminAppCapabilities } from '@/policy/admin-app-capabilities.functions';
 import { useAdminAppCapabilities } from '@/policy/admin-app-capabilities';
-import { requireAdminRouteCapability } from '@/policy/admin-app-route-access';
 
 export const Route = createFileRoute('/_protected/workspaces/$workspaceId')({
-  beforeLoad: async () => {
-    const capabilities = await getAdminAppCapabilities();
-    requireAdminRouteCapability(capabilities, 'canViewWorkspaces');
-  },
   component: AdminWorkspaceDetailPage,
   staticData: { title: 'Workspace Details' },
 });

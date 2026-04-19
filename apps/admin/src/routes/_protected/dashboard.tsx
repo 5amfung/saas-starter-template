@@ -19,15 +19,9 @@ import {
   AdminSignupChart,
   AdminSignupChartSkeleton,
 } from '@/components/admin/admin-signup-chart';
-import { getAdminAppCapabilities } from '@/policy/admin-app-capabilities.functions';
 import { useAdminAppCapabilities } from '@/policy/admin-app-capabilities';
-import { requireAdminRouteCapability } from '@/policy/admin-app-route-access';
 
 export const Route = createFileRoute('/_protected/dashboard')({
-  beforeLoad: async () => {
-    const capabilities = await getAdminAppCapabilities();
-    requireAdminRouteCapability(capabilities, 'canViewDashboard');
-  },
   component: AdminDashboardPage,
   staticData: { title: 'Dashboard' },
 });
