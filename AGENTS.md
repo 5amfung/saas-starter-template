@@ -400,9 +400,9 @@ Practical rule:
 Run from repo root unless there is a reason not to:
 
 - `pnpm dev`
-- `pnpm admin:dev`
-- `pnpm api:dev`
-- `pnpm web:dev`
+- `pnpm dev:admin`
+- `pnpm dev:api`
+- `pnpm dev:web`
 - `pnpm run build`
 - `pnpm run lint`
 - `pnpm run lint:fix`
@@ -415,11 +415,12 @@ Run from repo root unless there is a reason not to:
 - `pnpm run test:integration`
 - `pnpm run coverage`
 - `pnpm test:e2e`
-- `pnpm run web:test:e2e:chromium`
-- `pnpm run web:test:e2e:firefox`
-- `pnpm run web:test:e2e:webkit`
-- `pnpm run web:test:e2e:ui`
-- `pnpm run web:test:e2e:report`
+- `pnpm run test:e2e:admin`
+- `pnpm run test:e2e:ui:admin`
+- `pnpm run test:e2e:report:admin`
+- `pnpm run test:e2e:web`
+- `pnpm run test:e2e:ui:web`
+- `pnpm run test:e2e:report:web`
 
 ### App-Specific Commands
 

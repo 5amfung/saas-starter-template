@@ -215,7 +215,7 @@ saas-starter-template/
 
 | Command                       | Description                               |
 | ----------------------------- | ----------------------------------------- |
-| `pnpm run web:dev`            | Start only the web app dev server         |
+| `pnpm run dev:web`            | Start only the web app dev server         |
 | `pnpm run dev:stripe-webhook` | Forward Stripe webhooks to localhost:3000 |
 
 ### Running Commands in a Specific Package
