@@ -1,7 +1,7 @@
 import { APIError } from 'better-auth/api';
 import {
-  evaluateWorkspaceAccessCapabilities,
   evaluateWorkspaceCapabilities,
+  evaluateWorkspaceRoleOnlyCapabilities,
   hasWorkspaceCapability,
 } from '@workspace/policy';
 import {
@@ -9,9 +9,9 @@ import {
   hasActiveWorkspaceSubscription,
 } from './workspace-policy-facts.server';
 import type {
-  WorkspaceAccessCapabilities,
   WorkspaceCapabilities,
   WorkspaceCapability,
+  WorkspaceRoleOnlyCapabilities,
 } from '@workspace/policy';
 import { getWorkspaceBillingData } from '@/billing/billing.server';
 import {
@@ -19,11 +19,16 @@ import {
   listUserWorkspaces,
 } from '@/workspace/workspace.server';
 
-export async function getWorkspaceAccessCapabilitiesForUser(
+/**
+ * Returns the role-only workspace permission set.
+ * This path checks membership and normalized role without loading billing,
+ * workspace-count, or other richer workspace facts.
+ */
+export async function getWorkspaceRoleOnlyCapabilitiesForUser(
   headers: Headers,
   workspaceId: string,
   userId: string
-): Promise<WorkspaceAccessCapabilities> {
+): Promise<WorkspaceRoleOnlyCapabilities> {
   await ensureWorkspaceMembership(headers, workspaceId);
   const workspaceRole = await getNormalizedWorkspaceRole(
     headers,
@@ -31,9 +36,14 @@ export async function getWorkspaceAccessCapabilitiesForUser(
     userId
   );
 
-  return evaluateWorkspaceAccessCapabilities(workspaceRole);
+  return evaluateWorkspaceRoleOnlyCapabilities(workspaceRole);
 }
 
+/**
+ * Returns the full workspace capability snapshot.
+ * This path combines role permissions with richer facts like billing state
+ * and last-workspace rules.
+ */
 export async function getWorkspaceCapabilitiesForUser(
   headers: Headers,
   workspaceId: string,
