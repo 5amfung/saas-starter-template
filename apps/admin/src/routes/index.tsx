@@ -1,19 +1,11 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import type { AdminAppEntry } from '@/policy/admin-app-capabilities.shared';
-import {
-  getAdminAppCapabilitiesForEntry,
-  getAdminAppEntryRedirect,
-} from '@/policy/admin-app-capabilities.shared';
+import { getAdminAppEntryRedirect } from '@/policy/admin-app-capabilities.shared';
 import { getAdminAppEntry } from '@/policy/admin-app-capabilities.functions';
-import { getDefaultAdminRoute } from '@/policy/admin-app-route-access';
 
 export function getIndexRedirectTarget(entry: AdminAppEntry) {
   if (entry.kind === 'canEnterAdminApp') {
-    const defaultRoute = getDefaultAdminRoute(
-      getAdminAppCapabilitiesForEntry(entry)
-    );
-
-    return { to: defaultRoute ?? ('/dashboard' as const) };
+    return { to: '/dashboard' as const };
   }
 
   const redirectTarget = getAdminAppEntryRedirect(entry, 'root');

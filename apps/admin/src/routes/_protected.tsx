@@ -1,5 +1,10 @@
 import { useEffect } from 'react';
-import { Outlet, createFileRoute, useNavigate } from '@tanstack/react-router';
+import {
+  Outlet,
+  createFileRoute,
+  redirect,
+  useNavigate,
+} from '@tanstack/react-router';
 import {
   SidebarInset,
   SidebarProvider,
@@ -8,10 +13,19 @@ import { SiteHeader } from '@workspace/components/layout';
 import type { AdminAppEntry } from '@/policy/admin-app-capabilities.shared';
 import { AppSidebar } from '@/components/app-sidebar';
 import { authMiddleware } from '@/middleware/auth';
+import { getAdminAppEntry } from '@/policy/admin-app-capabilities.functions';
 import { getAdminAppEntryRedirect } from '@/policy/admin-app-capabilities.shared';
 import { useAdminAppEntry } from '@/policy/admin-app-capabilities';
 
 export const Route = createFileRoute('/_protected')({
+  beforeLoad: async () => {
+    const entry = await getAdminAppEntry();
+    const redirectTarget = getProtectedLayoutRedirectTarget(entry);
+
+    if (redirectTarget) {
+      throw redirect(redirectTarget);
+    }
+  },
   component: ProtectedLayout,
   server: {
     middleware: [authMiddleware],
@@ -20,6 +34,14 @@ export const Route = createFileRoute('/_protected')({
 
 export function canRenderProtectedLayout(entry?: AdminAppEntry) {
   return entry?.kind === 'canEnterAdminApp';
+}
+
+export function getProtectedLayoutRedirectTarget(entry?: AdminAppEntry) {
+  if (!entry || canRenderProtectedLayout(entry)) {
+    return null;
+  }
+
+  return getAdminAppEntryRedirect(entry, 'protected') ?? { to: '/signin' };
 }
 
 export function getProtectedLayoutState({
@@ -47,9 +69,7 @@ function ProtectedLayout() {
   const { data: entry, error, isPending } = useAdminAppEntry();
   const state = getProtectedLayoutState({ entry, isPending, error });
   const redirectTarget =
-    state === 'blocked' && entry
-      ? getAdminAppEntryRedirect(entry, 'protected')
-      : null;
+    state === 'blocked' ? getProtectedLayoutRedirectTarget(entry) : null;
 
   useEffect(() => {
     if (redirectTarget) {
