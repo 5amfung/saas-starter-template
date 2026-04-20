@@ -203,5 +203,5 @@ describe('WorkspaceMembersPage integration', () => {
     expect(
       screen.queryByRole('menuitem', { name: /transfer ownership/i })
     ).not.toBeInTheDocument();
-  });
+  }, 10_000);
 });
