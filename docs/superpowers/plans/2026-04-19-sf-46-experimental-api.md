@@ -17,7 +17,7 @@
 - `apps/web/src/api/api-key-auth.server.ts`
   - Verifies the API key against `configId: "system-managed"` and returns a small discriminated result.
 - `apps/web/src/routes/api/hello.ts`
-  - GET route that reads headers, delegates verification, and returns the HTTP response.
+  - POST route that reads headers, delegates verification, and returns the HTTP response.
 - `apps/web/test/unit/api/api-key-auth.server.test.ts`
   - Verifier tests for invalid key, missing workspace header, mismatch, and success.
 - `apps/web/test/unit/routes/api/hello.test.ts`
@@ -145,7 +145,7 @@ Use the repo’s API file-route pattern:
 export const Route = createFileRoute('/api/hello')({
   server: {
     handlers: {
-      GET: async ({ request }) => {
+      POST: async ({ request }) => {
         const verification = await verifyWorkspaceApiKey({
           apiKey: request.headers.get('x-api-key'),
           workspaceId: request.headers.get('x-api-workspace-id'),

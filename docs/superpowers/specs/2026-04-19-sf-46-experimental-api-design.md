@@ -160,13 +160,13 @@ Add unit tests for the helper that cover:
 
 Add route-level tests that cover:
 
-- success response from `GET /api/hello`
+- success response from `POST /api/hello`
 - `403` translation for workspace mismatch
 - `400` translation for missing workspace header
 
 ## Acceptance Criteria
 
-- `GET /api/hello` exists in `apps/web`
+- `POST /api/hello` exists in `apps/web`
 - the route verifies keys with `auth.api.verifyApiKey`
 - verification is scoped to `configId: "system-managed"`
 - workspace mismatch returns `403 Forbidden`
