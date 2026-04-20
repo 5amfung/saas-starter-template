@@ -1,8 +1,8 @@
 import { getTableConfig } from 'drizzle-orm/pg-core';
 import {
+  integrationSecrets,
   notificationPreferences,
   notificationPreferencesRelations,
-  workspaceIntegrationSecrets,
 } from '../../src/app.schema';
 import {
   apikey,
@@ -54,12 +54,12 @@ describe('notificationPreferences table', () => {
 });
 
 // ---------------------------------------------------------------------------
-// app.schema.ts — workspaceIntegrationSecret
+// app.schema.ts — integrationSecrets
 // ---------------------------------------------------------------------------
 
-describe('workspaceIntegrationSecrets table', () => {
+describe('integrationSecrets table', () => {
   it('is exported from the app schema', () => {
-    expect(schema.workspaceIntegrationSecrets).toBeDefined();
+    expect(schema.integrationSecrets).toBeDefined();
   });
 
   it.each([
@@ -74,37 +74,34 @@ describe('workspaceIntegrationSecrets table', () => {
     'createdAt',
     'updatedAt',
   ] as const)('has %s column', (column) => {
-    expect(workspaceIntegrationSecrets[column]).toBeDefined();
+    expect(integrationSecrets[column]).toBeDefined();
   });
 
   it('has workspaceId as a non-null column', () => {
-    expect(workspaceIntegrationSecrets.workspaceId.dataType).toBe('string');
-    expect(workspaceIntegrationSecrets.workspaceId.notNull).toBe(true);
+    expect(integrationSecrets.workspaceId.dataType).toBe('string');
+    expect(integrationSecrets.workspaceId.notNull).toBe(true);
   });
 
   it('has encryptionVersion as a non-null integer defaulting to 1', () => {
-    expect(workspaceIntegrationSecrets.encryptionVersion.dataType).toBe(
-      'number'
-    );
-    expect(workspaceIntegrationSecrets.encryptionVersion.notNull).toBe(true);
-    expect(workspaceIntegrationSecrets.encryptionVersion.hasDefault).toBe(true);
+    expect(integrationSecrets.encryptionVersion.dataType).toBe('number');
+    expect(integrationSecrets.encryptionVersion.notNull).toBe(true);
+    expect(integrationSecrets.encryptionVersion.hasDefault).toBe(true);
   });
 
   it('has createdAt and updatedAt as non-null timestamps with defaults', () => {
-    expect(workspaceIntegrationSecrets.createdAt.dataType).toBe('date');
-    expect(workspaceIntegrationSecrets.createdAt.notNull).toBe(true);
-    expect(workspaceIntegrationSecrets.createdAt.hasDefault).toBe(true);
+    expect(integrationSecrets.createdAt.dataType).toBe('date');
+    expect(integrationSecrets.createdAt.notNull).toBe(true);
+    expect(integrationSecrets.createdAt.hasDefault).toBe(true);
 
-    expect(workspaceIntegrationSecrets.updatedAt.dataType).toBe('date');
-    expect(workspaceIntegrationSecrets.updatedAt.notNull).toBe(true);
-    expect(workspaceIntegrationSecrets.updatedAt.hasDefault).toBe(true);
+    expect(integrationSecrets.updatedAt.dataType).toBe('date');
+    expect(integrationSecrets.updatedAt.notNull).toBe(true);
+    expect(integrationSecrets.updatedAt.hasDefault).toBe(true);
   });
 
   it('defines the composite unique index on workspaceId, integration, and key', () => {
-    const tableConfig = getTableConfig(workspaceIntegrationSecrets);
+    const tableConfig = getTableConfig(integrationSecrets);
     const index = tableConfig.indexes.find(
-      (entry) =>
-        entry.config.name === 'workspace_integration_secret_workspace_key_uidx'
+      (entry) => entry.config.name === 'integration_secret_workspace_key_uidx'
     );
 
     expect(index).toBeDefined();
@@ -240,6 +237,6 @@ describe('db package exports', () => {
   it('exports schema with auth and app tables', () => {
     expect(schema.user).toBeDefined();
     expect(schema.notificationPreferences).toBeDefined();
-    expect(schema.workspaceIntegrationSecrets).toBeDefined();
+    expect(schema.integrationSecrets).toBeDefined();
   });
 });

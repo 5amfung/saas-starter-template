@@ -1,8 +1,8 @@
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
 import {
+  entitlementOverrides,
   member as memberTable,
   organization as organizationTable,
-  workspaceEntitlementOverrides as overrideTable,
   subscription as subscriptionTable,
   user as userTable,
 } from '@workspace/db-schema';
@@ -10,6 +10,8 @@ import type { AnyColumn } from 'drizzle-orm';
 import type { Database } from '@workspace/db';
 import type { EntitlementOverrides } from '../domain/entitlements';
 import type { PlanId } from '../domain/plans';
+
+const overrideTable = entitlementOverrides;
 
 export async function listSubscriptionsForWorkspace(
   db: Database,
