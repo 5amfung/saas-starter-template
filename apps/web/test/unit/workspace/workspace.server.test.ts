@@ -4,6 +4,7 @@ import {
   ensureWorkspaceMembership,
   getActiveMemberRole,
   listUserWorkspaces,
+  getWorkspaceSwitcherTriggerDetail,
 } from '@/workspace/workspace.server';
 
 const {
@@ -11,11 +12,15 @@ const {
   listOrganizationsMock,
   setActiveOrganizationMock,
   getFullOrganizationMock,
+  resolveWorkspacePlanIdFromDbMock,
+  countWorkspaceMembersMock,
 } = vi.hoisted(() => ({
   getAuthMock: vi.fn(),
   listOrganizationsMock: vi.fn(),
   setActiveOrganizationMock: vi.fn(),
   getFullOrganizationMock: vi.fn(),
+  resolveWorkspacePlanIdFromDbMock: vi.fn(),
+  countWorkspaceMembersMock: vi.fn(),
 }));
 
 vi.mock('@/init', () => ({
@@ -29,6 +34,10 @@ beforeEach(() => {
       setActiveOrganization: setActiveOrganizationMock,
       getFullOrganization: getFullOrganizationMock,
     },
+    billing: {
+      resolveWorkspacePlanIdFromDb: resolveWorkspacePlanIdFromDbMock,
+      countWorkspaceMembers: countWorkspaceMembersMock,
+    },
   });
 });
 
@@ -40,6 +49,10 @@ describe('workspace.server', () => {
         listOrganizations: listOrganizationsMock,
         setActiveOrganization: setActiveOrganizationMock,
         getFullOrganization: getFullOrganizationMock,
+      },
+      billing: {
+        resolveWorkspacePlanIdFromDb: resolveWorkspacePlanIdFromDbMock,
+        countWorkspaceMembers: countWorkspaceMembersMock,
       },
     });
   });
@@ -265,6 +278,64 @@ describe('workspace.server', () => {
         headers,
         query: { organizationId: 'org_target' },
       });
+    });
+  });
+
+  describe('getWorkspaceSwitcherTriggerDetail', () => {
+    it('returns the plan name and member count for a workspace from the workspace list', async () => {
+      listOrganizationsMock.mockResolvedValueOnce([
+        { id: 'org_1', name: 'Workspace' },
+      ]);
+      resolveWorkspacePlanIdFromDbMock.mockResolvedValueOnce('starter');
+      countWorkspaceMembersMock.mockResolvedValueOnce(2);
+
+      const result = await getWorkspaceSwitcherTriggerDetail(
+        new Headers(),
+        'org_1'
+      );
+
+      expect(result).toEqual({
+        planName: 'Starter',
+        memberCount: 2,
+      });
+      expect(getFullOrganizationMock).not.toHaveBeenCalled();
+      expect(countWorkspaceMembersMock).toHaveBeenCalledWith('org_1');
+      expect(resolveWorkspacePlanIdFromDbMock).toHaveBeenCalledWith('org_1');
+    });
+
+    it('returns the plan name and member count for an accessible workspace', async () => {
+      listOrganizationsMock.mockResolvedValueOnce([]);
+      getFullOrganizationMock.mockResolvedValueOnce({
+        id: 'org_1',
+        name: 'Workspace',
+        members: [
+          { id: 'member_1', userId: 'user_1', role: 'owner' },
+          { id: 'member_2', userId: 'user_2', role: 'member' },
+        ],
+      });
+      resolveWorkspacePlanIdFromDbMock.mockResolvedValueOnce('starter');
+      countWorkspaceMembersMock.mockResolvedValueOnce(2);
+
+      const result = await getWorkspaceSwitcherTriggerDetail(
+        new Headers(),
+        'org_1'
+      );
+
+      expect(result).toEqual({
+        planName: 'Starter',
+        memberCount: 2,
+      });
+      expect(countWorkspaceMembersMock).toHaveBeenCalledWith('org_1');
+      expect(resolveWorkspacePlanIdFromDbMock).toHaveBeenCalledWith('org_1');
+    });
+
+    it('throws when the workspace is not accessible to the current user', async () => {
+      listOrganizationsMock.mockResolvedValueOnce([]);
+      getFullOrganizationMock.mockResolvedValueOnce(null);
+
+      await expect(
+        getWorkspaceSwitcherTriggerDetail(new Headers(), 'org_missing')
+      ).rejects.toBeInstanceOf(APIError);
     });
   });
 });
