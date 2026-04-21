@@ -477,6 +477,14 @@ test.describe('Workspace Switching & Creation', () => {
     await signUpAndLogin(page, baseURL!);
     await getActiveWorkspaceId(page);
 
+    const trigger = page.locator('[data-sidebar="menu-button"]').first();
+    await expect(
+      trigger.getByTestId('workspace-switcher-trigger-plan-name')
+    ).toHaveText('Free');
+    await expect(
+      trigger.getByTestId('workspace-switcher-trigger-lock-icon')
+    ).toBeVisible();
+
     await openWorkspaceSwitcher(page);
     await expect(page.getByText('Workspaces')).toBeVisible();
     await expect(page.getByText('Add workspace')).toBeVisible();
