@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {
-  IconLock,
   IconLoader2,
+  IconLock,
   IconPlus,
   IconSelector,
   IconUsers,
@@ -230,6 +230,12 @@ export function WorkspaceSwitcher({
               </span>
               {triggerDetail ? (
                 <span className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+                  <span
+                    data-testid="workspace-switcher-trigger-plan-name"
+                    className="min-w-0 truncate"
+                  >
+                    {triggerDetail.planName}
+                  </span>
                   {triggerDetail.memberCount > 1 ? (
                     <IconUsers
                       data-testid="workspace-switcher-trigger-users-icon"
@@ -241,12 +247,6 @@ export function WorkspaceSwitcher({
                       className="size-3.5 shrink-0"
                     />
                   )}
-                  <span
-                    data-testid="workspace-switcher-trigger-plan-name"
-                    className="min-w-0 truncate"
-                  >
-                    {triggerDetail.planName}
-                  </span>
                 </span>
               ) : null}
             </div>

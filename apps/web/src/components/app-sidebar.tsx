@@ -32,8 +32,8 @@ import { NavMain } from '@/components/nav-main';
 import { useWorkspaceCapabilitiesQuery } from '@/policy/workspace-capabilities';
 import {
   useWorkspaceDetailQuery,
-  useWorkspaceSwitcherTriggerDetailQuery,
   useWorkspaceListQuery,
+  useWorkspaceSwitcherTriggerDetailQuery,
 } from '@/workspace/workspace.queries';
 import { mergeCurrentWorkspaceIntoList } from '@/workspace/workspace.selectors';
 import { WorkspaceSwitcher } from '@/components/workspace-switcher';

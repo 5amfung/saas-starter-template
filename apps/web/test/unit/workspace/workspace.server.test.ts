@@ -3,8 +3,8 @@ import {
   ensureActiveWorkspaceForSession,
   ensureWorkspaceMembership,
   getActiveMemberRole,
-  listUserWorkspaces,
   getWorkspaceSwitcherTriggerDetail,
+  listUserWorkspaces,
 } from '@/workspace/workspace.server';
 
 const {

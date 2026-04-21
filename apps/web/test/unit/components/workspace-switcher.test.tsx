@@ -305,6 +305,26 @@ describe('WorkspaceSwitcher', () => {
     expect(screen.getByText('Pro')).toBeInTheDocument();
   });
 
+  it('renders the trigger plan name before the sharing icon', () => {
+    renderWithProviders(
+      <WorkspaceSwitcher
+        workspaces={defaultWorkspaces}
+        activeWorkspaceId="ws-1"
+        triggerDetail={{ planName: 'Pro', memberCount: 4 }}
+      />
+    );
+
+    const planName = screen.getByTestId('workspace-switcher-trigger-plan-name');
+    const usersIcon = screen.getByTestId(
+      'workspace-switcher-trigger-users-icon'
+    );
+
+    expect(
+      planName.compareDocumentPosition(usersIcon) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
   it('renders the lock icon in the trigger for non-shared workspaces', () => {
     renderWithProviders(
       <WorkspaceSwitcher
