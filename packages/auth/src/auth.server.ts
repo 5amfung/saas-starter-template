@@ -307,6 +307,11 @@ export function createAuth(config: AuthConfig) {
         {
           configId: 'system-managed',
           references: 'organization',
+          rateLimit: {
+            enabled: true,
+            maxRequests: 5000,
+            timeWindow: 1000 * 60 * 5,
+          },
         },
       ]),
       stripe({

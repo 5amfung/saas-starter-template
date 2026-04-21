@@ -1,10 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { requestLogger } from '@workspace/logging';
 import { verifyWorkspaceApiKey } from '@/api/api-key-auth.server';
 
-function jsonError(message: string, status: number): Response {
+function jsonError(
+  message: string,
+  status: number,
+  headers?: HeadersInit
+): Response {
   return Response.json(
     { error: message },
     {
+      headers,
       status,
     }
   );
@@ -12,6 +18,7 @@ function jsonError(message: string, status: number): Response {
 
 export const Route = createFileRoute('/api/hello')({
   server: {
+    middleware: [requestLogger],
     handlers: {
       POST: async ({ request }: { request: Request }) => {
         const verification = await verifyWorkspaceApiKey({
@@ -26,10 +33,22 @@ export const Route = createFileRoute('/api/hello')({
                 'Missing required header: x-api-workspace-id',
                 400
               );
+            case 'missing-key':
+              return jsonError('Missing API key', 401);
             case 'forbidden':
               return jsonError(
                 'API key is not authorized for this workspace',
                 403
+              );
+            case 'rate-limited':
+              return jsonError(
+                'Rate limit exceeded.',
+                429,
+                verification.retryAfterSeconds === null
+                  ? undefined
+                  : {
+                      'Retry-After': String(verification.retryAfterSeconds),
+                    }
               );
             case 'invalid-key':
             default:
