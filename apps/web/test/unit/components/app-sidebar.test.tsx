@@ -11,6 +11,7 @@ const {
   useRouterStateMock,
   useWorkspaceListQueryMock,
   useWorkspaceDetailQueryMock,
+  useWorkspaceSwitcherTriggerDetailQueryMock,
 } = vi.hoisted(() => ({
   useSessionMock: vi.fn(),
   useActiveOrganizationMock: vi.fn(),
@@ -18,6 +19,7 @@ const {
   useRouterStateMock: vi.fn(),
   useWorkspaceListQueryMock: vi.fn(),
   useWorkspaceDetailQueryMock: vi.fn(),
+  useWorkspaceSwitcherTriggerDetailQueryMock: vi.fn(),
 }));
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
@@ -44,6 +46,8 @@ vi.mock('@tanstack/react-router', async () => {
 vi.mock('@/workspace/workspace.queries', () => ({
   useWorkspaceListQuery: useWorkspaceListQueryMock,
   useWorkspaceDetailQuery: useWorkspaceDetailQueryMock,
+  useWorkspaceSwitcherTriggerDetailQuery:
+    useWorkspaceSwitcherTriggerDetailQueryMock,
 }));
 
 vi.mock('@workspace/ui/components/sidebar', () => ({
@@ -67,9 +71,11 @@ vi.mock('@/components/workspace-switcher', () => ({
   WorkspaceSwitcher: ({
     workspaces,
     activeWorkspaceId,
+    triggerDetail,
   }: {
     workspaces: Array<{ id: string; name: string }>;
     activeWorkspaceId: string | null;
+    triggerDetail?: { planName: string; memberCount: number } | null;
   }) => (
     <div
       data-testid="workspace-switcher"
@@ -79,6 +85,7 @@ vi.mock('@/components/workspace-switcher', () => ({
           ?.name ?? ''
       }
       data-workspace-count={workspaces.length}
+      data-trigger-detail={JSON.stringify(triggerDetail ?? null)}
     />
   ),
 }));
@@ -144,6 +151,9 @@ beforeEach(() => {
   });
   useWorkspaceListQueryMock.mockReturnValue({ data: mockOrgs });
   useWorkspaceDetailQueryMock.mockReturnValue({ data: null });
+  useWorkspaceSwitcherTriggerDetailQueryMock.mockReturnValue({
+    data: undefined,
+  });
   useActiveOrganizationMock.mockReturnValue({
     data: { id: 'ws-1', name: 'Workspace One' },
   });
@@ -172,6 +182,38 @@ describe('AppSidebar', () => {
     const switcher = screen.getByTestId('workspace-switcher');
     expect(switcher).toBeInTheDocument();
     expect(switcher).toHaveAttribute('data-active-id', 'ws-1');
+    expect(switcher).toHaveAttribute('data-trigger-detail', 'null');
+  });
+
+  it('passes the loaded trigger detail into WorkspaceSwitcher', async () => {
+    useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
+    useWorkspaceSwitcherTriggerDetailQueryMock.mockReturnValue({
+      data: { planName: 'Pro', memberCount: 4 },
+    });
+
+    await renderSidebar();
+
+    expect(screen.getByTestId('workspace-switcher')).toHaveAttribute(
+      'data-trigger-detail',
+      JSON.stringify({ planName: 'Pro', memberCount: 4 })
+    );
+    expect(useWorkspaceSwitcherTriggerDetailQueryMock).toHaveBeenCalledWith(
+      'ws-1'
+    );
+  });
+
+  it('falls back to a null trigger detail while the query is unresolved', async () => {
+    useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
+    useWorkspaceSwitcherTriggerDetailQueryMock.mockReturnValue({
+      data: undefined,
+    });
+
+    await renderSidebar();
+
+    expect(screen.getByTestId('workspace-switcher')).toHaveAttribute(
+      'data-trigger-detail',
+      'null'
+    );
   });
 
   it('prefers the route workspace over stale active organization state', async () => {

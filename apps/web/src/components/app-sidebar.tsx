@@ -32,6 +32,7 @@ import { NavMain } from '@/components/nav-main';
 import { useWorkspaceCapabilitiesQuery } from '@/policy/workspace-capabilities';
 import {
   useWorkspaceDetailQuery,
+  useWorkspaceSwitcherTriggerDetailQuery,
   useWorkspaceListQuery,
 } from '@/workspace/workspace.queries';
 import { mergeCurrentWorkspaceIntoList } from '@/workspace/workspace.selectors';
@@ -75,6 +76,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     organizations?.at(0)?.id ??
     null;
   const { data: activeWorkspace } = useWorkspaceDetailQuery(activeWorkspaceId);
+  const { data: triggerDetail } =
+    useWorkspaceSwitcherTriggerDetailQuery(activeWorkspaceId);
 
   const { data: activeWorkspaceCapabilities } =
     useWorkspaceCapabilitiesQuery(activeWorkspaceId);
@@ -151,6 +154,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <WorkspaceSwitcher
           workspaces={workspaces}
           activeWorkspaceId={activeWorkspaceId}
+          triggerDetail={triggerDetail ?? null}
         />
       </SidebarHeader>
       <SidebarContent>
