@@ -1,4 +1,4 @@
 interface:
   display_name: "Verify Check Test"
-  short_description: "Run check and test until clean"
-  default_prompt: "Use $verify-check-test to verify this repo by running pnpm run check and pnpm test, fixing failures until both pass."
+  short_description: "Run check, test, and E2E until clean"
+  default_prompt: "Use $verify-check-test to verify this repo by running the full root loop, including pnpm run check:boundaries, pnpm run lint, pnpm run typecheck, pnpm run build, pnpm test, and pnpm test:e2e, fixing failures until all pass."
