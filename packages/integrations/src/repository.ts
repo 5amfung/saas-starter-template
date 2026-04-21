@@ -1,5 +1,5 @@
 import { and, eq } from 'drizzle-orm';
-import { workspaceIntegrationSecrets } from '@workspace/db-schema';
+import { integrationSecrets } from '@workspace/db-schema';
 import type { Database } from '@workspace/db';
 import type { IntegrationFieldKey, IntegrationKey } from './definitions';
 import type { EncryptedIntegrationSecret } from './types';
@@ -20,15 +20,15 @@ export async function listWorkspaceIntegrationSecretRows(
 ): Promise<Array<WorkspaceIntegrationSecretRow>> {
   return db
     .select({
-      integration: workspaceIntegrationSecrets.integration,
-      key: workspaceIntegrationSecrets.key,
-      encryptedValue: workspaceIntegrationSecrets.encryptedValue,
-      iv: workspaceIntegrationSecrets.iv,
-      authTag: workspaceIntegrationSecrets.authTag,
-      encryptionVersion: workspaceIntegrationSecrets.encryptionVersion,
+      integration: integrationSecrets.integration,
+      key: integrationSecrets.key,
+      encryptedValue: integrationSecrets.encryptedValue,
+      iv: integrationSecrets.iv,
+      authTag: integrationSecrets.authTag,
+      encryptionVersion: integrationSecrets.encryptionVersion,
     })
-    .from(workspaceIntegrationSecrets)
-    .where(eq(workspaceIntegrationSecrets.workspaceId, workspaceId)) as Promise<
+    .from(integrationSecrets)
+    .where(eq(integrationSecrets.workspaceId, workspaceId)) as Promise<
     Array<WorkspaceIntegrationSecretRow>
   >;
 }
@@ -41,19 +41,19 @@ export async function getWorkspaceIntegrationSecretRow(
 ): Promise<WorkspaceIntegrationSecretRow | null> {
   const rows = await db
     .select({
-      integration: workspaceIntegrationSecrets.integration,
-      key: workspaceIntegrationSecrets.key,
-      encryptedValue: workspaceIntegrationSecrets.encryptedValue,
-      iv: workspaceIntegrationSecrets.iv,
-      authTag: workspaceIntegrationSecrets.authTag,
-      encryptionVersion: workspaceIntegrationSecrets.encryptionVersion,
+      integration: integrationSecrets.integration,
+      key: integrationSecrets.key,
+      encryptedValue: integrationSecrets.encryptedValue,
+      iv: integrationSecrets.iv,
+      authTag: integrationSecrets.authTag,
+      encryptionVersion: integrationSecrets.encryptionVersion,
     })
-    .from(workspaceIntegrationSecrets)
+    .from(integrationSecrets)
     .where(
       and(
-        eq(workspaceIntegrationSecrets.workspaceId, workspaceId),
-        eq(workspaceIntegrationSecrets.integration, integration),
-        eq(workspaceIntegrationSecrets.key, key)
+        eq(integrationSecrets.workspaceId, workspaceId),
+        eq(integrationSecrets.integration, integration),
+        eq(integrationSecrets.key, key)
       )
     )
     .limit(1);
@@ -75,13 +75,13 @@ export async function upsertWorkspaceIntegrationSecretRow(
   }
 ) {
   await db
-    .insert(workspaceIntegrationSecrets)
+    .insert(integrationSecrets)
     .values(row)
     .onConflictDoUpdate({
       target: [
-        workspaceIntegrationSecrets.workspaceId,
-        workspaceIntegrationSecrets.integration,
-        workspaceIntegrationSecrets.key,
+        integrationSecrets.workspaceId,
+        integrationSecrets.integration,
+        integrationSecrets.key,
       ],
       set: {
         encryptedValue: row.encryptedValue,
@@ -100,12 +100,12 @@ export async function deleteWorkspaceIntegrationSecretRow(
   key: IntegrationFieldKey
 ) {
   await db
-    .delete(workspaceIntegrationSecrets)
+    .delete(integrationSecrets)
     .where(
       and(
-        eq(workspaceIntegrationSecrets.workspaceId, workspaceId),
-        eq(workspaceIntegrationSecrets.integration, integration),
-        eq(workspaceIntegrationSecrets.key, key)
+        eq(integrationSecrets.workspaceId, workspaceId),
+        eq(integrationSecrets.integration, integration),
+        eq(integrationSecrets.key, key)
       )
     );
 }

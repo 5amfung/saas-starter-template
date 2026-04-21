@@ -94,7 +94,7 @@ vi.mock('@/init', () => ({
   getDb: getDbMock.mockImplementation(() => ({
     select: dbSelectMock,
     query: {
-      workspaceEntitlementOverrides: {
+      entitlementOverrides: {
         findFirst: findFirstMock,
       },
     },
@@ -104,7 +104,7 @@ vi.mock('@/init', () => ({
 vi.mock('@workspace/db-schema', async (importOriginal) => {
   const actual = await importOriginal();
   return Object.assign({}, actual, {
-    workspaceEntitlementOverrides: { workspaceId: 'workspace_id' },
+    entitlementOverrides: { workspaceId: 'workspace_id' },
   });
 });
 

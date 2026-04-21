@@ -139,7 +139,7 @@ vi.mock('@workspace/db-schema', async (importOriginal) => {
   return Object.assign({}, actual, {
     subscription: { status: 'status', referenceId: 'referenceId' },
     user: { id: 'user_id' },
-    workspaceEntitlementOverrides: {
+    entitlementOverrides: {
       workspaceId: 'workspaceId',
       limits: 'limits',
       features: 'features',

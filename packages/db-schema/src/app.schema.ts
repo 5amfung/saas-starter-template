@@ -32,41 +32,38 @@ export const notificationPreferencesRelations = relations(
   })
 );
 
-export const workspaceEntitlementOverrides = pgTable(
-  'workspace_entitlement_override',
-  {
-    id: text('id').primaryKey(),
-    workspaceId: text('workspace_id')
-      .notNull()
-      .unique()
-      .references(() => organization.id, { onDelete: 'cascade' }),
-    // JSONB columns use Record<string, ...> because Drizzle can't enforce
-    // key unions at the DB layer. Callers must cast to EntitlementOverrides
-    // (keyed by LimitKey/FeatureKey/QuotaKey) at the read boundary.
-    limits: jsonb('limits').$type<Partial<Record<string, number>>>(),
-    features: jsonb('features').$type<Partial<Record<string, boolean>>>(),
-    quotas: jsonb('quotas').$type<Partial<Record<string, number>>>(),
-    notes: text('notes'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
-      .defaultNow()
-      .$onUpdate(() => new Date())
-      .notNull(),
-  }
-);
+export const entitlementOverrides = pgTable('entitlement_override', {
+  id: text('id').primaryKey(),
+  workspaceId: text('workspace_id')
+    .notNull()
+    .unique()
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  // JSONB columns use Record<string, ...> because Drizzle can't enforce
+  // key unions at the DB layer. Callers must cast to EntitlementOverrides
+  // (keyed by LimitKey/FeatureKey/QuotaKey) at the read boundary.
+  limits: jsonb('limits').$type<Partial<Record<string, number>>>(),
+  features: jsonb('features').$type<Partial<Record<string, boolean>>>(),
+  quotas: jsonb('quotas').$type<Partial<Record<string, number>>>(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at')
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
 
-export const workspaceEntitlementOverridesRelations = relations(
-  workspaceEntitlementOverrides,
+export const entitlementOverridesRelations = relations(
+  entitlementOverrides,
   ({ one }) => ({
     workspace: one(organization, {
-      fields: [workspaceEntitlementOverrides.workspaceId],
+      fields: [entitlementOverrides.workspaceId],
       references: [organization.id],
     }),
   })
 );
 
-export const workspaceIntegrationSecrets = pgTable(
-  'workspace_integration_secret',
+export const integrationSecrets = pgTable(
+  'integration_secret',
   {
     id: text('id').primaryKey(),
     workspaceId: text('workspace_id')
@@ -85,7 +82,7 @@ export const workspaceIntegrationSecrets = pgTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex('workspace_integration_secret_workspace_key_uidx').on(
+    uniqueIndex('integration_secret_workspace_key_uidx').on(
       table.workspaceId,
       table.integration,
       table.key
