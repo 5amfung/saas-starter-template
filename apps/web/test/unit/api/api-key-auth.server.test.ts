@@ -19,7 +19,7 @@ describe('api-key-auth.server', () => {
     });
   });
 
-  it('returns invalid-key when the api key header is missing', async () => {
+  it('returns missing-key when the api key header is missing', async () => {
     await expect(
       verifyWorkspaceApiKey({
         apiKey: null,
@@ -27,7 +27,7 @@ describe('api-key-auth.server', () => {
       })
     ).resolves.toEqual({
       ok: false,
-      reason: 'invalid-key',
+      reason: 'missing-key',
     });
 
     expect(verifyApiKeyMock).not.toHaveBeenCalled();
@@ -69,6 +69,29 @@ describe('api-key-auth.server', () => {
         configId: 'system-managed',
         key: 'sr_secret',
       },
+    });
+  });
+
+  it('returns rate-limited when Better Auth rejects with a rate limit error', async () => {
+    verifyApiKeyMock.mockRejectedValueOnce({
+      status: 'UNAUTHORIZED',
+      body: {
+        message: 'Rate limit exceeded.',
+        code: 'RATE_LIMITED',
+        details: { tryAgainIn: 1250 },
+      },
+      statusCode: 401,
+    });
+
+    await expect(
+      verifyWorkspaceApiKey({
+        apiKey: 'sr_secret',
+        workspaceId: 'ws_1',
+      })
+    ).resolves.toEqual({
+      ok: false,
+      reason: 'rate-limited',
+      retryAfterSeconds: 2,
     });
   });
 

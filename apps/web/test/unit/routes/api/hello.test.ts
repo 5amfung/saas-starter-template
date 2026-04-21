@@ -91,6 +91,28 @@ describe('/api/hello route', () => {
     });
   });
 
+  it('returns 401 when the api key header is missing', async () => {
+    verifyWorkspaceApiKeyMock.mockResolvedValueOnce({
+      ok: false,
+      reason: 'missing-key',
+    });
+
+    const handler = await getHandler();
+    const response = await handler!({
+      request: new Request('http://localhost/api/hello', {
+        method: 'POST',
+        headers: {
+          'x-api-workspace-id': 'ws_1',
+        },
+      }),
+    });
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      error: 'Missing API key',
+    });
+  });
+
   it('returns 401 when the api key is invalid', async () => {
     verifyWorkspaceApiKeyMock.mockResolvedValueOnce({
       ok: false,
@@ -111,6 +133,31 @@ describe('/api/hello route', () => {
     expect(response.status).toBe(401);
     await expect(response.json()).resolves.toEqual({
       error: 'Invalid API key',
+    });
+  });
+
+  it('returns 429 when api key verification is rate limited', async () => {
+    verifyWorkspaceApiKeyMock.mockResolvedValueOnce({
+      ok: false,
+      reason: 'rate-limited',
+      retryAfterSeconds: 2,
+    });
+
+    const handler = await getHandler();
+    const response = await handler!({
+      request: new Request('http://localhost/api/hello', {
+        method: 'POST',
+        headers: {
+          'x-api-key': 'sr_secret',
+          'x-api-workspace-id': 'ws_1',
+        },
+      }),
+    });
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get('Retry-After')).toBe('2');
+    await expect(response.json()).resolves.toEqual({
+      error: 'Rate limit exceeded.',
     });
   });
 });
