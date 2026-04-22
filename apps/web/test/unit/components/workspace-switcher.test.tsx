@@ -254,6 +254,109 @@ describe('WorkspaceSwitcher', () => {
     expect(screen.getByText('Add workspace')).toBeInTheDocument();
   });
 
+  it('shows the trigger plan subtitle when trigger detail is provided', () => {
+    renderWithProviders(
+      <WorkspaceSwitcher
+        workspaces={defaultWorkspaces}
+        activeWorkspaceId="ws-1"
+        triggerDetail={{ planName: 'Pro', memberCount: 1 }}
+      />
+    );
+
+    expect(screen.getAllByText('Workspace One').length).toBeGreaterThan(0);
+    expect(screen.getByText('Pro')).toBeInTheDocument();
+  });
+
+  it('truncates long trigger plan names without affecting the icon', () => {
+    renderWithProviders(
+      <WorkspaceSwitcher
+        workspaces={defaultWorkspaces}
+        activeWorkspaceId="ws-1"
+        triggerDetail={{
+          planName: 'Enterprise Team Plan With Extended Workspace Access',
+          memberCount: 4,
+        }}
+      />
+    );
+
+    expect(
+      screen.getByTestId('workspace-switcher-trigger-users-icon')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('workspace-switcher-trigger-plan-name')
+    ).toHaveClass('truncate');
+    expect(
+      screen.getByText('Enterprise Team Plan With Extended Workspace Access')
+    ).toBeInTheDocument();
+  });
+
+  it('renders the shared workspace users icon in the trigger', () => {
+    renderWithProviders(
+      <WorkspaceSwitcher
+        workspaces={defaultWorkspaces}
+        activeWorkspaceId="ws-1"
+        triggerDetail={{ planName: 'Pro', memberCount: 4 }}
+      />
+    );
+
+    expect(
+      screen.getByTestId('workspace-switcher-trigger-users-icon')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Pro')).toBeInTheDocument();
+  });
+
+  it('renders the trigger plan name before the sharing icon', () => {
+    renderWithProviders(
+      <WorkspaceSwitcher
+        workspaces={defaultWorkspaces}
+        activeWorkspaceId="ws-1"
+        triggerDetail={{ planName: 'Pro', memberCount: 4 }}
+      />
+    );
+
+    const planName = screen.getByTestId('workspace-switcher-trigger-plan-name');
+    const usersIcon = screen.getByTestId(
+      'workspace-switcher-trigger-users-icon'
+    );
+
+    expect(
+      planName.compareDocumentPosition(usersIcon) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it('renders the lock icon in the trigger for non-shared workspaces', () => {
+    renderWithProviders(
+      <WorkspaceSwitcher
+        workspaces={defaultWorkspaces}
+        activeWorkspaceId="ws-1"
+        triggerDetail={{ planName: 'Pro', memberCount: 1 }}
+      />
+    );
+
+    expect(
+      screen.getByTestId('workspace-switcher-trigger-lock-icon')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Pro')).toBeInTheDocument();
+  });
+
+  it('falls back to the single-line trigger when trigger detail is missing', () => {
+    renderWithProviders(
+      <WorkspaceSwitcher
+        workspaces={defaultWorkspaces}
+        activeWorkspaceId="ws-1"
+      />
+    );
+
+    expect(screen.getAllByText('Workspace One').length).toBeGreaterThan(0);
+    expect(
+      screen.queryByTestId('workspace-switcher-trigger-users-icon')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('workspace-switcher-trigger-lock-icon')
+    ).not.toBeInTheDocument();
+  });
+
   it('calls setActive and navigates when a workspace is clicked', async () => {
     const user = userEvent.setup();
     setActiveMock.mockResolvedValue({ error: null });

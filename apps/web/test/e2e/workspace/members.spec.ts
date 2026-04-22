@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, request as playwrightRequest, test } from '@playwright/test';
 import {
   VALID_PASSWORD,
   createIsolatedWorkspaceFixture,
@@ -8,7 +8,6 @@ import {
   waitForTestEmail,
 } from '@workspace/test-utils';
 import { completeStripeCheckout } from '../lib/complete-stripe-checkout';
-import { toCookieHeader } from '../lib/parse-cookie-header';
 import type { Page } from '@playwright/test';
 
 /**
@@ -17,38 +16,41 @@ import type { Page } from '@playwright/test';
  */
 async function signInAndGoToMembers(
   page: Page,
+  baseURL: string,
   credentials: { email: string; password: string },
-  workspaceId?: string
+  workspaceId: string
 ): Promise<string> {
-  await page.goto('/signin');
-  await page.getByLabel('Email').fill(credentials.email);
-  await page.getByLabel('Password', { exact: true }).fill(credentials.password);
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-
-  let activeWorkspaceId = workspaceId;
-
-  if (activeWorkspaceId) {
-    await page.waitForURL(new RegExp(`/ws/${activeWorkspaceId}/overview`), {
-      timeout: 15000,
-      waitUntil: 'domcontentloaded',
+  const authRequest = await playwrightRequest.newContext({ baseURL });
+  try {
+    const signinResponse = await authRequest.post('/api/auth/sign-in/email', {
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: baseURL,
+      },
+      data: credentials,
     });
-  } else {
-    await page.waitForURL(/\/ws\/.*\/overview/, {
-      timeout: 15000,
-      waitUntil: 'domcontentloaded',
-    });
-    activeWorkspaceId = page.url().match(/\/ws\/([^/]+)\//)?.[1];
+
+    if (!signinResponse.ok()) {
+      const body = await signinResponse.text();
+      throw new Error(`Sign-in failed (${signinResponse.status()}): ${body}`);
+    }
+
+    const storageState = await authRequest.storageState();
+    await page.context().clearCookies();
+    await page.context().addCookies(storageState.cookies);
+  } finally {
+    await authRequest.dispose();
   }
 
-  if (!activeWorkspaceId) {
-    throw new Error(`Could not extract workspaceId from ${page.url()}`);
-  }
-  await page.goto(`/ws/${activeWorkspaceId}/members`, {
+  await page.goto(`/ws/${workspaceId}/members`, {
     waitUntil: 'domcontentloaded',
   });
-  await page.waitForURL(`**/ws/${activeWorkspaceId}/members`);
+  await page.waitForURL(`**/ws/${workspaceId}/members`);
+  await expect(page.getByRole('tab', { name: 'Team Members' })).toBeVisible({
+    timeout: 15000,
+  });
 
-  return activeWorkspaceId;
+  return workspaceId;
 }
 
 async function setupOwnerAndGoToMembers(
@@ -70,7 +72,12 @@ async function setupOwnerAndGoToMembers(
     },
   });
 
-  await signInAndGoToMembers(page, fixture.owner, fixture.workspace.id);
+  await signInAndGoToMembers(
+    page,
+    baseURL,
+    fixture.owner,
+    fixture.workspace.id
+  );
 
   return fixture;
 }
@@ -131,49 +138,45 @@ async function acceptInvitationViaApi(
   inviteeCredentials: { email: string; password: string },
   invitationId: string
 ): Promise<void> {
-  // Sign in as invitee to get session cookie.
-  const signinResponse = await fetch(`${baseURL}/api/auth/sign-in/email`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Origin: baseURL,
-    },
-    body: JSON.stringify({
-      email: inviteeCredentials.email,
-      password: inviteeCredentials.password,
-    }),
-  });
-
-  if (!signinResponse.ok) {
-    const body = await signinResponse.text();
-    throw new Error(
-      `Invitee sign-in failed (${signinResponse.status}): ${body}`
+  const inviteeRequest = await playwrightRequest.newContext({ baseURL });
+  try {
+    const signinResponse = await inviteeRequest.post(
+      '/api/auth/sign-in/email',
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: baseURL,
+        },
+        data: inviteeCredentials,
+      }
     );
-  }
 
-  const inviteeCookie = toCookieHeader(
-    signinResponse.headers.get('set-cookie') ?? ''
-  );
-
-  // Accept the invitation.
-  const acceptResponse = await fetch(
-    `${baseURL}/api/auth/organization/accept-invitation`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Cookie: inviteeCookie,
-        Origin: baseURL,
-      },
-      body: JSON.stringify({ invitationId }),
+    if (!signinResponse.ok()) {
+      const body = await signinResponse.text();
+      throw new Error(
+        `Invitee sign-in failed (${signinResponse.status()}): ${body}`
+      );
     }
-  );
 
-  if (!acceptResponse.ok) {
-    const body = await acceptResponse.text();
-    throw new Error(
-      `Invitation acceptance failed (${acceptResponse.status}): ${body}`
+    const acceptResponse = await inviteeRequest.post(
+      '/api/auth/organization/accept-invitation',
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: baseURL,
+        },
+        data: { invitationId },
+      }
     );
+
+    if (!acceptResponse.ok()) {
+      const body = await acceptResponse.text();
+      throw new Error(
+        `Invitation acceptance failed (${acceptResponse.status()}): ${body}`
+      );
+    }
+  } finally {
+    await inviteeRequest.dispose();
   }
 }
 
@@ -985,7 +988,7 @@ test.describe('Workspace Members Page', () => {
 
     // Sign out and sign in as member.
     await resetToSignedOutState(page);
-    await signInAndGoToMembers(page, member);
+    await signInAndGoToMembers(page, baseURL!, member, workspaceId);
 
     // Invite button should NOT be visible.
     await expect(
@@ -1013,7 +1016,7 @@ test.describe('Workspace Members Page', () => {
 
     // Sign out and sign in as member.
     await resetToSignedOutState(page);
-    await signInAndGoToMembers(page, member);
+    await signInAndGoToMembers(page, baseURL!, member, workspaceId);
 
     // Navigate to the owner's workspace members page.
     await page.goto(`/ws/${workspaceId}/members`);
@@ -1081,7 +1084,7 @@ test.describe('Workspace Members Page', () => {
     );
 
     await resetToSignedOutState(page);
-    await signInAndGoToMembers(page, adminCredentials);
+    await signInAndGoToMembers(page, baseURL!, adminCredentials, workspaceId);
     await page.goto(`/ws/${workspaceId}/members`);
     await page.waitForURL(`**/ws/${workspaceId}/members`);
 
@@ -1122,7 +1125,7 @@ test.describe('Workspace Members Page', () => {
 
     // Sign out and sign in as member.
     await resetToSignedOutState(page);
-    await signInAndGoToMembers(page, member);
+    await signInAndGoToMembers(page, baseURL!, member, workspaceId);
 
     // Navigate to the owner's workspace.
     await page.goto(`/ws/${workspaceId}/members`);
@@ -1164,7 +1167,7 @@ test.describe('Workspace Members Page', () => {
 
     // Sign out and sign in as member.
     await resetToSignedOutState(page);
-    await signInAndGoToMembers(page, member);
+    await signInAndGoToMembers(page, baseURL!, member, workspaceId);
 
     // Navigate to the owner's workspace.
     await page.goto(`/ws/${workspaceId}/members`);
@@ -1302,7 +1305,12 @@ test.describe('Workspace Members Page', () => {
       }
     );
 
-    await signInAndGoToMembers(page, fixture.owner, fixture.workspace.id);
+    await signInAndGoToMembers(
+      page,
+      baseURL!,
+      fixture.owner,
+      fixture.workspace.id
+    );
 
     // Skeleton elements with animate-pulse should be visible during loading.
     const skeletons = page.locator('.animate-pulse');

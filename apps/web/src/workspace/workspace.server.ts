@@ -1,4 +1,5 @@
 import { APIError } from 'better-auth/api';
+import { getFreePlan, getPlanById } from '@workspace/billing';
 import { isRecord } from '@workspace/auth';
 import { getAuth } from '@/init';
 import { pickDefaultWorkspace } from '@/workspace/workspace';
@@ -158,4 +159,22 @@ export async function getWorkspaceMemberForUser(
 ) {
   const members = await getWorkspaceMembers(headers, workspaceId);
   return members.find((member) => member.userId === userId) ?? null;
+}
+
+export async function getWorkspaceSwitcherTriggerDetail(
+  headers: Headers,
+  workspaceId: string
+) {
+  await ensureWorkspaceMembership(headers, workspaceId);
+
+  const planId =
+    await getAuth().billing.resolveWorkspacePlanIdFromDb(workspaceId);
+  const plan = getPlanById(planId) ?? getFreePlan();
+  const memberCount =
+    await getAuth().billing.countWorkspaceMembers(workspaceId);
+
+  return {
+    planName: plan.name,
+    memberCount,
+  };
 }
