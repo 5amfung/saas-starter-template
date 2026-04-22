@@ -187,19 +187,20 @@ describe('WorkspaceMembersPage integration', () => {
       expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     });
 
-    await waitFor(async () => {
-      const memberRow = screen.getByText('member@test.com').closest('tr');
-      expect(memberRow).not.toBeNull();
+    const memberRow = screen.getByText('member@test.com').closest('tr');
+    expect(memberRow).not.toBeNull();
 
-      await user.click(
-        within(memberRow!).getByRole('button', {
-          name: /row actions for member@test\.com/i,
-        })
-      );
+    await user.click(
+      within(memberRow!).getByRole('button', {
+        name: /row actions for member@test\.com/i,
+      })
+    );
 
-      expect(
-        screen.queryByRole('menuitem', { name: /transfer ownership/i })
-      ).not.toBeInTheDocument();
-    });
+    expect(
+      await screen.findByRole('menuitem', { name: /remove/i })
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('menuitem', { name: /transfer ownership/i })
+    ).not.toBeInTheDocument();
   }, 10_000);
 });
