@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, request as playwrightRequest, test } from '@playwright/test';
 import {
   VALID_PASSWORD,
   createIsolatedWorkspaceFixture,
@@ -7,7 +7,7 @@ import {
   waitForTestEmail,
 } from '@workspace/test-utils';
 import { completeStripeCheckout } from '../lib/complete-stripe-checkout';
-import { parseCookieHeader, toCookieHeader } from '../lib/parse-cookie-header';
+import { parseCookieHeader } from '../lib/parse-cookie-header';
 import type { Page } from '@playwright/test';
 
 /**
@@ -222,48 +222,45 @@ async function acceptInvitationViaApi(
   inviteeCredentials: { email: string; password: string },
   invitationId: string
 ): Promise<void> {
-  const signinResponse = await page.request.post(
-    `${baseURL}/api/auth/sign-in/email`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        Origin: baseURL,
-      },
-      data: {
-        email: inviteeCredentials.email,
-        password: inviteeCredentials.password,
-      },
-    }
-  );
-
-  if (!signinResponse.ok()) {
-    const body = await signinResponse.text();
-    throw new Error(
-      `Invitee sign-in failed (${signinResponse.status()}): ${body}`
+  const inviteeRequest = await playwrightRequest.newContext({ baseURL });
+  try {
+    const signinResponse = await inviteeRequest.post(
+      '/api/auth/sign-in/email',
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: baseURL,
+        },
+        data: inviteeCredentials,
+      }
     );
-  }
 
-  const inviteeCookie = toCookieHeader(
-    signinResponse.headers()['set-cookie'] ?? ''
-  );
-
-  const acceptResponse = await page.request.post(
-    `${baseURL}/api/auth/organization/accept-invitation`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        Cookie: inviteeCookie,
-        Origin: baseURL,
-      },
-      data: { invitationId },
+    if (!signinResponse.ok()) {
+      const body = await signinResponse.text();
+      throw new Error(
+        `Invitee sign-in failed (${signinResponse.status()}): ${body}`
+      );
     }
-  );
 
-  if (!acceptResponse.ok()) {
-    const body = await acceptResponse.text();
-    throw new Error(
-      `Invitation acceptance failed (${acceptResponse.status()}): ${body}`
+    const acceptResponse = await inviteeRequest.post(
+      '/api/auth/organization/accept-invitation',
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: baseURL,
+        },
+        data: { invitationId },
+      }
     );
+
+    if (!acceptResponse.ok()) {
+      const body = await acceptResponse.text();
+      throw new Error(
+        `Invitation acceptance failed (${acceptResponse.status()}): ${body}`
+      );
+    }
+  } finally {
+    await inviteeRequest.dispose();
   }
 }
 

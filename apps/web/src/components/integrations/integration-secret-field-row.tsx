@@ -57,15 +57,24 @@ export function IntegrationSecretFieldRow({
 
   const saveMutation = useMutation({
     mutationFn: (nextValue: string) => onSave(fieldKey, nextValue),
+    onSuccess: (_result, nextValue) => {
+      const nextMaskedValue = nextValue ? maskValueForDisplay(nextValue) : '';
+      setSavedMaskedValue(nextMaskedValue);
+      setSavedValue(nextValue);
+      setDraftValue(nextMaskedValue);
+      setDraftComparableValue(nextValue);
+      setIsHidden(Boolean(nextValue));
+    },
     onError: (error) => {
       toast.error(getErrorMessage(error, `Failed to save ${label}.`));
     },
   });
 
   const isDirty = draftComparableValue !== savedValue;
+  const hasStoredValue = Boolean(savedValue);
   const actionDisabled = !canManage || saveMutation.isPending;
   const toggleHiddenDisabled =
-    !canManage || !hasValue || saveMutation.isPending;
+    !canManage || !hasStoredValue || saveMutation.isPending;
 
   const handleDraftChange = (nextValue: string) => {
     setDraftValue(nextValue);
