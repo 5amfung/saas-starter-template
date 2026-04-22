@@ -1,3 +1,5 @@
+// Hand-maintained Better Auth schema. Use Better Auth CLI output only as a
+// temporary reference during upgrades, not as a generator target for this file.
 import { relations } from 'drizzle-orm';
 import {
   boolean,
@@ -117,8 +119,8 @@ export const apikey = pgTable(
     lastRefillAt: timestamp('last_refill_at'),
     enabled: boolean('enabled').default(true),
     rateLimitEnabled: boolean('rate_limit_enabled').default(true),
-    rateLimitTimeWindow: integer('rate_limit_time_window').default(86400000),
-    rateLimitMax: integer('rate_limit_max').default(10),
+    rateLimitTimeWindow: integer('rate_limit_time_window').default(300000),
+    rateLimitMax: integer('rate_limit_max').default(5000),
     requestCount: integer('request_count').default(0),
     remaining: integer('remaining'),
     lastRequest: timestamp('last_request'),
