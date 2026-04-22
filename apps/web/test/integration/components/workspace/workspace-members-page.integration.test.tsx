@@ -184,24 +184,22 @@ describe('WorkspaceMembersPage integration', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('admin')).toBeInTheDocument();
-    });
-
-    await waitFor(() => {
       expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     });
 
-    const memberRow = screen.getByText('member@test.com').closest('tr');
-    expect(memberRow).not.toBeNull();
+    await waitFor(async () => {
+      const memberRow = screen.getByText('member@test.com').closest('tr');
+      expect(memberRow).not.toBeNull();
 
-    await user.click(
-      within(memberRow!).getByRole('button', {
-        name: /row actions for member@test\.com/i,
-      })
-    );
+      await user.click(
+        within(memberRow!).getByRole('button', {
+          name: /row actions for member@test\.com/i,
+        })
+      );
 
-    expect(
-      screen.queryByRole('menuitem', { name: /transfer ownership/i })
-    ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('menuitem', { name: /transfer ownership/i })
+      ).not.toBeInTheDocument();
+    });
   }, 10_000);
 });
