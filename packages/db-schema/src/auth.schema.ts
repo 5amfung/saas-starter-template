@@ -1,3 +1,5 @@
+// Hand-maintained Better Auth schema. Use Better Auth CLI output only as a
+// temporary reference during upgrades, not as a generator target for this file.
 import { relations } from 'drizzle-orm';
 import {
   boolean,

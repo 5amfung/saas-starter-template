@@ -12,7 +12,7 @@
     "url": "https://github.com/5amfung/saas-starter-template/issues"
   },
   "homepage": "https://github.com/5amfung/saas-starter-template#readme",
-  "packageManager": "pnpm@10.33.0",
+  "packageManager": "pnpm@10.33.1",
   "scripts": {
     "dev": "turbo run dev dev:stripe-webhook --filter @workspace/web --filter @workspace/admin-web",
     "dev:admin": "pnpm --filter @workspace/admin-web dev",

@@ -203,13 +203,28 @@ saas-starter-template/
 
 ### Database Commands
 
-| Command                    | Description                        |
-| -------------------------- | ---------------------------------- |
-| `pnpm run db:generate`     | Generate Drizzle migration files   |
-| `pnpm run db:migrate`      | Apply migrations                   |
-| `pnpm run db:push`         | Push schema directly (dev only)    |
-| `pnpm run db:studio`       | Open Drizzle Studio                |
-| `pnpm run gen-auth-schema` | Regenerate auth schema from config |
+| Command                | Description                      |
+| ---------------------- | -------------------------------- |
+| `pnpm run db:generate` | Generate Drizzle migration files |
+| `pnpm run db:migrate`  | Apply migrations                 |
+| `pnpm run db:push`     | Push schema directly (dev only)  |
+| `pnpm run db:studio`   | Open Drizzle Studio              |
+
+`packages/db-schema/src/auth.schema.ts` is hand-maintained. Do not regenerate it
+in place. If you need Better Auth's latest generated schema as a reference
+during an upgrade, generate it to a temporary file and manually port the needed
+changes:
+
+```bash
+pnpm --filter @workspace/db-schema exec pnpx @better-auth/cli generate \
+  --config ../auth/src/auth.cli.ts \
+  --output /tmp/better-auth-auth.schema.ts \
+  --yes
+```
+
+Then diff the temporary file against `packages/db-schema/src/auth.schema.ts` and
+copy over the desired Better Auth schema changes by hand, preserving any
+repo-owned indexes or other Drizzle customizations.
 
 ### App-Specific Commands
 
