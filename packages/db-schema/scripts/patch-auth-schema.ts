@@ -112,10 +112,21 @@ function main(): void {
         return id != null && !existingIds.has(id);
       });
       if (toAdd.length === 0) continue;
+      const arrayContent = content.slice(arrayStart, arrayEnd);
+      const trailingWhitespace = arrayContent.match(/\s*$/)?.[0] ?? '';
+      const arrayBody = arrayContent.slice(
+        0,
+        arrayContent.length - trailingWhitespace.length
+      );
+      const separator = arrayBody.trim().length === 0 ? '' : '\n';
       const insertion =
-        ',' + toAdd.map((line) => `\n    ${line}`).join(',') + ',\n';
+        separator + toAdd.map((line) => `    ${line},`).join('\n');
       content =
-        content.slice(0, arrayEnd) + insertion + content.slice(arrayEnd);
+        content.slice(0, arrayStart) +
+        arrayBody +
+        insertion +
+        trailingWhitespace +
+        content.slice(arrayEnd);
       continue;
     }
 
