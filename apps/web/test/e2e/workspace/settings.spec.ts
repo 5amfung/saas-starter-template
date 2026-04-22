@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, request as playwrightRequest, test } from '@playwright/test';
 import {
   VALID_PASSWORD,
   createIsolatedWorkspaceFixture,
@@ -27,6 +27,13 @@ async function signUpAndLogin(
   });
 
   await page.context().addCookies(parseCookieHeader(fixture.owner.cookie));
+  await page.goto(`/ws/${fixture.workspace.id}/overview`, {
+    waitUntil: 'domcontentloaded',
+  });
+  await page.waitForURL(`**/ws/${fixture.workspace.id}/overview`, {
+    timeout: 15000,
+    waitUntil: 'domcontentloaded',
+  });
   return {
     email: fixture.owner.email,
     cookieHeader: toCookieHeader(fixture.owner.cookie),
@@ -36,6 +43,11 @@ async function signUpAndLogin(
 
 /** Navigate to /ws, wait for redirect, extract workspaceId from URL. */
 async function getActiveWorkspaceId(page: Page): Promise<string> {
+  const currentMatch = page.url().match(/\/ws\/([^/]+)\/(?:overview|settings)/);
+  if (currentMatch) {
+    return currentMatch[1];
+  }
+
   await page.goto('/ws', { waitUntil: 'domcontentloaded' });
   await page.waitForURL(/\/ws\/.+\/overview/, {
     timeout: 10000,
@@ -124,47 +136,45 @@ function getInvitationId(invitationUrl: string): string {
 }
 
 async function acceptInvitationViaApi(
-  page: Page,
   baseURL: string,
   inviteeCredentials: { email: string; password: string },
   invitationId: string
 ): Promise<void> {
-  const signinResponse = await page.request.post(
-    `${baseURL}/api/auth/sign-in/email`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        Origin: baseURL,
-      },
-      data: inviteeCredentials,
-    }
-  );
-
-  if (!signinResponse.ok()) {
-    throw new Error(`Invitee sign-in failed (${signinResponse.status()}).`);
-  }
-
-  const inviteeCookie = signinResponse
-    .headers()
-    ['set-cookie'].split(';')[0]
-    .trim();
-
-  const acceptResponse = await page.request.post(
-    `${baseURL}/api/auth/organization/accept-invitation`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        Cookie: inviteeCookie,
-        Origin: baseURL,
-      },
-      data: { invitationId },
-    }
-  );
-
-  if (!acceptResponse.ok()) {
-    throw new Error(
-      `Invitation acceptance failed (${acceptResponse.status()}).`
+  const inviteeRequest = await playwrightRequest.newContext({ baseURL });
+  try {
+    const signinResponse = await inviteeRequest.post(
+      '/api/auth/sign-in/email',
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: baseURL,
+        },
+        data: inviteeCredentials,
+      }
     );
+
+    if (!signinResponse.ok()) {
+      throw new Error(`Invitee sign-in failed (${signinResponse.status()}).`);
+    }
+
+    const acceptResponse = await inviteeRequest.post(
+      '/api/auth/organization/accept-invitation',
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: baseURL,
+        },
+        data: { invitationId },
+      }
+    );
+
+    if (!acceptResponse.ok()) {
+      throw new Error(
+        `Invitation acceptance failed (${acceptResponse.status()}).`
+      );
+    }
+  } finally {
+    await inviteeRequest.dispose();
   }
 }
 
@@ -246,7 +256,6 @@ async function inviteWorkspaceUser(
 
   const invitationUrl = await getInvitationUrl(baseURL, inviteeEmail);
   await acceptInvitationViaApi(
-    page,
     baseURL,
     { email: inviteeEmail, password: inviteePassword },
     getInvitationId(invitationUrl)
@@ -476,6 +485,14 @@ test.describe('Workspace Switching & Creation', () => {
   }) => {
     await signUpAndLogin(page, baseURL!);
     await getActiveWorkspaceId(page);
+
+    const trigger = page.locator('[data-sidebar="menu-button"]').first();
+    await expect(
+      trigger.getByTestId('workspace-switcher-trigger-plan-name')
+    ).toHaveText('Free');
+    await expect(
+      trigger.getByTestId('workspace-switcher-trigger-lock-icon')
+    ).toBeVisible();
 
     await openWorkspaceSwitcher(page);
     await expect(page.getByText('Workspaces')).toBeVisible();

@@ -1,5 +1,11 @@
 import * as React from 'react';
-import { IconLoader2, IconPlus, IconSelector } from '@tabler/icons-react';
+import {
+  IconLoader2,
+  IconLock,
+  IconPlus,
+  IconSelector,
+  IconUsers,
+} from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
@@ -68,6 +74,7 @@ function buildWorkspaceCreateAttributes(
 export function WorkspaceSwitcher({
   workspaces,
   activeWorkspaceId,
+  triggerDetail,
 }: {
   workspaces: Array<{
     id: string;
@@ -75,6 +82,7 @@ export function WorkspaceSwitcher({
     logo: React.ReactNode;
   }>;
   activeWorkspaceId: string | null;
+  triggerDetail?: { planName: string; memberCount: number } | null;
 }) {
   const { isMobile } = useSidebar();
   const navigate = useNavigate();
@@ -220,8 +228,32 @@ export function WorkspaceSwitcher({
               <span className="truncate font-medium">
                 {activeWorkspace.name}
               </span>
+              {triggerDetail ? (
+                <span className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+                  <span
+                    data-testid="workspace-switcher-trigger-plan-name"
+                    className="min-w-0 truncate"
+                  >
+                    {triggerDetail.planName}
+                  </span>
+                  {triggerDetail.memberCount > 1 ? (
+                    <IconUsers
+                      data-testid="workspace-switcher-trigger-users-icon"
+                      className="size-3.5 shrink-0"
+                    />
+                  ) : (
+                    <IconLock
+                      data-testid="workspace-switcher-trigger-lock-icon"
+                      className="size-3.5 shrink-0"
+                    />
+                  )}
+                </span>
+              ) : null}
             </div>
-            <IconSelector className="ml-auto" />
+            <IconSelector
+              data-testid="workspace-switcher-selector-icon"
+              className="ml-auto"
+            />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="min-w-56 rounded-lg"

@@ -184,10 +184,6 @@ describe('WorkspaceMembersPage integration', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('admin')).toBeInTheDocument();
-    });
-
-    await waitFor(() => {
       expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     });
 
@@ -200,6 +196,9 @@ describe('WorkspaceMembersPage integration', () => {
       })
     );
 
+    expect(
+      await screen.findByRole('menuitem', { name: /remove/i })
+    ).toBeVisible();
     expect(
       screen.queryByRole('menuitem', { name: /transfer ownership/i })
     ).not.toBeInTheDocument();

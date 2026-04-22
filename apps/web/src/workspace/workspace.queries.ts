@@ -1,6 +1,9 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { authClient } from '@workspace/auth/client';
-import { getWorkspaceById } from '@/workspace/workspace.functions';
+import {
+  getWorkspaceById,
+  getWorkspaceSwitcherTriggerDetail,
+} from '@/workspace/workspace.functions';
 
 type WorkspaceSummary = {
   id: string;
@@ -14,12 +17,26 @@ type WorkspaceSummary = {
 export const WORKSPACE_LIST_QUERY_KEY = ['workspace', 'list'] as const;
 export const WORKSPACE_DETAIL_QUERY_KEY = (workspaceId: string) =>
   ['workspace', 'detail', workspaceId] as const;
+export const WORKSPACE_SWITCHER_TRIGGER_DETAIL_QUERY_KEY = (
+  workspaceId: string
+) => ['workspace', 'switcher-trigger-detail', workspaceId] as const;
 
 export function workspaceDetailQueryOptions(workspaceId: string) {
   return queryOptions({
     queryKey: WORKSPACE_DETAIL_QUERY_KEY(workspaceId),
     queryFn: async () => {
       return getWorkspaceById({ data: { workspaceId } });
+    },
+  });
+}
+
+export function workspaceSwitcherTriggerDetailQueryOptions(
+  workspaceId: string
+) {
+  return queryOptions({
+    queryKey: WORKSPACE_SWITCHER_TRIGGER_DETAIL_QUERY_KEY(workspaceId),
+    queryFn: async () => {
+      return getWorkspaceSwitcherTriggerDetail({ data: { workspaceId } });
     },
   });
 }
@@ -38,6 +55,15 @@ export function useWorkspaceListQuery() {
 export function useWorkspaceDetailQuery(workspaceId: string | null) {
   return useQuery({
     ...workspaceDetailQueryOptions(workspaceId ?? ''),
+    enabled: workspaceId !== null,
+  });
+}
+
+export function useWorkspaceSwitcherTriggerDetailQuery(
+  workspaceId: string | null
+) {
+  return useQuery({
+    ...workspaceSwitcherTriggerDetailQueryOptions(workspaceId ?? ''),
     enabled: workspaceId !== null,
   });
 }

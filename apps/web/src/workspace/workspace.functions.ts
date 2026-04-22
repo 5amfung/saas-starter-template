@@ -7,11 +7,14 @@ import { getAuth } from '@/init';
 import {
   ensureWorkspaceMembership,
   getActiveMemberRole,
+  getWorkspaceSwitcherTriggerDetail as getWorkspaceSwitcherTriggerDetailServer,
 } from '@/workspace/workspace.server';
 
 const workspaceRouteInput = z.object({
   workspaceId: z.string().min(1),
 });
+
+const workspaceSwitcherTriggerDetailInput = workspaceRouteInput;
 
 type VerifiedSession = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getAuth>['api']['getSession']>>
@@ -112,3 +115,11 @@ export const getActiveWorkspaceId = createServerFn().handler(async () => {
   const entry = await requireWebAppEntry(headers);
   return entry.activeWorkspaceId;
 });
+
+export const getWorkspaceSwitcherTriggerDetail = createServerFn()
+  .inputValidator(workspaceSwitcherTriggerDetailInput)
+  .handler(async ({ data }) => {
+    const headers = getRequestHeaders();
+    await requireVerifiedSession(headers);
+    return getWorkspaceSwitcherTriggerDetailServer(headers, data.workspaceId);
+  });
