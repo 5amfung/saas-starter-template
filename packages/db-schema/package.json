@@ -20,7 +20,6 @@
     "db:migrate": "dotenv -e .env -- drizzle-kit migrate",
     "db:push": "dotenv -e .env -- drizzle-kit push",
     "db:studio": "dotenv -e .env -- drizzle-kit studio",
-    "db:seed:e2e": "dotenv -e .env -- tsx src/seed/e2e-seed.ts",
     "gen-schema": "pnpm run gen-auth-schema && pnpm run patch-indices",
     "gen-auth-schema": "dotenv -e .env -- pnpx @better-auth/cli generate --config ../auth/src/auth.cli.ts --output ./src/auth.schema.ts --yes",
     "patch-indices": "node --experimental-strip-types scripts/patch-auth-schema.ts ./src/auth.schema.ts"
