@@ -134,7 +134,6 @@ function getInvitationId(invitationUrl: string): string {
  * Signs in as the invitee via API and accepts the invitation by ID.
  */
 async function acceptInvitationViaApi(
-  page: Page,
   baseURL: string,
   inviteeCredentials: { email: string; password: string },
   invitationId: string
@@ -239,7 +238,6 @@ async function setupInvitedMember(
   const invitationId = getInvitationId(invitationUrl);
 
   await acceptInvitationViaApi(
-    page,
     baseURL,
     {
       email: inviteeEmail,

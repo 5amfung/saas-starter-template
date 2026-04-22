@@ -136,7 +136,6 @@ function getInvitationId(invitationUrl: string): string {
 }
 
 async function acceptInvitationViaApi(
-  page: Page,
   baseURL: string,
   inviteeCredentials: { email: string; password: string },
   invitationId: string
@@ -257,7 +256,6 @@ async function inviteWorkspaceUser(
 
   const invitationUrl = await getInvitationUrl(baseURL, inviteeEmail);
   await acceptInvitationViaApi(
-    page,
     baseURL,
     { email: inviteeEmail, password: inviteePassword },
     getInvitationId(invitationUrl)
