@@ -1301,7 +1301,7 @@ git commit -m "test(web): move admin integration coverage"
 - Modify: `README.md`
 - Modify: workflow/deployment files if present under `.github/workflows/`
 
-- [ ] **Step 1: Update root scripts**
+- [x] **Step 1: Update root scripts**
 
 In `package.json`, keep web scripts and mark admin-specific scripts for removal only after `apps/admin` retirement. During transition, add a merged-app admin E2E script:
 
@@ -1315,7 +1315,7 @@ Keep:
 "test:e2e:web": "pnpm --filter @workspace/web test:e2e"
 ```
 
-- [ ] **Step 2: Update README deployment language**
+- [x] **Step 2: Update README deployment language**
 
 Change deployment docs to say one app deploy handles both customer and admin routes:
 
@@ -1325,7 +1325,7 @@ and workspace routes under `/ws`. Platform administration routes live under
 `/admin` in the same TanStack Start app.
 ```
 
-- [ ] **Step 3: Run script and docs checks**
+- [x] **Step 3: Run script and docs checks**
 
 Run:
 
@@ -1336,7 +1336,7 @@ pnpm --filter @workspace/web typecheck
 
 Expected: PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Run:
 
