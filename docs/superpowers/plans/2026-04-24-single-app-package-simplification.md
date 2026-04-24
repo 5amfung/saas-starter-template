@@ -686,7 +686,7 @@ git commit -m "chore: remove retired package artifacts"
 - Read: `apps/web/playwright.config.ts`
 - Read: `apps/web/test/e2e/start-e2e-server.sh`
 
-- [ ] **Step 1: Run final static and unit/integration verification**
+- [x] **Step 1: Run final static and unit/integration verification**
 
 Run:
 
@@ -700,7 +700,7 @@ pnpm run build
 
 Expected: all pass.
 
-- [ ] **Step 2: Run final web E2E verification**
+- [x] **Step 2: Run final web E2E verification**
 
 Run outside the sandbox when executing this plan:
 
@@ -710,7 +710,7 @@ pnpm --filter @workspace/web test:e2e
 
 Expected: all Playwright tests pass. If this fails because the browser/server cannot run inside the sandbox, rerun with elevated execution rather than skipping the check.
 
-- [ ] **Step 3: Re-run final import and hygiene gates**
+- [x] **Step 3: Re-run final import and hygiene gates**
 
 Run:
 
@@ -728,7 +728,7 @@ Expected:
 - ignored-file dry-run prints no cleanup candidates.
 - branch status shows a clean worktree.
 
-- [ ] **Step 4: Record verification evidence in final response**
+- [x] **Step 4: Record verification evidence in final response**
 
 Final response must include:
 
@@ -741,9 +741,9 @@ Final response must include:
 
 ## Self-Review Checklist
 
-- [ ] Every requirement in the design spec maps to a task above.
-- [ ] `packages/auth`, `packages/policy`, `packages/billing`, `packages/ui`, `packages/db`, and `packages/db-schema` remain untouched except for imports that already existed outside this migration.
-- [ ] No task moves domain/runtime code into `apps/web`.
-- [ ] No task creates a broad `@/components/index.ts` barrel.
-- [ ] Final verification includes lint, typecheck, tests, boundary checks, E2E, build, import search, and ignored-artifact cleanup.
-- [ ] Definition of Done includes no transitional files under retired paths.
+- [x] Every requirement in the design spec maps to a task above.
+- [x] `packages/auth`, `packages/policy`, `packages/billing`, `packages/ui`, `packages/db`, and `packages/db-schema` remain untouched except for imports that already existed outside this migration.
+- [x] No task moves domain/runtime code into `apps/web`.
+- [x] No task creates a broad `@/components/index.ts` barrel.
+- [x] Final verification includes lint, typecheck, tests, boundary checks, E2E, build, import search, and ignored-artifact cleanup.
+- [x] Definition of Done includes no transitional files under retired paths.
