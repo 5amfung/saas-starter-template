@@ -1607,7 +1607,7 @@ git commit -m "test(web): add visual shell regression coverage"
 
 - Update: `docs/superpowers/evidence/2026-04-23-single-app-admin-web-regression.md`
 
-- [ ] **Step 1: Start the merged web app**
+- [x] **Step 1: Start the merged web app**
 
 Run:
 
@@ -1617,7 +1617,7 @@ pnpm dev:web
 
 Expected: app starts and serves customer and admin routes from the same origin.
 
-- [ ] **Step 2: Manually smoke customer UI**
+- [x] **Step 2: Manually smoke customer UI**
 
 Visit and verify:
 
@@ -1634,7 +1634,7 @@ Visit and verify:
 
 Record PASS/FAIL for layout, navigation, forms, and primary actions in the evidence file.
 
-- [ ] **Step 3: Manually smoke admin UI**
+- [x] **Step 3: Manually smoke admin UI**
 
 Visit and verify:
 
@@ -1650,7 +1650,7 @@ Visit and verify:
 
 Record PASS/FAIL for layout, navigation, tables, filters, forms, and primary actions in the evidence file.
 
-- [ ] **Step 4: Stop on any regression**
+- [x] **Step 4: Stop on any regression**
 
 If any manual check fails, do not continue to Phase 6. Add a fix task before retiring `apps/admin`.
 
