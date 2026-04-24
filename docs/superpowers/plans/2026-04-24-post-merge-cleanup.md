@@ -22,21 +22,21 @@ Remove the stale `pnpm run dev:web` row from the app-specific commands table bec
 
 ## Task 2: Remove Retired Auth Cookie Prefix Option
 
-- [ ] **Step 1: Remove `cookiePrefix` from auth server config**
+- [x] **Step 1: Remove `cookiePrefix` from auth server config**
 
 Delete the `AuthConfig.cookiePrefix` option and the conditional `advanced.cookiePrefix` wiring from `packages/auth/src/auth.server.ts`.
 
-- [ ] **Step 2: Update auth package tests**
+- [x] **Step 2: Update auth package tests**
 
 Delete tests that assert `cookiePrefix` override behavior and simplify the local Better Auth config test type.
 
-- [ ] **Step 3: Update web init test**
+- [x] **Step 3: Update web init test**
 
 Remove the assertion that `getAuth()` does not pass `cookiePrefix`; the type no longer permits that option.
 
 ## Task 3: Verification
 
-- [ ] **Step 1: Search for retired live references**
+- [x] **Step 1: Search for retired live references**
 
 Run:
 
@@ -46,7 +46,7 @@ rg -n "cookiePrefix|dev:web|@workspace/components" README.md package.json apps p
 
 Expected: no live runtime or command-doc references remain. Historical docs under `docs/superpowers` are allowed to mention retired concepts.
 
-- [ ] **Step 2: Run targeted tests**
+- [x] **Step 2: Run targeted tests**
 
 Run:
 
@@ -57,7 +57,7 @@ pnpm --filter @workspace/web test test/unit/init/init.test.ts
 
 Expected: both pass.
 
-- [ ] **Step 3: Run static checks**
+- [x] **Step 3: Run static checks**
 
 Run:
 
