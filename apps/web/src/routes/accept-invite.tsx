@@ -18,8 +18,8 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card';
 import { FieldDescription } from '@workspace/ui/components/field';
-import { AuthLayout } from '@workspace/components/auth';
 import type { WebAppEntry } from '@/policy/web-app-entry.shared';
+import { AuthLayout } from '@/auth';
 import { useWebAppEntry } from '@/policy/web-app-entry';
 
 export const Route = createFileRoute('/accept-invite')({

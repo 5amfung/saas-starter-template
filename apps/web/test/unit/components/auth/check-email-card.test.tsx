@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // apps/web/test/unit/components/auth/check-email-card.test.tsx
 import { render, screen } from '@testing-library/react';
-import { CheckEmailCard } from '@workspace/components/auth';
+import { CheckEmailCard } from '@/auth';
 
 describe('CheckEmailCard', () => {
   it('renders title and description', () => {

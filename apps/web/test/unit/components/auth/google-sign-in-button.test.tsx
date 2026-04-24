@@ -3,7 +3,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import { GoogleSignInButton } from '@workspace/components/auth';
+import { GoogleSignInButton } from '@/auth';
 
 const { signInSocial } = vi.hoisted(() => ({
   signInSocial: vi.fn(),

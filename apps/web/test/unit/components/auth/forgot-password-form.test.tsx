@@ -4,8 +4,8 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { OPERATIONS } from '@workspace/logging/client';
 import { renderWithProviders } from '@workspace/test-utils';
-import { ForgotPasswordForm } from '@workspace/components/auth';
 import type * as LoggingClient from '@workspace/logging/client';
+import { ForgotPasswordForm } from '@/auth';
 
 const { requestPasswordReset } = vi.hoisted(() => ({
   requestPasswordReset: vi.fn(),

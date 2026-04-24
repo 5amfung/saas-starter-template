@@ -339,7 +339,7 @@ Expected: commit succeeds with only layout copy and import changes.
 - Modify imports in: `apps/web/src/**`
 - Modify imports in: `apps/web/test/**`
 
-- [ ] **Step 1: Copy auth package folder into app auth folder**
+- [x] **Step 1: Copy auth package folder into app auth folder**
 
 Run:
 
@@ -360,7 +360,7 @@ apps/web/src/auth/signin-form.tsx
 apps/web/src/auth/signup-form.tsx
 ```
 
-- [ ] **Step 2: Fix copied auth component import paths**
+- [x] **Step 2: Fix copied auth component import paths**
 
 Run:
 
@@ -377,7 +377,7 @@ import { ValidatedField } from '@/components/form/validated-field';
 import { GoogleIcon } from '@/components/icons/google-icon';
 ```
 
-- [ ] **Step 3: Update app/test imports for auth**
+- [x] **Step 3: Update app/test imports for auth**
 
 Run:
 
@@ -393,7 +393,7 @@ rg -n "@workspace/components/auth" apps/web/src apps/web/test
 
 prints no matches.
 
-- [ ] **Step 4: Verify auth slice**
+- [x] **Step 4: Verify auth slice**
 
 Run:
 
@@ -405,7 +405,7 @@ pnpm --filter @workspace/web lint
 
 Expected: all pass.
 
-- [ ] **Step 5: Commit auth slice**
+- [x] **Step 5: Commit auth slice**
 
 Run:
 

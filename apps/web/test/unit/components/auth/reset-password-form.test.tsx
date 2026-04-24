@@ -3,7 +3,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import { ResetPasswordForm } from '@workspace/components/auth';
+import { ResetPasswordForm } from '@/auth';
 
 const { resetPassword } = vi.hoisted(() => ({
   resetPassword: vi.fn(),

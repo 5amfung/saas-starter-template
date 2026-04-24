@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
 import { IconStack2 } from '@tabler/icons-react';
 import { authClient } from '@workspace/auth/client';
-import { AuthLayout, CheckEmailCard } from '@workspace/components/auth';
+import { AuthLayout, CheckEmailCard } from '@/auth';
 import { getWebmailLinkForEmail } from '@/lib';
 
 const WEB_LOGO = (

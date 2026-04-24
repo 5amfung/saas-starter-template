@@ -41,7 +41,7 @@ vi.mock('@workspace/auth/client', () => ({
   },
 }));
 
-vi.mock('@workspace/components/auth', () => ({
+vi.mock('@/auth', () => ({
   AuthLayout: ({ children }: { children: React.ReactNode }) => children,
 }));
 
