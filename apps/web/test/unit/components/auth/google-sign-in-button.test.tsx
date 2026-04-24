@@ -15,13 +15,6 @@ vi.mock('@workspace/auth/client', () => ({
   },
 }));
 
-// Mock the GoogleIcon SVG component.
-vi.mock('@/components/icons', () => ({
-  GoogleIcon: (props: React.ComponentProps<'svg'>) => (
-    <svg data-testid="google-icon" {...props} />
-  ),
-}));
-
 describe('GoogleSignInButton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
