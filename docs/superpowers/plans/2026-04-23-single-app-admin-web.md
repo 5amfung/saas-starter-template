@@ -349,7 +349,7 @@ git commit -m "feat(web): add admin route constants"
 - Create: `apps/web/src/policy/admin-app-capabilities.ts`
 - Test: `apps/web/test/unit/policy/admin-app-capabilities.shared.test.ts`
 
-- [ ] **Step 1: Copy existing admin policy files into web**
+- [x] **Step 1: Copy existing admin policy files into web**
 
 Copy the content of these files into the matching web paths:
 
@@ -362,7 +362,7 @@ apps/admin/src/policy/admin-app-capabilities.ts
 
 When copying, update imports that point to admin-local aliases so they point to web-local modules.
 
-- [ ] **Step 2: Add access-denied behavior to shared policy**
+- [x] **Step 2: Add access-denied behavior to shared policy**
 
 In `apps/web/src/policy/admin-app-capabilities.shared.ts`, represent verified non-admin users as an access-denied entry instead of a sign-in redirect:
 
@@ -389,7 +389,7 @@ return {
 };
 ```
 
-- [ ] **Step 3: Update redirect helper for admin paths**
+- [x] **Step 3: Update redirect helper for admin paths**
 
 Update `getAdminAppEntryRedirect` in `apps/web/src/policy/admin-app-capabilities.shared.ts` to use `apps/web/src/admin/admin-routes.ts` constants. Access denied entries should redirect to `ADMIN_ACCESS_DENIED` only when a protected route needs a redirect response.
 
@@ -409,7 +409,7 @@ if (entry.kind === 'accessDenied') {
 
 Unauthenticated redirects use the shared `/signin` route with `{ redirect: ADMIN_DASHBOARD }`. Unverified redirects use the shared `/verify` route with `{ redirect: ADMIN_DASHBOARD }`.
 
-- [ ] **Step 4: Write tests for non-admin denial**
+- [x] **Step 4: Write tests for non-admin denial**
 
 Create `apps/web/test/unit/policy/admin-app-capabilities.shared.test.ts` with cases for:
 
@@ -468,7 +468,7 @@ describe('admin app entry policy', () => {
 });
 ```
 
-- [ ] **Step 5: Run admin policy tests**
+- [x] **Step 5: Run admin policy tests**
 
 Run:
 
@@ -478,7 +478,7 @@ pnpm --filter @workspace/web test test/unit/policy/admin-app-capabilities.shared
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run:
 
@@ -498,14 +498,15 @@ git commit -m "feat(web): add admin entry policy"
 - Create: `apps/web/src/routes/admin/access-denied.tsx`
 - Test: `apps/web/test/unit/routes/admin-access-denied-route.test.tsx`
 
-- [ ] **Step 1: Write route component test**
+- [x] **Step 1: Write route component test**
 
 Create `apps/web/test/unit/routes/admin-access-denied-route.test.tsx`:
 
 ```tsx
+// @vitest-environment jsdom
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { Route } from '@/routes/admin/access-denied';
+import { AdminAccessDeniedPage } from '@/routes/admin/access-denied';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
   const actual =
@@ -520,7 +521,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => {
 
 describe('admin access denied route', () => {
   it('explains the current account is not allowed into admin', () => {
-    render(<Route.options.component />);
+    render(<AdminAccessDeniedPage />);
 
     expect(
       screen.getByRole('heading', { name: /access denied/i })
@@ -536,7 +537,7 @@ describe('admin access denied route', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -546,13 +547,13 @@ pnpm --filter @workspace/web test test/unit/routes/admin-access-denied-route.tes
 
 Expected: FAIL because the route does not exist.
 
-- [ ] **Step 3: Implement route**
+- [x] **Step 3: Implement route**
 
 Create `apps/web/src/routes/admin/access-denied.tsx`:
 
 ```tsx
 import { Link, createFileRoute } from '@tanstack/react-router';
-import { Button } from '@workspace/ui/components/button';
+import { buttonVariants } from '@workspace/ui/components/button';
 import {
   Card,
   CardContent,
@@ -565,25 +566,29 @@ export const Route = createFileRoute('/admin/access-denied')({
   component: AdminAccessDeniedPage,
 });
 
-function AdminAccessDeniedPage() {
+export function AdminAccessDeniedPage() {
   return (
     <main className="flex min-h-svh items-center justify-center p-6">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Access denied</CardTitle>
+          <CardTitle role="heading" aria-level={1}>
+            Access denied
+          </CardTitle>
           <CardDescription>
             The current account does not have admin access.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex gap-2">
-          <Button asChild>
-            <Link to="/">Go to app</Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link to="/signin" search={{ redirect: '/admin' }}>
-              Switch account
-            </Link>
-          </Button>
+          <Link to="/" className={buttonVariants()}>
+            Go to app
+          </Link>
+          <Link
+            to="/signin"
+            search={{ redirect: '/admin' }}
+            className={buttonVariants({ variant: 'outline' })}
+          >
+            Switch account
+          </Link>
         </CardContent>
       </Card>
     </main>
@@ -591,7 +596,7 @@ function AdminAccessDeniedPage() {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run:
 
@@ -601,7 +606,7 @@ pnpm --filter @workspace/web test test/unit/routes/admin-access-denied-route.tes
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run:
 

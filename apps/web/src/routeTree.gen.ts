@@ -17,6 +17,7 @@ import { Route as AuthRouteImport } from './routes/_auth';
 import { Route as IndexRouteImport } from './routes/index';
 import { Route as VerifyEmailChangeEmailTokenRouteImport } from './routes/verify-email-change.$emailToken';
 import { Route as ApiHelloRouteImport } from './routes/api/hello';
+import { Route as AdminAccessDeniedRouteImport } from './routes/admin/access-denied';
 import { Route as ProtectedWsRouteImport } from './routes/_protected/ws';
 import { Route as AuthVerifyRouteImport } from './routes/_auth/verify';
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup';
@@ -74,6 +75,11 @@ const VerifyEmailChangeEmailTokenRoute =
 const ApiHelloRoute = ApiHelloRouteImport.update({
   id: '/api/hello',
   path: '/api/hello',
+  getParentRoute: () => rootRouteImport,
+} as any);
+const AdminAccessDeniedRoute = AdminAccessDeniedRouteImport.update({
+  id: '/admin/access-denied',
+  path: '/admin/access-denied',
   getParentRoute: () => rootRouteImport,
 } as any);
 const ProtectedWsRoute = ProtectedWsRouteImport.update({
@@ -190,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
   '/ws': typeof ProtectedWsRouteWithChildren;
+  '/admin/access-denied': typeof AdminAccessDeniedRoute;
   '/api/hello': typeof ApiHelloRoute;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/account': typeof ProtectedAccountAccountRoute;
@@ -216,6 +223,7 @@ export interface FileRoutesByTo {
   '/signin': typeof AuthSigninRoute;
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
+  '/admin/access-denied': typeof AdminAccessDeniedRoute;
   '/api/hello': typeof ApiHelloRoute;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/account': typeof ProtectedAccountAccountRoute;
@@ -246,6 +254,7 @@ export interface FileRoutesById {
   '/_auth/signup': typeof AuthSignupRoute;
   '/_auth/verify': typeof AuthVerifyRoute;
   '/_protected/ws': typeof ProtectedWsRouteWithChildren;
+  '/admin/access-denied': typeof AdminAccessDeniedRoute;
   '/api/hello': typeof ApiHelloRoute;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/_protected/_account/account': typeof ProtectedAccountAccountRoute;
@@ -275,6 +284,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/verify'
     | '/ws'
+    | '/admin/access-denied'
     | '/api/hello'
     | '/verify-email-change/$emailToken'
     | '/account'
@@ -301,6 +311,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/verify'
+    | '/admin/access-denied'
     | '/api/hello'
     | '/verify-email-change/$emailToken'
     | '/account'
@@ -330,6 +341,7 @@ export interface FileRouteTypes {
     | '/_auth/signup'
     | '/_auth/verify'
     | '/_protected/ws'
+    | '/admin/access-denied'
     | '/api/hello'
     | '/verify-email-change/$emailToken'
     | '/_protected/_account/account'
@@ -354,6 +366,7 @@ export interface RootRouteChildren {
   AcceptInviteRoute: typeof AcceptInviteRoute;
   HealthRoute: typeof HealthRoute;
   PingRoute: typeof PingRoute;
+  AdminAccessDeniedRoute: typeof AdminAccessDeniedRoute;
   ApiHelloRoute: typeof ApiHelloRoute;
   VerifyEmailChangeEmailTokenRoute: typeof VerifyEmailChangeEmailTokenRoute;
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
@@ -416,6 +429,13 @@ declare module '@tanstack/react-router' {
       path: '/api/hello';
       fullPath: '/api/hello';
       preLoaderRoute: typeof ApiHelloRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/admin/access-denied': {
+      id: '/admin/access-denied';
+      path: '/admin/access-denied';
+      fullPath: '/admin/access-denied';
+      preLoaderRoute: typeof AdminAccessDeniedRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     '/_protected/ws': {
@@ -636,6 +656,7 @@ const rootRouteChildren: RootRouteChildren = {
   AcceptInviteRoute: AcceptInviteRoute,
   HealthRoute: HealthRoute,
   PingRoute: PingRoute,
+  AdminAccessDeniedRoute: AdminAccessDeniedRoute,
   ApiHelloRoute: ApiHelloRoute,
   VerifyEmailChangeEmailTokenRoute: VerifyEmailChangeEmailTokenRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
