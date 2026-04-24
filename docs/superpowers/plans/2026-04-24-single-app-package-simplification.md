@@ -205,7 +205,7 @@ Expected: commit succeeds with only low-level copy and import changes.
 - Modify imports in: `apps/web/src/**`
 - Modify imports in: `apps/web/test/**`
 
-- [ ] **Step 1: Copy hook files into existing app hooks folder**
+- [x] **Step 1: Copy hook files into existing app hooks folder**
 
 Run:
 
@@ -219,7 +219,7 @@ cp packages/components/src/hooks/use-sessions-query.ts apps/web/src/hooks/use-se
 
 Expected: `apps/web/src/hooks` now contains the existing app hooks plus the copied session/table hooks.
 
-- [ ] **Step 2: Update app/test imports for hooks**
+- [x] **Step 2: Update app/test imports for hooks**
 
 Run:
 
@@ -235,7 +235,7 @@ rg -n "@workspace/components/hooks" apps/web/src apps/web/test
 
 prints no matches.
 
-- [ ] **Step 3: Verify hook slice**
+- [x] **Step 3: Verify hook slice**
 
 Run:
 
@@ -247,7 +247,7 @@ pnpm --filter @workspace/web lint
 
 Expected: all pass.
 
-- [ ] **Step 4: Commit hook slice**
+- [x] **Step 4: Commit hook slice**
 
 Run:
 

@@ -58,7 +58,7 @@ vi.mock('@tanstack/react-query', async (importOriginal) => ({
   useQueryClient: useQueryClientMock,
 }));
 
-vi.mock('@workspace/components/hooks', () => ({
+vi.mock('@/hooks', () => ({
   useSessionQuery: useSessionQueryMock,
 }));
 

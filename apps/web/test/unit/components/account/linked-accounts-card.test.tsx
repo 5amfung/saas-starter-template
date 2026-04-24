@@ -15,7 +15,7 @@ vi.mock('@workspace/auth/client', () => ({
   },
 }));
 
-vi.mock('@workspace/components/hooks', () => ({
+vi.mock('@/hooks', () => ({
   useLinkedAccountsQuery: () => ({
     // Include a credential account so Google is not the only auth method,
     // which keeps the Disconnect button enabled.
@@ -168,7 +168,7 @@ describe('LinkedAccountsCard — unlinked provider', () => {
       },
     }));
 
-    vi.doMock('@workspace/components/hooks', () => ({
+    vi.doMock('@/hooks', () => ({
       useLinkedAccountsQuery: () => ({
         data: [],
         isPending: false,
@@ -204,7 +204,7 @@ describe('LinkedAccountsCard — unlinked provider', () => {
       },
     }));
 
-    vi.doMock('@workspace/components/hooks', () => ({
+    vi.doMock('@/hooks', () => ({
       useLinkedAccountsQuery: () => ({
         data: [],
         isPending: false,

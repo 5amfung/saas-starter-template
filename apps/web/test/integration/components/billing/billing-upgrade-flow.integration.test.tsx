@@ -39,7 +39,7 @@ vi.mock('sonner', () => ({
   toast: { success: mockToastSuccess, error: mockToastError },
 }));
 
-vi.mock('@workspace/components/hooks', () => ({
+vi.mock('@/hooks', () => ({
   SESSION_QUERY_KEY: ['session', 'current'] as const,
 }));
 

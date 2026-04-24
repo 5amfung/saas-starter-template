@@ -39,7 +39,7 @@ vi.mock('@workspace/auth/client', () => ({
   },
 }));
 
-vi.mock('@workspace/components/hooks', async (importOriginal) => ({
+vi.mock('@/hooks', async (importOriginal) => ({
   ...(await importOriginal()),
   useSessionQuery: useSessionQueryMock,
 }));

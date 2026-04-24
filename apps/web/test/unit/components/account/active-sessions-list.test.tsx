@@ -16,7 +16,7 @@ const {
   mockGetLastUsedLoginMethod: vi.fn(),
 }));
 
-vi.mock('@workspace/components/hooks', () => ({
+vi.mock('@/hooks', () => ({
   useSessionQuery: mockUseSessionQuery,
   SESSION_QUERY_KEY: ['session', 'current'],
   useSessionsQuery: mockUseSessionsQuery,
