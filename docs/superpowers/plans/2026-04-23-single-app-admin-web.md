@@ -1542,7 +1542,7 @@ git commit -m "test(web): add admin regression coverage"
 - Create or modify: `apps/web/test/e2e/regression/visual-shells.spec.ts`
 - Update: `docs/superpowers/evidence/2026-04-23-single-app-admin-web-regression.md`
 
-- [ ] **Step 1: Add shell screenshot checks**
+- [x] **Step 1: Add shell screenshot checks**
 
 Create `apps/web/test/e2e/regression/visual-shells.spec.ts`:
 
@@ -1572,7 +1572,7 @@ test.describe('visual shell regression', () => {
 
 After seeded admin fixtures are available, add authenticated screenshots for `/admin/dashboard`, `/admin/users`, and `/admin/workspaces`.
 
-- [ ] **Step 2: Generate or compare screenshots**
+- [x] **Step 2: Generate or compare screenshots**
 
 For first introduction of screenshots, run:
 
@@ -1588,11 +1588,11 @@ pnpm --filter @workspace/web test:e2e test/e2e/regression/visual-shells.spec.ts
 
 Expected: PASS with committed screenshots or PASS against existing screenshots.
 
-- [ ] **Step 3: Record evidence**
+- [x] **Step 3: Record evidence**
 
 Append screenshot paths and command results to `docs/superpowers/evidence/2026-04-23-single-app-admin-web-regression.md`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Run:
 
