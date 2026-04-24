@@ -40,6 +40,7 @@
 | Task 4.1 single auth runtime      | `pnpm --filter @workspace/web test test/unit/init/init.test.ts`                                                                                                                     | PASS: 1 file, 2 tests; web init has no `cookiePrefix` and existing test asserts that                     | terminal                        |
 | Task 4.2 admin entry E2E          | `pnpm --filter @workspace/web test:e2e test/e2e/admin/access-denied.spec.ts test/e2e/admin/admin-auth.spec.ts`                                                                      | PASS: 2 tests                                                                                            | terminal                        |
 | Task 4.3 shared sign-out E2E      | `pnpm --filter @workspace/web test:e2e test/e2e/admin/session-cookie.spec.ts`                                                                                                       | PASS: 1 test                                                                                             | terminal                        |
+| Task 5.1 admin E2E fixtures       | `pnpm --filter @workspace/web typecheck`                                                                                                                                            | PASS                                                                                                     | terminal                        |
 
 ## Final No-Regression Gate
 

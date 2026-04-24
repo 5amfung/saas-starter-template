@@ -1091,7 +1091,7 @@ git commit -m "test(web): verify shared session sign out"
 - Create: `apps/web/test/e2e/admin/fixtures/admin-fixtures.ts`
 - Create: `apps/web/test/e2e/admin/fixtures/admin-navigation.ts`
 
-- [ ] **Step 1: Copy admin fixtures**
+- [x] **Step 1: Copy admin fixtures**
 
 Copy:
 
@@ -1107,7 +1107,7 @@ to:
 apps/web/test/e2e/admin/fixtures/
 ```
 
-- [ ] **Step 2: Update admin auth fixture base URL**
+- [x] **Step 2: Update admin auth fixture base URL**
 
 In `apps/web/test/e2e/admin/fixtures/admin-auth.ts`, use the merged app base URL:
 
@@ -1119,7 +1119,7 @@ function getBaseUrl(): string {
 
 Keep `signInSeededUser(getBaseUrl(), ...)`.
 
-- [ ] **Step 3: Update admin navigation helper paths**
+- [x] **Step 3: Update admin navigation helper paths**
 
 In `apps/web/test/e2e/admin/fixtures/admin-navigation.ts`, prefix paths:
 
@@ -1132,7 +1132,7 @@ await page.goto(`/admin/workspaces/${workspaceId}`);
 await page.waitForURL(new RegExp(`/admin/workspaces/${workspaceId}$`));
 ```
 
-- [ ] **Step 4: Run TypeScript check**
+- [x] **Step 4: Run TypeScript check**
 
 Run:
 
@@ -1142,7 +1142,7 @@ pnpm --filter @workspace/web typecheck
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run:
 
