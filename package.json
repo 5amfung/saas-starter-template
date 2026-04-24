@@ -16,7 +16,6 @@
   "scripts": {
     "dev": "turbo run dev dev:stripe-webhook --filter @workspace/web",
     "dev:api": "pnpm --filter @workspace/api-server dev",
-    "dev:web": "turbo run dev dev:stripe-webhook --filter @workspace/web",
     "build": "turbo run build",
     "start:api": "pnpm --filter @workspace/api-server start",
     "start:web": "pnpm --filter @workspace/web start",
