@@ -224,16 +224,17 @@ Expected: `apps/web/src/hooks` now contains the existing app hooks plus the copi
 Run:
 
 ```bash
-perl -pi -e 's#@workspace/components/hooks#@/hooks#g' $(rg -l "@workspace/components/hooks" apps/web/src apps/web/test)
+perl -pi -e 's#@workspace/components/hooks#@/hooks#g' $(rg -l "@workspace/components/hooks" apps/web/src apps/web/test --glob '!apps/web/test/unit/components/account/active-sessions-list.test.tsx' --glob '!apps/web/test/unit/components/account/linked-accounts-card.test.tsx')
 ```
 
 Expected:
 
 ```bash
-rg -n "@workspace/components/hooks" apps/web/src apps/web/test
+rg -n "@workspace/components/hooks" apps/web/src
+rg -n "@workspace/components/hooks" apps/web/test --glob '!apps/web/test/unit/components/account/active-sessions-list.test.tsx' --glob '!apps/web/test/unit/components/account/linked-accounts-card.test.tsx'
 ```
 
-prints no matches.
+prints no matches. Tests that still import account components from `@workspace/components/account` keep mocking `@workspace/components/hooks` until Task 6 moves account components into `apps/web`.
 
 - [x] **Step 3: Verify hook slice**
 
