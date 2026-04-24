@@ -6,7 +6,7 @@ module.exports = {
       comment:
         'Applications must only use @workspace/billing public APIs, never internals.',
       severity: 'error',
-      from: { path: '^apps/(web|admin)/src' },
+      from: { path: '^apps/web/src' },
       to: { path: '^packages/billing/src/(infrastructure|internal)/' },
     },
     {
@@ -22,7 +22,7 @@ module.exports = {
       comment: 'Domain packages cannot depend on application layers.',
       severity: 'error',
       from: { path: '^packages/billing/src/' },
-      to: { path: '^apps/(web|admin)/src/' },
+      to: { path: '^apps/web/src/' },
     },
     {
       name: 'no-new-app-db-schema-imports',
@@ -30,9 +30,9 @@ module.exports = {
         'Temporary allow-list for existing db-schema imports. Any new import from app code fails.',
       severity: 'error',
       from: {
-        path: '^apps/(web|admin)/src',
+        path: '^apps/web/src',
         pathNot:
-          '^apps/(web/src/init\\.ts|web/src/account/notification-preferences\\.server\\.ts|web/src/admin/admin\\.server\\.ts|admin/src/init\\.ts|admin/src/admin/admin\\.server\\.ts)$',
+          '^apps/web/src/(init\\.ts|account/notification-preferences\\.server\\.ts|admin/admin\\.server\\.ts)$',
       },
       to: { path: '^packages/db-schema/src/' },
     },
@@ -45,19 +45,11 @@ module.exports = {
       to: { path: '^apps/web/src/policy/.*\\.server\\.ts$' },
     },
     {
-      name: 'no-routes-or-components-import-policy-server-admin',
-      comment:
-        'Admin components should consume policy functions/hooks, not server-only policy modules.',
-      severity: 'error',
-      from: { path: '^apps/admin/src/components/' },
-      to: { path: '^apps/admin/src/policy/.*\\.server\\.ts$' },
-    },
-    {
       name: 'no-app-imports-policy-internals',
       comment:
         'Applications may depend on @workspace/policy through its public entry only.',
       severity: 'error',
-      from: { path: '^apps/(web|admin)/src/' },
+      from: { path: '^apps/web/src/' },
       to: { path: '^packages/policy/src/(?!index\\.ts$)' },
     },
   ],

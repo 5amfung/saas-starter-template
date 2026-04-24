@@ -1693,7 +1693,7 @@ docs/superpowers/evidence/2026-04-23-single-app-admin-web-regression.md
 
 Expected: every baseline, during-migration, customer regression, admin regression, visual regression, and manual smoke row has a PASS result or a documented pre-existing failure. No blank result cells are allowed.
 
-- [ ] **Step 3: Remove admin app directory**
+- [x] **Step 3: Remove admin app directory**
 
 Run:
 
@@ -1701,7 +1701,7 @@ Run:
 git rm -r apps/admin
 ```
 
-- [ ] **Step 4: Remove admin package references**
+- [x] **Step 4: Remove admin package references**
 
 Update root scripts in `package.json`:
 
@@ -1723,7 +1723,7 @@ Remove:
 
 Adjust `.dependency-cruiser.cjs` path patterns from `apps/(web|admin)/src` to `apps/web/src` where appropriate.
 
-- [ ] **Step 5: Run broad verification**
+- [x] **Step 5: Run broad verification**
 
 Run:
 
@@ -1740,7 +1740,7 @@ pnpm run build
 
 Expected: PASS.
 
-- [ ] **Step 6: Record final no-regression evidence**
+- [x] **Step 6: Record final no-regression evidence**
 
 Append final command results to:
 
@@ -1750,7 +1750,7 @@ docs/superpowers/evidence/2026-04-23-single-app-admin-web-regression.md
 
 Expected: the final evidence table proves no UI or functionality regression with concrete command results and manual smoke status.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 Run:
 

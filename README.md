@@ -124,7 +124,6 @@ A production-ready SaaS foundation with authentication, multi-tenant workspaces,
 
 ```bash
  cp apps/web/.env.example apps/web/.env
- cp apps/admin/.env.example apps/admin/.env
  cp packages/db-schema/.env.example packages/db-schema/.env
 ```
 
