@@ -32,7 +32,7 @@ module.exports = {
       from: {
         path: '^apps/(web|admin)/src',
         pathNot:
-          '^apps/(web/src/init\\.ts|web/src/account/notification-preferences\\.server\\.ts|admin/src/init\\.ts|admin/src/admin/admin\\.server\\.ts)$',
+          '^apps/(web/src/init\\.ts|web/src/account/notification-preferences\\.server\\.ts|web/src/admin/admin\\.server\\.ts|admin/src/init\\.ts|admin/src/admin/admin\\.server\\.ts)$',
       },
       to: { path: '^packages/db-schema/src/' },
     },

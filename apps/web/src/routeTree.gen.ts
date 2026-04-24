@@ -15,9 +15,11 @@ import { Route as AcceptInviteRouteImport } from './routes/accept-invite';
 import { Route as ProtectedRouteImport } from './routes/_protected';
 import { Route as AuthRouteImport } from './routes/_auth';
 import { Route as IndexRouteImport } from './routes/index';
+import { Route as AdminIndexRouteImport } from './routes/admin/index';
 import { Route as VerifyEmailChangeEmailTokenRouteImport } from './routes/verify-email-change.$emailToken';
 import { Route as ApiHelloRouteImport } from './routes/api/hello';
 import { Route as AdminAccessDeniedRouteImport } from './routes/admin/access-denied';
+import { Route as AdminProtectedRouteImport } from './routes/admin/_protected';
 import { Route as ProtectedWsRouteImport } from './routes/_protected/ws';
 import { Route as AuthVerifyRouteImport } from './routes/_auth/verify';
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup';
@@ -27,10 +29,17 @@ import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-pa
 import { Route as ProtectedWsIndexRouteImport } from './routes/_protected/ws/index';
 import { Route as ApiTestEmailsRouteImport } from './routes/api/test/emails';
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$';
+import { Route as AdminProtectedWorkspacesRouteImport } from './routes/admin/_protected/workspaces';
+import { Route as AdminProtectedUsersRouteImport } from './routes/admin/_protected/users';
+import { Route as AdminProtectedDashboardRouteImport } from './routes/admin/_protected/dashboard';
 import { Route as ProtectedWsWorkspaceIdRouteImport } from './routes/_protected/ws/$workspaceId';
 import { Route as ProtectedAccountNotificationsRouteImport } from './routes/_protected/_account/notifications';
 import { Route as ProtectedAccountBillingRouteImport } from './routes/_protected/_account/billing';
 import { Route as ProtectedAccountAccountRouteImport } from './routes/_protected/_account/account';
+import { Route as AdminProtectedWorkspacesIndexRouteImport } from './routes/admin/_protected/workspaces/index';
+import { Route as AdminProtectedUsersIndexRouteImport } from './routes/admin/_protected/users/index';
+import { Route as AdminProtectedWorkspacesWorkspaceIdRouteImport } from './routes/admin/_protected/workspaces/$workspaceId';
+import { Route as AdminProtectedUsersUserIdRouteImport } from './routes/admin/_protected/users/$userId';
 import { Route as ProtectedWsWorkspaceIdSettingsRouteImport } from './routes/_protected/ws/$workspaceId/settings';
 import { Route as ProtectedWsWorkspaceIdProjectsRouteImport } from './routes/_protected/ws/$workspaceId/projects';
 import { Route as ProtectedWsWorkspaceIdOverviewRouteImport } from './routes/_protected/ws/$workspaceId/overview';
@@ -66,6 +75,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any);
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any);
 const VerifyEmailChangeEmailTokenRoute =
   VerifyEmailChangeEmailTokenRouteImport.update({
     id: '/verify-email-change/$emailToken',
@@ -80,6 +94,11 @@ const ApiHelloRoute = ApiHelloRouteImport.update({
 const AdminAccessDeniedRoute = AdminAccessDeniedRouteImport.update({
   id: '/admin/access-denied',
   path: '/admin/access-denied',
+  getParentRoute: () => rootRouteImport,
+} as any);
+const AdminProtectedRoute = AdminProtectedRouteImport.update({
+  id: '/admin/_protected',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any);
 const ProtectedWsRoute = ProtectedWsRouteImport.update({
@@ -127,6 +146,22 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any);
+const AdminProtectedWorkspacesRoute =
+  AdminProtectedWorkspacesRouteImport.update({
+    id: '/workspaces',
+    path: '/workspaces',
+    getParentRoute: () => AdminProtectedRoute,
+  } as any);
+const AdminProtectedUsersRoute = AdminProtectedUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminProtectedRoute,
+} as any);
+const AdminProtectedDashboardRoute = AdminProtectedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AdminProtectedRoute,
+} as any);
 const ProtectedWsWorkspaceIdRoute = ProtectedWsWorkspaceIdRouteImport.update({
   id: '/$workspaceId',
   path: '/$workspaceId',
@@ -148,6 +183,30 @@ const ProtectedAccountAccountRoute = ProtectedAccountAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => ProtectedRoute,
 } as any);
+const AdminProtectedWorkspacesIndexRoute =
+  AdminProtectedWorkspacesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AdminProtectedWorkspacesRoute,
+  } as any);
+const AdminProtectedUsersIndexRoute =
+  AdminProtectedUsersIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AdminProtectedUsersRoute,
+  } as any);
+const AdminProtectedWorkspacesWorkspaceIdRoute =
+  AdminProtectedWorkspacesWorkspaceIdRouteImport.update({
+    id: '/$workspaceId',
+    path: '/$workspaceId',
+    getParentRoute: () => AdminProtectedWorkspacesRoute,
+  } as any);
+const AdminProtectedUsersUserIdRoute =
+  AdminProtectedUsersUserIdRouteImport.update({
+    id: '/$userId',
+    path: '/$userId',
+    getParentRoute: () => AdminProtectedUsersRoute,
+  } as any);
 const ProtectedWsWorkspaceIdSettingsRoute =
   ProtectedWsWorkspaceIdSettingsRouteImport.update({
     id: '/settings',
@@ -196,13 +255,18 @@ export interface FileRoutesByFullPath {
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
   '/ws': typeof ProtectedWsRouteWithChildren;
+  '/admin': typeof AdminProtectedRouteWithChildren;
   '/admin/access-denied': typeof AdminAccessDeniedRoute;
   '/api/hello': typeof ApiHelloRoute;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
+  '/admin/': typeof AdminIndexRoute;
   '/account': typeof ProtectedAccountAccountRoute;
   '/billing': typeof ProtectedAccountBillingRoute;
   '/notifications': typeof ProtectedAccountNotificationsRoute;
   '/ws/$workspaceId': typeof ProtectedWsWorkspaceIdRouteWithChildren;
+  '/admin/dashboard': typeof AdminProtectedDashboardRoute;
+  '/admin/users': typeof AdminProtectedUsersRouteWithChildren;
+  '/admin/workspaces': typeof AdminProtectedWorkspacesRouteWithChildren;
   '/api/auth/$': typeof ApiAuthSplatRoute;
   '/api/test/emails': typeof ApiTestEmailsRoute;
   '/ws/': typeof ProtectedWsIndexRoute;
@@ -212,6 +276,10 @@ export interface FileRoutesByFullPath {
   '/ws/$workspaceId/overview': typeof ProtectedWsWorkspaceIdOverviewRoute;
   '/ws/$workspaceId/projects': typeof ProtectedWsWorkspaceIdProjectsRoute;
   '/ws/$workspaceId/settings': typeof ProtectedWsWorkspaceIdSettingsRoute;
+  '/admin/users/$userId': typeof AdminProtectedUsersUserIdRoute;
+  '/admin/workspaces/$workspaceId': typeof AdminProtectedWorkspacesWorkspaceIdRoute;
+  '/admin/users/': typeof AdminProtectedUsersIndexRoute;
+  '/admin/workspaces/': typeof AdminProtectedWorkspacesIndexRoute;
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute;
@@ -223,6 +291,7 @@ export interface FileRoutesByTo {
   '/signin': typeof AuthSigninRoute;
   '/signup': typeof AuthSignupRoute;
   '/verify': typeof AuthVerifyRoute;
+  '/admin': typeof AdminIndexRoute;
   '/admin/access-denied': typeof AdminAccessDeniedRoute;
   '/api/hello': typeof ApiHelloRoute;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
@@ -230,6 +299,7 @@ export interface FileRoutesByTo {
   '/billing': typeof ProtectedAccountBillingRoute;
   '/notifications': typeof ProtectedAccountNotificationsRoute;
   '/ws/$workspaceId': typeof ProtectedWsWorkspaceIdRouteWithChildren;
+  '/admin/dashboard': typeof AdminProtectedDashboardRoute;
   '/api/auth/$': typeof ApiAuthSplatRoute;
   '/api/test/emails': typeof ApiTestEmailsRoute;
   '/ws': typeof ProtectedWsIndexRoute;
@@ -239,6 +309,10 @@ export interface FileRoutesByTo {
   '/ws/$workspaceId/overview': typeof ProtectedWsWorkspaceIdOverviewRoute;
   '/ws/$workspaceId/projects': typeof ProtectedWsWorkspaceIdProjectsRoute;
   '/ws/$workspaceId/settings': typeof ProtectedWsWorkspaceIdSettingsRoute;
+  '/admin/users/$userId': typeof AdminProtectedUsersUserIdRoute;
+  '/admin/workspaces/$workspaceId': typeof AdminProtectedWorkspacesWorkspaceIdRoute;
+  '/admin/users': typeof AdminProtectedUsersIndexRoute;
+  '/admin/workspaces': typeof AdminProtectedWorkspacesIndexRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
@@ -254,13 +328,18 @@ export interface FileRoutesById {
   '/_auth/signup': typeof AuthSignupRoute;
   '/_auth/verify': typeof AuthVerifyRoute;
   '/_protected/ws': typeof ProtectedWsRouteWithChildren;
+  '/admin/_protected': typeof AdminProtectedRouteWithChildren;
   '/admin/access-denied': typeof AdminAccessDeniedRoute;
   '/api/hello': typeof ApiHelloRoute;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
+  '/admin/': typeof AdminIndexRoute;
   '/_protected/_account/account': typeof ProtectedAccountAccountRoute;
   '/_protected/_account/billing': typeof ProtectedAccountBillingRoute;
   '/_protected/_account/notifications': typeof ProtectedAccountNotificationsRoute;
   '/_protected/ws/$workspaceId': typeof ProtectedWsWorkspaceIdRouteWithChildren;
+  '/admin/_protected/dashboard': typeof AdminProtectedDashboardRoute;
+  '/admin/_protected/users': typeof AdminProtectedUsersRouteWithChildren;
+  '/admin/_protected/workspaces': typeof AdminProtectedWorkspacesRouteWithChildren;
   '/api/auth/$': typeof ApiAuthSplatRoute;
   '/api/test/emails': typeof ApiTestEmailsRoute;
   '/_protected/ws/': typeof ProtectedWsIndexRoute;
@@ -270,6 +349,10 @@ export interface FileRoutesById {
   '/_protected/ws/$workspaceId/overview': typeof ProtectedWsWorkspaceIdOverviewRoute;
   '/_protected/ws/$workspaceId/projects': typeof ProtectedWsWorkspaceIdProjectsRoute;
   '/_protected/ws/$workspaceId/settings': typeof ProtectedWsWorkspaceIdSettingsRoute;
+  '/admin/_protected/users/$userId': typeof AdminProtectedUsersUserIdRoute;
+  '/admin/_protected/workspaces/$workspaceId': typeof AdminProtectedWorkspacesWorkspaceIdRoute;
+  '/admin/_protected/users/': typeof AdminProtectedUsersIndexRoute;
+  '/admin/_protected/workspaces/': typeof AdminProtectedWorkspacesIndexRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
@@ -284,13 +367,18 @@ export interface FileRouteTypes {
     | '/signup'
     | '/verify'
     | '/ws'
+    | '/admin'
     | '/admin/access-denied'
     | '/api/hello'
     | '/verify-email-change/$emailToken'
+    | '/admin/'
     | '/account'
     | '/billing'
     | '/notifications'
     | '/ws/$workspaceId'
+    | '/admin/dashboard'
+    | '/admin/users'
+    | '/admin/workspaces'
     | '/api/auth/$'
     | '/api/test/emails'
     | '/ws/'
@@ -299,7 +387,11 @@ export interface FileRouteTypes {
     | '/ws/$workspaceId/members'
     | '/ws/$workspaceId/overview'
     | '/ws/$workspaceId/projects'
-    | '/ws/$workspaceId/settings';
+    | '/ws/$workspaceId/settings'
+    | '/admin/users/$userId'
+    | '/admin/workspaces/$workspaceId'
+    | '/admin/users/'
+    | '/admin/workspaces/';
   fileRoutesByTo: FileRoutesByTo;
   to:
     | '/'
@@ -311,6 +403,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/verify'
+    | '/admin'
     | '/admin/access-denied'
     | '/api/hello'
     | '/verify-email-change/$emailToken'
@@ -318,6 +411,7 @@ export interface FileRouteTypes {
     | '/billing'
     | '/notifications'
     | '/ws/$workspaceId'
+    | '/admin/dashboard'
     | '/api/auth/$'
     | '/api/test/emails'
     | '/ws'
@@ -326,7 +420,11 @@ export interface FileRouteTypes {
     | '/ws/$workspaceId/members'
     | '/ws/$workspaceId/overview'
     | '/ws/$workspaceId/projects'
-    | '/ws/$workspaceId/settings';
+    | '/ws/$workspaceId/settings'
+    | '/admin/users/$userId'
+    | '/admin/workspaces/$workspaceId'
+    | '/admin/users'
+    | '/admin/workspaces';
   id:
     | '__root__'
     | '/'
@@ -341,13 +439,18 @@ export interface FileRouteTypes {
     | '/_auth/signup'
     | '/_auth/verify'
     | '/_protected/ws'
+    | '/admin/_protected'
     | '/admin/access-denied'
     | '/api/hello'
     | '/verify-email-change/$emailToken'
+    | '/admin/'
     | '/_protected/_account/account'
     | '/_protected/_account/billing'
     | '/_protected/_account/notifications'
     | '/_protected/ws/$workspaceId'
+    | '/admin/_protected/dashboard'
+    | '/admin/_protected/users'
+    | '/admin/_protected/workspaces'
     | '/api/auth/$'
     | '/api/test/emails'
     | '/_protected/ws/'
@@ -356,7 +459,11 @@ export interface FileRouteTypes {
     | '/_protected/ws/$workspaceId/members'
     | '/_protected/ws/$workspaceId/overview'
     | '/_protected/ws/$workspaceId/projects'
-    | '/_protected/ws/$workspaceId/settings';
+    | '/_protected/ws/$workspaceId/settings'
+    | '/admin/_protected/users/$userId'
+    | '/admin/_protected/workspaces/$workspaceId'
+    | '/admin/_protected/users/'
+    | '/admin/_protected/workspaces/';
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
@@ -366,9 +473,11 @@ export interface RootRouteChildren {
   AcceptInviteRoute: typeof AcceptInviteRoute;
   HealthRoute: typeof HealthRoute;
   PingRoute: typeof PingRoute;
+  AdminProtectedRoute: typeof AdminProtectedRouteWithChildren;
   AdminAccessDeniedRoute: typeof AdminAccessDeniedRoute;
   ApiHelloRoute: typeof ApiHelloRoute;
   VerifyEmailChangeEmailTokenRoute: typeof VerifyEmailChangeEmailTokenRoute;
+  AdminIndexRoute: typeof AdminIndexRoute;
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
   ApiTestEmailsRoute: typeof ApiTestEmailsRoute;
 }
@@ -417,6 +526,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    '/admin/': {
+      id: '/admin/';
+      path: '/admin';
+      fullPath: '/admin/';
+      preLoaderRoute: typeof AdminIndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/verify-email-change/$emailToken': {
       id: '/verify-email-change/$emailToken';
       path: '/verify-email-change/$emailToken';
@@ -436,6 +552,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/access-denied';
       fullPath: '/admin/access-denied';
       preLoaderRoute: typeof AdminAccessDeniedRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/admin/_protected': {
+      id: '/admin/_protected';
+      path: '/admin';
+      fullPath: '/admin';
+      preLoaderRoute: typeof AdminProtectedRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     '/_protected/ws': {
@@ -501,6 +624,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    '/admin/_protected/workspaces': {
+      id: '/admin/_protected/workspaces';
+      path: '/workspaces';
+      fullPath: '/admin/workspaces';
+      preLoaderRoute: typeof AdminProtectedWorkspacesRouteImport;
+      parentRoute: typeof AdminProtectedRoute;
+    };
+    '/admin/_protected/users': {
+      id: '/admin/_protected/users';
+      path: '/users';
+      fullPath: '/admin/users';
+      preLoaderRoute: typeof AdminProtectedUsersRouteImport;
+      parentRoute: typeof AdminProtectedRoute;
+    };
+    '/admin/_protected/dashboard': {
+      id: '/admin/_protected/dashboard';
+      path: '/dashboard';
+      fullPath: '/admin/dashboard';
+      preLoaderRoute: typeof AdminProtectedDashboardRouteImport;
+      parentRoute: typeof AdminProtectedRoute;
+    };
     '/_protected/ws/$workspaceId': {
       id: '/_protected/ws/$workspaceId';
       path: '/$workspaceId';
@@ -528,6 +672,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/account';
       preLoaderRoute: typeof ProtectedAccountAccountRouteImport;
       parentRoute: typeof ProtectedRoute;
+    };
+    '/admin/_protected/workspaces/': {
+      id: '/admin/_protected/workspaces/';
+      path: '/';
+      fullPath: '/admin/workspaces/';
+      preLoaderRoute: typeof AdminProtectedWorkspacesIndexRouteImport;
+      parentRoute: typeof AdminProtectedWorkspacesRoute;
+    };
+    '/admin/_protected/users/': {
+      id: '/admin/_protected/users/';
+      path: '/';
+      fullPath: '/admin/users/';
+      preLoaderRoute: typeof AdminProtectedUsersIndexRouteImport;
+      parentRoute: typeof AdminProtectedUsersRoute;
+    };
+    '/admin/_protected/workspaces/$workspaceId': {
+      id: '/admin/_protected/workspaces/$workspaceId';
+      path: '/$workspaceId';
+      fullPath: '/admin/workspaces/$workspaceId';
+      preLoaderRoute: typeof AdminProtectedWorkspacesWorkspaceIdRouteImport;
+      parentRoute: typeof AdminProtectedWorkspacesRoute;
+    };
+    '/admin/_protected/users/$userId': {
+      id: '/admin/_protected/users/$userId';
+      path: '/$userId';
+      fullPath: '/admin/users/$userId';
+      preLoaderRoute: typeof AdminProtectedUsersUserIdRouteImport;
+      parentRoute: typeof AdminProtectedUsersRoute;
     };
     '/_protected/ws/$workspaceId/settings': {
       id: '/_protected/ws/$workspaceId/settings';
@@ -649,6 +821,52 @@ const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
   ProtectedRouteChildren,
 );
 
+interface AdminProtectedUsersRouteChildren {
+  AdminProtectedUsersUserIdRoute: typeof AdminProtectedUsersUserIdRoute;
+  AdminProtectedUsersIndexRoute: typeof AdminProtectedUsersIndexRoute;
+}
+
+const AdminProtectedUsersRouteChildren: AdminProtectedUsersRouteChildren = {
+  AdminProtectedUsersUserIdRoute: AdminProtectedUsersUserIdRoute,
+  AdminProtectedUsersIndexRoute: AdminProtectedUsersIndexRoute,
+};
+
+const AdminProtectedUsersRouteWithChildren =
+  AdminProtectedUsersRoute._addFileChildren(AdminProtectedUsersRouteChildren);
+
+interface AdminProtectedWorkspacesRouteChildren {
+  AdminProtectedWorkspacesWorkspaceIdRoute: typeof AdminProtectedWorkspacesWorkspaceIdRoute;
+  AdminProtectedWorkspacesIndexRoute: typeof AdminProtectedWorkspacesIndexRoute;
+}
+
+const AdminProtectedWorkspacesRouteChildren: AdminProtectedWorkspacesRouteChildren =
+  {
+    AdminProtectedWorkspacesWorkspaceIdRoute:
+      AdminProtectedWorkspacesWorkspaceIdRoute,
+    AdminProtectedWorkspacesIndexRoute: AdminProtectedWorkspacesIndexRoute,
+  };
+
+const AdminProtectedWorkspacesRouteWithChildren =
+  AdminProtectedWorkspacesRoute._addFileChildren(
+    AdminProtectedWorkspacesRouteChildren,
+  );
+
+interface AdminProtectedRouteChildren {
+  AdminProtectedDashboardRoute: typeof AdminProtectedDashboardRoute;
+  AdminProtectedUsersRoute: typeof AdminProtectedUsersRouteWithChildren;
+  AdminProtectedWorkspacesRoute: typeof AdminProtectedWorkspacesRouteWithChildren;
+}
+
+const AdminProtectedRouteChildren: AdminProtectedRouteChildren = {
+  AdminProtectedDashboardRoute: AdminProtectedDashboardRoute,
+  AdminProtectedUsersRoute: AdminProtectedUsersRouteWithChildren,
+  AdminProtectedWorkspacesRoute: AdminProtectedWorkspacesRouteWithChildren,
+};
+
+const AdminProtectedRouteWithChildren = AdminProtectedRoute._addFileChildren(
+  AdminProtectedRouteChildren,
+);
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRouteWithChildren,
@@ -656,9 +874,11 @@ const rootRouteChildren: RootRouteChildren = {
   AcceptInviteRoute: AcceptInviteRoute,
   HealthRoute: HealthRoute,
   PingRoute: PingRoute,
+  AdminProtectedRoute: AdminProtectedRouteWithChildren,
   AdminAccessDeniedRoute: AdminAccessDeniedRoute,
   ApiHelloRoute: ApiHelloRoute,
   VerifyEmailChangeEmailTokenRoute: VerifyEmailChangeEmailTokenRoute,
+  AdminIndexRoute: AdminIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiTestEmailsRoute: ApiTestEmailsRoute,
 };

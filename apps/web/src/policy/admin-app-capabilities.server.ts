@@ -18,7 +18,7 @@ import type {
 } from './admin-app-capabilities.shared';
 import { getAuth } from '@/init';
 
-async function getCurrentAdminAppSession(
+export async function getCurrentAdminAppSession(
   headers: Headers = getRequestHeaders()
 ): Promise<AdminAppSessionLike | null> {
   return (await getAuth().api.getSession({

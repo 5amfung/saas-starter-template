@@ -624,7 +624,7 @@ git commit -m "feat(web): add admin access denied page"
 - Create: `apps/web/src/components/admin-app-sidebar.tsx`
 - Test: moved/adapted route unit tests from `apps/admin/test/unit/routes`
 
-- [ ] **Step 1: Reuse shared auth routes for admin intent**
+- [x] **Step 1: Reuse shared auth routes for admin intent**
 
 Do not create `/admin/signin`, `/admin/signup`, `/admin/verify`, `/admin/forgot-password`, or `/admin/reset-password`. A platform admin is a regular web user with platform-admin access, so admin routes should use the existing shared auth pages:
 
@@ -637,7 +637,7 @@ Do not create `/admin/signin`, `/admin/signup`, `/admin/verify`, `/admin/forgot-
 
 Admin self-signup is not part of this migration. If a user needs platform admin access, he must sign into an existing user account that has the platform admin role/capability.
 
-- [ ] **Step 2: Move admin protected layout**
+- [x] **Step 2: Move admin protected layout**
 
 Copy `apps/admin/src/routes/_protected.tsx` to `apps/web/src/routes/admin/_protected.tsx`.
 
@@ -649,7 +649,7 @@ createFileRoute('/admin/_protected');
 
 Use the web-local `admin-app-capabilities` modules and `AdminAppSidebar`.
 
-- [ ] **Step 3: Move admin sidebar**
+- [x] **Step 3: Move admin sidebar**
 
 Copy `apps/admin/src/components/app-sidebar.tsx` to `apps/web/src/components/admin-app-sidebar.tsx`.
 
@@ -662,7 +662,7 @@ Update links:
 /account    -> /account
 ```
 
-- [ ] **Step 4: Add admin index redirect**
+- [x] **Step 4: Add admin index redirect**
 
 Copy `apps/admin/src/routes/index.tsx` to `apps/web/src/routes/admin/index.tsx`.
 
@@ -675,7 +675,7 @@ unauthenticated    -> /signin?redirect=/admin/dashboard
 unverified         -> /verify?redirect=/admin/dashboard
 ```
 
-- [ ] **Step 5: Run route generation/typecheck**
+- [x] **Step 5: Run route generation/typecheck**
 
 Run:
 
@@ -691,7 +691,7 @@ pnpm --filter @workspace/web build
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run:
 
@@ -711,7 +711,7 @@ git commit -m "feat(web): add admin route shell"
 - Create/modify: `apps/web/src/admin/*`
 - Test: move/adapt `apps/admin/test/unit/admin/*` into `apps/web/test/unit/admin/*`
 
-- [ ] **Step 1: Copy admin application modules**
+- [x] **Step 1: Copy admin application modules**
 
 Copy these files into `apps/web/src/admin/`:
 
@@ -728,7 +728,7 @@ apps/admin/src/admin/workspaces.schemas.ts
 apps/admin/src/admin/workspaces.server.ts
 ```
 
-- [ ] **Step 2: Update imports**
+- [x] **Step 2: Update imports**
 
 Replace admin-local imports with web-local imports:
 
@@ -741,7 +741,7 @@ Replace admin-local imports with web-local imports:
 
 Use `requireCurrentAdminAppCapability` from `apps/web/src/policy/admin-app-capabilities.server.ts` for admin authorization.
 
-- [ ] **Step 3: Move unit tests**
+- [x] **Step 3: Move unit tests**
 
 Copy admin unit tests from:
 
@@ -757,7 +757,7 @@ apps/web/test/unit/admin/
 
 Update imports to `@/admin/*`.
 
-- [ ] **Step 4: Run admin unit tests in web**
+- [x] **Step 4: Run admin unit tests in web**
 
 Run:
 
@@ -767,7 +767,7 @@ pnpm --filter @workspace/web test test/unit/admin
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run:
 
@@ -784,7 +784,7 @@ git commit -m "feat(web): move admin server modules"
 - Create/modify: `apps/web/src/routes/admin/_protected/*`
 - Test: move/adapt component and route tests
 
-- [ ] **Step 1: Copy admin components**
+- [x] **Step 1: Copy admin components**
 
 Copy:
 
@@ -798,7 +798,7 @@ to:
 apps/web/src/components/admin/
 ```
 
-- [ ] **Step 2: Copy admin protected feature routes**
+- [x] **Step 2: Copy admin protected feature routes**
 
 Copy current admin routes:
 
@@ -820,7 +820,7 @@ apps/web/src/routes/admin/_protected/
 
 Update route IDs to the `/admin/_protected/...` route namespace and visible links to `/admin/*`.
 
-- [ ] **Step 3: Update component imports and links**
+- [x] **Step 3: Update component imports and links**
 
 Replace imports such as:
 
@@ -840,7 +840,7 @@ with the matching web-local paths. Update navigation URLs:
 /workspaces/$workspaceId -> /admin/workspaces/$workspaceId
 ```
 
-- [ ] **Step 4: Move component tests**
+- [x] **Step 4: Move component tests**
 
 Copy:
 
@@ -856,7 +856,7 @@ apps/web/test/unit/components/admin/
 
 Update imports and expected links to `/admin/*`.
 
-- [ ] **Step 5: Run admin component and route tests**
+- [x] **Step 5: Run admin component and route tests**
 
 Run:
 
@@ -867,7 +867,7 @@ pnpm --filter @workspace/web typecheck
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run:
 
