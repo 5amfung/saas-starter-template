@@ -1389,7 +1389,7 @@ If all checks pass, `apps/admin` can be retired in Phase 6. If any fail, do not 
 - Create or modify: `apps/web/test/e2e/regression/customer-core.spec.ts`
 - Update: `docs/superpowers/evidence/2026-04-23-single-app-admin-web-regression.md`
 
-- [ ] **Step 1: Add customer core regression spec**
+- [x] **Step 1: Add customer core regression spec**
 
 Create `apps/web/test/e2e/regression/customer-core.spec.ts` with browser assertions that cover the customer flows most likely to regress during the app merge:
 
@@ -1423,7 +1423,7 @@ test.describe('customer core regression', () => {
 
 If existing helpers already sign in seeded customer users, extend this spec with a signed-in workspace shell assertion instead of adding duplicate setup code.
 
-- [ ] **Step 2: Run the customer regression spec**
+- [x] **Step 2: Run the customer regression spec**
 
 Run:
 
@@ -1433,7 +1433,7 @@ pnpm --filter @workspace/web test:e2e test/e2e/regression/customer-core.spec.ts
 
 Expected: PASS.
 
-- [ ] **Step 3: Record evidence**
+- [x] **Step 3: Record evidence**
 
 Append this row to `docs/superpowers/evidence/2026-04-23-single-app-admin-web-regression.md`:
 
@@ -1441,7 +1441,7 @@ Append this row to `docs/superpowers/evidence/2026-04-23-single-app-admin-web-re
 | Customer core E2E | `pnpm --filter @workspace/web test:e2e test/e2e/regression/customer-core.spec.ts` | PASS | Playwright report path |
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Run:
 
