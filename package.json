@@ -31,10 +31,6 @@
     "test:integration": "turbo run test:integration",
     "coverage": "turbo run coverage",
     "test:e2e": "turbo run test:e2e",
-    "test:e2e:admin": "pnpm --filter @workspace/web test:e2e test/e2e/admin",
-    "test:e2e:web": "pnpm --filter @workspace/web test:e2e",
-    "test:e2e:ui:web": "pnpm --filter @workspace/web test:e2e:ui",
-    "test:e2e:report:web": "pnpm --filter @workspace/web test:e2e:report",
     "prepare": "husky || echo 'Skip installing husky'",
     "clean": "npkill"
   },
