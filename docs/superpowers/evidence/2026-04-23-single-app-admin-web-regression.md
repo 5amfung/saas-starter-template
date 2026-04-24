@@ -57,6 +57,7 @@
 | Task 5.5 retirement gate result   | Review all Task 5.5 gate rows                                                                                                                                                       | PASS: `apps/admin` can be retired in Phase 6                                                             | this evidence file              |
 | Task 5.6 customer core E2E first  | `pnpm --filter @workspace/web test:e2e test/e2e/regression/customer-core.spec.ts`                                                                                                   | FAIL: 2 passed, 1 failed; signup button assertion used `Create account` but UI label is `Create Account` | Playwright error context        |
 | Task 5.6 customer core E2E        | `pnpm --filter @workspace/web test:e2e test/e2e/regression/customer-core.spec.ts`                                                                                                   | PASS: 3 tests                                                                                            | terminal                        |
+| Task 5.7 admin core E2E           | `pnpm --filter @workspace/web test:e2e test/e2e/admin/admin-core-regression.spec.ts`                                                                                                | PASS: 3 tests                                                                                            | terminal                        |
 
 ## Final No-Regression Gate
 

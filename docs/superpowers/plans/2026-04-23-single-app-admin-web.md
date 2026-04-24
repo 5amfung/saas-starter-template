@@ -1457,7 +1457,7 @@ git commit -m "test(web): add customer regression coverage"
 - Create or modify: `apps/web/test/e2e/admin/admin-core-regression.spec.ts`
 - Update: `docs/superpowers/evidence/2026-04-23-single-app-admin-web-regression.md`
 
-- [ ] **Step 1: Add admin core regression spec**
+- [x] **Step 1: Add admin core regression spec**
 
 Create `apps/web/test/e2e/admin/admin-core-regression.spec.ts` with assertions for the migrated admin entry points:
 
@@ -1508,7 +1508,7 @@ test('loads core admin pages for a platform admin', async ({ page }) => {
 
 Use the real admin sign-in fixture in that test; do not fake authorization in the browser.
 
-- [ ] **Step 2: Run the admin regression spec**
+- [x] **Step 2: Run the admin regression spec**
 
 Run:
 
@@ -1518,7 +1518,7 @@ pnpm --filter @workspace/web test:e2e test/e2e/admin/admin-core-regression.spec.
 
 Expected: PASS.
 
-- [ ] **Step 3: Record evidence**
+- [x] **Step 3: Record evidence**
 
 Append this row to `docs/superpowers/evidence/2026-04-23-single-app-admin-web-regression.md`:
 
@@ -1526,7 +1526,7 @@ Append this row to `docs/superpowers/evidence/2026-04-23-single-app-admin-web-re
 | Admin core E2E | `pnpm --filter @workspace/web test:e2e test/e2e/admin/admin-core-regression.spec.ts` | PASS | Playwright report path |
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Run:
 
