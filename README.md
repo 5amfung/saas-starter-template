@@ -229,7 +229,6 @@ repo-owned indexes or other Drizzle customizations.
 
 | Command                       | Description                               |
 | ----------------------------- | ----------------------------------------- |
-| `pnpm run dev:web`            | Start only the web app dev server         |
 | `pnpm run dev:stripe-webhook` | Forward Stripe webhooks to localhost:3000 |
 
 ### Running Commands in a Specific Package
