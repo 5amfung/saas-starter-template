@@ -267,7 +267,7 @@ Expected: commit succeeds with only hook copy and import changes.
 - Modify imports in: `apps/web/src/**`
 - Modify imports in: `apps/web/test/**`
 
-- [ ] **Step 1: Copy layout package folder into app components**
+- [x] **Step 1: Copy layout package folder into app components**
 
 Run:
 
@@ -291,7 +291,7 @@ apps/web/src/components/layout/table-pagination.tsx
 apps/web/src/components/layout/theme-provider.tsx
 ```
 
-- [ ] **Step 2: Update app/test imports for layout**
+- [x] **Step 2: Update app/test imports for layout**
 
 Run:
 
@@ -307,7 +307,7 @@ rg -n "@workspace/components/layout" apps/web/src apps/web/test
 
 prints no matches.
 
-- [ ] **Step 3: Verify layout slice**
+- [x] **Step 3: Verify layout slice**
 
 Run:
 
@@ -319,7 +319,7 @@ pnpm --filter @workspace/web lint
 
 Expected: all pass.
 
-- [ ] **Step 4: Commit layout slice**
+- [x] **Step 4: Commit layout slice**
 
 Run:
 

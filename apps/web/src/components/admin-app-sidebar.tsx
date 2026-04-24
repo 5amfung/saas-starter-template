@@ -26,7 +26,7 @@ import {
   NavSecondary,
   NavUser,
   NavUserSkeleton,
-} from '@workspace/components/layout';
+} from '@/components/layout';
 import { useAdminAppCapabilities } from '@/policy/admin-app-capabilities';
 
 const navSecondary = [

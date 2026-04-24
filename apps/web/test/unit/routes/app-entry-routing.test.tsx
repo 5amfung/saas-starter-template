@@ -50,7 +50,7 @@ vi.mock('@workspace/ui/components/sidebar', () => ({
   SidebarProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
-vi.mock('@workspace/components/layout', () => ({
+vi.mock('@/components/layout', () => ({
   SiteHeader: () => null,
 }));
 

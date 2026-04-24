@@ -7,16 +7,16 @@ import {
   createRootRouteWithContext,
 } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
+import { withErrorBoundary } from '@sentry/tanstackstart-react';
 import { Toaster } from '@workspace/ui/components/sonner';
 import appCss from '@workspace/ui/globals.css?url';
+import type { QueryClient } from '@tanstack/react-query';
 import {
   AppErrorBoundary,
   NotFound,
   ThemeProvider,
   useTheme,
-} from '@workspace/components/layout';
-import { withErrorBoundary } from '@sentry/tanstackstart-react';
-import type { QueryClient } from '@tanstack/react-query';
+} from '@/components/layout';
 
 interface RouterContext {
   queryClient: QueryClient;

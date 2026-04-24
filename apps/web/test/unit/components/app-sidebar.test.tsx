@@ -102,7 +102,7 @@ vi.mock('@/components/nav-main', () => ({
   ),
 }));
 
-vi.mock('@workspace/components/layout', () => ({
+vi.mock('@/components/layout', () => ({
   NavSecondary: ({
     items,
   }: {

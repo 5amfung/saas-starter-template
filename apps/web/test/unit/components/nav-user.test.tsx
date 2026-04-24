@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { NavUser, NavUserSkeleton } from '@workspace/components/layout';
+import { NavUser, NavUserSkeleton } from '@/components/layout';
 
 const { signOutMock, navigateMock } = vi.hoisted(() => ({
   signOutMock: vi.fn(),

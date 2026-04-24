@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // apps/web/test/unit/components/not-found.test.tsx
 import { render, screen } from '@testing-library/react';
-import { NotFound } from '@workspace/components/layout';
+import { NotFound } from '@/components/layout';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal()),

@@ -3,9 +3,9 @@ import {
   SidebarInset,
   SidebarProvider,
 } from '@workspace/ui/components/sidebar';
-import { SiteHeader } from '@workspace/components/layout';
 import type { WebAppEntry } from '@/policy/web-app-entry.shared';
 import { AppSidebar } from '@/components/app-sidebar';
+import { SiteHeader } from '@/components/layout';
 import { authMiddleware } from '@/middleware/auth';
 import { useWebAppEntry } from '@/policy/web-app-entry';
 

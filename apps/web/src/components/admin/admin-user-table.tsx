@@ -43,13 +43,13 @@ import {
   TableRow,
 } from '@workspace/ui/components/table';
 import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
-import { SortableHeader, TablePagination } from '@workspace/components/layout';
 import type {
   ColumnDef,
   Table as ReactTable,
   SortingState,
   VisibilityState,
 } from '@tanstack/react-table';
+import { SortableHeader, TablePagination } from '@/components/layout';
 import { useColumnSort } from '@/hooks';
 import {
   ACTIONS_COLUMN_CLASS,
