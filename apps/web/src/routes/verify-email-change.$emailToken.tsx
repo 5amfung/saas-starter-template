@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
 import { IconStack2 } from '@tabler/icons-react';
 import { authClient } from '@workspace/auth/client';
-import { getWebmailLinkForEmail } from '@workspace/components/lib';
 import { AuthLayout, CheckEmailCard } from '@workspace/components/auth';
+import { getWebmailLinkForEmail } from '@/lib';
 
 const WEB_LOGO = (
   <a href="/" className="flex items-center gap-2 self-center font-medium">

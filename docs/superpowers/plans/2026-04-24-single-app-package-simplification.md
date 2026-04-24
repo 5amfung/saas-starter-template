@@ -111,7 +111,7 @@ No commit is expected for this task unless an evidence file is intentionally cre
 - Modify imports in: `apps/web/src/**`
 - Modify imports in: `apps/web/test/**`
 
-- [ ] **Step 1: Copy low-level package folders into `apps/web`**
+- [x] **Step 1: Copy low-level package folders into `apps/web`**
 
 Run:
 
@@ -141,7 +141,7 @@ apps/web/src/components/form/form-submit-button.tsx
 apps/web/src/components/form/validated-field.tsx
 ```
 
-- [ ] **Step 2: Fix copied form component import paths**
+- [x] **Step 2: Fix copied form component import paths**
 
 Update `apps/web/src/components/form/validated-field.tsx`:
 
@@ -152,7 +152,7 @@ Update `apps/web/src/components/form/validated-field.tsx`:
 
 No other copied `form` or `icons` files should need app-local import changes.
 
-- [ ] **Step 3: Update app/test imports for moved low-level domains**
+- [x] **Step 3: Update app/test imports for moved low-level domains**
 
 Run:
 
@@ -170,7 +170,7 @@ rg -n "@workspace/components/(lib|form|icons)" apps/web/src apps/web/test
 
 prints no matches.
 
-- [ ] **Step 4: Verify low-level slice**
+- [x] **Step 4: Verify low-level slice**
 
 Run:
 
@@ -182,7 +182,7 @@ pnpm --filter @workspace/web lint
 
 Expected: all pass.
 
-- [ ] **Step 5: Commit low-level slice**
+- [x] **Step 5: Commit low-level slice**
 
 Run:
 

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // apps/web/test/unit/components/auth/form-error.test.tsx
 import { render, screen } from '@testing-library/react';
-import { FormError } from '@workspace/components/form';
+import { FormError } from '@/components/form';
 
 describe('FormError', () => {
   it('renders nothing when errors array is empty', () => {

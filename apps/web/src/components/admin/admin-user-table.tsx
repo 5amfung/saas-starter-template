@@ -43,12 +43,6 @@ import {
   TableRow,
 } from '@workspace/ui/components/table';
 import { Tabs, TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
-import {
-  ACTIONS_COLUMN_CLASS,
-  ADMIN_PAGE_SIZE_OPTIONS,
-  MAX_SKELETON_ROWS,
-  formatDate,
-} from '@workspace/components/lib';
 import { useColumnSort } from '@workspace/components/hooks';
 import { SortableHeader, TablePagination } from '@workspace/components/layout';
 import type {
@@ -57,6 +51,12 @@ import type {
   SortingState,
   VisibilityState,
 } from '@tanstack/react-table';
+import {
+  ACTIONS_COLUMN_CLASS,
+  ADMIN_PAGE_SIZE_OPTIONS,
+  MAX_SKELETON_ROWS,
+  formatDate,
+} from '@/lib';
 
 interface UserRow {
   id: string;

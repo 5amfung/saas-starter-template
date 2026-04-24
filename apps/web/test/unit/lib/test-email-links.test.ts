@@ -1,4 +1,4 @@
-import { extractEmailLinks } from '@workspace/components/lib';
+import { extractEmailLinks } from '@/lib';
 
 describe('extractEmailLinks', () => {
   it('returns invitationUrl from invitation email props', () => {
