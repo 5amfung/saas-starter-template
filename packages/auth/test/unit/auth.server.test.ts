@@ -192,9 +192,6 @@ function buildTestConfig(overrides?: Partial<AuthConfig>): AuthConfig {
 }
 
 interface BetterAuthConfig {
-  advanced?: {
-    cookiePrefix?: string;
-  };
   databaseHooks?: {
     user?: {
       create?: {
@@ -749,35 +746,6 @@ describe('createAuth', () => {
   // ─── Stripe plan config wiring ──────────────────────────────────────
 
   describe('Stripe plan configuration', () => {
-    it('passes advanced.cookiePrefix when provided', async () => {
-      const createAuth = await importCreateAuth();
-
-      createAuth(buildTestConfig({ cookiePrefix: 'admin' }));
-      const config = betterAuthSpy.mock.calls[0][0] as BetterAuthConfig;
-
-      expect(config.advanced?.cookiePrefix).toBe('admin');
-    });
-
-    it('omits advanced.cookiePrefix when no override is provided', async () => {
-      const createAuth = await importCreateAuth();
-
-      createAuth(buildTestConfig());
-      const config = betterAuthSpy.mock.calls[0][0] as BetterAuthConfig;
-
-      expect(config.advanced?.cookiePrefix).toBeUndefined();
-      expect(config.advanced).toBeUndefined();
-    });
-
-    it('omits advanced.cookiePrefix when override is an empty string', async () => {
-      const createAuth = await importCreateAuth();
-
-      createAuth(buildTestConfig({ cookiePrefix: '' }));
-      const config = betterAuthSpy.mock.calls[0][0] as BetterAuthConfig;
-
-      expect(config.advanced?.cookiePrefix).toBeUndefined();
-      expect(config.advanced).toBeUndefined();
-    });
-
     it('passes billing helpers attached to the returned auth object', async () => {
       const createAuth = await importCreateAuth();
       const auth = createAuth(buildTestConfig());
