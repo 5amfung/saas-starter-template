@@ -1245,7 +1245,7 @@ git commit -m "test(web): run admin e2e in web app"
 - Create/modify: `apps/web/test/integration/components/admin/*`
 - Do not copy: duplicated shared account/auth primitive tests unless admin-specific behavior differs
 
-- [ ] **Step 1: Move admin-specific integration flow**
+- [x] **Step 1: Move admin-specific integration flow**
 
 Copy:
 
@@ -1259,11 +1259,11 @@ to:
 apps/web/test/integration/components/admin/admin-user-management-flow.integration.test.tsx
 ```
 
-- [ ] **Step 2: Update imports and expected paths**
+- [x] **Step 2: Update imports and expected paths**
 
 Update imports to web-local modules. Any route expectations should use `/admin/*`.
 
-- [ ] **Step 3: Decide whether auth integration tests are still needed**
+- [x] **Step 3: Decide whether auth integration tests are still needed**
 
 Inspect:
 
@@ -1274,7 +1274,7 @@ apps/admin/test/integration/components/auth/signup-form.integration.test.tsx
 
 Move them only if they assert admin-specific callback URLs such as `/admin/dashboard` or admin-specific messaging. Otherwise rely on existing web auth integration tests plus admin E2E.
 
-- [ ] **Step 4: Run integration tests**
+- [x] **Step 4: Run integration tests**
 
 Run:
 
@@ -1284,7 +1284,7 @@ pnpm --filter @workspace/web test test/integration/components/admin
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run:
 

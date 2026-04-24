@@ -44,6 +44,7 @@
 | Task 5.2 migrated admin E2E first | `pnpm --filter @workspace/web test:e2e test/e2e/admin`                                                                                                                              | FAIL: 16 passed, 1 failed; migrated direct-load spec used sign-in redirect URL as success signal         | terminal                        |
 | Task 5.2 direct-load fix          | `pnpm --filter @workspace/web test:e2e test/e2e/admin/users/user-detail-direct-load.spec.ts`                                                                                        | PASS: 1 test                                                                                             | terminal                        |
 | Task 5.2 migrated admin E2E       | `pnpm --filter @workspace/web test:e2e test/e2e/admin`                                                                                                                              | PASS: 17 tests, including migrated admin visual screenshot checks                                        | terminal                        |
+| Task 5.3 admin integration        | `pnpm --filter @workspace/web test test/integration/components/admin`                                                                                                               | PASS: 1 file, 5 tests                                                                                    | terminal                        |
 
 ## Final No-Regression Gate
 
