@@ -90,6 +90,11 @@ pnpm run check:boundaries
 
 Expected: all pass before migration begins. If not, document the failing baseline before changing code.
 
+Current execution note: reran the baseline on
+`codex/single-app-internal-layers-20260424` after committing this plan. The
+web typecheck, web lint, web unit suite, and dependency-cruiser boundary check
+all passed before package migration edits began.
+
 - [x] **Step 5: Add initial app-layer boundary placeholders**
 
 Update `.dependency-cruiser.cjs` with rules that can coexist with the current packages and future app-local paths. Start with rules that are immediately useful and do not fail the current code:
@@ -306,6 +311,11 @@ Expected: all pass.
 
 ## Task 5: Move `packages/integrations`
 
+> Current execution correction: this task was marked complete in the draft
+> checklist, but the active branch still has `packages/integrations` and active
+> `@workspace/integrations` imports. The checkboxes below are reset so progress
+> is recorded from the actual current tree.
+
 **Files:**
 
 - Move: `packages/integrations/src/**` -> `apps/web/src/integrations/core/**`
@@ -314,7 +324,7 @@ Expected: all pass.
 - Modify: imports from `@workspace/integrations`
 - Modify: `.dependency-cruiser.cjs`
 
-- [x] **Step 1: Create integration core layer**
+- [ ] **Step 1: Create integration core layer**
 
 Target mapping:
 
@@ -327,7 +337,7 @@ packages/integrations/src/workspace-integrations.ts -> apps/web/src/integrations
 packages/integrations/src/index.ts                  -> apps/web/src/integrations/core/index.ts
 ```
 
-- [x] **Step 2: Replace imports**
+- [ ] **Step 2: Replace imports**
 
 Use:
 
@@ -337,11 +347,11 @@ Use:
 
 Server wrappers under `apps/web/src/integrations/*.server.ts` should import from core. UI should not import repository internals.
 
-- [x] **Step 3: Enforce integration boundary**
+- [ ] **Step 3: Enforce integration boundary**
 
 Update `.dependency-cruiser.cjs` so UI cannot import `@/integrations/core/repository` and cannot import integration server modules directly.
 
-- [x] **Step 4: Move tests and delete package**
+- [ ] **Step 4: Move tests and delete package**
 
 Move tests to `apps/web/test/unit/integrations`.
 
@@ -353,7 +363,7 @@ rg -n "@workspace/integrations" apps packages package.json pnpm-lock.yaml
 
 has no active references.
 
-- [x] **Step 5: Verify**
+- [ ] **Step 5: Verify**
 
 Run:
 
@@ -368,6 +378,11 @@ Expected: all pass.
 
 ## Task 6: Move `packages/policy`
 
+> Current execution correction: this task was marked complete in the draft
+> checklist, but the active branch still has `packages/policy` and active
+> `@workspace/policy` imports. The checkboxes below are reset so progress is
+> recorded from the actual current tree.
+
 **Files:**
 
 - Move: `packages/policy/src/**` -> `apps/web/src/policy/core/**`
@@ -375,7 +390,7 @@ Expected: all pass.
 - Modify: existing app policy imports
 - Modify: `.dependency-cruiser.cjs`
 
-- [x] **Step 1: Move pure policy evaluators**
+- [ ] **Step 1: Move pure policy evaluators**
 
 Target mapping:
 
@@ -387,7 +402,7 @@ packages/policy/src/workspace-lifecycle.ts  -> apps/web/src/policy/core/workspac
 packages/policy/src/index.ts                -> apps/web/src/policy/core/index.ts
 ```
 
-- [x] **Step 2: Replace imports**
+- [ ] **Step 2: Replace imports**
 
 Use:
 
@@ -397,7 +412,7 @@ Use:
 
 Existing app-local policy server/shared files should continue to load contextual facts and call pure evaluators.
 
-- [x] **Step 3: Enforce pure policy boundary**
+- [ ] **Step 3: Enforce pure policy boundary**
 
 Update `.dependency-cruiser.cjs` so `apps/web/src/policy/core/**` cannot import:
 
@@ -408,7 +423,7 @@ Update `.dependency-cruiser.cjs` so `apps/web/src/policy/core/**` cannot import:
 - `apps/web/src/observability/**`
 - `apps/web/src/email/**`
 
-- [x] **Step 4: Move tests and delete package**
+- [ ] **Step 4: Move tests and delete package**
 
 Move tests to `apps/web/test/unit/policy`.
 
@@ -420,7 +435,7 @@ rg -n "@workspace/policy" apps packages package.json pnpm-lock.yaml
 
 has no active references.
 
-- [x] **Step 5: Verify**
+- [ ] **Step 5: Verify**
 
 Run:
 
