@@ -889,7 +889,7 @@ git commit -m "feat(web): move admin pages"
 - Do not modify: `apps/admin/src/init.ts` until retirement phase
 - Test: `apps/web/test/unit/init/init.test.ts`
 
-- [ ] **Step 1: Confirm web init has no admin cookie prefix**
+- [x] **Step 1: Confirm web init has no admin cookie prefix**
 
 Inspect `apps/web/src/init.ts`. Expected Better Auth config has no `cookiePrefix`:
 
@@ -911,7 +911,7 @@ authSingleton = createAuth({
 });
 ```
 
-- [ ] **Step 2: Keep or update init tests**
+- [x] **Step 2: Keep or update init tests**
 
 Ensure `apps/web/test/unit/init/init.test.ts` asserts `cookiePrefix` is not passed.
 
@@ -923,7 +923,7 @@ expect(createAuthMock).toHaveBeenCalledWith(
 );
 ```
 
-- [ ] **Step 3: Run init tests**
+- [x] **Step 3: Run init tests**
 
 Run:
 
@@ -933,7 +933,7 @@ pnpm --filter @workspace/web test test/unit/init/init.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 4: Commit if tests or init changed**
+- [x] **Step 4: Commit if tests or init changed**
 
 Run:
 
@@ -951,7 +951,7 @@ If no files changed, record this task as verified with no commit.
 - Create: `apps/web/test/e2e/admin/access-denied.spec.ts`
 - Create or modify: `apps/web/test/e2e/admin/admin-auth.spec.ts`
 
-- [ ] **Step 1: Add non-admin access denied E2E**
+- [x] **Step 1: Add non-admin access denied E2E**
 
 Create `apps/web/test/e2e/admin/access-denied.spec.ts`:
 
@@ -978,7 +978,7 @@ test('verified non-admin sees access denied at /admin', async ({
 
 If the existing E2E helpers do not expose `signUpAndLogin` from `../utils/auth`, adapt this test to use the repo’s current `packages/test-utils` helpers.
 
-- [ ] **Step 2: Add unauthenticated admin redirect E2E**
+- [x] **Step 2: Add unauthenticated admin redirect E2E**
 
 In `apps/web/test/e2e/admin/admin-auth.spec.ts`, add:
 
@@ -995,7 +995,7 @@ test('unauthenticated admin protected route redirects to shared signin with admi
 });
 ```
 
-- [ ] **Step 3: Run targeted E2E**
+- [x] **Step 3: Run targeted E2E**
 
 Run:
 
@@ -1005,7 +1005,7 @@ pnpm --filter @workspace/web test:e2e test/e2e/admin/access-denied.spec.ts test/
 
 Expected: PASS.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Run:
 
@@ -1020,7 +1020,7 @@ git commit -m "test(web): cover admin entry with single session"
 
 - Create or modify: `apps/web/test/e2e/admin/session-cookie.spec.ts`
 
-- [ ] **Step 1: Add admin sign-out invalidates shared session test**
+- [x] **Step 1: Add admin sign-out invalidates shared session test**
 
 Create `apps/web/test/e2e/admin/session-cookie.spec.ts`:
 
@@ -1060,7 +1060,7 @@ test('signing out clears access to both admin and customer routes', async ({
 
 If the user menu controls have different accessible names, inspect `packages/components/src/layout/nav-user.tsx` and update the selectors to match the existing UI.
 
-- [ ] **Step 2: Run targeted E2E**
+- [x] **Step 2: Run targeted E2E**
 
 Run:
 
@@ -1070,7 +1070,7 @@ pnpm --filter @workspace/web test:e2e test/e2e/admin/session-cookie.spec.ts
 
 Expected: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 Run:
 
