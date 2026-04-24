@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import type { AdminAppPolicyContext } from '@/policy/core/admin-app';
 import {
   evaluateAdminAppCapabilities,
   hasAdminAppCapability,
-} from '../../src/admin-app';
-import type { AdminAppPolicyContext } from '../../src/admin-app';
+} from '@/policy/core/admin-app';
 
 describe('evaluateAdminAppCapabilities', () => {
   it('denies non-admin platform users', () => {

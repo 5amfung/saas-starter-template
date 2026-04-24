@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   evaluateAdminAppCapabilities,
   hasAdminAppCapability,
-} from '../../src/admin-app';
+} from '@/policy/core/admin-app';
 
 describe('evaluateAdminAppCapabilities operational coverage', () => {
   it('grants operational read, modify, support, and destructive capabilities to admins', () => {

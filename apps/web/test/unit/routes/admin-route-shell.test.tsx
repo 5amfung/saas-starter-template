@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { AdminAppEntryCapabilities } from '@workspace/policy';
+import type { AdminAppEntryCapabilities } from '@/policy/core';
 import type { AdminAppEntry } from '@/policy/admin-app-capabilities.shared';
 
 function capabilities(

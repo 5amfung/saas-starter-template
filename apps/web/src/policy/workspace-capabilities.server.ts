@@ -1,10 +1,5 @@
 import { APIError } from 'better-auth/api';
 import {
-  evaluateWorkspaceCapabilities,
-  evaluateWorkspaceRoleOnlyCapabilities,
-  hasWorkspaceCapability,
-} from '@workspace/policy';
-import {
   getNormalizedWorkspaceRole,
   hasActiveWorkspaceSubscription,
 } from './workspace-policy-facts.server';
@@ -12,7 +7,12 @@ import type {
   WorkspaceCapabilities,
   WorkspaceCapability,
   WorkspaceRoleOnlyCapabilities,
-} from '@workspace/policy';
+} from '@/policy/core';
+import {
+  evaluateWorkspaceCapabilities,
+  evaluateWorkspaceRoleOnlyCapabilities,
+  hasWorkspaceCapability,
+} from '@/policy/core';
 import { getWorkspaceBillingData } from '@/billing/billing.server';
 import {
   ensureWorkspaceMembership,

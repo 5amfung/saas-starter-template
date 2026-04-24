@@ -390,7 +390,7 @@ Expected: all pass.
 - Modify: existing app policy imports
 - Modify: `.dependency-cruiser.cjs`
 
-- [ ] **Step 1: Move pure policy evaluators**
+- [x] **Step 1: Move pure policy evaluators**
 
 Target mapping:
 
@@ -402,7 +402,7 @@ packages/policy/src/workspace-lifecycle.ts  -> apps/web/src/policy/core/workspac
 packages/policy/src/index.ts                -> apps/web/src/policy/core/index.ts
 ```
 
-- [ ] **Step 2: Replace imports**
+- [x] **Step 2: Replace imports**
 
 Use:
 
@@ -412,7 +412,7 @@ Use:
 
 Existing app-local policy server/shared files should continue to load contextual facts and call pure evaluators.
 
-- [ ] **Step 3: Enforce pure policy boundary**
+- [x] **Step 3: Enforce pure policy boundary**
 
 Update `.dependency-cruiser.cjs` so `apps/web/src/policy/core/**` cannot import:
 
@@ -423,7 +423,7 @@ Update `.dependency-cruiser.cjs` so `apps/web/src/policy/core/**` cannot import:
 - `apps/web/src/observability/**`
 - `apps/web/src/email/**`
 
-- [ ] **Step 4: Move tests and delete package**
+- [x] **Step 4: Move tests and delete package**
 
 Move tests to `apps/web/test/unit/policy`.
 
@@ -435,7 +435,7 @@ rg -n "@workspace/policy" apps packages package.json pnpm-lock.yaml
 
 has no active references.
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 Run:
 
@@ -447,6 +447,12 @@ pnpm run check:boundaries
 ```
 
 Expected: all pass.
+
+Current execution note: before moving, `pnpm --filter @workspace/policy test`
+passed with 5 files and 34 tests. After the move, the `@workspace/policy`
+search returned no active references, `pnpm --filter @workspace/web test
+test/unit/policy` passed with 9 files and 63 tests, and web typecheck, web
+lint, and dependency-cruiser boundary checks all passed.
 
 ## Task 7: Move `packages/billing`
 

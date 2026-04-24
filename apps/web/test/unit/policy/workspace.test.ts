@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import type { WorkspacePolicyContext } from '@/policy/core/workspace';
 import {
   evaluateWorkspaceCapabilities,
   evaluateWorkspaceRoleOnlyCapabilities,
   hasWorkspaceCapability,
-} from '../../src/workspace';
-import type { WorkspacePolicyContext } from '../../src/workspace';
+} from '@/policy/core/workspace';
 
 const baseContext = (
   overrides: Partial<WorkspacePolicyContext> = {}

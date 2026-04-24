@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { WebAppEntryCapabilities } from '@workspace/policy';
+import type { WebAppEntryCapabilities } from '@/policy/core';
 
 function capabilities(
   overrides: Partial<WebAppEntryCapabilities>

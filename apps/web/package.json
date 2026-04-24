@@ -49,7 +49,6 @@
     "@workspace/email": "workspace:*",
     "@workspace/integrations": "workspace:*",
     "@workspace/logging": "workspace:*",
-    "@workspace/policy": "workspace:*",
     "@workspace/ui": "workspace:*",
     "better-auth": "1.6.3",
     "class-variance-authority": "^0.7.1",

@@ -1,21 +1,18 @@
 import { APIError } from 'better-auth/api';
 import { redirect } from '@tanstack/react-router';
 import { getRequestHeaders } from '@tanstack/react-start/server';
-import { hasAdminAppCapability } from '@workspace/policy';
 import {
   getAdminAppCapabilitiesForSession,
   getAdminAppEntryForSession,
   getAdminAppEntryRedirect,
 } from './admin-app-capabilities.shared';
-import type {
-  AdminAppCapabilities,
-  AdminAppCapability,
-} from '@workspace/policy';
+import type { AdminAppCapabilities, AdminAppCapability } from '@/policy/core';
 import type {
   AdminAppEntry,
   AdminAppEntryAllowed,
   AdminAppSessionLike,
 } from './admin-app-capabilities.shared';
+import { hasAdminAppCapability } from '@/policy/core';
 import { getAuth } from '@/init';
 
 export async function getCurrentAdminAppSession(

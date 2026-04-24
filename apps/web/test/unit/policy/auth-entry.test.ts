@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import {
-  evaluateAdminAppEntryCapabilities,
-  evaluateWebAppEntryCapabilities,
-} from '../../src/auth-entry';
 import type {
   AdminAppEntryFacts,
   WebAppEntryFacts,
-} from '../../src/auth-entry';
+} from '@/policy/core/auth-entry';
+import {
+  evaluateAdminAppEntryCapabilities,
+  evaluateWebAppEntryCapabilities,
+} from '@/policy/core/auth-entry';
 
 describe('evaluateWebAppEntryCapabilities', () => {
   it('denies guests and requires sign-in', () => {

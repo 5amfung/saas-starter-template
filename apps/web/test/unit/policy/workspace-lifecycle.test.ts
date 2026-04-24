@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import {
-  evaluateWorkspaceLifecycleCapabilities,
-  evaluateWorkspaceMemberRemovalCapabilities,
-  evaluateWorkspaceOwnershipTransferCapabilities,
-} from '../../src/index';
 import type {
   WorkspaceLifecycleContext,
   WorkspaceMemberRemovalContext,
   WorkspaceOwnershipTransferContext,
-} from '../../src/index';
+} from '@/policy/core';
+import {
+  evaluateWorkspaceLifecycleCapabilities,
+  evaluateWorkspaceMemberRemovalCapabilities,
+  evaluateWorkspaceOwnershipTransferCapabilities,
+} from '@/policy/core';
 
 const baseLifecycleContext = (
   overrides: Partial<WorkspaceLifecycleContext> = {}

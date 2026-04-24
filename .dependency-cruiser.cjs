@@ -45,12 +45,14 @@ module.exports = {
       to: { path: '^apps/web/src/policy/.*\\.server\\.ts$' },
     },
     {
-      name: 'no-app-imports-policy-internals',
+      name: 'no-policy-core-imports-runtime',
       comment:
-        'Applications may depend on @workspace/policy through its public entry only.',
+        'Pure policy evaluators must stay independent of app runtime, persistence, and UI layers.',
       severity: 'error',
-      from: { path: '^apps/web/src/' },
-      to: { path: '^packages/policy/src/(?!index\\.ts$)' },
+      from: { path: '^apps/web/src/policy/core/' },
+      to: {
+        path: '^apps/web/src/(routes|components|db|auth/server|observability|email)/',
+      },
     },
   ],
   options: {
