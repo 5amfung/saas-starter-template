@@ -1353,7 +1353,7 @@ If `.github/workflows` does not exist or has no relevant changes, omit it from `
 
 - Modify: `docs/superpowers/specs/2026-04-23-single-app-admin-web-design.md` only if this gate changes during implementation
 
-- [ ] **Step 1: Run migrated admin test suite in web**
+- [x] **Step 1: Run migrated admin test suite in web**
 
 Run:
 
@@ -1367,7 +1367,7 @@ pnpm --filter @workspace/web test:e2e test/e2e/admin
 
 Expected: PASS.
 
-- [ ] **Step 2: Run customer smoke coverage**
+- [x] **Step 2: Run customer smoke coverage**
 
 Run:
 
@@ -1378,7 +1378,7 @@ pnpm --filter @workspace/web test:e2e test/e2e/workspace/settings.spec.ts
 
 Expected: PASS.
 
-- [ ] **Step 3: Record gate result in implementation notes**
+- [x] **Step 3: Record gate result in implementation notes**
 
 If all checks pass, `apps/admin` can be retired in Phase 6. If any fail, do not delete `apps/admin`.
 
