@@ -1669,7 +1669,7 @@ If any manual check fails, do not continue to Phase 6. Add a fix task before ret
 - Modify: `.dependency-cruiser.cjs`
 - Modify: `tsconfig.json` or app references if needed
 
-- [ ] **Step 1: Confirm merged app verification before deletion**
+- [x] **Step 1: Confirm merged app verification before deletion**
 
 Run:
 
@@ -1683,7 +1683,7 @@ pnpm --filter @workspace/web test:e2e test/e2e/regression
 
 Expected: PASS.
 
-- [ ] **Step 2: Confirm regression evidence file is complete**
+- [x] **Step 2: Confirm regression evidence file is complete**
 
 Open:
 

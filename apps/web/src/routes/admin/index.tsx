@@ -1,8 +1,8 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
-import { ADMIN_DASHBOARD } from '@/admin/admin-routes';
 import type { AdminAppEntry } from '@/policy/admin-app-capabilities.shared';
-import { getAdminAppEntryRedirect } from '@/policy/admin-app-capabilities.shared';
+import { ADMIN_DASHBOARD } from '@/admin/admin-routes';
 import { getAdminAppEntry } from '@/policy/admin-app-capabilities.functions';
+import { getAdminAppEntryRedirect } from '@/policy/admin-app-capabilities.shared';
 
 export function getIndexRedirectTarget(entry: AdminAppEntry) {
   if (entry.kind === 'canEnterAdminApp') {

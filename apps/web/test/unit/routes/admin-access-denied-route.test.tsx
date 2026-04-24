@@ -2,11 +2,11 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import type * as TanStackRouter from '@tanstack/react-router';
 import { AdminAccessDeniedPage } from '@/routes/admin/access-denied';
 
 vi.mock('@tanstack/react-router', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@tanstack/react-router')>();
+  const actual = await importOriginal<typeof TanStackRouter>();
 
   return {
     ...actual,
