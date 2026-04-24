@@ -15,7 +15,7 @@ import {
   ChangePasswordDialog,
   LinkedAccountsCard,
   SetPasswordDialog,
-} from '@workspace/components/account';
+} from '@/account';
 import { useLinkedAccountsQuery, useSessionQuery } from '@/hooks';
 
 export const Route = createFileRoute('/_protected/_account/account')({

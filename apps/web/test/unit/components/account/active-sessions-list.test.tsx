@@ -2,7 +2,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import { ActiveSessionsList } from '@workspace/components/account';
+import { ActiveSessionsList } from '@/account';
 
 const {
   mockUseSessionQuery,
@@ -16,7 +16,7 @@ const {
   mockGetLastUsedLoginMethod: vi.fn(),
 }));
 
-vi.mock('@workspace/components/hooks', () => ({
+vi.mock('@/hooks', () => ({
   useSessionQuery: mockUseSessionQuery,
   SESSION_QUERY_KEY: ['session', 'current'],
   useSessionsQuery: mockUseSessionsQuery,

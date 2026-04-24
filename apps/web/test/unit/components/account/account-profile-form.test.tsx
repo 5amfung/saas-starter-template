@@ -2,7 +2,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import { AccountProfileForm } from '@workspace/components/account';
+import { AccountProfileForm } from '@/account';
 
 const { updateUser } = vi.hoisted(() => ({
   updateUser: vi.fn(),

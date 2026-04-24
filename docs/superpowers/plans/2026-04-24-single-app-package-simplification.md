@@ -432,7 +432,7 @@ Expected: commit succeeds with only auth copy and import changes.
 - Modify imports in: `apps/web/src/**`
 - Modify imports in: `apps/web/test/**`
 
-- [ ] **Step 1: Copy account package files into existing app account folder**
+- [x] **Step 1: Copy account package files into existing app account folder**
 
 Run:
 
@@ -449,7 +449,7 @@ cp packages/components/src/account/index.ts apps/web/src/account/index.ts
 
 Expected: copied account UI lives beside the existing notification-preferences account modules.
 
-- [ ] **Step 2: Fix copied account barrel and schema imports**
+- [x] **Step 2: Fix copied account barrel and schema imports**
 
 Update `apps/web/src/account/index.ts`:
 
@@ -478,7 +478,7 @@ rg -n "\\./schemas" apps/web/src/account
 
 prints no matches.
 
-- [ ] **Step 3: Fix copied account imports for app-local utilities**
+- [x] **Step 3: Fix copied account imports for app-local utilities**
 
 Run:
 
@@ -496,7 +496,7 @@ import { LINKED_ACCOUNTS_QUERY_KEY, useLinkedAccountsQuery } from '@/hooks';
 import { GoogleIcon } from '@/components/icons';
 ```
 
-- [ ] **Step 4: Update app/test imports for account**
+- [x] **Step 4: Update app/test imports for account**
 
 Run:
 
@@ -512,7 +512,7 @@ rg -n "@workspace/components/account" apps/web/src apps/web/test
 
 prints no matches.
 
-- [ ] **Step 5: Verify account slice**
+- [x] **Step 5: Verify account slice**
 
 Run:
 
@@ -524,7 +524,7 @@ pnpm --filter @workspace/web lint
 
 Expected: all pass.
 
-- [ ] **Step 6: Commit account slice**
+- [x] **Step 6: Commit account slice**
 
 Run:
 

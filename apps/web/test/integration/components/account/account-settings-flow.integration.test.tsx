@@ -6,7 +6,7 @@ import {
   AccountProfileForm,
   ChangeEmailDialog,
   ChangePasswordDialog,
-} from '@workspace/components/account';
+} from '@/account';
 
 const {
   updateUserMock,
