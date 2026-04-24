@@ -9,17 +9,14 @@ import {
 import { Field, FieldLabel } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
 import {
-  useLinkedAccountsQuery,
-  useSessionQuery,
-} from '@workspace/components/hooks';
-import {
   AccountProfileForm,
   ActiveSessionsList,
   ChangeEmailDialog,
   ChangePasswordDialog,
   LinkedAccountsCard,
   SetPasswordDialog,
-} from '@workspace/components/account';
+} from '@/account';
+import { useLinkedAccountsQuery, useSessionQuery } from '@/hooks';
 
 export const Route = createFileRoute('/_protected/_account/account')({
   component: AccountPage,

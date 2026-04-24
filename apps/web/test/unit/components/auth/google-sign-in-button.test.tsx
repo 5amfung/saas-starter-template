@@ -3,7 +3,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@workspace/test-utils';
-import { GoogleSignInButton } from '@workspace/components/auth';
+import { GoogleSignInButton } from '@/auth';
 
 const { signInSocial } = vi.hoisted(() => ({
   signInSocial: vi.fn(),
@@ -13,13 +13,6 @@ vi.mock('@workspace/auth/client', () => ({
   authClient: {
     signIn: { social: signInSocial },
   },
-}));
-
-// Mock the GoogleIcon SVG component.
-vi.mock('@workspace/components/icons', () => ({
-  GoogleIcon: (props: React.ComponentProps<'svg'>) => (
-    <svg data-testid="google-icon" {...props} />
-  ),
 }));
 
 describe('GoogleSignInButton', () => {

@@ -23,19 +23,19 @@ import {
   TableRow,
 } from '@workspace/ui/components/table';
 import {
-  ACTIONS_COLUMN_CLASS,
-  DEFAULT_PAGE_SIZE_OPTIONS,
-  MAX_SKELETON_ROWS,
-  normalizeRole,
-} from '@workspace/components/lib';
-import { useColumnSort } from '@workspace/components/hooks';
-import { SortableHeader, TablePagination } from '@workspace/components/layout';
-import {
   OPERATIONS,
   buildWorkflowAttributes,
   startWorkflowSpan,
 } from '@workspace/logging/client';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
+import { SortableHeader, TablePagination } from '@/components/layout';
+import { useColumnSort } from '@/hooks';
+import {
+  ACTIONS_COLUMN_CLASS,
+  DEFAULT_PAGE_SIZE_OPTIONS,
+  MAX_SKELETON_ROWS,
+  normalizeRole,
+} from '@/lib';
 import { WorkspaceTransferOwnershipDialog } from '@/components/workspace/workspace-transfer-ownership-dialog';
 import { TypedConfirmDialog } from '@/components/shared/typed-confirm-dialog';
 

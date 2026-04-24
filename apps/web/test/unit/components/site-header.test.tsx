@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react';
-import { SiteHeader } from '@workspace/components/layout';
+import { SiteHeader } from '@/components/layout';
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
 

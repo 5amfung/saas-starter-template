@@ -2,7 +2,7 @@
 import { IconHelp, IconHome } from '@tabler/icons-react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { NavSecondary, ThemeProvider } from '@workspace/components/layout';
+import { NavSecondary, ThemeProvider } from '@/components/layout';
 
 vi.mock('@workspace/ui/components/sidebar', () => ({
   SidebarGroup: ({ children, ...props }: React.ComponentProps<'div'>) => (

@@ -35,12 +35,12 @@ import { Separator } from '@workspace/ui/components/separator';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { Textarea } from '@workspace/ui/components/textarea';
 import { cn } from '@workspace/ui/lib/utils';
-import { getInitials, toFieldErrorItem } from '@workspace/components/lib';
 import {
   OPERATIONS,
   buildWorkflowAttributes,
   startWorkflowSpan,
 } from '@workspace/logging/client';
+import { getInitials, toFieldErrorItem } from '@/lib';
 import { adminUserFormSchema } from '@/admin/schemas';
 import { updateUser } from '@/admin/users.functions';
 

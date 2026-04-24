@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, render, renderHook, screen } from '@testing-library/react';
-import { ThemeProvider, useTheme } from '@workspace/components/layout';
+import { ThemeProvider, useTheme } from '@/components/layout';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

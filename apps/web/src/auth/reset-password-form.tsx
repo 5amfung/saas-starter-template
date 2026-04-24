@@ -16,9 +16,9 @@ import {
 import { Input } from '@workspace/ui/components/input';
 import { resetPasswordSchema } from '@workspace/auth/schemas';
 import { authClient } from '@workspace/auth/client';
-import { FormErrorDisplay } from '../form/form-error-display';
-import { FormSubmitButton } from '../form/form-submit-button';
-import { ValidatedField } from '../form/validated-field';
+import { FormErrorDisplay } from '@/components/form/form-error-display';
+import { FormSubmitButton } from '@/components/form/form-submit-button';
+import { ValidatedField } from '@/components/form/validated-field';
 
 interface ResetPasswordFormProps {
   token?: string;

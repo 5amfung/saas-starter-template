@@ -1,4 +1,4 @@
-import { toFieldErrorItem } from '@workspace/components/lib';
+import { toFieldErrorItem } from '@/lib';
 
 describe('toFieldErrorItem', () => {
   it('wraps string errors in an object', () => {

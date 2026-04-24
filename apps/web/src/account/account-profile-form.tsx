@@ -24,10 +24,10 @@ import {
   FieldLabel,
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
-import { toFieldErrorItem } from '../lib/form-utils';
-import { getInitials } from '../lib/get-initials';
-import { SESSION_QUERY_KEY } from '../hooks/use-session-query';
-import { accountProfileSchema } from './schemas';
+import { accountProfileSchema } from './account.schemas';
+import { toFieldErrorItem } from '@/lib/form-utils';
+import { getInitials } from '@/lib/get-initials';
+import { SESSION_QUERY_KEY } from '@/hooks/use-session-query';
 
 const CARD_FOOTER_CLASS = 'flex justify-end gap-2 pt-6';
 

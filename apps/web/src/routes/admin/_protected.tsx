@@ -9,9 +9,9 @@ import {
   SidebarInset,
   SidebarProvider,
 } from '@workspace/ui/components/sidebar';
-import { SiteHeader } from '@workspace/components/layout';
 import type { AdminAppEntry } from '@/policy/admin-app-capabilities.shared';
 import { AdminAppSidebar } from '@/components/admin-app-sidebar';
+import { SiteHeader } from '@/components/layout';
 import { getAdminAppEntry } from '@/policy/admin-app-capabilities.functions';
 import { getAdminAppEntryRedirect } from '@/policy/admin-app-capabilities.shared';
 import { useAdminAppEntry } from '@/policy/admin-app-capabilities';

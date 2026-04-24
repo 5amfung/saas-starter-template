@@ -23,11 +23,7 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from '@workspace/ui/components/sidebar';
-import {
-  NavSecondary,
-  NavUser,
-  NavUserSkeleton,
-} from '@workspace/components/layout';
+import { NavSecondary, NavUser, NavUserSkeleton } from '@/components/layout';
 import { NavMain } from '@/components/nav-main';
 import { useWorkspaceCapabilitiesQuery } from '@/policy/workspace-capabilities';
 import {

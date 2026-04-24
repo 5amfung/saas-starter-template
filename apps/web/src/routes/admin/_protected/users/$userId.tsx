@@ -8,7 +8,7 @@ import {
 } from '@tanstack/react-router';
 import { Button } from '@workspace/ui/components/button';
 import { Separator } from '@workspace/ui/components/separator';
-import { useSessionQuery } from '@workspace/components/hooks';
+import { useSessionQuery } from '@/hooks';
 import { getUser } from '@/admin/users.functions';
 import { AdminDeleteUserDialog } from '@/components/admin/admin-delete-user-dialog';
 import {

@@ -44,7 +44,6 @@
     "@tanstack/router-plugin": "^1.167.12",
     "@workspace/auth": "workspace:*",
     "@workspace/billing": "workspace:*",
-    "@workspace/components": "workspace:*",
     "@workspace/db": "workspace:*",
     "@workspace/db-schema": "workspace:*",
     "@workspace/email": "workspace:*",

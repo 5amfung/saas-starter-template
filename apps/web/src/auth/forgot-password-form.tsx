@@ -22,9 +22,9 @@ import {
 } from '@workspace/logging/client';
 import { Input } from '@workspace/ui/components/input';
 import { authClient } from '@workspace/auth/client';
-import { FormErrorDisplay } from '../form/form-error-display';
-import { FormSubmitButton } from '../form/form-submit-button';
-import { ValidatedField } from '../form/validated-field';
+import { FormErrorDisplay } from '@/components/form/form-error-display';
+import { FormSubmitButton } from '@/components/form/form-submit-button';
+import { ValidatedField } from '@/components/form/validated-field';
 
 export function ForgotPasswordForm() {
   const [isSuccess, setIsSuccess] = useState(false);

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // apps/web/test/unit/components/auth/auth-layout.test.tsx
 import { render, screen } from '@testing-library/react';
-import { AuthLayout } from '@workspace/components/auth';
+import { AuthLayout } from '@/auth';
 
 const webLogo = <a href="/">Acme Inc.</a>;
 

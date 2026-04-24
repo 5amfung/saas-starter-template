@@ -1,4 +1,4 @@
-export * from './schemas';
+export * from './account.schemas';
 export * from './account-profile-form';
 export * from './active-sessions-list';
 export * from './change-email-dialog';

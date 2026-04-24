@@ -23,8 +23,8 @@ import {
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
 import { authClient } from '@workspace/auth/client';
-import { toFieldErrorItem } from '../lib';
-import { changePasswordSchema } from './schemas';
+import { changePasswordSchema } from './account.schemas';
+import { toFieldErrorItem } from '@/lib';
 
 export function ChangePasswordDialog() {
   const [open, setOpen] = React.useState(false);

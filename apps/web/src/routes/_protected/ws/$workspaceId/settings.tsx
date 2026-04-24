@@ -22,7 +22,7 @@ import {
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
 import { Separator } from '@workspace/ui/components/separator';
-import { toFieldErrorItem } from '@workspace/components/lib';
+import { toFieldErrorItem } from '@/lib';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
 import { getWorkspaceCapabilities } from '@/policy/workspace-capabilities.functions';
 import { getWorkspaceLifecycleCapabilities } from '@/policy/workspace-lifecycle-capabilities.functions';

@@ -5,8 +5,8 @@ import { toast } from 'sonner';
 import { authClient } from '@workspace/auth/client';
 import { verifySearchSchema } from '@workspace/auth/schemas';
 import { Button } from '@workspace/ui/components/button';
-import { getWebmailLinkForEmail } from '@workspace/components/lib';
-import { CheckEmailCard } from '@workspace/components/auth';
+import { CheckEmailCard } from '@/auth';
+import { getWebmailLinkForEmail } from '@/lib';
 
 export const Route = createFileRoute('/_auth/verify')({
   component: VerifyPage,

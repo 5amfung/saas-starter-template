@@ -1,10 +1,7 @@
 // @vitest-environment jsdom
 import { renderHook, waitFor } from '@testing-library/react';
 import { createHookWrapper } from '@workspace/test-utils';
-import {
-  SESSION_QUERY_KEY,
-  useSessionQuery,
-} from '@workspace/components/hooks';
+import { SESSION_QUERY_KEY, useSessionQuery } from '@/hooks';
 
 const { getSession } = vi.hoisted(() => ({
   getSession: vi.fn(),

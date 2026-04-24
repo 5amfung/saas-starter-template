@@ -5,7 +5,7 @@ import {
   FormErrorDisplay,
   FormSubmitButton,
   ValidatedField,
-} from '@workspace/components/form';
+} from '@/components/form';
 
 // ---------------------------------------------------------------------------
 // Helpers: minimal fake form/field APIs

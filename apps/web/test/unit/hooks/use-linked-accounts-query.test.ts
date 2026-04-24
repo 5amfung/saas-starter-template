@@ -1,10 +1,7 @@
 // @vitest-environment jsdom
 import { renderHook, waitFor } from '@testing-library/react';
 import { createHookWrapper } from '@workspace/test-utils';
-import {
-  LINKED_ACCOUNTS_QUERY_KEY,
-  useLinkedAccountsQuery,
-} from '@workspace/components/hooks';
+import { LINKED_ACCOUNTS_QUERY_KEY, useLinkedAccountsQuery } from '@/hooks';
 
 const { listAccounts } = vi.hoisted(() => ({
   listAccounts: vi.fn(),

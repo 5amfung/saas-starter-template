@@ -23,11 +23,11 @@ import {
   workflowLogger,
 } from '@workspace/logging/client';
 import { Input } from '@workspace/ui/components/input';
-import { FormError } from '../form/form-error';
-import { FormErrorDisplay } from '../form/form-error-display';
-import { FormSubmitButton } from '../form/form-submit-button';
-import { ValidatedField } from '../form/validated-field';
 import { GoogleSignInButton } from './google-sign-in-button';
+import { FormError } from '@/components/form/form-error';
+import { FormErrorDisplay } from '@/components/form/form-error-display';
+import { FormSubmitButton } from '@/components/form/form-submit-button';
+import { ValidatedField } from '@/components/form/validated-field';
 
 interface SigninFormProps {
   /** URL to redirect to after successful sign-in when no ?redirect param is present. */

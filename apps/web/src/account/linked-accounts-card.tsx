@@ -22,8 +22,8 @@ import {
 } from '@workspace/ui/components/card';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { authClient } from '@workspace/auth/client';
-import { LINKED_ACCOUNTS_QUERY_KEY, useLinkedAccountsQuery } from '../hooks';
-import { GoogleIcon } from '../icons';
+import { LINKED_ACCOUNTS_QUERY_KEY, useLinkedAccountsQuery } from '@/hooks';
+import { GoogleIcon } from '@/components/icons';
 
 /** Subset of social providers configured for this app. */
 type SocialProviderId = 'google';
