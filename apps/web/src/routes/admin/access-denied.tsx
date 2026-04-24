@@ -1,5 +1,7 @@
-import { Link, createFileRoute } from '@tanstack/react-router';
-import { buttonVariants } from '@workspace/ui/components/button';
+import * as React from 'react';
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
+import { authClient } from '@workspace/auth/client';
+import { Button, buttonVariants } from '@workspace/ui/components/button';
 import {
   Card,
   CardContent,
@@ -13,6 +15,21 @@ export const Route = createFileRoute('/admin/access-denied')({
 });
 
 export function AdminAccessDeniedPage() {
+  const navigate = useNavigate();
+  const [isSwitchingAccount, setIsSwitchingAccount] = React.useState(false);
+
+  async function handleSwitchAccount() {
+    setIsSwitchingAccount(true);
+
+    try {
+      await authClient.signOut();
+      await navigate({ to: '/signin', search: { redirect: '/admin' } });
+    } catch (error) {
+      console.error('Switch account failed', error);
+      setIsSwitchingAccount(false);
+    }
+  }
+
   return (
     <main className="flex min-h-svh items-center justify-center p-6">
       <Card className="w-full max-w-md">
@@ -28,13 +45,14 @@ export function AdminAccessDeniedPage() {
           <Link to="/" className={buttonVariants()}>
             Go to app
           </Link>
-          <Link
-            to="/signin"
-            search={{ redirect: '/admin' }}
-            className={buttonVariants({ variant: 'outline' })}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleSwitchAccount}
+            disabled={isSwitchingAccount}
           >
-            Switch account
-          </Link>
+            {isSwitchingAccount ? 'Switching...' : 'Switch account'}
+          </Button>
         </CardContent>
       </Card>
     </main>
