@@ -630,7 +630,7 @@ Expected: commit includes package deletion, dependency removal, alias removal, a
 - Remove ignored artifacts under: `apps/admin/`
 - Remove ignored artifacts under: `packages/components/`
 
-- [ ] **Step 1: Dry-run ignored artifact cleanup**
+- [x] **Step 1: Dry-run ignored artifact cleanup**
 
 Run:
 
@@ -641,7 +641,7 @@ git clean -ndX apps/admin packages/components
 
 Expected: output lists ignored artifacts such as `apps/admin/.output/`, `apps/admin/.turbo/`, `apps/admin/node_modules/`, `apps/admin/playwright-report/`, `apps/admin/test-results/`, or `apps/admin/.env` if they are present.
 
-- [ ] **Step 2: Remove ignored retired-path artifacts deliberately**
+- [x] **Step 2: Remove ignored retired-path artifacts deliberately**
 
 Run:
 
@@ -651,7 +651,7 @@ git clean -fdX apps/admin packages/components
 
 Expected: ignored artifacts under `apps/admin` and `packages/components` are removed. This command is intentionally destructive for ignored files in retired paths only.
 
-- [ ] **Step 3: Verify no retired-path artifacts remain**
+- [x] **Step 3: Verify no retired-path artifacts remain**
 
 Run:
 
@@ -663,7 +663,7 @@ git clean -ndX apps/admin packages/components
 Expected:
 Both commands should produce no output for these paths.
 
-- [ ] **Step 4: Commit cleanup only if tracked files changed**
+- [x] **Step 4: Commit cleanup only if tracked files changed**
 
 Run:
 
