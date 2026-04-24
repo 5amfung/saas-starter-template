@@ -24,7 +24,6 @@
       "@workspace/email/*": ["../../packages/email/src/*"],
       "@workspace/auth": ["../../packages/auth/src/index.ts"],
       "@workspace/auth/*": ["../../packages/auth/src/*"],
-      "@workspace/components/*": ["../../packages/components/src/*/index.ts"],
       "@workspace/policy": ["../../packages/policy/src/index.ts"],
       "@workspace/logging": ["../../packages/logging/src/server.ts"],
       "@workspace/logging/client": ["../../packages/logging/src/client.ts"],

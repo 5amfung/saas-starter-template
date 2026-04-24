@@ -544,7 +544,7 @@ Expected: commit succeeds with only account copy and import changes.
 - Modify: `apps/web/tsconfig.json`
 - Modify: `pnpm-lock.yaml`
 
-- [ ] **Step 1: Confirm all app imports now use local paths**
+- [x] **Step 1: Confirm all app imports now use local paths**
 
 Run:
 
@@ -554,7 +554,7 @@ rg -n "@workspace/components" apps/web/src apps/web/test
 
 Expected: no matches.
 
-- [ ] **Step 2: Remove web package dependency**
+- [x] **Step 2: Remove web package dependency**
 
 Update `apps/web/package.json` dependencies:
 
@@ -564,7 +564,7 @@ Update `apps/web/package.json` dependencies:
 
 Expected: `apps/web/package.json` no longer contains `@workspace/components`.
 
-- [ ] **Step 3: Remove web TypeScript path alias**
+- [x] **Step 3: Remove web TypeScript path alias**
 
 Update `apps/web/tsconfig.json` paths:
 
@@ -574,7 +574,7 @@ Update `apps/web/tsconfig.json` paths:
 
 Expected: `apps/web/tsconfig.json` no longer contains `@workspace/components`.
 
-- [ ] **Step 4: Delete package source and manifest**
+- [x] **Step 4: Delete package source and manifest**
 
 Run:
 
@@ -584,7 +584,7 @@ git rm -r packages/components
 
 Expected: all tracked `packages/components` files are staged for deletion.
 
-- [ ] **Step 5: Refresh lockfile**
+- [x] **Step 5: Refresh lockfile**
 
 Run:
 
@@ -594,7 +594,7 @@ pnpm install --lockfile-only
 
 Expected: `pnpm-lock.yaml` removes the `packages/components` importer and removes `@workspace/components` from `apps/web` dependencies.
 
-- [ ] **Step 6: Verify package-boundary removal**
+- [x] **Step 6: Verify package-boundary removal**
 
 Run:
 
@@ -612,7 +612,7 @@ Expected:
 - boundary check passes.
 - web typecheck, lint, and tests pass.
 
-- [ ] **Step 7: Commit package removal**
+- [x] **Step 7: Commit package removal**
 
 Run:
 
