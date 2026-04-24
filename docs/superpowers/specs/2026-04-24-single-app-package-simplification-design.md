@@ -240,6 +240,29 @@ Targeted no-regression checks:
 - Admin shell still renders `/admin`, `/admin/dashboard`, `/admin/users`, `/admin/users/:userId`, `/admin/workspaces`, and `/admin/workspaces/:workspaceId`.
 - Test email link extraction still works for E2E mock email routes.
 
+## Repository Hygiene
+
+Phase 7 should also clean up transitional files created by the migration or left behind by the retired two-app setup.
+
+Before calling the phase done, verify there are no remaining tracked imports, manifests, generated outputs, ignored build artifacts, or scratch files tied to the removed package boundary.
+
+Required hygiene checks:
+
+```bash
+rg -n "@workspace/components" apps packages
+git status --short --ignored apps/admin packages/components
+git clean -ndX apps/admin packages/components
+```
+
+Expected:
+
+- `rg` finds no source, test, config, or package references to `@workspace/components`.
+- `apps/admin` does not contain leftover ignored artifacts such as `.output`, `.turbo`, `node_modules`, `playwright-report`, `test-results`, or `.env`.
+- `packages/components` does not contain leftover ignored artifacts or migration scratch files after the package is deleted.
+- `git clean -ndX` reports nothing that still needs to be intentionally removed for these retired paths.
+
+If the dry-run reports ignored artifacts under retired paths, remove them deliberately before final verification. Do not leave cleanup to local developer state or CI cache behavior.
+
 ## Risks
 
 ### Import Churn
@@ -265,5 +288,7 @@ Many tests mock `@workspace/components/hooks`, `@workspace/components/auth`, or 
 - No source or test imports reference `@workspace/components`.
 - `packages/auth`, `packages/policy`, `packages/billing`, `packages/ui`, `packages/db`, and `packages/db-schema` remain packages.
 - All moved UI, hooks, and utilities are app-local under `apps/web/src`.
+- No transitional migration files, ignored build outputs, old app artifacts, package cache folders, or scratch files remain under retired paths such as `apps/admin` or `packages/components`.
+- Repository hygiene checks pass, including the ignored-file dry-run for retired paths.
 - Final verification commands pass.
 - No regression is found in the targeted auth, account, customer shell, admin shell, and E2E mock-email flows.
