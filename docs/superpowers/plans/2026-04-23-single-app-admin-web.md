@@ -1159,7 +1159,7 @@ git commit -m "test(web): add admin e2e fixtures"
 - Move/copy: `apps/admin/test/e2e/*` to `apps/web/test/e2e/admin/*`
 - Modify: `packages/test-utils/*` only if helpers need base URL or path updates
 
-- [ ] **Step 1: Copy admin E2E specs**
+- [x] **Step 1: Copy admin E2E specs**
 
 Copy admin E2E specs into:
 
@@ -1182,7 +1182,7 @@ admin/workspaces/workspace-entitlements.spec.ts
 admin/workspaces/workspace-api-keys.spec.ts
 ```
 
-- [ ] **Step 2: Update admin E2E paths**
+- [x] **Step 2: Update admin E2E paths**
 
 Replace page navigations:
 
@@ -1193,7 +1193,7 @@ Replace page navigations:
 /signin     -> /signin?redirect=/admin/dashboard
 ```
 
-- [ ] **Step 3: Update imports to web-local admin fixtures**
+- [x] **Step 3: Update imports to web-local admin fixtures**
 
 Replace imports from old fixture paths with:
 
@@ -1209,7 +1209,7 @@ import {
 
 Adjust relative paths according to the spec file folder depth.
 
-- [ ] **Step 4: Update web Playwright config if needed**
+- [x] **Step 4: Update web Playwright config if needed**
 
 `apps/web/playwright.config.ts` should continue to use:
 
@@ -1219,7 +1219,7 @@ testDir: './test/e2e';
 
 No second web server should be added for admin. Admin specs run against the same base URL.
 
-- [ ] **Step 5: Run merged admin E2E subset**
+- [x] **Step 5: Run merged admin E2E subset**
 
 Run:
 
@@ -1229,7 +1229,7 @@ pnpm --filter @workspace/web test:e2e test/e2e/admin
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run:
 
