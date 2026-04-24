@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// apps/web/test/unit@/components/form/form-components.test.tsx
+// apps/web/test/unit/components/form/form-components.test.tsx
 import { render, screen } from '@testing-library/react';
 import {
   FormErrorDisplay,
