@@ -49,7 +49,7 @@ Expected:
 - Read: `apps/web/src/**`
 - Read: `apps/web/test/**`
 
-- [ ] **Step 1: Confirm branch and clean tracked state**
+- [x] **Step 1: Confirm branch and clean tracked state**
 
 Run:
 
@@ -65,7 +65,7 @@ Expected:
 
 The exact ahead count may vary as plan/spec commits are added. There should be no tracked or untracked source changes before the implementation begins.
 
-- [ ] **Step 2: Capture current `@workspace/components` references**
+- [x] **Step 2: Capture current `@workspace/components` references**
 
 Run:
 
@@ -75,7 +75,7 @@ rg -n "@workspace/components/(lib|icons|form|hooks|layout|auth|account)" apps/we
 
 Expected: matches in `apps/web/src` and `apps/web/test`. These are the references the later tasks must eliminate.
 
-- [ ] **Step 3: Capture current retired-path ignored artifacts**
+- [x] **Step 3: Capture current retired-path ignored artifacts**
 
 Run:
 
@@ -85,7 +85,7 @@ git status --short --ignored apps/admin packages/components
 
 Expected before cleanup: ignored `apps/admin/` artifacts may be present from the retired app. Track the output so the final hygiene task can prove they were removed.
 
-- [ ] **Step 4: Run baseline package checks**
+- [x] **Step 4: Run baseline package checks**
 
 Run:
 
@@ -97,7 +97,7 @@ pnpm --filter @workspace/web test
 
 Expected: all pass before package movement begins.
 
-- [ ] **Step 5: Commit only if a baseline artifact was intentionally added**
+- [x] **Step 5: Commit only if a baseline artifact was intentionally added**
 
 No commit is expected for this task unless an evidence file is intentionally created. If no files changed, continue to Task 2.
 
