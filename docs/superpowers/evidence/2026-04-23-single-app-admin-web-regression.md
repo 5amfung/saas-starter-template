@@ -21,8 +21,10 @@
 
 ## During Migration Gates
 
-| Phase | Command or check | Result | Artifact |
-| ----- | ---------------- | ------ | -------- |
+| Phase               | Command or check                                                         | Result                                                                          | Artifact |
+| ------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------- | -------- |
+| Task 0.3 red test   | `pnpm --filter @workspace/web test test/unit/admin/admin-routes.test.ts` | PASS as expected red state: failed because `@/admin/admin-routes` did not exist | terminal |
+| Task 0.3 green test | `pnpm --filter @workspace/web test test/unit/admin/admin-routes.test.ts` | PASS: 1 file, 1 test                                                            | terminal |
 
 ## Final No-Regression Gate
 

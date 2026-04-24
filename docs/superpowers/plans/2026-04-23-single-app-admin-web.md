@@ -269,7 +269,7 @@ git commit -m "docs: capture admin web migration regression baseline"
 - Create: `apps/web/src/admin/admin-routes.ts`
 - Test: `apps/web/test/unit/admin/admin-routes.test.ts`
 
-- [ ] **Step 1: Write route constant tests**
+- [x] **Step 1: Write route constant tests**
 
 Create `apps/web/test/unit/admin/admin-routes.test.ts`:
 
@@ -294,7 +294,7 @@ describe('admin route constants', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -304,7 +304,7 @@ pnpm --filter @workspace/web test test/unit/admin/admin-routes.test.ts
 
 Expected: FAIL because `@/admin/admin-routes` does not exist.
 
-- [ ] **Step 3: Add route constants**
+- [x] **Step 3: Add route constants**
 
 Create `apps/web/src/admin/admin-routes.ts`:
 
@@ -316,7 +316,7 @@ export const ADMIN_USERS = '/admin/users' as const;
 export const ADMIN_WORKSPACES = '/admin/workspaces' as const;
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run:
 
@@ -326,7 +326,7 @@ pnpm --filter @workspace/web test test/unit/admin/admin-routes.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run:
 
