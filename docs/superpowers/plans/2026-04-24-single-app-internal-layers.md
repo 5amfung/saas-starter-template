@@ -255,7 +255,7 @@ and web typecheck, web lint, and dependency-cruiser boundary checks all passed.
 - Modify: package scripts for React Email preview if still needed
 - Modify: `.dependency-cruiser.cjs`
 
-- [ ] **Step 1: Create email layer**
+- [x] **Step 1: Create email layer**
 
 Target mapping:
 
@@ -267,7 +267,7 @@ packages/email/src/resend.server.ts         -> apps/web/src/email/resend.server.
 packages/email/src/templates/*.tsx          -> apps/web/src/email/templates/*.tsx
 ```
 
-- [ ] **Step 2: Replace imports**
+- [x] **Step 2: Replace imports**
 
 Use:
 
@@ -276,7 +276,7 @@ Use:
 @workspace/email/templates/<template-name>   -> @/email/templates/<template-name>
 ```
 
-- [ ] **Step 3: Preserve email preview workflow**
+- [x] **Step 3: Preserve email preview workflow**
 
 If `dev:email` is still wanted, move the command from the package into `apps/web/package.json` or the root:
 
@@ -286,11 +286,11 @@ react-email dev --dir apps/web/src/email/templates --port 3001
 
 Keep invocation through `pnpm` scripts.
 
-- [ ] **Step 4: Enforce email server boundary**
+- [x] **Step 4: Enforce email server boundary**
 
 Update `.dependency-cruiser.cjs` so client/UI code cannot import `resend.server.ts`.
 
-- [ ] **Step 5: Move tests and delete package**
+- [x] **Step 5: Move tests and delete package**
 
 Move tests to `apps/web/test/unit/email`.
 
@@ -302,7 +302,7 @@ rg -n "@workspace/email" apps packages package.json pnpm-lock.yaml
 
 has no active references.
 
-- [ ] **Step 6: Verify**
+- [x] **Step 6: Verify**
 
 Run:
 
@@ -314,6 +314,13 @@ pnpm run check:boundaries
 ```
 
 Expected: all pass.
+
+Current execution note: before moving, `pnpm --filter @workspace/email test`
+passed with 5 files and 41 tests. After the move, the `@workspace/email`
+search returned no active references, `pnpm --filter @workspace/web test
+test/unit/email` passed with 5 files and 41 tests, and web typecheck, web lint,
+and dependency-cruiser boundary checks all passed. `apps/web` now owns the
+`dev:email` script and React Email/Resend dependencies.
 
 ## Task 5: Move `packages/integrations`
 

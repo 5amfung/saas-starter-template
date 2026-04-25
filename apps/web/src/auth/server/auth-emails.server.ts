@@ -1,10 +1,10 @@
 import { createElement } from 'react';
-import { buildEmailRequestContext } from '@workspace/email';
-import { ChangeEmailApprovalEmail } from '@workspace/email/templates/change-email-approval-email';
-import { EmailVerificationEmail } from '@workspace/email/templates/email-verification-email';
-import { ResetPasswordEmail } from '@workspace/email/templates/reset-password-email';
-import { WorkspaceInvitationEmail } from '@workspace/email/templates/workspace-invitation-email';
-import type { EmailClient } from '@workspace/email';
+import type { EmailClient } from '@/email';
+import { buildEmailRequestContext } from '@/email';
+import { ChangeEmailApprovalEmail } from '@/email/templates/change-email-approval-email';
+import { EmailVerificationEmail } from '@/email/templates/email-verification-email';
+import { ResetPasswordEmail } from '@/email/templates/reset-password-email';
+import { WorkspaceInvitationEmail } from '@/email/templates/workspace-invitation-email';
 
 const ensureTrailingSlashRemoved = (value: string): string =>
   value.endsWith('/') ? value.slice(0, -1) : value;

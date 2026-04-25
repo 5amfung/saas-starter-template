@@ -11,7 +11,7 @@ async function importCreateEmailClient() {
       emails = { send: mockSend };
     },
   }));
-  const mod = await import('../../src/resend.server');
+  const mod = await import('@/email/resend.server');
   return mod.createEmailClient;
 }
 
@@ -108,7 +108,11 @@ describe('createEmailClient', () => {
         subject: 'Test',
         react: createElement('div'),
       })
-    ).rejects.toThrow('Failed to send email: Rate limit exceeded');
+    ).rejects.toMatchObject({
+      message: expect.stringContaining(
+        'Failed to send email: Rate limit exceeded'
+      ),
+    });
   });
 
   it('includes replyTo when replyToEmail is set', async () => {

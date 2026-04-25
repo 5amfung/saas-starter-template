@@ -8,24 +8,24 @@ const { sendEmailMock, buildEmailRequestContextMock, getRequestHeadersMock } =
     getRequestHeadersMock: vi.fn(),
   }));
 
-vi.mock('@workspace/email', () => ({
+vi.mock('@/email', () => ({
   buildEmailRequestContext: buildEmailRequestContextMock,
 }));
 
 // Mock email template components to simple strings for assertion simplicity.
-vi.mock('@workspace/email/templates/change-email-approval-email', () => ({
+vi.mock('@/email/templates/change-email-approval-email', () => ({
   ChangeEmailApprovalEmail: 'ChangeEmailApprovalEmail',
 }));
 
-vi.mock('@workspace/email/templates/email-verification-email', () => ({
+vi.mock('@/email/templates/email-verification-email', () => ({
   EmailVerificationEmail: 'EmailVerificationEmail',
 }));
 
-vi.mock('@workspace/email/templates/reset-password-email', () => ({
+vi.mock('@/email/templates/reset-password-email', () => ({
   ResetPasswordEmail: 'ResetPasswordEmail',
 }));
 
-vi.mock('@workspace/email/templates/workspace-invitation-email', () => ({
+vi.mock('@/email/templates/workspace-invitation-email', () => ({
   WorkspaceInvitationEmail: 'WorkspaceInvitationEmail',
 }));
 

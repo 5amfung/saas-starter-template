@@ -26,7 +26,7 @@ import { PLANS } from '../core/plans';
 import { createBillingHelpers } from './billing.server';
 import { createAuthEmails } from './auth-emails.server';
 import type { PlanId } from '../core/plans';
-import type { EmailClient } from '@workspace/email';
+import type { EmailClient } from '@/email';
 import type { Database } from '@workspace/db';
 import {
   OPERATIONS,

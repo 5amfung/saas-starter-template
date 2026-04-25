@@ -20,8 +20,6 @@
       "@workspace/ui/*": ["../../packages/ui/src/*"],
       "@workspace/db": ["../../packages/db/src/index.ts"],
       "@workspace/db/*": ["../../packages/db/src/*"],
-      "@workspace/email": ["../../packages/email/src/index.ts"],
-      "@workspace/email/*": ["../../packages/email/src/*"],
       "@workspace/test-utils": ["../../packages/test-utils/src/index.ts"]
     }
   }

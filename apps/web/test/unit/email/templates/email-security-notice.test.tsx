@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 import { render } from '@react-email/render';
-import { EmailSecurityNotice } from '../../../src/templates/email-security-notice';
+import { EmailSecurityNotice } from '@/email/templates/email-security-notice';
 
 describe('EmailSecurityNotice', () => {
   it('renders with full context (IP, city, country)', async () => {

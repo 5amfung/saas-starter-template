@@ -1,9 +1,9 @@
 import { createElement } from 'react';
 import { render } from '@react-email/render';
-import { ChangeEmailApprovalEmail } from '../../../src/templates/change-email-approval-email';
-import { EmailVerificationEmail } from '../../../src/templates/email-verification-email';
-import { ResetPasswordEmail } from '../../../src/templates/reset-password-email';
-import { WorkspaceInvitationEmail } from '../../../src/templates/workspace-invitation-email';
+import { ChangeEmailApprovalEmail } from '@/email/templates/change-email-approval-email';
+import { EmailVerificationEmail } from '@/email/templates/email-verification-email';
+import { ResetPasswordEmail } from '@/email/templates/reset-password-email';
+import { WorkspaceInvitationEmail } from '@/email/templates/workspace-invitation-email';
 
 const baseRequestContext = {
   requestedAtUtc: '13 March 2025, 12:00 UTC',

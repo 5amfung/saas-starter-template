@@ -1,7 +1,7 @@
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { createDb } from '@workspace/db';
 import * as schema from '@workspace/db-schema';
-import { createEmailClient, createMockEmailClient } from '@workspace/email';
+import { createEmailClient, createMockEmailClient } from '@/email';
 import { createAuth } from '@/auth/server/auth.server';
 
 let dbSingleton: ReturnType<typeof createDb> | undefined;

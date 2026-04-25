@@ -87,6 +87,14 @@ module.exports = {
         path: '^apps/web/src/observability/(server|request-logger\\.server)\\.ts$',
       },
     },
+    {
+      name: 'no-ui-imports-email-server',
+      comment:
+        'UI and client-safe code must not import the Resend server adapter.',
+      severity: 'error',
+      from: { path: '^apps/web/src/(components|routes|hooks|auth/client)/' },
+      to: { path: '^apps/web/src/email/resend\\.server\\.ts$' },
+    },
   ],
   options: {
     tsConfig: {

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { buildEmailRequestContext } from '../../src/request-context';
+import { buildEmailRequestContext } from '@/email/request-context';
 
 describe('buildEmailRequestContext', () => {
   it('returns only requestedAtUtc when no headers are provided', () => {

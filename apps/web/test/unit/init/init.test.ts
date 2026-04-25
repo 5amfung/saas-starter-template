@@ -20,7 +20,7 @@ vi.mock('@workspace/db', () => ({
   createDb: createDbMock,
 }));
 
-vi.mock('@workspace/email', () => ({
+vi.mock('@/email', () => ({
   createEmailClient: createEmailClientMock,
   createMockEmailClient: createMockEmailClientMock,
 }));

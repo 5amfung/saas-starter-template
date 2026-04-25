@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import type { MockEmailClient } from '@workspace/email';
+import type { MockEmailClient } from '@/email';
 import { extractEmailLinks } from '@/lib';
 import { getEmailClient } from '@/init';
 

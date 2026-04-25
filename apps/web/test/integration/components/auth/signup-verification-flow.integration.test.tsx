@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createMockEmailClient } from '@workspace/email';
-import type { MockEmailClient } from '@workspace/email';
+import type { MockEmailClient } from '@/email';
+import { createMockEmailClient } from '@/email';
 
 describe('Mock email client integration', () => {
   let client: MockEmailClient;
