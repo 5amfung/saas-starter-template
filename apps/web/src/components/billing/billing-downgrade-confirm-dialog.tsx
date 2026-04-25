@@ -10,7 +10,7 @@ import {
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog';
 import { BillingPlanSummary } from './billing-plan-summary';
-import type { PlanDefinition } from '@workspace/billing';
+import type { PlanDefinition } from '@/billing/core';
 
 const DATE_FORMAT = new Intl.DateTimeFormat('en-US', {
   month: 'long',

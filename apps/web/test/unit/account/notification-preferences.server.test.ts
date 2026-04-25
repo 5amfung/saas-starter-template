@@ -27,7 +27,7 @@ vi.mock('@/init', () => ({
   getAuth: getAuthMock,
 }));
 
-vi.mock('@workspace/db/schema', () => ({
+vi.mock('@/db/schema', () => ({
   notificationPreferences: {
     userId: 'userId',
     marketingEmails: 'marketingEmails',

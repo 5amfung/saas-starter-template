@@ -4,7 +4,7 @@ import {
   E2E_ADMIN_WORKSPACES,
   E2E_BASELINE_USERS,
   E2E_PLATFORM_ADMIN,
-} from '@workspace/db-schema';
+} from '@/db/seed/e2e-fixtures';
 
 export const adminFixtures = {
   platformAdmin: E2E_PLATFORM_ADMIN,

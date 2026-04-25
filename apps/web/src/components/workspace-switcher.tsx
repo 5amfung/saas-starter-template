@@ -10,14 +10,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { generateSlug } from '@workspace/auth';
-import { authClient } from '@workspace/auth/client';
-import {
-  OPERATIONS,
-  buildWorkflowAttributes,
-  startWorkflowSpan,
-  workflowLogger,
-} from '@workspace/logging/client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,6 +36,14 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@workspace/ui/components/sidebar';
+import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  startWorkflowSpan,
+  workflowLogger,
+} from '@/observability/client';
+import { authClient } from '@/auth/client/auth-client';
+import { generateSlug } from '@/auth';
 import { addWorkspaceToList } from '@/workspace/workspace.mutations';
 import { pickWorkspaceForSwitcher } from '@/workspace/workspace';
 import { WORKSPACE_LIST_QUERY_KEY } from '@/workspace/workspace.queries';

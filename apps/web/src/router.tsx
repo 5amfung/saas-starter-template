@@ -3,8 +3,8 @@ import { QueryClient } from '@tanstack/react-query';
 import { createRouter } from '@tanstack/react-router';
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query';
 import * as Sentry from '@sentry/tanstackstart-react';
-import { isBrowserSentryRuntimeEnabled } from '@workspace/logging/client';
 import { routeTree } from './routeTree.gen';
+import { isBrowserSentryRuntimeEnabled } from '@/observability/client';
 
 export const getRouter = () => {
   const queryClient = new QueryClient();

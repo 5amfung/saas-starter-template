@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { OPERATIONS } from '@workspace/logging/client';
 import { renderWithProviders } from '@workspace/test-utils';
-import type * as LoggingClient from '@workspace/logging/client';
+import type * as LoggingClient from '@/observability/client';
+import { OPERATIONS } from '@/observability/client';
 import { AdminUserForm } from '@/components/admin/admin-user-form';
 import { AdminDeleteUserDialog } from '@/components/admin/admin-delete-user-dialog';
 
@@ -25,7 +25,7 @@ const {
   ),
 }));
 
-vi.mock('@workspace/auth/client', () => ({
+vi.mock('@/auth/client/auth-client', () => ({
   authClient: {},
 }));
 
@@ -34,7 +34,7 @@ vi.mock('@/admin/users.functions', () => ({
   deleteUser: adminRemoveUserMock,
 }));
 
-vi.mock('@workspace/logging/client', async (importActual) => {
+vi.mock('@/observability/client', async (importActual) => {
   const actual = await importActual<typeof LoggingClient>();
   return {
     ...actual,

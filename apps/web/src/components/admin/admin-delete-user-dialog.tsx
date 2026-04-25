@@ -21,7 +21,7 @@ import {
   OPERATIONS,
   buildWorkflowAttributes,
   startWorkflowSpan,
-} from '@workspace/logging/client';
+} from '@/observability/client';
 import { deleteUser } from '@/admin/users.functions';
 
 const CONFIRMATION_TEXT = 'DELETE';

@@ -5,7 +5,7 @@ import type {
   PlanDefinition,
   PlanId,
   ProductUpgradeAction,
-} from '@workspace/billing';
+} from '@/billing/core';
 import { createWorkspaceCheckoutSession } from '@/billing/billing.functions';
 
 export type UpgradePromptAction =

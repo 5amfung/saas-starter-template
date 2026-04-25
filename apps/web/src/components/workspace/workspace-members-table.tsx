@@ -22,12 +22,12 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table';
+import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import {
   OPERATIONS,
   buildWorkflowAttributes,
   startWorkflowSpan,
-} from '@workspace/logging/client';
-import type { ColumnDef, SortingState } from '@tanstack/react-table';
+} from '@/observability/client';
 import { SortableHeader, TablePagination } from '@/components/layout';
 import { useColumnSort } from '@/hooks';
 import {

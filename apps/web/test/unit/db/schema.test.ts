@@ -1,0 +1,242 @@
+import { getTableConfig } from 'drizzle-orm/pg-core';
+import {
+  integrationSecrets,
+  notificationPreferences,
+  notificationPreferencesRelations,
+} from '@/db/schema/app.schema';
+import {
+  apikey,
+  invitation,
+  member,
+  organization,
+  session,
+  subscription,
+  user,
+} from '@/db/schema/auth.schema';
+import { createDb } from '@/db/client';
+import * as schema from '@/db/schema/schema';
+
+// ---------------------------------------------------------------------------
+// app.schema.ts — notificationPreferences
+// ---------------------------------------------------------------------------
+
+describe('notificationPreferences table', () => {
+  it('has userId as primary key', () => {
+    const col = notificationPreferences.userId;
+    expect(col.dataType).toBe('string');
+    expect(col.primary).toBe(true);
+  });
+
+  it('has marketingEmails as non-null boolean defaulting to false', () => {
+    const col = notificationPreferences.marketingEmails;
+    expect(col.dataType).toBe('boolean');
+    expect(col.notNull).toBe(true);
+    expect(col.hasDefault).toBe(true);
+  });
+
+  it('has createdAt as non-null timestamp with default', () => {
+    const col = notificationPreferences.createdAt;
+    expect(col.dataType).toBe('date');
+    expect(col.notNull).toBe(true);
+    expect(col.hasDefault).toBe(true);
+  });
+
+  it('has updatedAt as non-null timestamp with default', () => {
+    const col = notificationPreferences.updatedAt;
+    expect(col.dataType).toBe('date');
+    expect(col.notNull).toBe(true);
+    expect(col.hasDefault).toBe(true);
+  });
+
+  it('defines a relation to user', () => {
+    expect(notificationPreferencesRelations).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// app.schema.ts — integrationSecrets
+// ---------------------------------------------------------------------------
+
+describe('integrationSecrets table', () => {
+  it('is exported from the app schema', () => {
+    expect(schema.integrationSecrets).toBeDefined();
+  });
+
+  it.each([
+    'id',
+    'workspaceId',
+    'integration',
+    'key',
+    'encryptedValue',
+    'iv',
+    'authTag',
+    'encryptionVersion',
+    'createdAt',
+    'updatedAt',
+  ] as const)('has %s column', (column) => {
+    expect(integrationSecrets[column]).toBeDefined();
+  });
+
+  it('has workspaceId as a non-null column', () => {
+    expect(integrationSecrets.workspaceId.dataType).toBe('string');
+    expect(integrationSecrets.workspaceId.notNull).toBe(true);
+  });
+
+  it('has encryptionVersion as a non-null integer defaulting to 1', () => {
+    expect(integrationSecrets.encryptionVersion.dataType).toBe('number');
+    expect(integrationSecrets.encryptionVersion.notNull).toBe(true);
+    expect(integrationSecrets.encryptionVersion.hasDefault).toBe(true);
+  });
+
+  it('has createdAt and updatedAt as non-null timestamps with defaults', () => {
+    expect(integrationSecrets.createdAt.dataType).toBe('date');
+    expect(integrationSecrets.createdAt.notNull).toBe(true);
+    expect(integrationSecrets.createdAt.hasDefault).toBe(true);
+
+    expect(integrationSecrets.updatedAt.dataType).toBe('date');
+    expect(integrationSecrets.updatedAt.notNull).toBe(true);
+    expect(integrationSecrets.updatedAt.hasDefault).toBe(true);
+  });
+
+  it('defines the composite unique index on workspaceId, integration, and key', () => {
+    const tableConfig = getTableConfig(integrationSecrets);
+    const index = tableConfig.indexes.find(
+      (entry) => entry.config.name === 'integration_secret_workspace_key_uidx'
+    );
+
+    expect(index).toBeDefined();
+    expect(index?.config.unique).toBe(true);
+    expect(
+      index?.config.columns.map((column) => (column as { name: string }).name)
+    ).toEqual(['workspace_id', 'integration', 'key']);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// auth.schema.ts — structural smoke tests
+// ---------------------------------------------------------------------------
+
+describe('auth schema tables', () => {
+  describe('user table', () => {
+    it.each([
+      'id',
+      'name',
+      'email',
+      'emailVerified',
+      'role',
+      'banned',
+      'stripeCustomerId',
+      'lastSignInAt',
+    ] as const)('has %s column', (column) => {
+      expect(user[column]).toBeDefined();
+    });
+
+    it('has id as primary key', () => {
+      expect(user.id.primary).toBe(true);
+    });
+
+    it('has email as non-null', () => {
+      expect(user.email.notNull).toBe(true);
+    });
+
+    it('has name as non-null', () => {
+      expect(user.name.notNull).toBe(true);
+    });
+  });
+
+  describe('session table', () => {
+    it('has activeOrganizationId column for workspace tracking', () => {
+      expect(session.activeOrganizationId).toBeDefined();
+      expect(session.activeOrganizationId.dataType).toBe('string');
+    });
+
+    it('has userId as non-null foreign key', () => {
+      expect(session.userId.notNull).toBe(true);
+    });
+  });
+
+  describe('subscription table', () => {
+    it.each(['referenceId', 'plan', 'status', 'stripeScheduleId'] as const)(
+      'has %s column',
+      (column) => {
+        expect(subscription[column]).toBeDefined();
+      }
+    );
+
+    it('has plan and referenceId as non-null', () => {
+      expect(subscription.plan.notNull).toBe(true);
+      expect(subscription.referenceId.notNull).toBe(true);
+    });
+  });
+
+  describe('apikey table', () => {
+    it.each(['configId', 'referenceId', 'enabled', 'key'] as const)(
+      'has %s column',
+      (column) => {
+        expect(apikey[column]).toBeDefined();
+      }
+    );
+
+    it('defines the api key lookup index for organization provisioning queries', () => {
+      const tableConfig = getTableConfig(apikey);
+      const index = tableConfig.indexes.find(
+        (entry) => entry.config.name === 'apikey_lookup_idx'
+      );
+
+      expect(index).toBeDefined();
+      expect(
+        index?.config.columns.map((column) => (column as { name: string }).name)
+      ).toEqual(['config_id', 'reference_id', 'enabled']);
+    });
+  });
+
+  describe('member table', () => {
+    it.each(['organizationId', 'userId', 'role'] as const)(
+      'has %s column',
+      (column) => {
+        expect(member[column]).toBeDefined();
+      }
+    );
+
+    it('has role defaulting to member', () => {
+      expect(member.role.hasDefault).toBe(true);
+    });
+  });
+
+  describe('organization table', () => {
+    it('has slug column', () => {
+      expect(organization.slug).toBeDefined();
+      expect(organization.slug.notNull).toBe(true);
+    });
+
+    it('has name as non-null', () => {
+      expect(organization.name.notNull).toBe(true);
+    });
+  });
+
+  describe('invitation table', () => {
+    it.each(['email', 'role', 'status'] as const)('has %s column', (column) => {
+      expect(invitation[column]).toBeDefined();
+    });
+
+    it('has status defaulting to pending', () => {
+      expect(invitation.status.hasDefault).toBe(true);
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// index.ts — exports
+// ---------------------------------------------------------------------------
+
+describe('db package exports', () => {
+  it('exports createDb as a function', () => {
+    expect(typeof createDb).toBe('function');
+  });
+
+  it('exports schema with auth and app tables', () => {
+    expect(schema.user).toBeDefined();
+    expect(schema.notificationPreferences).toBeDefined();
+    expect(schema.integrationSecrets).toBeDefined();
+  });
+});

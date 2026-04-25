@@ -45,7 +45,7 @@ import type {
   SortingState,
   VisibilityState,
 } from '@tanstack/react-table';
-import type { PlanId } from '@workspace/billing';
+import type { PlanId } from '@/billing/core';
 import { SortableHeader, TablePagination } from '@/components/layout';
 import { useColumnSort } from '@/hooks';
 import {

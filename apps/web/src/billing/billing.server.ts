@@ -1,5 +1,6 @@
 import { redirect } from '@tanstack/react-router';
 import { getRequestHeaders } from '@tanstack/react-start/server';
+import type { PlanDefinition, PlanId } from '@/billing/core';
 import {
   BillingDomainError,
   PLANS,
@@ -13,8 +14,7 @@ import {
   getWorkspaceEntitlements as getWorkspaceEntitlementsQuery,
   resolveSubscriptionDetails,
   resolveWorkspacePlanId,
-} from '@workspace/billing';
-import type { PlanDefinition, PlanId } from '@workspace/billing';
+} from '@/billing/core';
 import { getAuth, getDb } from '@/init';
 
 export async function requireVerifiedSession() {

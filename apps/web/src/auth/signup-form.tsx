@@ -1,7 +1,5 @@
 import { useForm } from '@tanstack/react-form';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { authClient } from '@workspace/auth/client';
-import { signupSchema } from '@workspace/auth/schemas';
 import {
   Card,
   CardContent,
@@ -15,14 +13,16 @@ import {
   FieldGroup,
   FieldSeparator,
 } from '@workspace/ui/components/field';
+import { Input } from '@workspace/ui/components/input';
+import { GoogleSignInButton } from './google-sign-in-button';
 import {
   OPERATIONS,
   buildWorkflowAttributes,
   startWorkflowSpan,
   workflowLogger,
-} from '@workspace/logging/client';
-import { Input } from '@workspace/ui/components/input';
-import { GoogleSignInButton } from './google-sign-in-button';
+} from '@/observability/client';
+import { signupSchema } from '@/auth/schemas/schemas';
+import { authClient } from '@/auth/client/auth-client';
 import { FormErrorDisplay } from '@/components/form/form-error-display';
 import { FormSubmitButton } from '@/components/form/form-submit-button';
 import { ValidatedField } from '@/components/form/validated-field';

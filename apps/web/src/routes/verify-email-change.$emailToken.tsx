@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
 import { IconStack2 } from '@tabler/icons-react';
-import { authClient } from '@workspace/auth/client';
+import { authClient } from '@/auth/client/auth-client';
 import { AuthLayout, CheckEmailCard } from '@/auth';
 import { getWebmailLinkForEmail } from '@/lib';
 

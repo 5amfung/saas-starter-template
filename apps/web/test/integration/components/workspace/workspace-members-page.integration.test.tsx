@@ -31,7 +31,7 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
   }),
 }));
 
-vi.mock('@workspace/auth/client', () => ({
+vi.mock('@/auth/client/auth-client', () => ({
   authClient: {
     organization: {
       listMembers: listMembersMock,

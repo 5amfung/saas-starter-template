@@ -1,8 +1,5 @@
-import { evaluateWebAppEntryCapabilities } from '@workspace/policy';
-import type {
-  WebAppEntryCapabilities,
-  WebAppEntryFacts,
-} from '@workspace/policy';
+import type { WebAppEntryCapabilities, WebAppEntryFacts } from '@/policy/core';
+import { evaluateWebAppEntryCapabilities } from '@/policy/core';
 
 export interface WebAppEntryWorkspace {
   id: string;

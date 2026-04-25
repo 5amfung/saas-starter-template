@@ -14,7 +14,7 @@ import {
   AlertDialogTrigger,
 } from '@workspace/ui/components/alert-dialog';
 import { Button } from '@workspace/ui/components/button';
-import { authClient } from '@workspace/auth/client';
+import { authClient } from '@/auth/client/auth-client';
 
 export function SetPasswordDialog({ email }: { email: string }) {
   const [open, setOpen] = React.useState(false);

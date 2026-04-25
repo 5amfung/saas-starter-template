@@ -1,11 +1,11 @@
 import { createServerFn } from '@tanstack/react-start';
+import * as z from 'zod';
 import {
   OPERATIONS,
   buildWorkflowAttributes,
   startWorkflowSpan,
   workflowLogger,
-} from '@workspace/logging/server';
-import * as z from 'zod';
+} from '@/observability/server';
 import { requireCurrentAdminAppCapability } from '@/policy/admin-app-capabilities.server';
 import {
   createWorkspaceApiKey,

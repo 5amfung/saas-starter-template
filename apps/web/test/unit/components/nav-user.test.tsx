@@ -8,7 +8,7 @@ const { signOutMock, navigateMock } = vi.hoisted(() => ({
   navigateMock: vi.fn(),
 }));
 
-vi.mock('@workspace/auth/client', () => ({
+vi.mock('@/auth/client/auth-client', () => ({
   authClient: {
     signOut: signOutMock,
   },

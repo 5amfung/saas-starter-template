@@ -24,7 +24,7 @@ const {
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
 
-vi.mock('@workspace/auth/client', () => ({
+vi.mock('@/auth/client/auth-client', () => ({
   authClient: {
     useSession: useSessionMock,
     useActiveOrganization: useActiveOrganizationMock,

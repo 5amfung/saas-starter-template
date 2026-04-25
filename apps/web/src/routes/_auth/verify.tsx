@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { IconLoader } from '@tabler/icons-react';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { toast } from 'sonner';
-import { authClient } from '@workspace/auth/client';
-import { verifySearchSchema } from '@workspace/auth/schemas';
 import { Button } from '@workspace/ui/components/button';
+import { authClient } from '@/auth/client/auth-client';
+import { verifySearchSchema } from '@/auth/schemas/schemas';
 import { CheckEmailCard } from '@/auth';
 import { getWebmailLinkForEmail } from '@/lib';
 

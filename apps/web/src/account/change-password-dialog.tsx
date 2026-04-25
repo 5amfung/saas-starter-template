@@ -22,8 +22,8 @@ import {
   FieldLabel,
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
-import { authClient } from '@workspace/auth/client';
 import { changePasswordSchema } from './account.schemas';
+import { authClient } from '@/auth/client/auth-client';
 import { toFieldErrorItem } from '@/lib';
 
 export function ChangePasswordDialog() {

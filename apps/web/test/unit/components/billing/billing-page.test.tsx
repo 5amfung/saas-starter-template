@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { evaluateWorkspaceProductPolicy } from '@workspace/billing';
 import { renderWithProviders } from '@workspace/test-utils';
+import { evaluateWorkspaceProductPolicy } from '@/billing/core';
 import { BillingPage } from '@/components/billing/billing-page';
 
 // ── Hoisted mocks ────────────────────────────────────────────────────────────
@@ -38,7 +38,7 @@ vi.mock('@sentry/tanstackstart-react', () => ({
   startSpan: startSpanMock,
 }));
 
-vi.mock('@workspace/logging/client', () => ({
+vi.mock('@/observability/client', () => ({
   OPERATIONS: {
     BILLING_CHECKOUT_CREATE_SESSION: 'billing.checkout.create_session',
     BILLING_PORTAL_CREATE_SESSION: 'billing.portal.create_session',

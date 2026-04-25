@@ -1,13 +1,10 @@
+import { getWorkspaceIntegrationEncryptionKey } from './integration-encryption-key.server';
+import type { IntegrationFieldKey, IntegrationKey } from '@/integrations/core';
 import {
   getWorkspaceIntegrationSummaries,
   revealWorkspaceIntegrationValue as revealWorkspaceIntegrationValueFromPackage,
   updateWorkspaceIntegrationValues as updateWorkspaceIntegrationValuesFromPackage,
-} from '@workspace/integrations';
-import { getWorkspaceIntegrationEncryptionKey } from './integration-encryption-key.server';
-import type {
-  IntegrationFieldKey,
-  IntegrationKey,
-} from '@workspace/integrations';
+} from '@/integrations/core';
 import { getDb } from '@/init';
 import { requireWorkspaceCapabilityForUser } from '@/policy/workspace-capabilities.server';
 

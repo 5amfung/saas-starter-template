@@ -4,6 +4,9 @@
  */
 export function createServerFnMock() {
   return {
+    createMiddleware: () => ({
+      server: (fn: unknown) => fn,
+    }),
     createServerFn: () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
       let handler: Function;

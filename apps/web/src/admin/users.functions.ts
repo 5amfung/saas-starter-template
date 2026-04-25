@@ -1,11 +1,5 @@
 import { createServerFn } from '@tanstack/react-start';
 import {
-  OPERATIONS,
-  buildWorkflowAttributes,
-  startWorkflowSpan,
-  workflowLogger,
-} from '@workspace/logging/server';
-import {
   adminDeleteUserSchema,
   adminGetUserSchema,
   adminListUsersSchema,
@@ -17,6 +11,12 @@ import {
   listAdminUsers,
   updateAdminUser,
 } from './users.server';
+import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  startWorkflowSpan,
+  workflowLogger,
+} from '@/observability/server';
 import { requireCurrentAdminAppCapability } from '@/policy/admin-app-capabilities.server';
 
 const ADMIN_USERS_ROUTE = '/admin/users/$userId';

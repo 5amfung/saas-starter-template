@@ -1,10 +1,5 @@
 import { APIError } from 'better-auth/api';
 import {
-  evaluateWorkspaceLifecycleCapabilities,
-  evaluateWorkspaceMemberRemovalCapabilities,
-  evaluateWorkspaceOwnershipTransferCapabilities,
-} from '@workspace/policy';
-import {
   getNormalizedWorkspaceRole,
   hasActiveWorkspaceSubscription,
   normalizeWorkspaceRole,
@@ -14,7 +9,12 @@ import type {
   WorkspaceLifecycleContext,
   WorkspaceMemberRemovalCapabilities,
   WorkspaceOwnershipTransferCapabilities,
-} from '@workspace/policy';
+} from '@/policy/core';
+import {
+  evaluateWorkspaceLifecycleCapabilities,
+  evaluateWorkspaceMemberRemovalCapabilities,
+  evaluateWorkspaceOwnershipTransferCapabilities,
+} from '@/policy/core';
 import { getWorkspaceBillingData } from '@/billing/billing.server';
 import {
   countOwnedWorkspaces,

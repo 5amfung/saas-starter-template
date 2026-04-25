@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { WebAppEntryCapabilities } from '@workspace/policy';
+import type { WebAppEntryCapabilities } from '@/policy/core';
 
 function capabilities(
   overrides: Partial<WebAppEntryCapabilities>
@@ -32,7 +32,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconStack2: () => null,
 }));
 
-vi.mock('@workspace/auth/client', () => ({
+vi.mock('@/auth/client/auth-client', () => ({
   authClient: {
     signOut: vi.fn(),
     organization: {

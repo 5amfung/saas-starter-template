@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { requestLogger } from '@workspace/logging';
+import { requestLogger } from '@/observability/server';
 import { verifyWorkspaceApiKey } from '@/api/api-key-auth.server';
 
 function jsonError(

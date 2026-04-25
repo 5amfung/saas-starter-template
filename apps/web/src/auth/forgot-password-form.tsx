@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { Link } from '@tanstack/react-router';
-import { forgotPasswordSchema } from '@workspace/auth/schemas';
 import {
   Card,
   CardContent,
@@ -14,14 +13,15 @@ import {
   FieldDescription,
   FieldGroup,
 } from '@workspace/ui/components/field';
+import { Input } from '@workspace/ui/components/input';
 import {
   OPERATIONS,
   buildWorkflowAttributes,
   startWorkflowSpan,
   workflowLogger,
-} from '@workspace/logging/client';
-import { Input } from '@workspace/ui/components/input';
-import { authClient } from '@workspace/auth/client';
+} from '@/observability/client';
+import { forgotPasswordSchema } from '@/auth/schemas/schemas';
+import { authClient } from '@/auth/client/auth-client';
 import { FormErrorDisplay } from '@/components/form/form-error-display';
 import { FormSubmitButton } from '@/components/form/form-submit-button';
 import { ValidatedField } from '@/components/form/validated-field';

@@ -9,7 +9,7 @@ const { signInSocial } = vi.hoisted(() => ({
   signInSocial: vi.fn(),
 }));
 
-vi.mock('@workspace/auth/client', () => ({
+vi.mock('@/auth/client/auth-client', () => ({
   authClient: {
     signIn: { social: signInSocial },
   },

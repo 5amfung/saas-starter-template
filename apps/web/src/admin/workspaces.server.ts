@@ -1,24 +1,24 @@
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { sql } from 'drizzle-orm';
-import {
-  clearAdminWorkspaceEntitlementOverrides,
-  getAdminWorkspaceDetail,
-  listAdminWorkspaces,
-  setAdminWorkspaceEntitlementOverrides,
-} from '@workspace/billing';
 import type {
   AdminWorkspaceListParams,
   EntitlementOverrides,
   Entitlements,
   PlanId,
   WorkspaceProductPolicy,
-} from '@workspace/billing';
+} from '@/billing/core';
 import type {
   EntitlementOverrideInput,
   WorkspaceApiKeyAccessMode,
   WorkspaceApiKeyCreateInput,
   WorkspaceApiKeyDeleteInput,
 } from './workspaces.schemas';
+import {
+  clearAdminWorkspaceEntitlementOverrides,
+  getAdminWorkspaceDetail,
+  listAdminWorkspaces,
+  setAdminWorkspaceEntitlementOverrides,
+} from '@/billing/core';
 import { getAuth, getDb } from '@/init';
 import { requireCurrentAdminAppEntry } from '@/policy/admin-app-capabilities.server';
 

@@ -16,13 +16,13 @@ import {
   IconUsers,
 } from '@tabler/icons-react';
 import { useRouterState } from '@tanstack/react-router';
-import { authClient } from '@workspace/auth/client';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
 } from '@workspace/ui/components/sidebar';
+import { authClient } from '@/auth/client/auth-client';
 import { NavSecondary, NavUser, NavUserSkeleton } from '@/components/layout';
 import { NavMain } from '@/components/nav-main';
 import { useWorkspaceCapabilitiesQuery } from '@/policy/workspace-capabilities';

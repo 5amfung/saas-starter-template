@@ -27,7 +27,7 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card';
 import { Skeleton } from '@workspace/ui/components/skeleton';
-import { authClient } from '@workspace/auth/client';
+import { authClient } from '@/auth/client/auth-client';
 import { SESSIONS_QUERY_KEY, useSessionQuery, useSessionsQuery } from '@/hooks';
 
 interface SessionItem {

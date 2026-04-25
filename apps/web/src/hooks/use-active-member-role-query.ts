@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { authClient } from '@workspace/auth/client';
+import { authClient } from '@/auth/client/auth-client';
 
 export const ACTIVE_MEMBER_ROLE_QUERY_KEY = (workspaceId: string) =>
   ['workspace', 'activeRole', workspaceId] as const;

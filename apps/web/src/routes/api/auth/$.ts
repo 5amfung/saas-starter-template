@@ -1,5 +1,5 @@
-import { requestLogger } from '@workspace/logging';
 import { createFileRoute } from '@tanstack/react-router';
+import { requestLogger } from '@/observability/server';
 import { getAuth } from '@/init';
 
 export const Route = createFileRoute('/api/auth/$')({

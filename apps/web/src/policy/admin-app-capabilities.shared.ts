@@ -1,12 +1,12 @@
-import {
-  evaluateAdminAppCapabilities,
-  evaluateAdminAppEntryCapabilities,
-} from '@workspace/policy';
 import type {
   AdminAppCapabilities,
   AdminAppEntryCapabilities,
   AdminAppEntryFacts,
-} from '@workspace/policy';
+} from '@/policy/core';
+import {
+  evaluateAdminAppCapabilities,
+  evaluateAdminAppEntryCapabilities,
+} from '@/policy/core';
 import { ADMIN_ACCESS_DENIED, ADMIN_DASHBOARD } from '@/admin/admin-routes';
 
 export interface AdminAppSessionLike {

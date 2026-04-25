@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { OPERATIONS } from '@workspace/logging/client';
 import { renderWithProviders } from '@workspace/test-utils';
-import type * as LoggingClient from '@workspace/logging/client';
+import type * as LoggingClient from '@/observability/client';
 import type { InviteRole } from '@/workspace/workspace-members.types';
+import { OPERATIONS } from '@/observability/client';
 import { WorkspaceInviteDialog } from '@/components/workspace/workspace-invite-dialog';
 
 const { startSpanMock, loggerInfoMock, loggerErrorMock } = vi.hoisted(() => ({
@@ -13,7 +13,7 @@ const { startSpanMock, loggerInfoMock, loggerErrorMock } = vi.hoisted(() => ({
   loggerErrorMock: vi.fn(),
 }));
 
-vi.mock('@workspace/logging/client', async (importActual) => {
+vi.mock('@/observability/client', async (importActual) => {
   const actual = await importActual<typeof LoggingClient>();
   return {
     ...actual,

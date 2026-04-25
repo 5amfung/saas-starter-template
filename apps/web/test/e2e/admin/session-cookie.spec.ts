@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
-import { E2E_PASSWORD, E2E_PLATFORM_ADMIN } from '@workspace/db-schema';
 import { signInSeededUser } from '@workspace/test-utils';
 import { parseCookieHeader } from '../lib/parse-cookie-header';
+import { E2E_PASSWORD, E2E_PLATFORM_ADMIN } from '@/db/seed/e2e-fixtures';
 
 test('signing out clears access to both admin and customer routes', async ({
   page,

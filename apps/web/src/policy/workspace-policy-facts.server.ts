@@ -1,4 +1,4 @@
-import type { WorkspaceRole } from '@workspace/policy';
+import type { WorkspaceRole } from '@/policy/core';
 import type { getWorkspaceBillingData } from '@/billing/billing.server';
 import { getActiveMemberRole } from '@/workspace/workspace.server';
 
