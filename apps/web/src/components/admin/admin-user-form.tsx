@@ -39,7 +39,7 @@ import {
   OPERATIONS,
   buildWorkflowAttributes,
   startWorkflowSpan,
-} from '@workspace/logging/client';
+} from '@/observability/client';
 import { getInitials, toFieldErrorItem } from '@/lib';
 import { adminUserFormSchema } from '@/admin/schemas';
 import { updateUser } from '@/admin/users.functions';

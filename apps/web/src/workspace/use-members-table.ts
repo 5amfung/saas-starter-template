@@ -8,16 +8,16 @@ import {
 import { useNavigate, useRouter } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import {
-  OPERATIONS,
-  buildWorkflowAttributes,
-  workflowLogger,
-} from '@workspace/logging/client';
-import {
   MEMBER_PAGE_SIZE_DEFAULT,
   withPendingId,
 } from './workspace-members.types';
 import type { SortingState } from '@tanstack/react-table';
 import type { WorkspaceMemberRow } from '@/components/workspace/workspace-members-table';
+import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  workflowLogger,
+} from '@/observability/client';
 import { authClient } from '@/auth/client/auth-client';
 import { useSessionQuery } from '@/hooks';
 import {

@@ -77,6 +77,16 @@ module.exports = {
       from: { path: '^apps/web/src/auth/index\\.ts$' },
       to: { path: '^apps/web/src/(db|email|observability/server\\.ts)' },
     },
+    {
+      name: 'no-ui-imports-server-observability',
+      comment:
+        'Browser-safe UI code can use observability/client, not server workflow logging.',
+      severity: 'error',
+      from: { path: '^apps/web/src/(components|routes|hooks|auth/client)/' },
+      to: {
+        path: '^apps/web/src/observability/(server|request-logger\\.server)\\.ts$',
+      },
+    },
   ],
   options: {
     tsConfig: {

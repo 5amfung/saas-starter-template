@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createHookWrapper } from '@workspace/test-utils';
-import { OPERATIONS } from '@workspace/logging/client';
-import type * as LoggingClient from '@workspace/logging/client';
+import type * as LoggingClient from '@/observability/client';
+import { OPERATIONS } from '@/observability/client';
 import { useInvitationsTable } from '@/workspace/use-invitations-table';
 import {
   cancelWorkspaceInvitation,
@@ -36,7 +36,7 @@ vi.mock('@/workspace/workspace-members.functions', () => ({
   cancelWorkspaceInvitation: vi.fn(),
 }));
 
-vi.mock('@workspace/logging/client', async (importActual) => {
+vi.mock('@/observability/client', async (importActual) => {
   const actual = await importActual<typeof LoggingClient>();
   return {
     ...actual,

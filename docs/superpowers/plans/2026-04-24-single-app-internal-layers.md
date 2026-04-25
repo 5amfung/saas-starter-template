@@ -188,7 +188,7 @@ Expected: all pass.
 - Modify: `apps/web/package.json`
 - Modify: `.dependency-cruiser.cjs`
 
-- [ ] **Step 1: Create observability layer**
+- [x] **Step 1: Create observability layer**
 
 Target mapping:
 
@@ -200,7 +200,7 @@ packages/logging/src/operations.ts            -> apps/web/src/observability/oper
 packages/logging/src/observability.shared.ts  -> apps/web/src/observability/observability.shared.ts
 ```
 
-- [ ] **Step 2: Replace imports**
+- [x] **Step 2: Replace imports**
 
 Use:
 
@@ -210,11 +210,11 @@ Use:
 @workspace/logging        -> @/observability/server
 ```
 
-- [ ] **Step 3: Enforce client/server logging boundary**
+- [x] **Step 3: Enforce client/server logging boundary**
 
 Update `.dependency-cruiser.cjs` so browser-safe code can import `@/observability/client` but not `@/observability/server` or `request-logger.server.ts`.
 
-- [ ] **Step 4: Move tests and delete package**
+- [x] **Step 4: Move tests and delete package**
 
 Move logging tests into `apps/web/test/unit/observability`.
 
@@ -226,7 +226,7 @@ rg -n "@workspace/logging" apps packages package.json pnpm-lock.yaml
 
 has no active references.
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 Run:
 
@@ -238,6 +238,12 @@ pnpm run check:boundaries
 ```
 
 Expected: all pass.
+
+Current execution note: after moving auth app-local, `pnpm --filter
+@workspace/logging typecheck` passed before moving logging. After the move, the
+`@workspace/logging` search returned no active references, `pnpm --filter
+@workspace/web test test/unit/observability` passed with 3 files and 7 tests,
+and web typecheck, web lint, and dependency-cruiser boundary checks all passed.
 
 ## Task 4: Move `packages/email`
 

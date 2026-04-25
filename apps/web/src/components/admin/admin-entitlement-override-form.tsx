@@ -17,11 +17,6 @@ import { Label } from '@workspace/ui/components/label';
 import { Separator } from '@workspace/ui/components/separator';
 import { Textarea } from '@workspace/ui/components/textarea';
 import {
-  OPERATIONS,
-  buildWorkflowAttributes,
-  startWorkflowSpan,
-} from '@workspace/logging/client';
-import {
   FEATURE_METADATA,
   LIMIT_METADATA,
   QUOTA_METADATA,
@@ -33,6 +28,11 @@ import type {
   LimitKey,
   QuotaKey,
 } from '@workspace/billing';
+import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  startWorkflowSpan,
+} from '@/observability/client';
 import {
   clearEntitlementOverrides,
   saveEntitlementOverrides,

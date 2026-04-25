@@ -1,6 +1,6 @@
-import { OPERATIONS } from '@workspace/logging/server';
 import { createServerFnMock } from '../../mocks/server-fn';
-import type * as LoggingServer from '@workspace/logging/server';
+import type * as LoggingServer from '@/observability/server';
+import { OPERATIONS } from '@/observability/server';
 import {
   clearEntitlementOverrides,
   createAdminWorkspaceApiKey,
@@ -53,7 +53,7 @@ vi.mock('@/admin/workspaces.server', () => ({
   deleteWorkspaceApiKey: deleteWorkspaceApiKeyMock,
 }));
 
-vi.mock('@workspace/logging/server', async (importActual) => {
+vi.mock('@/observability/server', async (importActual) => {
   const actual = await importActual<typeof LoggingServer>();
   return {
     ...actual,

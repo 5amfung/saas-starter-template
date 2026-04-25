@@ -4,13 +4,13 @@ import * as Sentry from '@sentry/tanstackstart-react';
 import { toast } from 'sonner';
 import { getFreePlan, getPlanById } from '@workspace/billing';
 import { Card, CardContent } from '@workspace/ui/components/card';
-import { OPERATIONS, buildWorkflowAttributes } from '@workspace/logging/client';
 import { BillingDowngradeBanner } from './billing-downgrade-banner';
 import { BillingDowngradeConfirmDialog } from './billing-downgrade-confirm-dialog';
 import { BillingInvoiceTable } from './billing-invoice-table';
 import { BillingManagePlanDialog } from './billing-manage-plan-dialog';
 import { BillingPlanCards } from './billing-plan-cards';
 import type { PlanDefinition, PlanId } from '@workspace/billing';
+import { OPERATIONS, buildWorkflowAttributes } from '@/observability/client';
 import { SESSION_QUERY_KEY } from '@/hooks';
 import {
   cancelWorkspaceSubscription,

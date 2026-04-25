@@ -22,9 +22,6 @@
       "@workspace/db/*": ["../../packages/db/src/*"],
       "@workspace/email": ["../../packages/email/src/index.ts"],
       "@workspace/email/*": ["../../packages/email/src/*"],
-      "@workspace/logging": ["../../packages/logging/src/server.ts"],
-      "@workspace/logging/client": ["../../packages/logging/src/client.ts"],
-      "@workspace/logging/server": ["../../packages/logging/src/server.ts"],
       "@workspace/test-utils": ["../../packages/test-utils/src/index.ts"]
     }
   }

@@ -16,12 +16,6 @@ import {
   user as userTable,
 } from '@workspace/db-schema';
 import { assertInviteAllowed } from '@workspace/billing';
-import {
-  OPERATIONS,
-  buildWorkflowAttributes,
-  startWorkflowSpan,
-  workflowLogger,
-} from '@workspace/logging/server';
 import { isDuplicateOrganizationError, isSignInPath } from '../core/auth-utils';
 import {
   organizationAccessControl,
@@ -34,6 +28,12 @@ import { createAuthEmails } from './auth-emails.server';
 import type { PlanId } from '../core/plans';
 import type { EmailClient } from '@workspace/email';
 import type { Database } from '@workspace/db';
+import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  startWorkflowSpan,
+  workflowLogger,
+} from '@/observability/server';
 
 const DEFAULT_WORKSPACE_NAME = 'My Workspace';
 const DEFAULT_WORKSPACE_SLUG_ATTEMPTS = 3;

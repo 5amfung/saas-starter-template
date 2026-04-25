@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { OPERATIONS } from '@workspace/logging/client';
 import { renderWithProviders } from '@workspace/test-utils';
-import type * as LoggingClient from '@workspace/logging/client';
+import type * as LoggingClient from '@/observability/client';
+import { OPERATIONS } from '@/observability/client';
 import { WorkspaceDeleteDialog } from '@/components/workspace/workspace-delete-dialog';
 
 const { assignMock, mockToastSuccess, mockToastError } = vi.hoisted(() => ({
@@ -30,7 +30,7 @@ vi.mock('@/auth/client/auth-client', () => ({
   },
 }));
 
-vi.mock('@workspace/logging/client', async (importActual) => {
+vi.mock('@/observability/client', async (importActual) => {
   const actual = await importActual<typeof LoggingClient>();
   return {
     ...actual,

@@ -11,12 +11,6 @@ import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import {
-  OPERATIONS,
-  buildWorkflowAttributes,
-  startWorkflowSpan,
-  workflowLogger,
-} from '@workspace/logging/client';
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -42,6 +36,12 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@workspace/ui/components/sidebar';
+import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  startWorkflowSpan,
+  workflowLogger,
+} from '@/observability/client';
 import { authClient } from '@/auth/client/auth-client';
 import { generateSlug } from '@/auth';
 import { addWorkspaceToList } from '@/workspace/workspace.mutations';

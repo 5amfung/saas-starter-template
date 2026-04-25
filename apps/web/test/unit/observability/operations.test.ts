@@ -3,7 +3,7 @@ import {
   OPERATIONS,
   buildWorkflowAttributes,
   redactAuthWorkflowAttributes,
-} from '../../src/client';
+} from '@/observability/client';
 
 describe('observability helpers', () => {
   it('builds stable workflow attributes', () => {

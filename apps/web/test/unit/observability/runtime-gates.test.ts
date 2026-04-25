@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isBrowserSentryRuntimeEnabled } from '../../src/client';
+import { isBrowserSentryRuntimeEnabled } from '@/observability/client';
 
 describe('browser Sentry runtime gate', () => {
   it('enables browser Sentry by default outside tests', () => {

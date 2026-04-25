@@ -4,8 +4,8 @@ import {
   createHookWrapper,
   createMockSessionResponse,
 } from '@workspace/test-utils';
-import { OPERATIONS } from '@workspace/logging/client';
-import type * as LoggingClient from '@workspace/logging/client';
+import type * as LoggingClient from '@/observability/client';
+import { OPERATIONS } from '@/observability/client';
 import { useMembersTable } from '@/workspace/use-members-table';
 import {
   leaveWorkspace,
@@ -78,7 +78,7 @@ vi.mock('@/workspace/workspace-members.functions', () => ({
   transferWorkspaceOwnership: vi.fn(),
 }));
 
-vi.mock('@workspace/logging/client', async (importActual) => {
+vi.mock('@/observability/client', async (importActual) => {
   const actual = await importActual<typeof LoggingClient>();
   return {
     ...actual,

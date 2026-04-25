@@ -14,14 +14,14 @@ import {
   FieldLabel,
   FieldSeparator,
 } from '@workspace/ui/components/field';
+import { Input } from '@workspace/ui/components/input';
+import { GoogleSignInButton } from './google-sign-in-button';
 import {
   OPERATIONS,
   buildWorkflowAttributes,
   startWorkflowSpan,
   workflowLogger,
-} from '@workspace/logging/client';
-import { Input } from '@workspace/ui/components/input';
-import { GoogleSignInButton } from './google-sign-in-button';
+} from '@/observability/client';
 import { loginSchema } from '@/auth/schemas/schemas';
 import { authClient } from '@/auth/client/auth-client';
 import { FormError } from '@/components/form/form-error';

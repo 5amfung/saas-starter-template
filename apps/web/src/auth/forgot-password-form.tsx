@@ -13,13 +13,13 @@ import {
   FieldDescription,
   FieldGroup,
 } from '@workspace/ui/components/field';
+import { Input } from '@workspace/ui/components/input';
 import {
   OPERATIONS,
   buildWorkflowAttributes,
   startWorkflowSpan,
   workflowLogger,
-} from '@workspace/logging/client';
-import { Input } from '@workspace/ui/components/input';
+} from '@/observability/client';
 import { forgotPasswordSchema } from '@/auth/schemas/schemas';
 import { authClient } from '@/auth/client/auth-client';
 import { FormErrorDisplay } from '@/components/form/form-error-display';

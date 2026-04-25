@@ -2,12 +2,6 @@ import * as React from 'react';
 import { IconLoader2, IconStack2 } from '@tabler/icons-react';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
 import { z } from 'zod';
-import {
-  OPERATIONS,
-  buildWorkflowAttributes,
-  startWorkflowSpan,
-  workflowLogger,
-} from '@workspace/logging/client';
 import { Button } from '@workspace/ui/components/button';
 import {
   Card,
@@ -18,6 +12,12 @@ import {
 } from '@workspace/ui/components/card';
 import { FieldDescription } from '@workspace/ui/components/field';
 import type { WebAppEntry } from '@/policy/web-app-entry.shared';
+import {
+  OPERATIONS,
+  buildWorkflowAttributes,
+  startWorkflowSpan,
+  workflowLogger,
+} from '@/observability/client';
 import { authClient } from '@/auth/client/auth-client';
 import { AuthLayout } from '@/auth';
 import { useWebAppEntry } from '@/policy/web-app-entry';

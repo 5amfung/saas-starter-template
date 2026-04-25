@@ -18,13 +18,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@workspace/ui/components/select';
+import type { InviteRole } from '@/workspace/workspace-members.types';
 import {
   OPERATIONS,
   buildWorkflowAttributes,
   startWorkflowSpan,
   workflowLogger,
-} from '@workspace/logging/client';
-import type { InviteRole } from '@/workspace/workspace-members.types';
+} from '@/observability/client';
 
 interface WorkspaceInviteDialogProps {
   open: boolean;

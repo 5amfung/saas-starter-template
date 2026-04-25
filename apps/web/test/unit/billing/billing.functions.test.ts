@@ -55,7 +55,7 @@ vi.mock('@sentry/tanstackstart-react', () => ({
   },
 }));
 
-vi.mock('@workspace/logging/server', () => ({
+vi.mock('@/observability/server', () => ({
   OPERATIONS: {
     BILLING_CHECKOUT_CREATE_SESSION: 'billing.checkout.create_session',
     BILLING_PORTAL_CREATE_SESSION: 'billing.portal.create_session',
