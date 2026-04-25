@@ -4,8 +4,8 @@ import {
   signInBaselineUser,
   uniqueEmail,
 } from '@workspace/test-utils';
-import { E2E_BASELINE_USERS, E2E_PASSWORD } from '@workspace/db-schema';
 import { parseCookieHeader } from '../lib/parse-cookie-header';
+import { E2E_BASELINE_USERS, E2E_PASSWORD } from '@/db/seed/e2e-fixtures';
 
 test.describe('Sign-in flow', () => {
   test('happy path: valid credentials redirect to workspace overview', async ({

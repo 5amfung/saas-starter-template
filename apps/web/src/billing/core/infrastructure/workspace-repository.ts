@@ -1,15 +1,15 @@
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
+import type { AnyColumn } from 'drizzle-orm';
+import type { Database } from '@/db/client';
+import type { EntitlementOverrides } from '../domain/entitlements';
+import type { PlanId } from '../domain/plans';
 import {
   entitlementOverrides,
   member as memberTable,
   organization as organizationTable,
   subscription as subscriptionTable,
   user as userTable,
-} from '@workspace/db-schema';
-import type { AnyColumn } from 'drizzle-orm';
-import type { Database } from '@workspace/db';
-import type { EntitlementOverrides } from '../domain/entitlements';
-import type { PlanId } from '../domain/plans';
+} from '@/db/schema';
 
 const overrideTable = entitlementOverrides;
 

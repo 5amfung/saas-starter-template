@@ -134,7 +134,7 @@ vi.mock('drizzle-orm', async (importOriginal) => {
   });
 });
 
-vi.mock('@workspace/db-schema', async (importOriginal) => {
+vi.mock('@/db/schema', async (importOriginal) => {
   const actual = await importOriginal();
   return Object.assign({}, actual, {
     subscription: { status: 'status', referenceId: 'referenceId' },

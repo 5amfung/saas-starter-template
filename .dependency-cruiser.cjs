@@ -19,7 +19,7 @@ module.exports = {
       from: {
         path: '^apps/web/src/billing/core/(contracts|domain|application)/',
       },
-      to: { path: '^packages/db-schema/src/' },
+      to: { path: '^apps/web/src/db/schema/' },
     },
     {
       name: 'no-billing-dependency-on-apps',
@@ -31,16 +31,22 @@ module.exports = {
       },
     },
     {
-      name: 'no-new-app-db-schema-imports',
+      name: 'no-ui-imports-db',
       comment:
-        'Temporary allow-list for existing db-schema imports. Any new import from app code fails.',
+        'UI and client-safe code must use server functions, not database client or schema modules.',
       severity: 'error',
       from: {
-        path: '^apps/web/src',
-        pathNot:
-          '^apps/web/src/(init\\.ts|account/notification-preferences\\.server\\.ts|admin/admin\\.server\\.ts|auth/server/(auth|billing)\\.server\\.ts|billing/core/infrastructure/workspace-repository\\.ts|integrations/core/repository\\.ts)$',
+        path: '^apps/web/src/(components|routes|hooks|auth/client)/',
       },
-      to: { path: '^packages/db-schema/src/' },
+      to: { path: '^apps/web/src/db/' },
+    },
+    {
+      name: 'no-db-imports-ui-runtime',
+      comment:
+        'The database layer must stay below route, component, and hook code.',
+      severity: 'error',
+      from: { path: '^apps/web/src/db/' },
+      to: { path: '^apps/web/src/(routes|components|hooks)/' },
     },
     {
       name: 'no-routes-or-components-import-policy-server-web',

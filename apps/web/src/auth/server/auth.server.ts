@@ -11,10 +11,6 @@ import {
 import { tanstackStartCookies } from 'better-auth/tanstack-start';
 import { eq } from 'drizzle-orm';
 import Stripe from 'stripe';
-import {
-  subscription as subscriptionTable,
-  user as userTable,
-} from '@workspace/db-schema';
 import { isDuplicateOrganizationError, isSignInPath } from '../core/auth-utils';
 import {
   organizationAccessControl,
@@ -26,7 +22,11 @@ import { createBillingHelpers } from './billing.server';
 import { createAuthEmails } from './auth-emails.server';
 import type { PlanId } from '../core/plans';
 import type { EmailClient } from '@/email';
-import type { Database } from '@workspace/db';
+import type { Database } from '@/db/client';
+import {
+  subscription as subscriptionTable,
+  user as userTable,
+} from '@/db/schema';
 import { assertInviteAllowed } from '@/billing/core';
 import {
   OPERATIONS,

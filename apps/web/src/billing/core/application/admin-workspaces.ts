@@ -16,7 +16,7 @@ import {
 import { evaluateWorkspaceProductPolicy } from './workspace-product-policy';
 import type { PlanId } from '../domain/plans';
 import type { AdminWorkspaceListParams } from '../infrastructure/workspace-repository';
-import type { Database } from '@workspace/db';
+import type { Database } from '@/db/client';
 import type {
   EntitlementOverrides,
   Entitlements,

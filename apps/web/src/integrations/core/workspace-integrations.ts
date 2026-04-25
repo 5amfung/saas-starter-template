@@ -12,7 +12,7 @@ import {
   upsertWorkspaceIntegrationSecretRow,
 } from './repository';
 import type { IntegrationFieldKey, IntegrationKey } from './definitions';
-import type { Database } from '@workspace/db';
+import type { Database } from '@/db/client';
 import type { WorkspaceIntegrationSummary } from './types';
 
 type WorkspaceIntegrationsDb = Pick<

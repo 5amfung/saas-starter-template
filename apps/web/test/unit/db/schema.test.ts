@@ -3,7 +3,7 @@ import {
   integrationSecrets,
   notificationPreferences,
   notificationPreferencesRelations,
-} from '../../src/app.schema';
+} from '@/db/schema/app.schema';
 import {
   apikey,
   invitation,
@@ -12,9 +12,9 @@ import {
   session,
   subscription,
   user,
-} from '../../src/auth.schema';
-import { createDb } from '../../../db/src/index';
-import * as schema from '../../src/schema';
+} from '@/db/schema/auth.schema';
+import { createDb } from '@/db/client';
+import * as schema from '@/db/schema/schema';
 
 // ---------------------------------------------------------------------------
 // app.schema.ts — notificationPreferences

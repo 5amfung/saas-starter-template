@@ -1,5 +1,5 @@
-import { seedE2EBaseline } from '@workspace/db-schema';
 import type { FullConfig } from '@playwright/test';
+import { seedE2EBaseline } from '@/db/seed/seed-e2e-baseline';
 
 /**
  * Playwright globalSetup that verifies the server is using the mock email

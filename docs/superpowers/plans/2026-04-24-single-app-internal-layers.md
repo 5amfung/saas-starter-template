@@ -561,7 +561,7 @@ until the DB layer moves.
 - Modify: DB scripts
 - Modify: `.dependency-cruiser.cjs`
 
-- [ ] **Step 1: Create DB layer**
+- [x] **Step 1: Create DB layer**
 
 Target mapping:
 
@@ -576,7 +576,7 @@ packages/db-schema/src/seed/reset-e2e-state.ts   -> apps/web/src/db/seed/reset-e
 packages/db-schema/src/seed/seed-e2e-baseline.ts -> apps/web/src/db/seed/seed-e2e-baseline.ts
 ```
 
-- [ ] **Step 2: Decide Drizzle config location**
+- [x] **Step 2: Decide Drizzle config location**
 
 Preferred target:
 
@@ -595,7 +595,7 @@ pnpm --filter @workspace/web db:studio
 
 If Vercel build commands currently call `@workspace/db-schema`, update them to the new `@workspace/web` scripts in the same phase.
 
-- [ ] **Step 3: Replace imports**
+- [x] **Step 3: Replace imports**
 
 Use:
 
@@ -606,7 +606,7 @@ Use:
 @workspace/db-schema/seed/e2e-fixtures -> @/db/seed/e2e-fixtures
 ```
 
-- [ ] **Step 4: Enforce database boundaries**
+- [x] **Step 4: Enforce database boundaries**
 
 Update `.dependency-cruiser.cjs` so:
 
@@ -614,7 +614,7 @@ Update `.dependency-cruiser.cjs` so:
 - `@/db/**` cannot import routes/components/hooks
 - direct schema table imports are limited to server modules, infrastructure adapters, seed code, and approved tests
 
-- [ ] **Step 5: Update test utilities intentionally**
+- [x] **Step 5: Update test utilities intentionally**
 
 Review `packages/test-utils` imports from `@workspace/db` and `@workspace/db-schema`.
 
@@ -625,7 +625,11 @@ Choose one:
 
 Prefer the second option if keeping `packages/test-utils` would create a production app dependency cycle.
 
-- [ ] **Step 6: Move tests and delete packages**
+Chosen: keep the existing DB-coupled helpers in `packages/test-utils` as an
+explicit test-only bridge to `apps/web/src/db/**`; no production app code imports
+`packages/test-utils`.
+
+- [x] **Step 6: Move tests and delete packages**
 
 Move db/db-schema tests to `apps/web/test/unit/db`.
 
@@ -637,7 +641,7 @@ rg -n "@workspace/(db|db-schema)" apps packages package.json pnpm-lock.yaml pnpm
 
 has no active references, except any intentionally retained test-utils bridge documented in the same commit.
 
-- [ ] **Step 7: Verify**
+- [x] **Step 7: Verify**
 
 Run:
 
@@ -650,6 +654,17 @@ pnpm --filter @workspace/web db:generate
 ```
 
 Expected: tests pass, boundary check passes, and Drizzle can read the new schema location.
+
+Verified:
+
+- `pnpm --filter @workspace/db test` passed before the move (no tests found, exit 0).
+- `pnpm --filter @workspace/db-schema test` passed before the move (2 files, 56 tests).
+- `pnpm --filter @workspace/web test test/unit/db` passed after the move (2 files, 56 tests).
+- `pnpm --filter @workspace/test-utils typecheck` passed for the explicit test-only DB bridge.
+- `pnpm --filter @workspace/web typecheck` passed.
+- `pnpm --filter @workspace/web lint` passed.
+- `pnpm run check:boundaries` passed.
+- `pnpm --filter @workspace/web db:generate` read the relocated schema successfully. It created a fresh initial migration because no Drizzle output was previously tracked; the generated artifact was removed to preserve the spec constraint against changing Drizzle-generated artifacts in this migration.
 
 ## Task 9: Move `packages/auth`
 

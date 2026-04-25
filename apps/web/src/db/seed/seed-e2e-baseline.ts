@@ -1,6 +1,5 @@
 import { sql } from 'drizzle-orm';
 import { hashPassword } from 'better-auth/crypto';
-import { createDb } from '@workspace/db';
 import * as schema from '../schema';
 import { account, member, organization, subscription, user } from '../schema';
 import {
@@ -13,6 +12,7 @@ import {
   E2E_PLATFORM_ADMIN,
 } from './e2e-fixtures';
 import { resetE2EState } from './reset-e2e-state';
+import { createDb } from '@/db/client';
 
 interface SeedE2EBaselineOptions {
   databaseUrl?: string;

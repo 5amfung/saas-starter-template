@@ -1,13 +1,13 @@
 import { and, count, eq } from 'drizzle-orm';
 import Stripe from 'stripe';
+import { resolveWorkspacePlanId } from '../core/plans';
+import type { Database } from '@/db/client';
+import type { PlanId } from '../core/plans';
 import {
   member as memberTable,
   organization as organizationTable,
   subscription as subscriptionTable,
-} from '@workspace/db-schema';
-import { resolveWorkspacePlanId } from '../core/plans';
-import type { Database } from '@workspace/db';
-import type { PlanId } from '../core/plans';
+} from '@/db/schema';
 
 /**
  * Creates billing query helpers with closed-over database and Stripe client.

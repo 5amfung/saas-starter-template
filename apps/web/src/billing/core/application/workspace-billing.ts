@@ -26,7 +26,7 @@ import type {
   PlanId,
 } from '../domain/plans';
 import type { WorkspaceBillingSnapshot } from '../contracts/snapshot';
-import type { Database } from '@workspace/db';
+import type { Database } from '@/db/client';
 
 export interface BillingSnapshotInput {
   db: Database;

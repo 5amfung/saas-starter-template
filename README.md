@@ -124,7 +124,6 @@ A production-ready SaaS foundation with authentication, multi-tenant workspaces,
 
 ```bash
  cp apps/web/.env.example apps/web/.env
- cp packages/db-schema/.env.example packages/db-schema/.env
 ```
 
 Fill in the values for Neon, Resend, Stripe, Google OAuth, Better Auth,
@@ -179,7 +178,6 @@ saas-starter-template/
 | Package                    | Description                                            |
 | -------------------------- | ------------------------------------------------------ |
 | `@workspace/web`           | Main SaaS application (TanStack Start + Vite)          |
-| `@workspace/db`            | Database schema and client (Drizzle ORM + Neon)        |
 | `@workspace/email`         | Email sending and React Email templates                |
 | `@workspace/ui`            | Shared UI components (shadcn/ui, Recharts, styles)     |
 | `@workspace/eslint-config` | Shared ESLint configuration (TanStack + React presets) |
@@ -207,7 +205,7 @@ saas-starter-template/
 | `pnpm run db:push`     | Push schema directly (dev only)  |
 | `pnpm run db:studio`   | Open Drizzle Studio              |
 
-`packages/db-schema/src/auth.schema.ts` is hand-maintained. Do not regenerate it
+`apps/web/src/db/schema/auth.schema.ts` is hand-maintained. Do not regenerate it
 in place. If you need Better Auth's latest generated schema as a reference
 during an upgrade, generate it to a temporary file and manually port the needed
 changes:
@@ -219,7 +217,7 @@ pnpm dlx @better-auth/cli generate \
   --yes
 ```
 
-Then diff the temporary file against `packages/db-schema/src/auth.schema.ts` and
+Then diff the temporary file against `apps/web/src/db/schema/auth.schema.ts` and
 copy over the desired Better Auth schema changes by hand, preserving any
 repo-owned indexes or other Drizzle customizations.
 
@@ -233,7 +231,6 @@ repo-owned indexes or other Drizzle customizations.
 
 ```bash
 pnpm --filter @workspace/web <command>
-pnpm --filter @workspace/db <command>
 pnpm --filter @workspace/email dev:email    # Preview email templates on port 3001
 ```
 

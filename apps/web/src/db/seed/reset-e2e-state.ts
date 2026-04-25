@@ -1,5 +1,4 @@
 import { inArray, like, or } from 'drizzle-orm';
-import { createDb } from '@workspace/db';
 import {
   member,
   organization,
@@ -8,6 +7,7 @@ import {
   verification,
 } from '../schema';
 import * as schema from '../schema';
+import { createDb } from '@/db/client';
 
 type DbClient = ReturnType<typeof createDb<typeof schema>>;
 type TransactionDb = Parameters<Parameters<DbClient['transaction']>[0]>[0];

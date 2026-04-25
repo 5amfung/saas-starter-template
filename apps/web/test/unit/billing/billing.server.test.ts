@@ -101,7 +101,7 @@ vi.mock('@/init', () => ({
   })),
 }));
 
-vi.mock('@workspace/db-schema', async (importOriginal) => {
+vi.mock('@/db/schema', async (importOriginal) => {
   const actual = await importOriginal();
   return Object.assign({}, actual, {
     entitlementOverrides: { workspaceId: 'workspace_id' },

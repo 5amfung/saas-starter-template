@@ -1,5 +1,5 @@
 import { hashPassword } from 'better-auth/crypto';
-import { account, member, organization, user } from '@workspace/db-schema';
+import { account, member, organization, user } from '@/db/schema';
 import { getE2EDb } from './e2e-db';
 import { signInSeededUser } from './e2e-auth';
 

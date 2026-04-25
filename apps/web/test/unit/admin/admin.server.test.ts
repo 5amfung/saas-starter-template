@@ -35,7 +35,7 @@ vi.mock('@/init', () => ({
   getAuth: () => ({ api: {} }),
   getDb: () => ({ select: dbSelectMock }),
 }));
-vi.mock('@workspace/db-schema', () => ({
+vi.mock('@/db/schema', () => ({
   user: {
     createdAt: 'createdAt',
     emailVerified: 'emailVerified',

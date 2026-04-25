@@ -1,8 +1,8 @@
 import { and, eq } from 'drizzle-orm';
-import { integrationSecrets } from '@workspace/db-schema';
-import type { Database } from '@workspace/db';
+import type { Database } from '@/db/client';
 import type { IntegrationFieldKey, IntegrationKey } from './definitions';
 import type { EncryptedIntegrationSecret } from './types';
+import { integrationSecrets } from '@/db/schema';
 
 export interface WorkspaceIntegrationSecretRow extends EncryptedIntegrationSecret {
   integration: IntegrationKey;

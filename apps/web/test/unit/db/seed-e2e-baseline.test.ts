@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { seedE2EBaseline } from '../../src/seed/seed-e2e-baseline';
+import { seedE2EBaseline } from '@/db/seed/seed-e2e-baseline';
 
 const {
   createDbMock,
@@ -46,7 +46,7 @@ const {
   };
 });
 
-vi.mock('@workspace/db', () => ({
+vi.mock('@/db/client', () => ({
   createDb: createDbMock,
 }));
 
@@ -54,7 +54,7 @@ vi.mock('better-auth/crypto', () => ({
   hashPassword: hashPasswordMock,
 }));
 
-vi.mock('../../src/seed/reset-e2e-state', () => ({
+vi.mock('@/db/seed/reset-e2e-state', () => ({
   resetE2EState: resetE2EStateMock,
 }));
 

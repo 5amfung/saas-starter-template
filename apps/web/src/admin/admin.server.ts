@@ -1,6 +1,6 @@
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { and, gte, isNotNull, lt, sql } from 'drizzle-orm';
-import { user as userTable } from '@workspace/db-schema';
+import { user as userTable } from '@/db/schema';
 import { getDb } from '@/init';
 import { requireCurrentAdminAppEntry } from '@/policy/admin-app-capabilities.server';
 

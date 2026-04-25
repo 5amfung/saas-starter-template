@@ -22,7 +22,7 @@ const {
 
 // ── Module mocks ───────────────────────────────────────────────────────────
 
-vi.mock('@workspace/db/schema', () => ({
+vi.mock('@/db/schema', () => ({
   member: 'member',
   organization: 'organization',
   subscription: 'subscription',

@@ -16,7 +16,7 @@ vi.mock('@/auth/server/auth.server', () => ({
   createAuth: createAuthMock,
 }));
 
-vi.mock('@workspace/db', () => ({
+vi.mock('@/db/client', () => ({
   createDb: createDbMock,
 }));
 

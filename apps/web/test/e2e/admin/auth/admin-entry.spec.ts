@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { E2E_PASSWORD, E2E_PLATFORM_ADMIN } from '@workspace/db-schema';
+import { E2E_PASSWORD, E2E_PLATFORM_ADMIN } from '@/db/seed/e2e-fixtures';
 
 test.describe('Admin sign-in flow', () => {
   test('seeded platform admin user can sign in and reach the protected admin shell', async ({
