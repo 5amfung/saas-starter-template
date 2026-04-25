@@ -4,7 +4,7 @@ import type { WorkspaceApiKeyContext } from '@/api/middleware/workspace-api-key.
 import type { MessagingHelloRequest } from '@/api/messaging/hello.schemas';
 
 import { validateJsonBody } from '@/api/middleware/json-body.server';
-import { workspaceApiKeyMiddleware } from '@/api/middleware/workspace-api-key.server';
+import { verifyWorkspaceApiKeyMiddleware } from '@/api/middleware/workspace-api-key.server';
 import { messagingHelloRequestSchema } from '@/api/messaging/hello.schemas';
 import { createMessagingHello } from '@/api/messaging/service.server';
 import { requestLogger } from '@/observability/server';
@@ -21,7 +21,7 @@ export const Route = createFileRoute('/api/messaging/hello')({
   server: {
     middleware: [
       requestLogger,
-      workspaceApiKeyMiddleware,
+      verifyWorkspaceApiKeyMiddleware,
       validateJsonBody(messagingHelloRequestSchema),
     ],
     handlers: {

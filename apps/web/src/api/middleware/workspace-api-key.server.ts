@@ -38,7 +38,7 @@ function verificationErrorResponse(
   }
 }
 
-export const workspaceApiKeyMiddleware = createMiddleware().server(
+export const verifyWorkspaceApiKeyMiddleware = createMiddleware().server(
   async ({ request, next }) => {
     const verification = await verifyWorkspaceApiKey({
       apiKey: request.headers.get('x-api-key'),
