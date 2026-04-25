@@ -776,7 +776,7 @@ use app-compatible rejection message assertions for cases that previously used
 - Modify: `.dependency-cruiser.cjs`
 - Delete: obsolete package directories
 
-- [ ] **Step 1: Remove deleted packages from workspace metadata**
+- [x] **Step 1: Remove deleted packages from workspace metadata**
 
 Update workspace/package metadata so only kept packages remain active:
 
@@ -788,7 +788,7 @@ packages/test-utils
 
 If `pnpm-workspace.yaml` continues to use `packages/*`, ensure deleted directories are actually gone so they are not included.
 
-- [ ] **Step 2: Move dependencies to `apps/web/package.json`**
+- [x] **Step 2: Move dependencies to `apps/web/package.json`**
 
 Any runtime dependency that was only present in flattened package manifests but is still used by app-local code must be declared by `apps/web`.
 
@@ -802,7 +802,7 @@ Examples to check:
 - random-word-slugs
 - zod
 
-- [ ] **Step 3: Remove stale aliases and mocks**
+- [x] **Step 3: Remove stale aliases and mocks**
 
 Run:
 
@@ -812,7 +812,7 @@ rg -n "@workspace/(components|logging|email|integrations|policy|billing|db|db-sc
 
 Expected: no active source, test, config, or lockfile references to flattened packages.
 
-- [ ] **Step 4: Clean ignored artifacts**
+- [x] **Step 4: Clean ignored artifacts**
 
 Run:
 
@@ -823,7 +823,7 @@ git clean -ndX packages
 
 Review output carefully. Remove only obsolete ignored artifacts for deleted packages.
 
-- [ ] **Step 5: Refresh lockfile**
+- [x] **Step 5: Refresh lockfile**
 
 Run:
 
@@ -832,6 +832,13 @@ pnpm install --lockfile-only
 ```
 
 Expected: `pnpm-lock.yaml` reflects removed workspace packages and moved app dependencies.
+
+Verified:
+
+- `pnpm-workspace.yaml` still uses `packages/*`, and `find packages -maxdepth 2 -name package.json -print | sort` lists only `packages/eslint-config`, `packages/test-utils`, and `packages/ui`.
+- `rg -n "@workspace/(components|logging|email|integrations|policy|billing|db|db-schema|auth)" apps packages package.json pnpm-lock.yaml tsconfig.json turbo.json .dependency-cruiser.cjs` returned no active references.
+- `git status --short --ignored packages` and `git clean -ndX packages` showed only ignored `node_modules` under kept packages, so no obsolete deleted-package artifacts were removed.
+- `pnpm install --lockfile-only` completed with no further lockfile changes.
 
 ## Task 11: Final Verification
 
