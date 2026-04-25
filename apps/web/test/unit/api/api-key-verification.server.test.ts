@@ -1,4 +1,4 @@
-import { verifyWorkspaceApiKey } from '@/api/api-key-auth.server';
+import { verifyWorkspaceApiKey } from '@/api/api-key-verification.server';
 
 const { getAuthMock, verifyApiKeyMock } = vi.hoisted(() => ({
   getAuthMock: vi.fn(),
@@ -9,7 +9,7 @@ vi.mock('@/init', () => ({
   getAuth: getAuthMock,
 }));
 
-describe('api-key-auth.server', () => {
+describe('api-key-verification.server', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getAuthMock.mockReturnValue({

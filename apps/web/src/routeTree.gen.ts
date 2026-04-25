@@ -17,7 +17,6 @@ import { Route as AuthRouteImport } from './routes/_auth';
 import { Route as IndexRouteImport } from './routes/index';
 import { Route as AdminIndexRouteImport } from './routes/admin/index';
 import { Route as VerifyEmailChangeEmailTokenRouteImport } from './routes/verify-email-change.$emailToken';
-import { Route as ApiHelloRouteImport } from './routes/api/hello';
 import { Route as AdminAccessDeniedRouteImport } from './routes/admin/access-denied';
 import { Route as AdminProtectedRouteImport } from './routes/admin/_protected';
 import { Route as ProtectedWsRouteImport } from './routes/_protected/ws';
@@ -28,6 +27,7 @@ import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-pass
 import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-password';
 import { Route as ProtectedWsIndexRouteImport } from './routes/_protected/ws/index';
 import { Route as ApiTestEmailsRouteImport } from './routes/api/test/emails';
+import { Route as ApiMessagingHelloRouteImport } from './routes/api/messaging/hello';
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$';
 import { Route as AdminProtectedWorkspacesRouteImport } from './routes/admin/_protected/workspaces';
 import { Route as AdminProtectedUsersRouteImport } from './routes/admin/_protected/users';
@@ -86,11 +86,6 @@ const VerifyEmailChangeEmailTokenRoute =
     path: '/verify-email-change/$emailToken',
     getParentRoute: () => rootRouteImport,
   } as any);
-const ApiHelloRoute = ApiHelloRouteImport.update({
-  id: '/api/hello',
-  path: '/api/hello',
-  getParentRoute: () => rootRouteImport,
-} as any);
 const AdminAccessDeniedRoute = AdminAccessDeniedRouteImport.update({
   id: '/admin/access-denied',
   path: '/admin/access-denied',
@@ -139,6 +134,11 @@ const ProtectedWsIndexRoute = ProtectedWsIndexRouteImport.update({
 const ApiTestEmailsRoute = ApiTestEmailsRouteImport.update({
   id: '/api/test/emails',
   path: '/api/test/emails',
+  getParentRoute: () => rootRouteImport,
+} as any);
+const ApiMessagingHelloRoute = ApiMessagingHelloRouteImport.update({
+  id: '/api/messaging/hello',
+  path: '/api/messaging/hello',
   getParentRoute: () => rootRouteImport,
 } as any);
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -257,7 +257,6 @@ export interface FileRoutesByFullPath {
   '/ws': typeof ProtectedWsRouteWithChildren;
   '/admin': typeof AdminProtectedRouteWithChildren;
   '/admin/access-denied': typeof AdminAccessDeniedRoute;
-  '/api/hello': typeof ApiHelloRoute;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/admin/': typeof AdminIndexRoute;
   '/account': typeof ProtectedAccountAccountRoute;
@@ -268,6 +267,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminProtectedUsersRouteWithChildren;
   '/admin/workspaces': typeof AdminProtectedWorkspacesRouteWithChildren;
   '/api/auth/$': typeof ApiAuthSplatRoute;
+  '/api/messaging/hello': typeof ApiMessagingHelloRoute;
   '/api/test/emails': typeof ApiTestEmailsRoute;
   '/ws/': typeof ProtectedWsIndexRoute;
   '/ws/$workspaceId/billing': typeof ProtectedWsWorkspaceIdBillingRoute;
@@ -293,7 +293,6 @@ export interface FileRoutesByTo {
   '/verify': typeof AuthVerifyRoute;
   '/admin': typeof AdminIndexRoute;
   '/admin/access-denied': typeof AdminAccessDeniedRoute;
-  '/api/hello': typeof ApiHelloRoute;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/account': typeof ProtectedAccountAccountRoute;
   '/billing': typeof ProtectedAccountBillingRoute;
@@ -301,6 +300,7 @@ export interface FileRoutesByTo {
   '/ws/$workspaceId': typeof ProtectedWsWorkspaceIdRouteWithChildren;
   '/admin/dashboard': typeof AdminProtectedDashboardRoute;
   '/api/auth/$': typeof ApiAuthSplatRoute;
+  '/api/messaging/hello': typeof ApiMessagingHelloRoute;
   '/api/test/emails': typeof ApiTestEmailsRoute;
   '/ws': typeof ProtectedWsIndexRoute;
   '/ws/$workspaceId/billing': typeof ProtectedWsWorkspaceIdBillingRoute;
@@ -330,7 +330,6 @@ export interface FileRoutesById {
   '/_protected/ws': typeof ProtectedWsRouteWithChildren;
   '/admin/_protected': typeof AdminProtectedRouteWithChildren;
   '/admin/access-denied': typeof AdminAccessDeniedRoute;
-  '/api/hello': typeof ApiHelloRoute;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/admin/': typeof AdminIndexRoute;
   '/_protected/_account/account': typeof ProtectedAccountAccountRoute;
@@ -341,6 +340,7 @@ export interface FileRoutesById {
   '/admin/_protected/users': typeof AdminProtectedUsersRouteWithChildren;
   '/admin/_protected/workspaces': typeof AdminProtectedWorkspacesRouteWithChildren;
   '/api/auth/$': typeof ApiAuthSplatRoute;
+  '/api/messaging/hello': typeof ApiMessagingHelloRoute;
   '/api/test/emails': typeof ApiTestEmailsRoute;
   '/_protected/ws/': typeof ProtectedWsIndexRoute;
   '/_protected/ws/$workspaceId/billing': typeof ProtectedWsWorkspaceIdBillingRoute;
@@ -369,7 +369,6 @@ export interface FileRouteTypes {
     | '/ws'
     | '/admin'
     | '/admin/access-denied'
-    | '/api/hello'
     | '/verify-email-change/$emailToken'
     | '/admin/'
     | '/account'
@@ -380,6 +379,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/admin/workspaces'
     | '/api/auth/$'
+    | '/api/messaging/hello'
     | '/api/test/emails'
     | '/ws/'
     | '/ws/$workspaceId/billing'
@@ -405,7 +405,6 @@ export interface FileRouteTypes {
     | '/verify'
     | '/admin'
     | '/admin/access-denied'
-    | '/api/hello'
     | '/verify-email-change/$emailToken'
     | '/account'
     | '/billing'
@@ -413,6 +412,7 @@ export interface FileRouteTypes {
     | '/ws/$workspaceId'
     | '/admin/dashboard'
     | '/api/auth/$'
+    | '/api/messaging/hello'
     | '/api/test/emails'
     | '/ws'
     | '/ws/$workspaceId/billing'
@@ -441,7 +441,6 @@ export interface FileRouteTypes {
     | '/_protected/ws'
     | '/admin/_protected'
     | '/admin/access-denied'
-    | '/api/hello'
     | '/verify-email-change/$emailToken'
     | '/admin/'
     | '/_protected/_account/account'
@@ -452,6 +451,7 @@ export interface FileRouteTypes {
     | '/admin/_protected/users'
     | '/admin/_protected/workspaces'
     | '/api/auth/$'
+    | '/api/messaging/hello'
     | '/api/test/emails'
     | '/_protected/ws/'
     | '/_protected/ws/$workspaceId/billing'
@@ -475,10 +475,10 @@ export interface RootRouteChildren {
   PingRoute: typeof PingRoute;
   AdminProtectedRoute: typeof AdminProtectedRouteWithChildren;
   AdminAccessDeniedRoute: typeof AdminAccessDeniedRoute;
-  ApiHelloRoute: typeof ApiHelloRoute;
   VerifyEmailChangeEmailTokenRoute: typeof VerifyEmailChangeEmailTokenRoute;
   AdminIndexRoute: typeof AdminIndexRoute;
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
+  ApiMessagingHelloRoute: typeof ApiMessagingHelloRoute;
   ApiTestEmailsRoute: typeof ApiTestEmailsRoute;
 }
 
@@ -538,13 +538,6 @@ declare module '@tanstack/react-router' {
       path: '/verify-email-change/$emailToken';
       fullPath: '/verify-email-change/$emailToken';
       preLoaderRoute: typeof VerifyEmailChangeEmailTokenRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    '/api/hello': {
-      id: '/api/hello';
-      path: '/api/hello';
-      fullPath: '/api/hello';
-      preLoaderRoute: typeof ApiHelloRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     '/admin/access-denied': {
@@ -615,6 +608,13 @@ declare module '@tanstack/react-router' {
       path: '/api/test/emails';
       fullPath: '/api/test/emails';
       preLoaderRoute: typeof ApiTestEmailsRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/api/messaging/hello': {
+      id: '/api/messaging/hello';
+      path: '/api/messaging/hello';
+      fullPath: '/api/messaging/hello';
+      preLoaderRoute: typeof ApiMessagingHelloRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     '/api/auth/$': {
@@ -876,10 +876,10 @@ const rootRouteChildren: RootRouteChildren = {
   PingRoute: PingRoute,
   AdminProtectedRoute: AdminProtectedRouteWithChildren,
   AdminAccessDeniedRoute: AdminAccessDeniedRoute,
-  ApiHelloRoute: ApiHelloRoute,
   VerifyEmailChangeEmailTokenRoute: VerifyEmailChangeEmailTokenRoute,
   AdminIndexRoute: AdminIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiMessagingHelloRoute: ApiMessagingHelloRoute,
   ApiTestEmailsRoute: ApiTestEmailsRoute,
 };
 export const routeTree = rootRouteImport
