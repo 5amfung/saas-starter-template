@@ -1,6 +1,6 @@
 import { createMiddleware } from '@tanstack/react-start';
 import { jsonError } from '@/api/response.server';
-import { verifyWorkspaceApiKey } from '@/api/api-key-auth.server';
+import { verifyWorkspaceApiKey } from '@/api/api-key-verification.server';
 
 export type WorkspaceApiKeyContext = {
   workspaceApiKey: {
