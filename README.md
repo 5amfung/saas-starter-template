@@ -150,21 +150,22 @@ This project is organized as a monorepo using [pnpm workspaces](https://pnpm.io/
 ```
 saas-starter-template/
 ├── apps/
-│   └── web/                  # TanStack Start application (main SaaS app)
-│       └── src/
-│           ├── account/      # Account settings server functions and schemas
-│           ├── admin/        # Admin server functions and validation
-│           ├── billing/      # Stripe billing logic, plans, and server functions
-│           ├── components/   # App-specific feature components
-│           ├── hooks/        # Custom React hooks
-│           ├── lib/          # App-level utilities
-│           ├── middleware/   # Auth and admin request middleware
-│           ├── routes/       # TanStack Router file-based route modules
-│           ├── types/        # TypeScript type declarations
-│           └── workspace/    # Workspace/multi-tenancy logic and tests
+│   ├── web/                  # TanStack Start application (SaaS + admin)
+│   │   └── src/
+│   │       ├── account/      # Account settings server functions and schemas
+│   │       ├── admin/        # Admin server functions and validation
+│   │       ├── billing/      # Stripe billing logic, plans, and server functions
+│   │       ├── components/   # App-specific feature components
+│   │       ├── db/           # Drizzle schema and database access
+│   │       ├── email/        # Resend integration and React Email templates
+│   │       ├── hooks/        # Custom React hooks
+│   │       ├── lib/          # App-level utilities
+│   │       ├── middleware/   # Auth and admin request middleware
+│   │       ├── routes/       # TanStack Router file-based route modules
+│   │       ├── types/        # TypeScript type declarations
+│   │       └── workspace/    # Workspace/multi-tenancy logic and tests
+│   └── api-server/           # Optional standalone Hono API server
 ├── packages/
-│   ├── db/                   # Drizzle ORM schema, database client, and migrations
-│   ├── email/                # Email provider integration and React Email templates
 │   ├── eslint-config/        # Shared ESLint configuration
 │   ├── test-utils/           # Shared testing utilities (Testing Library, etc.)
 │   └── ui/                   # shadcn/ui components, styles, and shared UI primitives
@@ -177,8 +178,8 @@ saas-starter-template/
 
 | Package                    | Description                                            |
 | -------------------------- | ------------------------------------------------------ |
-| `@workspace/web`           | Main SaaS application (TanStack Start + Vite)          |
-| `@workspace/email`         | Email sending and React Email templates                |
+| `@workspace/web`           | SaaS and admin application (TanStack Start + Vite)     |
+| `@workspace/api-server`    | Optional standalone Hono API server                    |
 | `@workspace/ui`            | Shared UI components (shadcn/ui, Recharts, styles)     |
 | `@workspace/eslint-config` | Shared ESLint configuration (TanStack + React presets) |
 | `@workspace/test-utils`    | Shared test setup and utilities                        |
@@ -187,14 +188,15 @@ saas-starter-template/
 
 ### Root Commands (via Turborepo)
 
-| Command           | Description                      |
-| ----------------- | -------------------------------- |
-| `pnpm dev`        | Start all dev servers            |
-| `pnpm run build`  | Production build (all packages)  |
-| `pnpm test`       | Run all tests with Vitest        |
-| `pnpm run check`  | Type-check + lint (all packages) |
-| `pnpm run lint`   | Lint all packages                |
-| `pnpm run format` | Format code with Prettier        |
+| Command           | Description                                      |
+| ----------------- | ------------------------------------------------ |
+| `pnpm dev`        | Start the web app and Stripe webhook dev servers |
+| `pnpm dev:api`    | Start the optional Hono API server               |
+| `pnpm run build`  | Production build (all packages)                  |
+| `pnpm test`       | Run all tests with Vitest                        |
+| `pnpm run check`  | Type-check + lint (all packages)                 |
+| `pnpm run lint`   | Lint all packages                                |
+| `pnpm run format` | Format code with Prettier                        |
 
 ### Database Commands
 
@@ -223,15 +225,21 @@ repo-owned indexes or other Drizzle customizations.
 
 ### App-Specific Commands
 
-| Command                       | Description                               |
-| ----------------------------- | ----------------------------------------- |
-| `pnpm run dev:stripe-webhook` | Forward Stripe webhooks to localhost:3000 |
+| Command                                           | Description                                             |
+| ------------------------------------------------- | ------------------------------------------------------- |
+| `pnpm --filter @workspace/web dev`                | Start the TanStack Start dev server                     |
+| `pnpm --filter @workspace/web dev:email`          | Preview React Email templates on port 3001              |
+| `pnpm --filter @workspace/web dev:stripe-webhook` | Forward Stripe webhooks to localhost:3000               |
+| `pnpm --filter @workspace/web build:vite`         | Run the raw Vite/Nitro build                            |
+| `pnpm --filter @workspace/web build`              | Build standalone Node Nitro output and copy preloads    |
+| `pnpm --filter @workspace/web vercel-build`       | Run migrations, then build with the Nitro Vercel preset |
+| `pnpm --filter @workspace/web start`              | Run the standalone Node Nitro server                    |
 
 ### Running Commands in a Specific Package
 
 ```bash
 pnpm --filter @workspace/web <command>
-pnpm --filter @workspace/email dev:email    # Preview email templates on port 3001
+pnpm --filter @workspace/web dev:email    # Preview email templates on port 3001
 ```
 
 ## End-to-End Testing with Playwright
@@ -298,47 +306,71 @@ Test plans generated by the planner agent are saved to `apps/web/specs/`. See `a
 
 ## Deployment
 
-This repository is a monorepo, so deployment happens per app or service,
-not from a single root `.output` bundle.
+This repository is a monorepo, so deployment happens per app or service. The
+main deployable app is `apps/web`, which serves customer routes at `/`,
+workspace routes under `/ws`, and platform administration routes under
+`/admin`.
 
-The web app is the primary deployable application. Customer routes live at `/`
-and workspace routes under `/ws`. Platform administration routes live under
-`/admin` in the same TanStack Start app.
+### Vercel
 
-### Railway
+Use one Vercel Project for `apps/web`.
 
-The recommended Railway setup is one service per deployable app:
+Recommended project settings:
 
-- `apps/web` for the customer-facing app and platform administration routes
-- `apps/api-server` for the standalone Hono API server, if you use it
+| Setting          | Value                   |
+| ---------------- | ----------------------- |
+| Root Directory   | `apps/web`              |
+| Build Command    | `pnpm run vercel-build` |
+| Install Command  | Vercel default          |
+| Output Directory | Vercel default          |
 
-For the TanStack Start app (`apps/web`), set the Railway service root directory
-to the app folder and use the package scripts:
+`apps/web/vercel.json` pins the build command:
 
-```bash
-pnpm run build
-pnpm run start
+```json
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm run vercel-build"
+}
 ```
 
-Those scripts build Nitro output into the app-local `.output/` directory and
-start the server with the required Sentry instrumentation import.
+Do not configure a Vercel production start command. Vercel builds the app, then
+serves generated static assets and Vercel Functions. The app selects Nitro's
+Vercel output with:
 
-If you deploy from the repository root instead of a service root directory,
-use app-specific filtered commands rather than the root build:
+```bash
+pnpm run db:migrate && NITRO_PRESET=vercel pnpm run build:vite
+```
+
+That command runs migrations before build. Keep migrations backward-compatible:
+if a migration succeeds and the later build fails, the database can be ahead of
+the deployed code. If a release needs strict ordering beyond this simple
+build-time flow, let a separate release workflow own "migrate, then deploy."
+
+### Standalone Node Hosting
+
+The web app also keeps a standalone Nitro Node path for Docker, Railway, Fly,
+Render, or VM-style hosting:
 
 ```bash
 pnpm --filter @workspace/web run build
 pnpm --filter @workspace/web run start
 ```
 
-For the API server, use:
+The `build` script creates `.output/server` and copies the server Sentry preload
+files. The `start` script then runs:
+
+```bash
+node --import ./.output/server/instrument.server.mjs .output/server/index.mjs
+```
+
+The optional Hono API server remains a separate service if you deploy it:
 
 ```bash
 pnpm --filter @workspace/api-server run build
 pnpm --filter @workspace/api-server run start
 ```
 
-### Required production environment variables
+### Required Production Environment Variables
 
 Set `BETTER_AUTH_URL` to the public URL of the deployed service.
 
@@ -355,11 +387,12 @@ Common production variables include:
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 
-### Sentry configuration
+### Sentry Configuration
 
-Sentry uses this runtime DSN:
+Sentry uses separate browser and server runtime entry points:
 
-- `VITE_SENTRY_DSN` for both the browser bundle and the server runtime
+- `VITE_SENTRY_DSN` for the browser bundle
+- `SENTRY_DSN` for the server runtime, with `VITE_SENTRY_DSN` as a fallback
 
 Source map upload during production builds uses:
 
@@ -371,10 +404,13 @@ Use `VITE_SENTRY_DISABLED=true` to disable Sentry for an app run. The same
 flag is read by browser runtime code, server bootstrap code, and the Vite
 build plugin gating used for source map upload.
 
-Production deploys on Railway or CI should use the normal `build` command.
-The dedicated `build:e2e` command is only for Playwright test builds and
-sets `VITE_SENTRY_DISABLED=true` so Sentry stays off during the test build
-and test runtime.
+On Vercel, server-side Sentry initialization runs from `src/server.ts` so it is
+bundled into the generated Vercel Function. On standalone Node hosting, the same
+initialization runs through the `node --import` preload used by `start`.
+
+The dedicated `build:e2e` command is only for Playwright test builds and sets
+`VITE_SENTRY_DISABLED=true` so Sentry stays off during the test build and test
+runtime.
 
 See the [TanStack Start deployment docs](https://tanstack.com/start/latest/docs/framework/react/guide/hosting)
 for additional platform-specific guidance.

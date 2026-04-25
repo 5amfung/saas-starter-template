@@ -27,4 +27,24 @@ describe('web server Sentry runtime gate', () => {
       })
     ).toBe(true);
   });
+
+  it('uses Vercel server runtime environment variables when available', async () => {
+    const { getServerSentryDsn, getServerSentryEnvironment } = await import(
+      // @ts-ignore test imports the JS bootstrap module directly
+      '../../../instrument.server.mjs'
+    );
+
+    expect(
+      getServerSentryDsn({
+        SENTRY_DSN: 'server-dsn',
+        VITE_SENTRY_DSN: 'browser-dsn',
+      })
+    ).toBe('server-dsn');
+    expect(
+      getServerSentryEnvironment({
+        NODE_ENV: 'production',
+        VERCEL_ENV: 'preview',
+      })
+    ).toBe('preview');
+  });
 });
