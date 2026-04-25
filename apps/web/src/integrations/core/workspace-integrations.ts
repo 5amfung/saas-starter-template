@@ -1,10 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import {
-  INTEGRATION_DEFINITIONS,
-  isIntegrationFieldKey,
-  type IntegrationFieldKey,
-  type IntegrationKey,
-} from './definitions';
+import { INTEGRATION_DEFINITIONS, isIntegrationFieldKey } from './definitions';
 import {
   decryptIntegrationSecret,
   encryptIntegrationSecret,
@@ -16,6 +11,7 @@ import {
   listWorkspaceIntegrationSecretRows,
   upsertWorkspaceIntegrationSecretRow,
 } from './repository';
+import type { IntegrationFieldKey, IntegrationKey } from './definitions';
 import type { Database } from '@workspace/db';
 import type { WorkspaceIntegrationSummary } from './types';
 

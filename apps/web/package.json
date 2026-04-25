@@ -47,7 +47,6 @@
     "@workspace/db": "workspace:*",
     "@workspace/db-schema": "workspace:*",
     "@workspace/email": "workspace:*",
-    "@workspace/integrations": "workspace:*",
     "@workspace/logging": "workspace:*",
     "@workspace/ui": "workspace:*",
     "better-auth": "1.6.3",

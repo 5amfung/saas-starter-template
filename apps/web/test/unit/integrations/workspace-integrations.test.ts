@@ -3,7 +3,7 @@ import {
   getWorkspaceIntegrationSummaries,
   revealWorkspaceIntegrationValue,
   updateWorkspaceIntegrationValues,
-} from '../../src/workspace-integrations';
+} from '@/integrations/core/workspace-integrations';
 
 const ENCRYPTION_KEY = Buffer.alloc(32, 13).toString('base64');
 
@@ -24,7 +24,7 @@ const {
   maskIntegrationSecretMock: vi.fn(),
 }));
 
-vi.mock('../../src/crypto', () => ({
+vi.mock('@/integrations/core/crypto', () => ({
   decryptIntegrationSecret: decryptIntegrationSecretMock,
   encryptIntegrationSecret: encryptIntegrationSecretMock,
   maskIntegrationSecret: maskIntegrationSecretMock,

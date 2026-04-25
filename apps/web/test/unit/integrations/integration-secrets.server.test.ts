@@ -21,7 +21,7 @@ const {
   updateWorkspaceIntegrationValuesMock: vi.fn(),
 }));
 
-vi.mock('@workspace/integrations', () => ({
+vi.mock('@/integrations/core', () => ({
   getWorkspaceIntegrationSummaries: getWorkspaceIntegrationSummariesMock,
   revealWorkspaceIntegrationValue: revealWorkspaceIntegrationValueMock,
   updateWorkspaceIntegrationValues: updateWorkspaceIntegrationValuesMock,

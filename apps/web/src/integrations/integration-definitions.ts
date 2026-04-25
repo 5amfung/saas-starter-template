@@ -1,1 +1,1 @@
-export * from '@workspace/integrations';
+export * from '@/integrations/core';

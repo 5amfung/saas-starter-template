@@ -324,7 +324,7 @@ Expected: all pass.
 - Modify: imports from `@workspace/integrations`
 - Modify: `.dependency-cruiser.cjs`
 
-- [ ] **Step 1: Create integration core layer**
+- [x] **Step 1: Create integration core layer**
 
 Target mapping:
 
@@ -337,7 +337,7 @@ packages/integrations/src/workspace-integrations.ts -> apps/web/src/integrations
 packages/integrations/src/index.ts                  -> apps/web/src/integrations/core/index.ts
 ```
 
-- [ ] **Step 2: Replace imports**
+- [x] **Step 2: Replace imports**
 
 Use:
 
@@ -347,11 +347,11 @@ Use:
 
 Server wrappers under `apps/web/src/integrations/*.server.ts` should import from core. UI should not import repository internals.
 
-- [ ] **Step 3: Enforce integration boundary**
+- [x] **Step 3: Enforce integration boundary**
 
 Update `.dependency-cruiser.cjs` so UI cannot import `@/integrations/core/repository` and cannot import integration server modules directly.
 
-- [ ] **Step 4: Move tests and delete package**
+- [x] **Step 4: Move tests and delete package**
 
 Move tests to `apps/web/test/unit/integrations`.
 
@@ -363,7 +363,7 @@ rg -n "@workspace/integrations" apps packages package.json pnpm-lock.yaml
 
 has no active references.
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 Run:
 
@@ -375,6 +375,14 @@ pnpm run check:boundaries
 ```
 
 Expected: all pass.
+
+Current execution note: before moving, `pnpm --filter @workspace/integrations
+test` passed with 2 files and 6 tests. After the move, the
+`@workspace/integrations` search returned no active references,
+`pnpm --filter @workspace/web test test/unit/integrations` passed with 5 files
+and 19 tests, and web typecheck, web lint, and dependency-cruiser boundary
+checks all passed. The dependency-cruiser DB-schema allow-list now includes
+`apps/web/src/integrations/core/repository.ts` until the DB layer is moved.
 
 ## Task 6: Move `packages/policy`
 

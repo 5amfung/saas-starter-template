@@ -3,7 +3,7 @@ import {
   decryptIntegrationSecret,
   encryptIntegrationSecret,
   maskIntegrationSecret,
-} from '../../src/crypto';
+} from '@/integrations/core/crypto';
 
 const ENCRYPTION_KEY = Buffer.alloc(32, 7).toString('base64');
 

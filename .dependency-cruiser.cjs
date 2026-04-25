@@ -32,7 +32,7 @@ module.exports = {
       from: {
         path: '^apps/web/src',
         pathNot:
-          '^apps/web/src/(init\\.ts|account/notification-preferences\\.server\\.ts|admin/admin\\.server\\.ts)$',
+          '^apps/web/src/(init\\.ts|account/notification-preferences\\.server\\.ts|admin/admin\\.server\\.ts|integrations/core/repository\\.ts)$',
       },
       to: { path: '^packages/db-schema/src/' },
     },
@@ -53,6 +53,21 @@ module.exports = {
       to: {
         path: '^apps/web/src/(routes|components|db|auth/server|observability|email)/',
       },
+    },
+    {
+      name: 'no-ui-imports-integration-repository',
+      comment:
+        'UI should use integration server functions and route-safe types, not repository internals.',
+      severity: 'error',
+      from: { path: '^apps/web/src/(components|routes|hooks)/' },
+      to: { path: '^apps/web/src/integrations/core/repository\\.ts$' },
+    },
+    {
+      name: 'no-ui-imports-integration-server',
+      comment: 'UI should not import integration server-only modules directly.',
+      severity: 'error',
+      from: { path: '^apps/web/src/(components|routes|hooks)/' },
+      to: { path: '^apps/web/src/integrations/.*\\.server\\.ts$' },
     },
   ],
   options: {
