@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { createHookWrapper } from '@workspace/test-utils';
-import type { PlanDefinition } from '@workspace/billing';
+import type { PlanDefinition } from '@/billing/core';
 import { useUpgradePrompt } from '@/hooks/use-upgrade-prompt';
 
 const { mockCreateWorkspaceCheckoutSession, mockToastError } = vi.hoisted(

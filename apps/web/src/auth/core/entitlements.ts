@@ -1,1 +1,1 @@
-export * from '@workspace/billing';
+export * from '@/billing/core';

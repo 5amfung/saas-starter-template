@@ -36,7 +36,7 @@ vi.mock('@tanstack/react-start/server', () => ({
   getRequestHeaders: getRequestHeadersMock,
 }));
 
-vi.mock('@workspace/billing', () => ({
+vi.mock('@/billing/core', () => ({
   listAdminWorkspaces: listAdminWorkspacesMock,
   getAdminWorkspaceDetail: getAdminWorkspaceDetailMock,
   setAdminWorkspaceEntitlementOverrides:

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 
-import { PLANS, PLAN_ACTION_CONFIG } from '@workspace/billing';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -15,7 +14,8 @@ import type {
   PlanDefinition,
   PlanId,
   WorkspaceProductPolicy,
-} from '@workspace/billing';
+} from '@/billing/core';
+import { PLANS, PLAN_ACTION_CONFIG } from '@/billing/core';
 
 interface BillingManagePlanDialogProps {
   open: boolean;

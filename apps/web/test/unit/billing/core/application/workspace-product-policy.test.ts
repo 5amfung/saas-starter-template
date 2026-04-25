@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { evaluateWorkspaceProductPolicy } from '../../../src/application/workspace-product-policy';
-import { getPlanById } from '../../../src/domain/plans';
-import { resolveEntitlements } from '../../../src/domain/entitlements';
-import type { WorkspaceProductPolicyInput } from '../../../src/application/workspace-product-policy';
+import type { WorkspaceProductPolicyInput } from '@/billing/core/application/workspace-product-policy';
+import { evaluateWorkspaceProductPolicy } from '@/billing/core/application/workspace-product-policy';
+import { getPlanById } from '@/billing/core/domain/plans';
+import { resolveEntitlements } from '@/billing/core/domain/entitlements';
 
 function buildInput(
   overrides: Partial<WorkspaceProductPolicyInput> = {}

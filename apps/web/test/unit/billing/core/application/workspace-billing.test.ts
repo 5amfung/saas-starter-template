@@ -10,7 +10,7 @@ import {
   getWorkspaceEntitlements,
   previewPlanChange,
   setWorkspaceEntitlementOverrides,
-} from '../../../src/application/workspace-billing';
+} from '@/billing/core/application/workspace-billing';
 
 const {
   listSubscriptionsForWorkspaceMock,
@@ -26,7 +26,7 @@ const {
   clearWorkspaceEntitlementOverridesRowMock: vi.fn(),
 }));
 
-vi.mock('../../../src/infrastructure/workspace-repository', () => ({
+vi.mock('@/billing/core/infrastructure/workspace-repository', () => ({
   listSubscriptionsForWorkspace: listSubscriptionsForWorkspaceMock,
   countWorkspaceMembersFromDb: countWorkspaceMembersFromDbMock,
   getWorkspaceEntitlementOverridesRow: getWorkspaceEntitlementOverridesRowMock,

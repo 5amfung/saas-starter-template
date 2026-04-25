@@ -485,7 +485,7 @@ lint, and dependency-cruiser boundary checks all passed.
 - Modify: auth imports that depend on billing
 - Modify: `.dependency-cruiser.cjs`
 
-- [ ] **Step 1: Move billing core**
+- [x] **Step 1: Move billing core**
 
 Target mapping:
 
@@ -497,7 +497,7 @@ packages/billing/src/infrastructure/** -> apps/web/src/billing/core/infrastructu
 packages/billing/src/index.ts          -> apps/web/src/billing/core/index.ts
 ```
 
-- [ ] **Step 2: Replace imports**
+- [x] **Step 2: Replace imports**
 
 Use:
 
@@ -507,7 +507,7 @@ Use:
 
 App UI and server code should import public billing core exports, not infrastructure internals.
 
-- [ ] **Step 3: Enforce billing boundaries**
+- [x] **Step 3: Enforce billing boundaries**
 
 Update `.dependency-cruiser.cjs` so:
 
@@ -516,7 +516,7 @@ Update `.dependency-cruiser.cjs` so:
 - infrastructure may import DB but is not imported by UI/routes directly
 - app components import `@/billing/core`, app server wrappers, or types only
 
-- [ ] **Step 4: Move tests and delete package**
+- [x] **Step 4: Move tests and delete package**
 
 Move billing package tests to `apps/web/test/unit/billing/core`.
 
@@ -528,7 +528,7 @@ rg -n "@workspace/billing" apps packages package.json pnpm-lock.yaml
 
 has no active references.
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 Run:
 
@@ -540,6 +540,14 @@ pnpm run check:boundaries
 ```
 
 Expected: all pass.
+
+Current execution note: before moving, `pnpm --filter @workspace/billing test`
+passed with 3 files and 19 tests. After the move, the `@workspace/billing`
+search returned no active references, `pnpm --filter @workspace/web test
+test/unit/billing` passed with 8 files and 107 tests, and web typecheck, web
+lint, and dependency-cruiser boundary checks all passed. The DB-schema
+allow-list now includes `apps/web/src/billing/core/infrastructure/workspace-repository.ts`
+until the DB layer moves.
 
 ## Task 8: Move `packages/db` And `packages/db-schema`
 

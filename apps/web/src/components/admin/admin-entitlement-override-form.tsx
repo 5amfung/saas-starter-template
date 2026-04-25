@@ -16,18 +16,18 @@ import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 import { Separator } from '@workspace/ui/components/separator';
 import { Textarea } from '@workspace/ui/components/textarea';
-import {
-  FEATURE_METADATA,
-  LIMIT_METADATA,
-  QUOTA_METADATA,
-  UNLIMITED,
-} from '@workspace/billing';
 import type {
   EntitlementOverrides,
   FeatureKey,
   LimitKey,
   QuotaKey,
-} from '@workspace/billing';
+} from '@/billing/core';
+import {
+  FEATURE_METADATA,
+  LIMIT_METADATA,
+  QUOTA_METADATA,
+  UNLIMITED,
+} from '@/billing/core';
 import {
   OPERATIONS,
   buildWorkflowAttributes,

@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { evaluateWorkspaceProductPolicy } from '@workspace/billing';
 import { renderWithProviders } from '@workspace/test-utils';
-import type { Entitlements, PlanDefinition } from '@workspace/billing';
+import type { Entitlements, PlanDefinition } from '@/billing/core';
+import { evaluateWorkspaceProductPolicy } from '@/billing/core';
 import { BillingPlanCards } from '@/components/billing/billing-plan-cards';
 
 const FREE_PLAN: PlanDefinition = {

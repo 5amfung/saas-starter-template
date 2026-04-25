@@ -1,5 +1,5 @@
-import { evaluateWorkspaceProductPolicy } from '@workspace/billing';
-import type { Entitlements, PlanDefinition, PlanId } from '@workspace/billing';
+import type { Entitlements, PlanDefinition, PlanId } from '@/billing/core';
+import { evaluateWorkspaceProductPolicy } from '@/billing/core';
 
 export const FREE_PLAN_FIXTURE: PlanDefinition = {
   id: 'free',

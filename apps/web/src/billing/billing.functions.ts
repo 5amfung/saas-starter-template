@@ -2,8 +2,8 @@ import { createServerFn } from '@tanstack/react-start';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import * as Sentry from '@sentry/tanstackstart-react';
 import * as z from 'zod';
-import { PLANS } from '@workspace/billing';
-import type { PlanId } from '@workspace/billing';
+import type { PlanId } from '@/billing/core';
+import { PLANS } from '@/billing/core';
 import { OPERATIONS, buildWorkflowAttributes } from '@/observability/server';
 import {
   cancelWorkspaceSubscription as cancelWorkspaceSubscriptionServer,

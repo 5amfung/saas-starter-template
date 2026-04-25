@@ -3,6 +3,6 @@ export {
   computePlanDiff,
   getDowngradePlans,
   getPlanAction,
-} from '@workspace/billing';
+} from '@/billing/core';
 
-export type { LimitChange, PlanAction, PlanDiff } from '@workspace/billing';
+export type { LimitChange, PlanAction, PlanDiff } from '@/billing/core';

@@ -1,5 +1,5 @@
-import { PLANS } from '../../src/domain/plans';
-import type { WorkspaceBillingSnapshot } from '../../src/contracts/snapshot';
+import type { WorkspaceBillingSnapshot } from '@/billing/core/contracts/snapshot';
+import { PLANS } from '@/billing/core/domain/plans';
 
 type SnapshotOverrides = Partial<WorkspaceBillingSnapshot>;
 

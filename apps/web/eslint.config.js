@@ -31,11 +31,11 @@ export default [
           patterns: [
             {
               group: [
-                '@workspace/billing/infrastructure/*',
-                '@workspace/billing/internal/*',
+                '@/billing/core/infrastructure/*',
+                '@/billing/core/internal/*',
               ],
               message:
-                'Import from @workspace/billing public API only (package root exports).',
+                'Import from @/billing/core public API only (package root exports).',
             },
           ],
         },

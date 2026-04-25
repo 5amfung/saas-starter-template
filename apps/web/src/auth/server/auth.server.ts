@@ -15,7 +15,6 @@ import {
   subscription as subscriptionTable,
   user as userTable,
 } from '@workspace/db-schema';
-import { assertInviteAllowed } from '@workspace/billing';
 import { isDuplicateOrganizationError, isSignInPath } from '../core/auth-utils';
 import {
   organizationAccessControl,
@@ -28,6 +27,7 @@ import { createAuthEmails } from './auth-emails.server';
 import type { PlanId } from '../core/plans';
 import type { EmailClient } from '@/email';
 import type { Database } from '@workspace/db';
+import { assertInviteAllowed } from '@/billing/core';
 import {
   OPERATIONS,
   buildWorkflowAttributes,

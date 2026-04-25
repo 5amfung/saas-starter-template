@@ -12,7 +12,7 @@ import type {
   Entitlements,
   PlanDefinition,
   WorkspaceProductPolicy,
-} from '@workspace/billing';
+} from '@/billing/core';
 
 interface BillingPlanCardsProps {
   currentPlan: PlanDefinition;

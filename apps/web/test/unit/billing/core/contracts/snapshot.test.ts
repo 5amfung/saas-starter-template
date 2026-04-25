@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { parseWorkspaceBillingSnapshot } from '../../../src/contracts/snapshot';
-import { buildWorkspaceBillingSnapshotFixture } from '../../fixtures/workspace-billing-snapshot.fixture';
+import { buildWorkspaceBillingSnapshotFixture } from '../fixtures/workspace-billing-snapshot.fixture';
+import { parseWorkspaceBillingSnapshot } from '@/billing/core/contracts/snapshot';
 
 describe('workspaceBillingSnapshot contract', () => {
   it('accepts a complete snapshot payload', () => {

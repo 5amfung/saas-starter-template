@@ -104,7 +104,7 @@ beforeEach(() => {
   });
 });
 
-vi.mock('@workspace/billing', () => ({
+vi.mock('@/billing/core', () => ({
   PLANS: [
     { id: 'starter', stripeEnabled: true, isEnterprise: false },
     { id: 'pro', stripeEnabled: true, isEnterprise: false },

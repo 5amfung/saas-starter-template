@@ -1,7 +1,7 @@
 import { IconCheck } from '@tabler/icons-react';
-import { describeEntitlements, formatPlanPrice } from '@workspace/billing';
 import { cn } from '@workspace/ui/lib/utils';
-import type { Entitlements, PlanDefinition } from '@workspace/billing';
+import type { Entitlements, PlanDefinition } from '@/billing/core';
+import { describeEntitlements, formatPlanPrice } from '@/billing/core';
 
 interface BillingPlanSummaryProps {
   plan: PlanDefinition;

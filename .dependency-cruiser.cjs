@@ -4,25 +4,31 @@ module.exports = {
     {
       name: 'no-app-imports-billing-infrastructure',
       comment:
-        'Applications must only use @workspace/billing public APIs, never internals.',
+        'UI and route code must use billing core exports or app server wrappers, never infrastructure internals.',
       severity: 'error',
-      from: { path: '^apps/web/src' },
-      to: { path: '^packages/billing/src/(infrastructure|internal)/' },
+      from: {
+        path: '^apps/web/src/(components|routes|hooks|admin|workspace)/',
+      },
+      to: { path: '^apps/web/src/billing/core/infrastructure/' },
     },
     {
       name: 'no-billing-core-imports-db-schema',
       comment:
         'Billing storage access must stay in infrastructure adapters, not contracts/domain/application.',
       severity: 'error',
-      from: { path: '^packages/billing/src/(contracts|domain|application)/' },
+      from: {
+        path: '^apps/web/src/billing/core/(contracts|domain|application)/',
+      },
       to: { path: '^packages/db-schema/src/' },
     },
     {
       name: 'no-billing-dependency-on-apps',
       comment: 'Domain packages cannot depend on application layers.',
       severity: 'error',
-      from: { path: '^packages/billing/src/' },
-      to: { path: '^apps/web/src/' },
+      from: { path: '^apps/web/src/billing/core/' },
+      to: {
+        path: '^apps/web/src/(routes|components|admin|workspace|auth|policy|email|observability)/',
+      },
     },
     {
       name: 'no-new-app-db-schema-imports',
@@ -32,7 +38,7 @@ module.exports = {
       from: {
         path: '^apps/web/src',
         pathNot:
-          '^apps/web/src/(init\\.ts|account/notification-preferences\\.server\\.ts|admin/admin\\.server\\.ts|auth/server/(auth|billing)\\.server\\.ts|integrations/core/repository\\.ts)$',
+          '^apps/web/src/(init\\.ts|account/notification-preferences\\.server\\.ts|admin/admin\\.server\\.ts|auth/server/(auth|billing)\\.server\\.ts|billing/core/infrastructure/workspace-repository\\.ts|integrations/core/repository\\.ts)$',
       },
       to: { path: '^packages/db-schema/src/' },
     },
