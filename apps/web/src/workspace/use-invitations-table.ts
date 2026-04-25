@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { authClient } from '@workspace/auth/client';
 import {
   OPERATIONS,
   buildWorkflowAttributes,
@@ -17,6 +16,7 @@ import {
 import type { WorkspaceInvitationRow } from '@/components/workspace/workspace-invitations-table';
 import type { SortingState } from '@tanstack/react-table';
 import type { InviteDraft, InviteRole } from './workspace-members.types';
+import { authClient } from '@/auth/client/auth-client';
 import {
   cancelWorkspaceInvitation,
   inviteWorkspaceMember,

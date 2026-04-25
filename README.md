@@ -164,7 +164,6 @@ saas-starter-template/
 │           ├── types/        # TypeScript type declarations
 │           └── workspace/    # Workspace/multi-tenancy logic and tests
 ├── packages/
-│   ├── auth/                 # Better Auth server/client setup, permissions, and schemas
 │   ├── db/                   # Drizzle ORM schema, database client, and migrations
 │   ├── email/                # Email provider integration and React Email templates
 │   ├── eslint-config/        # Shared ESLint configuration
@@ -180,7 +179,6 @@ saas-starter-template/
 | Package                    | Description                                            |
 | -------------------------- | ------------------------------------------------------ |
 | `@workspace/web`           | Main SaaS application (TanStack Start + Vite)          |
-| `@workspace/auth`          | Authentication logic (Better Auth server/client setup) |
 | `@workspace/db`            | Database schema and client (Drizzle ORM + Neon)        |
 | `@workspace/email`         | Email sending and React Email templates                |
 | `@workspace/ui`            | Shared UI components (shadcn/ui, Recharts, styles)     |
@@ -215,8 +213,8 @@ during an upgrade, generate it to a temporary file and manually port the needed
 changes:
 
 ```bash
-pnpm --filter @workspace/db-schema exec pnpx @better-auth/cli generate \
-  --config ../auth/src/auth.cli.ts \
+pnpm dlx @better-auth/cli generate \
+  --config apps/web/src/auth/server/auth.cli.ts \
   --output /tmp/better-auth-auth.schema.ts \
   --yes
 ```

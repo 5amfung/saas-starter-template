@@ -8,7 +8,7 @@ import {
   signupSchema,
   signupSearchSchema,
   verifySearchSchema,
-} from '../../src/schemas';
+} from '@/auth/schemas/schemas';
 
 describe('loginSchema', () => {
   it('accepts valid credentials', () => {

@@ -22,8 +22,6 @@
       "@workspace/db/*": ["../../packages/db/src/*"],
       "@workspace/email": ["../../packages/email/src/index.ts"],
       "@workspace/email/*": ["../../packages/email/src/*"],
-      "@workspace/auth": ["../../packages/auth/src/index.ts"],
-      "@workspace/auth/*": ["../../packages/auth/src/*"],
       "@workspace/logging": ["../../packages/logging/src/server.ts"],
       "@workspace/logging/client": ["../../packages/logging/src/client.ts"],
       "@workspace/logging/server": ["../../packages/logging/src/server.ts"],

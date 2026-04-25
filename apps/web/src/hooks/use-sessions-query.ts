@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { authClient } from '@workspace/auth/client';
+import { authClient } from '@/auth/client/auth-client';
 
 export const SESSIONS_QUERY_KEY = ['session', 'active-list'] as const;
 

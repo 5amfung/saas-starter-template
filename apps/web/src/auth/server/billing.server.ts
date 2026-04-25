@@ -5,9 +5,9 @@ import {
   organization as organizationTable,
   subscription as subscriptionTable,
 } from '@workspace/db-schema';
-import { resolveWorkspacePlanId } from './plans';
+import { resolveWorkspacePlanId } from '../core/plans';
 import type { Database } from '@workspace/db';
-import type { PlanId } from './plans';
+import type { PlanId } from '../core/plans';
 
 /**
  * Creates billing query helpers with closed-over database and Stripe client.

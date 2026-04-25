@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { authClient } from '@workspace/auth/client';
 import { getAdminAppEntry } from './admin-app-capabilities.functions';
 import { getAdminAppCapabilitiesForSession } from './admin-app-capabilities.shared';
+import { authClient } from '@/auth/client/auth-client';
 
 export const ADMIN_APP_ENTRY_QUERY_KEY = ['admin-app', 'entry'] as const;
 

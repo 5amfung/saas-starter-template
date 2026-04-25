@@ -6,7 +6,7 @@
  * factory, this file instantiates it with dummy values so the CLI can
  * introspect the plugin/schema configuration.
  *
- * Usage: pnpx @better-auth/cli generate --config ./auth.cli.ts ...
+ * Usage: pnpm dlx @better-auth/cli generate --config apps/web/src/auth/server/auth.cli.ts ...
  */
 import { createAuth } from './auth.server';
 

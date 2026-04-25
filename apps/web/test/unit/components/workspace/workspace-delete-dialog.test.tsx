@@ -17,7 +17,7 @@ const { startSpanMock, loggerInfoMock, loggerErrorMock } = vi.hoisted(() => ({
   loggerErrorMock: vi.fn(),
 }));
 
-vi.mock('@workspace/auth/client', () => ({
+vi.mock('@/auth/client/auth-client', () => ({
   authClient: {
     organization: {
       setActive: setActiveMock,

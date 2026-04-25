@@ -1,7 +1,7 @@
 // test/mocks/auth.ts
 
 /**
- * Creates hoisted auth mock functions for use with vi.mock('@workspace/auth/client').
+ * Creates hoisted auth mock functions for use with vi.mock('@/auth/client/auth-client').
  */
 export function createAuthClientMocks() {
   const signInEmail = vi.fn();

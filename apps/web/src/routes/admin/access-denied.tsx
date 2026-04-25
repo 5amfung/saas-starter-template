@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { authClient } from '@workspace/auth/client';
 import { Button, buttonVariants } from '@workspace/ui/components/button';
 import {
   Card,
@@ -9,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@workspace/ui/components/card';
+import { authClient } from '@/auth/client/auth-client';
 
 export const Route = createFileRoute('/admin/access-denied')({
   component: AdminAccessDeniedPage,

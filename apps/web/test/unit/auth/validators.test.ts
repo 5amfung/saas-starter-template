@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { getSessionOrNull, requireVerifiedSession } from '../../src/validators';
+import {
+  getSessionOrNull,
+  requireVerifiedSession,
+} from '@/auth/server/validators';
 
 vi.mock('@tanstack/react-router', () => ({
   redirect: vi.fn((opts: unknown) => {

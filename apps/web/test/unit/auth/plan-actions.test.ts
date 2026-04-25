@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { getPlanById } from '../../src/plans';
+import { getPlanById } from '@/auth/core/plans';
 import {
   computePlanDiff,
   getDowngradePlans,
   getPlanAction,
-} from '../../src/plan-actions';
+} from '@/auth/core/plan-actions';
 
 describe('getPlanAction', () => {
   const free = getPlanById('free')!;

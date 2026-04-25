@@ -3,7 +3,7 @@ import {
   isDuplicateOrganizationError,
   isRecord,
   isSignInPath,
-} from '../../src/auth-utils';
+} from '@/auth/core/auth-utils';
 
 describe('isSignInPath', () => {
   it.each(['/sign-in', '/sign-in/email', '/callback/', '/callback/google'])(

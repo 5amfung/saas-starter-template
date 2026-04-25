@@ -3,7 +3,7 @@ import {
   ORGANIZATION_DEFAULT_ROLES,
   organizationRoles,
   organizationStatements,
-} from '../../src/permissions';
+} from '@/auth/core/permissions';
 
 describe('permissions', () => {
   it('ORGANIZATION_DEFAULT_ROLES contains owner, admin, and member', () => {

@@ -24,7 +24,7 @@ import {
   useSidebar,
 } from '@workspace/ui/components/sidebar';
 import { Skeleton } from '@workspace/ui/components/skeleton';
-import { authClient } from '@workspace/auth/client';
+import { authClient } from '@/auth/client/auth-client';
 
 export function NavUserSkeleton() {
   return (

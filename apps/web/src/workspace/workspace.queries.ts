@@ -1,5 +1,5 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
-import { authClient } from '@workspace/auth/client';
+import { authClient } from '@/auth/client/auth-client';
 import {
   getWorkspaceById,
   getWorkspaceSwitcherTriggerDetail,

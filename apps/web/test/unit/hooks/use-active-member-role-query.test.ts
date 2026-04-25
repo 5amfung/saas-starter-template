@@ -7,7 +7,7 @@ const { getActiveMemberRoleMock } = vi.hoisted(() => ({
   getActiveMemberRoleMock: vi.fn(),
 }));
 
-vi.mock('@workspace/auth/client', () => ({
+vi.mock('@/auth/client/auth-client', () => ({
   authClient: {
     organization: {
       getActiveMemberRole: getActiveMemberRoleMock,

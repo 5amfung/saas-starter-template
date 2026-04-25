@@ -1,6 +1,6 @@
 import { OPERATIONS } from '@workspace/logging/server';
 import type * as LoggingServer from '@workspace/logging/server';
-import type { AuthConfig } from '../../src/auth.server';
+import type { AuthConfig } from '@/auth/server/auth.server';
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks — references used inside vi.mock() definitions.
@@ -160,15 +160,15 @@ vi.mock('@workspace/logging/server', async (importActual) => {
   };
 });
 
-vi.mock('../../src/billing.server', () => ({
+vi.mock('@/auth/server/billing.server', () => ({
   createBillingHelpers: createBillingHelpersMock,
 }));
 
-vi.mock('../../src/auth-emails.server', () => ({
+vi.mock('@/auth/server/auth-emails.server', () => ({
   createAuthEmails: createAuthEmailsMock,
 }));
 
-vi.mock('../../src/slug', () => ({
+vi.mock('@/auth/core/slug', () => ({
   generateSlug: generateSlugMock,
 }));
 
@@ -244,7 +244,7 @@ describe('createAuth', () => {
 
   // We import createAuth lazily to ensure mocks are in place.
   async function importCreateAuth() {
-    const mod = await import('../../src/auth.server');
+    const mod = await import('@/auth/server/auth.server');
     return mod.createAuth;
   }
 
@@ -374,9 +374,9 @@ describe('createAuth', () => {
       const config = betterAuthSpy.mock.calls[0][0] as BetterAuthConfig;
       const hook = config.databaseHooks!.user!.create!.after!;
 
-      await expect(hook({ id: 'user_err' })).rejects.toThrow(
-        'Connection refused'
-      );
+      await expect(hook({ id: 'user_err' })).rejects.toMatchObject({
+        message: expect.stringContaining('Connection refused'),
+      });
       expect(loggerErrorMock).toHaveBeenCalledWith(
         'Failed to create default workspace',
         expect.objectContaining({
@@ -409,9 +409,11 @@ describe('createAuth', () => {
         opts.organizationHooks.beforeDeleteOrganization({
           organization: { id: 'org_with_sub' },
         })
-      ).rejects.toThrow(
-        'Cannot delete a workspace with an active subscription'
-      );
+      ).rejects.toMatchObject({
+        message: expect.stringContaining(
+          'Cannot delete a workspace with an active subscription'
+        ),
+      });
     });
 
     it('blocks deletion when workspace has a trialing subscription', async () => {
@@ -429,9 +431,11 @@ describe('createAuth', () => {
         opts.organizationHooks.beforeDeleteOrganization({
           organization: { id: 'org_trial' },
         })
-      ).rejects.toThrow(
-        'Cannot delete a workspace with an active subscription'
-      );
+      ).rejects.toMatchObject({
+        message: expect.stringContaining(
+          'Cannot delete a workspace with an active subscription'
+        ),
+      });
     });
 
     it("blocks deletion when it is the user's last workspace", async () => {
@@ -452,7 +456,9 @@ describe('createAuth', () => {
         opts.organizationHooks.beforeDeleteOrganization({
           organization: { id: 'org_last' },
         })
-      ).rejects.toThrow('Cannot delete your last workspace');
+      ).rejects.toMatchObject({
+        message: expect.stringContaining('Cannot delete your last workspace'),
+      });
     });
 
     it('allows deletion when no active subscriptions and user has multiple workspaces', async () => {
@@ -591,7 +597,9 @@ describe('createAuth', () => {
         opts.organizationHooks.beforeCreateInvitation({
           organization: { id: 'org_free' },
         })
-      ).rejects.toThrow('reached its member limit');
+      ).rejects.toMatchObject({
+        message: expect.stringContaining('reached its member limit'),
+      });
       expect(loggerErrorMock).toHaveBeenCalledWith(
         'Workspace invitation blocked by member limit',
         expect.objectContaining({
@@ -627,7 +635,9 @@ describe('createAuth', () => {
         opts.organizationHooks.beforeCreateInvitation({
           organization: { id: 'org_full' },
         })
-      ).rejects.toThrow('reached its member limit');
+      ).rejects.toMatchObject({
+        message: expect.stringContaining('reached its member limit'),
+      });
     });
 
     it('uses enterprise entitlement overrides when enforcing member limits', async () => {
@@ -671,7 +681,9 @@ describe('createAuth', () => {
         opts.organizationHooks.beforeCreateInvitation({
           organization: { id: 'org_enterprise' },
         })
-      ).rejects.toThrow('reached its member limit');
+      ).rejects.toMatchObject({
+        message: expect.stringContaining('reached its member limit'),
+      });
     });
   });
 

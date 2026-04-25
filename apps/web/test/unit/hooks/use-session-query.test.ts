@@ -7,7 +7,7 @@ const { getSession } = vi.hoisted(() => ({
   getSession: vi.fn(),
 }));
 
-vi.mock('@workspace/auth/client', () => ({
+vi.mock('@/auth/client/auth-client', () => ({
   authClient: {
     getSession,
   },

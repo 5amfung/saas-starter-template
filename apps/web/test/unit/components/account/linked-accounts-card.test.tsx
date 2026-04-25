@@ -8,7 +8,7 @@ const { linkSocialMock, unlinkAccountMock } = vi.hoisted(() => ({
   unlinkAccountMock: vi.fn(),
 }));
 
-vi.mock('@workspace/auth/client', () => ({
+vi.mock('@/auth/client/auth-client', () => ({
   authClient: {
     linkSocial: linkSocialMock,
     unlinkAccount: unlinkAccountMock,
@@ -191,7 +191,7 @@ describe('LinkedAccountsCard — unlinked provider', () => {
       .fn()
       .mockResolvedValue({ error: { message: 'Connection refused' } });
 
-    vi.doMock('@workspace/auth/client', () => ({
+    vi.doMock('@/auth/client/auth-client', () => ({
       authClient: {
         linkSocial: localLinkSocialMock,
         unlinkAccount: vi.fn(),

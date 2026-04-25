@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { generateSlug } from '../../src/slug';
+import { generateSlug } from '@/auth/core/slug';
 
 vi.mock('random-word-slugs', () => ({
   generateSlug: vi.fn(() => 'bold-blue-sparrow'),
@@ -44,7 +44,7 @@ describe('generateSlug', () => {
     vi.doUnmock('random-word-slugs');
     vi.resetModules();
 
-    const { generateSlug: realGenerateSlug } = await import('../../src/slug');
+    const { generateSlug: realGenerateSlug } = await import('@/auth/core/slug');
 
     const slug = realGenerateSlug();
 

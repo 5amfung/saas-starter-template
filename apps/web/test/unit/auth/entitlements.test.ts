@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import type {
+  EntitlementOverrides,
+  Entitlements,
+} from '@/auth/core/entitlements';
 import {
   UNLIMITED,
   checkLimit,
@@ -7,8 +11,7 @@ import {
   formatEntitlementValue,
   hasFeature,
   resolveEntitlements,
-} from '../../src/entitlements';
-import type { EntitlementOverrides, Entitlements } from '../../src/entitlements';
+} from '@/auth/core/entitlements';
 
 const BASE: Entitlements = {
   limits: { members: 5, projects: 10, apiKeys: 0 },

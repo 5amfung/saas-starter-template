@@ -632,6 +632,11 @@ Expected: tests pass, boundary check passes, and Drizzle can read the new schema
 
 ## Task 9: Move `packages/auth`
 
+> Current execution note: this task was executed before logging, email,
+> billing, and DB so those packages would no longer have `packages/auth` as a
+> consumer. That keeps dependency direction legal during the remaining package
+> removals.
+
 **Files:**
 
 - Move: `packages/auth/src/**` -> `apps/web/src/auth/**`
@@ -639,7 +644,7 @@ Expected: tests pass, boundary check passes, and Drizzle can read the new schema
 - Modify: imports from `@workspace/auth`, `@workspace/auth/client`, `@workspace/auth/server`, `@workspace/auth/validators`, `@workspace/auth/schemas`, `@workspace/auth/plans`, `@workspace/auth/billing`
 - Modify: `.dependency-cruiser.cjs`
 
-- [ ] **Step 1: Create auth internal layers**
+- [x] **Step 1: Create auth internal layers**
 
 Target mapping:
 
@@ -661,7 +666,7 @@ packages/auth/src/index.ts               -> apps/web/src/auth/index.ts
 
 Review `auth.cli.ts` separately. If still useful, move it to a server/script-only app path and wire it through a `pnpm --filter @workspace/web` script.
 
-- [ ] **Step 2: Replace imports**
+- [x] **Step 2: Replace imports**
 
 Use:
 
@@ -675,11 +680,11 @@ Use:
 @workspace/auth/billing    -> @/auth/server/billing.server
 ```
 
-- [ ] **Step 3: Preserve client-safe barrel behavior**
+- [x] **Step 3: Preserve client-safe barrel behavior**
 
 Keep `apps/web/src/auth/index.ts` client-safe. It must not export server-only modules or import DB/email/logging server code.
 
-- [ ] **Step 4: Enforce auth boundaries**
+- [x] **Step 4: Enforce auth boundaries**
 
 Update `.dependency-cruiser.cjs` so:
 
@@ -687,7 +692,7 @@ Update `.dependency-cruiser.cjs` so:
 - `src/auth/index.ts` stays client-safe
 - `src/auth/server/**` can import DB, email, billing core, and server observability
 
-- [ ] **Step 5: Move tests and delete package**
+- [x] **Step 5: Move tests and delete package**
 
 Move auth tests to app test folders.
 
@@ -699,7 +704,7 @@ rg -n "@workspace/auth" apps packages package.json pnpm-lock.yaml
 
 has no active references.
 
-- [ ] **Step 6: Verify**
+- [x] **Step 6: Verify**
 
 Run:
 
@@ -712,6 +717,14 @@ pnpm run check:boundaries
 ```
 
 Expected: all pass.
+
+Current execution note: before moving, `pnpm --filter @workspace/auth test`
+passed with 11 files and 196 tests. After the move, the `@workspace/auth`
+search returned no active references, `pnpm --filter @workspace/web test
+test/unit/auth` passed with 11 files and 196 tests, and web typecheck, web
+lint, and dependency-cruiser boundary checks all passed. The moved auth tests
+use app-compatible rejection message assertions for cases that previously used
+`rejects.toThrow` under the package-local Vitest config.
 
 ## Task 10: Workspace Cleanup
 

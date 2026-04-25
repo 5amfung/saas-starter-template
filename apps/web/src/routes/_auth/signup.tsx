@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { signupSearchSchema } from '@workspace/auth/schemas';
+import { signupSearchSchema } from '@/auth/schemas/schemas';
 import { SignupForm } from '@/auth';
 
 export const Route = createFileRoute('/_auth/signup')({

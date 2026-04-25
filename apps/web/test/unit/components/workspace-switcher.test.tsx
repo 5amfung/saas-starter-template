@@ -33,7 +33,7 @@ const {
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
 
-vi.mock('@workspace/auth/client', () => ({
+vi.mock('@/auth/client/auth-client', () => ({
   authClient: {
     organization: {
       setActive: setActiveMock,
@@ -42,7 +42,7 @@ vi.mock('@workspace/auth/client', () => ({
   },
 }));
 
-vi.mock('@workspace/auth', () => ({
+vi.mock('@/auth', () => ({
   generateSlug: generateSlugMock,
 }));
 

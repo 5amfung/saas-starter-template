@@ -1,6 +1,6 @@
 import { APIError } from 'better-auth/api';
 import { getFreePlan, getPlanById } from '@workspace/billing';
-import { isRecord } from '@workspace/auth';
+import { isRecord } from '@/auth';
 import { getAuth } from '@/init';
 import { pickDefaultWorkspace } from '@/workspace/workspace';
 

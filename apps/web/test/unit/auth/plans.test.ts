@@ -9,7 +9,7 @@ import {
   getUpgradePlan,
   getUpgradePlans,
   resolveWorkspacePlanId,
-} from '../../src/plans';
+} from '@/auth/core/plans';
 
 describe('plans', () => {
   it('exports exactly four plans', () => {

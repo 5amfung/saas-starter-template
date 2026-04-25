@@ -32,7 +32,7 @@ vi.mock('@tabler/icons-react', () => ({
   IconStack2: () => null,
 }));
 
-vi.mock('@workspace/auth/client', () => ({
+vi.mock('@/auth/client/auth-client', () => ({
   authClient: {
     signOut: vi.fn(),
     organization: {

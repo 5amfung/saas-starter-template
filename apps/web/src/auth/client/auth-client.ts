@@ -7,7 +7,7 @@ import {
   organizationClient,
 } from 'better-auth/client/plugins';
 import { createAuthClient } from 'better-auth/react';
-import type { createAuth } from './auth.server';
+import type { createAuth } from '../server/auth.server';
 
 // Use the return type of createAuth to infer additional fields.
 type AuthInstance = ReturnType<typeof createAuth>;

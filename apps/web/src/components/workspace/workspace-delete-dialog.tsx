@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { useMutation } from '@tanstack/react-query';
-import { authClient } from '@workspace/auth/client';
 import { toast } from 'sonner';
 import {
   OPERATIONS,
@@ -10,6 +9,7 @@ import {
   workflowLogger,
 } from '@workspace/logging/client';
 import { Button } from '@workspace/ui/components/button';
+import { authClient } from '@/auth/client/auth-client';
 import { TypedConfirmDialog } from '@/components/shared/typed-confirm-dialog';
 
 const CONFIRMATION_TEXT = 'DELETE';

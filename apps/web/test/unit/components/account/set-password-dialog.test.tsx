@@ -9,7 +9,7 @@ const { requestPasswordResetMock, signOutMock } = vi.hoisted(() => ({
   signOutMock: vi.fn(),
 }));
 
-vi.mock('@workspace/auth/client', () => ({
+vi.mock('@/auth/client/auth-client', () => ({
   authClient: {
     requestPasswordReset: requestPasswordResetMock,
     signOut: signOutMock,

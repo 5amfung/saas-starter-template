@@ -32,7 +32,7 @@ module.exports = {
       from: {
         path: '^apps/web/src',
         pathNot:
-          '^apps/web/src/(init\\.ts|account/notification-preferences\\.server\\.ts|admin/admin\\.server\\.ts|integrations/core/repository\\.ts)$',
+          '^apps/web/src/(init\\.ts|account/notification-preferences\\.server\\.ts|admin/admin\\.server\\.ts|auth/server/(auth|billing)\\.server\\.ts|integrations/core/repository\\.ts)$',
       },
       to: { path: '^packages/db-schema/src/' },
     },
@@ -68,6 +68,14 @@ module.exports = {
       severity: 'error',
       from: { path: '^apps/web/src/(components|routes|hooks)/' },
       to: { path: '^apps/web/src/integrations/.*\\.server\\.ts$' },
+    },
+    {
+      name: 'no-auth-index-imports-server-values',
+      comment:
+        'The auth barrel is client-safe and must not re-export server runtime values.',
+      severity: 'error',
+      from: { path: '^apps/web/src/auth/index\\.ts$' },
+      to: { path: '^apps/web/src/(db|email|observability/server\\.ts)' },
     },
   ],
   options: {

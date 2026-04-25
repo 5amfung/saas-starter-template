@@ -7,7 +7,6 @@ import {
 } from '@tanstack/react-query';
 import { useNavigate, useRouter } from '@tanstack/react-router';
 import { toast } from 'sonner';
-import { authClient } from '@workspace/auth/client';
 import {
   OPERATIONS,
   buildWorkflowAttributes,
@@ -19,6 +18,7 @@ import {
 } from './workspace-members.types';
 import type { SortingState } from '@tanstack/react-table';
 import type { WorkspaceMemberRow } from '@/components/workspace/workspace-members-table';
+import { authClient } from '@/auth/client/auth-client';
 import { useSessionQuery } from '@/hooks';
 import {
   WORKSPACE_DETAIL_QUERY_KEY,

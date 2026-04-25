@@ -2,7 +2,6 @@ import { IconLoader2 } from '@tabler/icons-react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { authClient } from '@workspace/auth/client';
 import {
   Avatar,
   AvatarFallback,
@@ -25,6 +24,7 @@ import {
 } from '@workspace/ui/components/field';
 import { Input } from '@workspace/ui/components/input';
 import { accountProfileSchema } from './account.schemas';
+import { authClient } from '@/auth/client/auth-client';
 import { toFieldErrorItem } from '@/lib/form-utils';
 import { getInitials } from '@/lib/get-initials';
 import { SESSION_QUERY_KEY } from '@/hooks/use-session-query';

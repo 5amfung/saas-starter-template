@@ -30,7 +30,7 @@ vi.mock('@workspace/email/templates/workspace-invitation-email', () => ({
 }));
 
 // Lazily import the module under test after all mocks are registered.
-const { createAuthEmails } = await import('../../src/auth-emails.server');
+const { createAuthEmails } = await import('@/auth/server/auth-emails.server');
 
 const MOCK_REQUEST_CONTEXT = {
   requestedAtUtc: '12 March 2026, 10:00 UTC',

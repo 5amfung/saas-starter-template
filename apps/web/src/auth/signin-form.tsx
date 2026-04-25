@@ -1,7 +1,5 @@
 import { useForm } from '@tanstack/react-form';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { authClient } from '@workspace/auth/client';
-import { loginSchema } from '@workspace/auth/schemas';
 import {
   Card,
   CardContent,
@@ -24,6 +22,8 @@ import {
 } from '@workspace/logging/client';
 import { Input } from '@workspace/ui/components/input';
 import { GoogleSignInButton } from './google-sign-in-button';
+import { loginSchema } from '@/auth/schemas/schemas';
+import { authClient } from '@/auth/client/auth-client';
 import { FormError } from '@/components/form/form-error';
 import { FormErrorDisplay } from '@/components/form/form-error-display';
 import { FormSubmitButton } from '@/components/form/form-submit-button';

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createBillingHelpers,
   resolveSubscriptionDetails,
-} from '../../src/billing.server';
+} from '@/auth/server/billing.server';
 
 // ── Hoisted mocks ──────────────────────────────────────────────────────────
 
@@ -283,7 +283,9 @@ describe('createBillingHelpers', () => {
 
       await expect(
         helpers.getInvoicesForWorkspace(TEST_WORKSPACE_ID)
-      ).rejects.toThrow('Stripe error');
+      ).rejects.toMatchObject({
+        message: expect.stringContaining('Stripe error'),
+      });
     });
   });
 
@@ -307,7 +309,9 @@ describe('createBillingHelpers', () => {
 
       await expect(
         helpers.cancelSubscriptionAtPeriodEnd('sub_123')
-      ).rejects.toThrow('Stripe error');
+      ).rejects.toMatchObject({
+        message: expect.stringContaining('Stripe error'),
+      });
 
       expect(stripeSubscriptionsUpdateMock).toHaveBeenCalledWith('sub_123', {
         cancel_at_period_end: true,
@@ -333,7 +337,9 @@ describe('createBillingHelpers', () => {
 
       await expect(
         helpers.getSubscriptionSchedule('sub_sched_456')
-      ).rejects.toThrow('Stripe error');
+      ).rejects.toMatchObject({
+        message: expect.stringContaining('Stripe error'),
+      });
 
       expect(stripeSchedulesRetrieveMock).toHaveBeenCalledWith('sub_sched_456');
     });
@@ -357,7 +363,9 @@ describe('createBillingHelpers', () => {
 
       await expect(
         helpers.releaseSubscriptionSchedule('sub_sched_789')
-      ).rejects.toThrow('Stripe error');
+      ).rejects.toMatchObject({
+        message: expect.stringContaining('Stripe error'),
+      });
 
       expect(stripeSchedulesReleaseMock).toHaveBeenCalledWith('sub_sched_789');
     });

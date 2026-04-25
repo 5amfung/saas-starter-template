@@ -12,7 +12,7 @@ const {
   getEmailClientMock: vi.fn(),
 }));
 
-vi.mock('@workspace/auth/server', () => ({
+vi.mock('@/auth/server/auth.server', () => ({
   createAuth: createAuthMock,
 }));
 
