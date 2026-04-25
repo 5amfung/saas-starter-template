@@ -28,6 +28,7 @@ import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-pass
 import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-password';
 import { Route as ProtectedWsIndexRouteImport } from './routes/_protected/ws/index';
 import { Route as ApiTestEmailsRouteImport } from './routes/api/test/emails';
+import { Route as ApiMessagingHelloRouteImport } from './routes/api/messaging/hello';
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$';
 import { Route as AdminProtectedWorkspacesRouteImport } from './routes/admin/_protected/workspaces';
 import { Route as AdminProtectedUsersRouteImport } from './routes/admin/_protected/users';
@@ -139,6 +140,11 @@ const ProtectedWsIndexRoute = ProtectedWsIndexRouteImport.update({
 const ApiTestEmailsRoute = ApiTestEmailsRouteImport.update({
   id: '/api/test/emails',
   path: '/api/test/emails',
+  getParentRoute: () => rootRouteImport,
+} as any);
+const ApiMessagingHelloRoute = ApiMessagingHelloRouteImport.update({
+  id: '/api/messaging/hello',
+  path: '/api/messaging/hello',
   getParentRoute: () => rootRouteImport,
 } as any);
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -268,6 +274,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminProtectedUsersRouteWithChildren;
   '/admin/workspaces': typeof AdminProtectedWorkspacesRouteWithChildren;
   '/api/auth/$': typeof ApiAuthSplatRoute;
+  '/api/messaging/hello': typeof ApiMessagingHelloRoute;
   '/api/test/emails': typeof ApiTestEmailsRoute;
   '/ws/': typeof ProtectedWsIndexRoute;
   '/ws/$workspaceId/billing': typeof ProtectedWsWorkspaceIdBillingRoute;
@@ -301,6 +308,7 @@ export interface FileRoutesByTo {
   '/ws/$workspaceId': typeof ProtectedWsWorkspaceIdRouteWithChildren;
   '/admin/dashboard': typeof AdminProtectedDashboardRoute;
   '/api/auth/$': typeof ApiAuthSplatRoute;
+  '/api/messaging/hello': typeof ApiMessagingHelloRoute;
   '/api/test/emails': typeof ApiTestEmailsRoute;
   '/ws': typeof ProtectedWsIndexRoute;
   '/ws/$workspaceId/billing': typeof ProtectedWsWorkspaceIdBillingRoute;
@@ -341,6 +349,7 @@ export interface FileRoutesById {
   '/admin/_protected/users': typeof AdminProtectedUsersRouteWithChildren;
   '/admin/_protected/workspaces': typeof AdminProtectedWorkspacesRouteWithChildren;
   '/api/auth/$': typeof ApiAuthSplatRoute;
+  '/api/messaging/hello': typeof ApiMessagingHelloRoute;
   '/api/test/emails': typeof ApiTestEmailsRoute;
   '/_protected/ws/': typeof ProtectedWsIndexRoute;
   '/_protected/ws/$workspaceId/billing': typeof ProtectedWsWorkspaceIdBillingRoute;
@@ -380,6 +389,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/admin/workspaces'
     | '/api/auth/$'
+    | '/api/messaging/hello'
     | '/api/test/emails'
     | '/ws/'
     | '/ws/$workspaceId/billing'
@@ -413,6 +423,7 @@ export interface FileRouteTypes {
     | '/ws/$workspaceId'
     | '/admin/dashboard'
     | '/api/auth/$'
+    | '/api/messaging/hello'
     | '/api/test/emails'
     | '/ws'
     | '/ws/$workspaceId/billing'
@@ -452,6 +463,7 @@ export interface FileRouteTypes {
     | '/admin/_protected/users'
     | '/admin/_protected/workspaces'
     | '/api/auth/$'
+    | '/api/messaging/hello'
     | '/api/test/emails'
     | '/_protected/ws/'
     | '/_protected/ws/$workspaceId/billing'
@@ -479,6 +491,7 @@ export interface RootRouteChildren {
   VerifyEmailChangeEmailTokenRoute: typeof VerifyEmailChangeEmailTokenRoute;
   AdminIndexRoute: typeof AdminIndexRoute;
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
+  ApiMessagingHelloRoute: typeof ApiMessagingHelloRoute;
   ApiTestEmailsRoute: typeof ApiTestEmailsRoute;
 }
 
@@ -615,6 +628,13 @@ declare module '@tanstack/react-router' {
       path: '/api/test/emails';
       fullPath: '/api/test/emails';
       preLoaderRoute: typeof ApiTestEmailsRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/api/messaging/hello': {
+      id: '/api/messaging/hello';
+      path: '/api/messaging/hello';
+      fullPath: '/api/messaging/hello';
+      preLoaderRoute: typeof ApiMessagingHelloRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     '/api/auth/$': {
@@ -880,6 +900,7 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyEmailChangeEmailTokenRoute: VerifyEmailChangeEmailTokenRoute,
   AdminIndexRoute: AdminIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiMessagingHelloRoute: ApiMessagingHelloRoute,
   ApiTestEmailsRoute: ApiTestEmailsRoute,
 };
 export const routeTree = rootRouteImport
