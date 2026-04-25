@@ -1,8 +1,8 @@
-import { subscription } from '@/db/schema';
 import { VALID_PASSWORD } from './e2e-constants';
 import { getE2EDb } from './e2e-db';
 import { createSeededUser } from './seeded-user';
 import { uniqueEmail } from './unique-email';
+import { subscription } from '@/db/schema';
 
 interface IsolatedWorkspaceOwnerOptions {
   email?: string;

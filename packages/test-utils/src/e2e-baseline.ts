@@ -1,5 +1,5 @@
-import { E2E_BASELINE_USERS, E2E_PASSWORD } from '@/db/seed/e2e-fixtures';
 import { signInSeededUser } from './e2e-auth';
+import { E2E_BASELINE_USERS, E2E_PASSWORD } from '@/db/seed/e2e-fixtures';
 
 export type E2EBaselineUserKey = keyof typeof E2E_BASELINE_USERS;
 

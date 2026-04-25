@@ -23,6 +23,7 @@ const {
 // ── Module mocks ───────────────────────────────────────────────────────────
 
 vi.mock('@/db/schema', () => ({
+  entitlementOverrides: 'entitlementOverrides',
   member: 'member',
   organization: 'organization',
   subscription: 'subscription',

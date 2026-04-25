@@ -842,7 +842,7 @@ Verified:
 
 ## Task 11: Final Verification
 
-- [ ] **Step 1: Run full static validation**
+- [x] **Step 1: Run full static validation**
 
 Run:
 
@@ -854,7 +854,7 @@ pnpm run check:boundaries
 
 Expected: all pass.
 
-- [ ] **Step 2: Run full test suite**
+- [x] **Step 2: Run full test suite**
 
 Run:
 
@@ -864,7 +864,7 @@ pnpm test
 
 Expected: all pass.
 
-- [ ] **Step 3: Run E2E**
+- [x] **Step 3: Run E2E**
 
 Run:
 
@@ -874,7 +874,7 @@ pnpm --filter @workspace/web test:e2e
 
 Expected: all pass. If sandbox restrictions block browser execution, request approval to run outside the sandbox instead of skipping.
 
-- [ ] **Step 4: Run build**
+- [x] **Step 4: Run build**
 
 Run:
 
@@ -884,7 +884,7 @@ pnpm run build
 
 Expected: build passes, including DB migration/build command changes.
 
-- [ ] **Step 5: Final hygiene checks**
+- [x] **Step 5: Final hygiene checks**
 
 Run:
 
@@ -899,6 +899,18 @@ Expected:
 - no active references to flattened package names
 - only kept packages remain under `packages/`
 - app-local dependency declarations are complete
+
+Verified:
+
+- `pnpm run lint` passed after final test-mock fixes.
+- `pnpm run typecheck` passed after final test-mock fixes.
+- `pnpm run check:boundaries` passed after final test-mock fixes.
+- `pnpm test` passed after patching full-suite mock coverage (web: 144 files, 1189 tests; test-utils: 2 files, 5 tests; api-server/ui replayed green cache).
+- `pnpm --filter @workspace/web test:e2e` passed outside the sandbox (157 Chromium tests).
+- `pnpm run build` passed. Vite/Nitro emitted existing third-party module directive, Sentry export, and chunk-size warnings, but the command exited 0 and generated `.output`.
+- `rg -n "@workspace/(components|logging|email|integrations|policy|billing|db|db-schema|auth)" apps packages package.json pnpm-lock.yaml tsconfig.json turbo.json .dependency-cruiser.cjs` returned no active references.
+- `find packages -maxdepth 2 -name package.json -print | sort` returned only `packages/eslint-config`, `packages/test-utils`, and `packages/ui`.
+- `pnpm list --depth -1` exited 0.
 
 ## Definition Of Done
 
