@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { AppSidebar } from '@/components/app-sidebar';
 
 // ── Hoisted mocks ────────────────────────────────────────────────────────────
@@ -8,6 +8,7 @@ const {
   useSessionMock,
   useActiveOrganizationMock,
   useWorkspaceCapabilitiesQueryMock,
+  useAdminAppCapabilitiesMock,
   useRouterStateMock,
   useWorkspaceListQueryMock,
   useWorkspaceDetailQueryMock,
@@ -16,6 +17,7 @@ const {
   useSessionMock: vi.fn(),
   useActiveOrganizationMock: vi.fn(),
   useWorkspaceCapabilitiesQueryMock: vi.fn(),
+  useAdminAppCapabilitiesMock: vi.fn(),
   useRouterStateMock: vi.fn(),
   useWorkspaceListQueryMock: vi.fn(),
   useWorkspaceDetailQueryMock: vi.fn(),
@@ -33,6 +35,10 @@ vi.mock('@/auth/client/auth-client', () => ({
 
 vi.mock('@/policy/workspace-capabilities', () => ({
   useWorkspaceCapabilitiesQuery: useWorkspaceCapabilitiesQueryMock,
+}));
+
+vi.mock('@/policy/admin-app-capabilities', () => ({
+  useAdminAppCapabilities: useAdminAppCapabilitiesMock,
 }));
 
 vi.mock('@tanstack/react-router', async () => {
@@ -108,8 +114,20 @@ vi.mock('@/components/layout', () => ({
   }: {
     items: Array<{ title: string; url: string }>;
   }) => <nav data-testid="nav-secondary" data-item-count={items.length} />,
-  NavUser: ({ user }: { user: { name: string; email: string } }) => (
-    <div data-testid="nav-user" data-name={user.name} />
+  NavUser: ({
+    user,
+    menuItems,
+  }: {
+    user: { name: string; email: string };
+    menuItems: Array<{ label: string; href: string }>;
+  }) => (
+    <div data-testid="nav-user" data-name={user.name}>
+      {menuItems.map((item) => (
+        <a key={item.href} href={item.href}>
+          {item.label}
+        </a>
+      ))}
+    </div>
   ),
   NavUserSkeleton: () => <div data-testid="nav-user-skeleton" />,
 }));
@@ -147,6 +165,24 @@ beforeEach(() => {
       canViewBilling: true,
       canViewSettings: true,
       canViewIntegrations: true,
+    },
+  });
+  useAdminAppCapabilitiesMock.mockReturnValue({
+    session: mockSession,
+    isPending: false,
+    capabilities: {
+      platformRole: 'user',
+      canAccessAdminApp: false,
+      canViewDashboard: false,
+      canViewAdminDashboard: false,
+      canViewAnalytics: false,
+      canViewUsers: false,
+      canManageUsers: false,
+      canDeleteUsers: false,
+      canViewWorkspaces: false,
+      canViewWorkspaceBilling: false,
+      canManageEntitlementOverrides: false,
+      canPerformSupportActions: false,
     },
   });
   useWorkspaceListQueryMock.mockReturnValue({ data: mockOrgs });
@@ -270,10 +306,11 @@ describe('AppSidebar', () => {
       'data-item-count',
       '6'
     );
-    expect(screen.getByRole('link', { name: 'Billing' })).toHaveAttribute(
-      'href',
-      '/ws/ws-1/billing'
-    );
+    expect(
+      within(screen.getByTestId('nav-main')).getByRole('link', {
+        name: 'Billing',
+      })
+    ).toHaveAttribute('href', '/ws/ws-1/billing');
   });
 
   it('shows Integrations between Members and Billing when allowed', async () => {
@@ -281,7 +318,9 @@ describe('AppSidebar', () => {
 
     await renderSidebar();
 
-    const links = screen.getAllByRole('link').map((link) => link.textContent);
+    const links = within(screen.getByTestId('nav-main'))
+      .getAllByRole('link')
+      .map((link) => link.textContent);
     expect(links).toEqual([
       'Overview',
       'Projects',
@@ -290,10 +329,11 @@ describe('AppSidebar', () => {
       'Billing',
       'Settings',
     ]);
-    expect(screen.getByRole('link', { name: 'Integrations' })).toHaveAttribute(
-      'href',
-      '/ws/ws-1/integrations'
-    );
+    expect(
+      within(screen.getByTestId('nav-main')).getByRole('link', {
+        name: 'Integrations',
+      })
+    ).toHaveAttribute('href', '/ws/ws-1/integrations');
   });
 
   it('hides Settings nav item when workspace capabilities deny settings access', async () => {
@@ -343,6 +383,73 @@ describe('AppSidebar', () => {
     expect(screen.queryByTestId('nav-user-skeleton')).not.toBeInTheDocument();
   });
 
+  it('passes the default account menu items to NavUser without Admin for non-admin users', async () => {
+    useSessionMock.mockReturnValue({ data: mockSession, isPending: false });
+    useActiveOrganizationMock.mockReturnValue({ data: null });
+    useWorkspaceListQueryMock.mockReturnValue({ data: [] });
+
+    await renderSidebar();
+
+    const navUser = within(screen.getByTestId('nav-user'));
+
+    expect(navUser.getByRole('link', { name: 'Account' })).toHaveAttribute(
+      'href',
+      '/account'
+    );
+    expect(navUser.getByRole('link', { name: 'Billing' })).toHaveAttribute(
+      'href',
+      '/billing'
+    );
+    expect(
+      navUser.getByRole('link', { name: 'Notifications' })
+    ).toHaveAttribute('href', '/notifications');
+    expect(
+      navUser.queryByRole('link', { name: 'Admin' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('adds the Admin account menu item when admin entry policy allows access', async () => {
+    useSessionMock.mockReturnValue({
+      data: { user: { ...mockUser, role: 'admin' as const } },
+      isPending: false,
+    });
+    useActiveOrganizationMock.mockReturnValue({ data: null });
+    useWorkspaceListQueryMock.mockReturnValue({ data: [] });
+    useAdminAppCapabilitiesMock.mockReturnValue({
+      session: { user: { ...mockUser, role: 'admin' as const } },
+      isPending: false,
+      capabilities: {
+        platformRole: 'admin',
+        canAccessAdminApp: true,
+        canViewDashboard: true,
+        canViewAdminDashboard: true,
+        canViewAnalytics: true,
+        canViewUsers: true,
+        canManageUsers: true,
+        canDeleteUsers: true,
+        canViewWorkspaces: true,
+        canViewWorkspaceBilling: true,
+        canManageEntitlementOverrides: true,
+        canPerformSupportActions: true,
+      },
+    });
+
+    await renderSidebar();
+
+    const links = within(screen.getByTestId('nav-user'))
+      .getAllByRole('link')
+      .map((link) => ({
+        label: link.textContent,
+        href: link.getAttribute('href'),
+      }));
+    expect(links).toEqual([
+      { label: 'Account', href: '/account' },
+      { label: 'Billing', href: '/billing' },
+      { label: 'Notifications', href: '/notifications' },
+      { label: 'Admin', href: '/admin' },
+    ]);
+  });
+
   it('renders NavUserSkeleton while session is pending', async () => {
     useSessionMock.mockReturnValue({ data: null, isPending: true });
     useWorkspaceListQueryMock.mockReturnValue({ data: null });
@@ -371,7 +478,9 @@ describe('AppSidebar', () => {
       '5'
     );
     expect(
-      screen.queryByRole('link', { name: 'Billing' })
+      within(screen.getByTestId('nav-main')).queryByRole('link', {
+        name: 'Billing',
+      })
     ).not.toBeInTheDocument();
   });
 
@@ -388,10 +497,14 @@ describe('AppSidebar', () => {
     await renderSidebar();
 
     expect(
-      screen.queryByRole('link', { name: 'Integrations' })
+      within(screen.getByTestId('nav-main')).queryByRole('link', {
+        name: 'Integrations',
+      })
     ).not.toBeInTheDocument();
-    expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(
-      ['Overview', 'Projects', 'Members', 'Billing', 'Settings']
-    );
+    expect(
+      within(screen.getByTestId('nav-main'))
+        .getAllByRole('link')
+        .map((link) => link.textContent)
+    ).toEqual(['Overview', 'Projects', 'Members', 'Billing', 'Settings']);
   });
 });
