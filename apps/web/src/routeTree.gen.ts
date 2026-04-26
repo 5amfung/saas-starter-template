@@ -10,10 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root';
 import { Route as PingRouteImport } from './routes/ping';
-import { Route as HealthRouteImport } from './routes/health';
 import { Route as AcceptInviteRouteImport } from './routes/accept-invite';
 import { Route as ProtectedRouteImport } from './routes/_protected';
 import { Route as AuthRouteImport } from './routes/_auth';
+import { Route as HealthRouteRouteImport } from './routes/health/route';
 import { Route as IndexRouteImport } from './routes/index';
 import { Route as AdminIndexRouteImport } from './routes/admin/index';
 import { Route as VerifyEmailChangeEmailTokenRouteImport } from './routes/verify-email-change.$emailToken';
@@ -52,11 +52,6 @@ const PingRoute = PingRouteImport.update({
   path: '/ping',
   getParentRoute: () => rootRouteImport,
 } as any);
-const HealthRoute = HealthRouteImport.update({
-  id: '/health',
-  path: '/health',
-  getParentRoute: () => rootRouteImport,
-} as any);
 const AcceptInviteRoute = AcceptInviteRouteImport.update({
   id: '/accept-invite',
   path: '/accept-invite',
@@ -68,6 +63,11 @@ const ProtectedRoute = ProtectedRouteImport.update({
 } as any);
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
+  getParentRoute: () => rootRouteImport,
+} as any);
+const HealthRouteRoute = HealthRouteRouteImport.update({
+  id: '/health',
+  path: '/health',
   getParentRoute: () => rootRouteImport,
 } as any);
 const IndexRoute = IndexRouteImport.update({
@@ -246,8 +246,8 @@ const ProtectedWsWorkspaceIdBillingRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute;
+  '/health': typeof HealthRouteRoute;
   '/accept-invite': typeof AcceptInviteRoute;
-  '/health': typeof HealthRoute;
   '/ping': typeof PingRoute;
   '/forgot-password': typeof AuthForgotPasswordRoute;
   '/reset-password': typeof AuthResetPasswordRoute;
@@ -283,8 +283,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute;
+  '/health': typeof HealthRouteRoute;
   '/accept-invite': typeof AcceptInviteRoute;
-  '/health': typeof HealthRoute;
   '/ping': typeof PingRoute;
   '/forgot-password': typeof AuthForgotPasswordRoute;
   '/reset-password': typeof AuthResetPasswordRoute;
@@ -317,10 +317,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   '/': typeof IndexRoute;
+  '/health': typeof HealthRouteRoute;
   '/_auth': typeof AuthRouteWithChildren;
   '/_protected': typeof ProtectedRouteWithChildren;
   '/accept-invite': typeof AcceptInviteRoute;
-  '/health': typeof HealthRoute;
   '/ping': typeof PingRoute;
   '/_auth/forgot-password': typeof AuthForgotPasswordRoute;
   '/_auth/reset-password': typeof AuthResetPasswordRoute;
@@ -358,8 +358,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
     | '/'
-    | '/accept-invite'
     | '/health'
+    | '/accept-invite'
     | '/ping'
     | '/forgot-password'
     | '/reset-password'
@@ -395,8 +395,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo;
   to:
     | '/'
-    | '/accept-invite'
     | '/health'
+    | '/accept-invite'
     | '/ping'
     | '/forgot-password'
     | '/reset-password'
@@ -428,10 +428,10 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/health'
     | '/_auth'
     | '/_protected'
     | '/accept-invite'
-    | '/health'
     | '/ping'
     | '/_auth/forgot-password'
     | '/_auth/reset-password'
@@ -468,10 +468,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
+  HealthRouteRoute: typeof HealthRouteRoute;
   AuthRoute: typeof AuthRouteWithChildren;
   ProtectedRoute: typeof ProtectedRouteWithChildren;
   AcceptInviteRoute: typeof AcceptInviteRoute;
-  HealthRoute: typeof HealthRoute;
   PingRoute: typeof PingRoute;
   AdminProtectedRoute: typeof AdminProtectedRouteWithChildren;
   AdminAccessDeniedRoute: typeof AdminAccessDeniedRoute;
@@ -489,13 +489,6 @@ declare module '@tanstack/react-router' {
       path: '/ping';
       fullPath: '/ping';
       preLoaderRoute: typeof PingRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    '/health': {
-      id: '/health';
-      path: '/health';
-      fullPath: '/health';
-      preLoaderRoute: typeof HealthRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     '/accept-invite': {
@@ -517,6 +510,13 @@ declare module '@tanstack/react-router' {
       path: '';
       fullPath: '/';
       preLoaderRoute: typeof AuthRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/health': {
+      id: '/health';
+      path: '/health';
+      fullPath: '/health';
+      preLoaderRoute: typeof HealthRouteRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     '/': {
@@ -869,10 +869,10 @@ const AdminProtectedRouteWithChildren = AdminProtectedRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  HealthRouteRoute: HealthRouteRoute,
   AuthRoute: AuthRouteWithChildren,
   ProtectedRoute: ProtectedRouteWithChildren,
   AcceptInviteRoute: AcceptInviteRoute,
-  HealthRoute: HealthRoute,
   PingRoute: PingRoute,
   AdminProtectedRoute: AdminProtectedRouteWithChildren,
   AdminAccessDeniedRoute: AdminAccessDeniedRoute,

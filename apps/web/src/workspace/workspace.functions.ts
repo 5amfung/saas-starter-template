@@ -3,7 +3,7 @@ import { createServerFn } from '@tanstack/react-start';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import * as z from 'zod';
 import { requireWebAppEntry } from '@/policy/web-app-entry.server';
-import { getAuth } from '@/init';
+import { getAuth } from '@/init.server';
 import {
   ensureWorkspaceMembership,
   getActiveMemberRole,
