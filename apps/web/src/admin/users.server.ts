@@ -4,7 +4,7 @@ import type {
   AdminListUsersInput,
   AdminUpdateUserInput,
 } from './users.schemas';
-import { getAuth } from '@/init';
+import { getAuth } from '@/init.server';
 import { getCurrentAdminAppSession } from '@/policy/admin-app-capabilities.server';
 
 interface AdminUserRecord {

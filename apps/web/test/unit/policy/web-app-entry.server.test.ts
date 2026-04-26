@@ -20,7 +20,7 @@ const {
   mockResolvePreferredWorkspace: vi.fn(),
 }));
 
-vi.mock('@/init', () => ({
+vi.mock('@/init.server', () => ({
   getAuth: () => ({
     api: {
       getSession: mockGetSession,

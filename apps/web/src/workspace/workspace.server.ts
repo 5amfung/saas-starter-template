@@ -1,7 +1,7 @@
 import { APIError } from 'better-auth/api';
 import { getFreePlan, getPlanById } from '@/billing/core';
 import { isRecord } from '@/auth';
-import { getAuth } from '@/init';
+import { getAuth } from '@/init.server';
 import { pickDefaultWorkspace } from '@/workspace/workspace';
 
 const getActiveOrganizationId = (session: unknown): string | null => {

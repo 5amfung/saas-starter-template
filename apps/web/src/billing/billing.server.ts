@@ -15,7 +15,7 @@ import {
   resolveSubscriptionDetails,
   resolveWorkspacePlanId,
 } from '@/billing/core';
-import { getAuth, getDb } from '@/init';
+import { getAuth, getDb } from '@/init.server';
 
 export async function requireVerifiedSession() {
   const headers = getRequestHeaders();

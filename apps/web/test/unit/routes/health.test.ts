@@ -3,7 +3,7 @@ const { getDbMock, dbExecuteMock } = vi.hoisted(() => ({
   dbExecuteMock: vi.fn(),
 }));
 
-vi.mock('@/init', () => ({
+vi.mock('@/init.server', () => ({
   getDb: getDbMock,
 }));
 
@@ -18,7 +18,7 @@ describe('web health route', () => {
   it('reports degraded status when the database check fails', async () => {
     dbExecuteMock.mockRejectedValueOnce(new Error('db offline'));
 
-    const { Route } = await import('@/routes/health');
+    const { Route } = await import('@/routes/health/route');
     const handlers = Route.options.server?.handlers as
       | {
           GET?: () => Promise<Response>;

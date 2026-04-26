@@ -6,7 +6,7 @@ import type {
   NotificationPreferencesPatch,
 } from '@/account/notification-preferences.schemas';
 import { notificationPreferences } from '@/db/schema';
-import { getAuth, getDb } from '@/init';
+import { getAuth, getDb } from '@/init.server';
 
 const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   emailUpdates: true,

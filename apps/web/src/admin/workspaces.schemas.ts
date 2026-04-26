@@ -1,9 +1,6 @@
 import * as z from 'zod';
 
-export const workspaceApiKeyAccessModeSchema = z.enum([
-  'read_only',
-  'read_write',
-]);
+const WORKSPACE_API_KEY_NAME_MAX_LENGTH = 80;
 
 export const entitlementOverrideSchema = z.object({
   workspaceId: z.string(),
@@ -32,10 +29,19 @@ export const entitlementOverrideSchema = z.object({
   notes: z.string().optional(),
 });
 
-export const workspaceApiKeyCreateSchema = z.object({
-  workspaceId: z.string(),
-  accessMode: workspaceApiKeyAccessModeSchema,
-});
+export const workspaceApiKeyCreateSchema = z
+  .object({
+    workspaceId: z.string(),
+    name: z
+      .string()
+      .trim()
+      .min(1, 'Key name is required.')
+      .max(
+        WORKSPACE_API_KEY_NAME_MAX_LENGTH,
+        `Key name must be ${WORKSPACE_API_KEY_NAME_MAX_LENGTH} characters or fewer.`
+      ),
+  })
+  .strict();
 
 export const workspaceApiKeyDeleteSchema = z.object({
   workspaceId: z.string(),
@@ -44,10 +50,6 @@ export const workspaceApiKeyDeleteSchema = z.object({
 
 export type EntitlementOverrideInput = z.infer<
   typeof entitlementOverrideSchema
->;
-
-export type WorkspaceApiKeyAccessMode = z.infer<
-  typeof workspaceApiKeyAccessModeSchema
 >;
 
 export type WorkspaceApiKeyCreateInput = z.infer<

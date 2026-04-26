@@ -1,6 +1,6 @@
 import { redirect } from '@tanstack/react-router';
 import { getRequestHeaders } from '@tanstack/react-start/server';
-import { getAuth } from '@/init';
+import { getAuth } from '@/init.server';
 
 export async function requireVerifiedWebSession(
   headers: Headers = getRequestHeaders()

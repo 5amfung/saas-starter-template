@@ -5,7 +5,7 @@ const { getAuthMock, verifyApiKeyMock } = vi.hoisted(() => ({
   verifyApiKeyMock: vi.fn(),
 }));
 
-vi.mock('@/init', () => ({
+vi.mock('@/init.server', () => ({
   getAuth: getAuthMock,
 }));
 
