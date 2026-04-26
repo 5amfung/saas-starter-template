@@ -113,7 +113,7 @@ export function AdminWorkspaceApiKeysCard({
               >
                 <div className="min-w-0 space-y-1">
                   <div className="truncate font-medium">
-                    {apiKey.name ?? 'Unnamed API Key'}
+                    {apiKey.name ?? 'API Key'}
                   </div>
                   <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground">
                     <span>

@@ -36,14 +36,16 @@ test.describe('Admin workspace API keys', () => {
     ).toBeVisible();
 
     await page.getByRole('button', { name: 'Generate new key' }).click();
-    await page.getByLabel('Read and Write').check();
+    await expect(page.getByLabel('Read and Write')).toHaveCount(0);
+    await expect(page.getByLabel('Read only')).toHaveCount(0);
+    await page.getByLabel('Key name').fill('Production support key');
     await page.getByRole('button', { name: 'Save' }).click();
 
     await expect(page.getByText('Workspace API key created.')).toBeVisible();
     await expect(
       page.getByRole('textbox', { name: 'Generated API key' })
-    ).toHaveValue(/^srw_/);
-    await expect(page.getByText('Read & Write API Key')).toBeVisible();
+    ).toHaveValue(/^sk_/);
+    await expect(page.getByText('Production support key')).toBeVisible();
 
     await page.getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByText('Delete API key')).toBeVisible();

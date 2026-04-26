@@ -15,11 +15,10 @@ import {
   AlertDialogTrigger,
 } from '@workspace/ui/components/alert-dialog';
 import { Button } from '@workspace/ui/components/button';
+import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 import { createAdminWorkspaceApiKey } from '@/admin/workspaces.functions';
 import { ADMIN_WORKSPACE_DETAIL_QUERY_KEY } from '@/admin/workspaces.queries';
-
-type AccessMode = 'read_only' | 'read_write';
 
 export interface GeneratedWorkspaceApiKey {
   id: string;
@@ -33,22 +32,7 @@ interface AdminGenerateWorkspaceApiKeyDialogProps {
   onKeyCreated?: (apiKey: GeneratedWorkspaceApiKey) => void;
 }
 
-const ACCESS_MODE_OPTIONS: Array<{
-  value: AccessMode;
-  label: string;
-  description: string;
-}> = [
-  {
-    value: 'read_only',
-    label: 'Read only',
-    description: 'Creates the workspace-owned Read API Key.',
-  },
-  {
-    value: 'read_write',
-    label: 'Read and Write',
-    description: 'Creates the workspace-owned Read & Write API Key.',
-  },
-];
+const WORKSPACE_API_KEY_NAME_MAX_LENGTH = 80;
 
 export function AdminGenerateWorkspaceApiKeyDialog({
   workspaceId,
@@ -56,14 +40,15 @@ export function AdminGenerateWorkspaceApiKeyDialog({
 }: AdminGenerateWorkspaceApiKeyDialogProps) {
   const queryClient = useQueryClient();
   const [open, setOpen] = React.useState(false);
-  const [accessMode, setAccessMode] = React.useState<AccessMode>('read_only');
+  const [name, setName] = React.useState('');
+  const [nameError, setNameError] = React.useState<string | null>(null);
 
   const mutation = useMutation({
-    mutationFn: async () =>
+    mutationFn: async (trimmedName: string) =>
       createAdminWorkspaceApiKey({
         data: {
           workspaceId,
-          accessMode,
+          name: trimmedName,
         },
       }),
     onSuccess: (result) => {
@@ -78,7 +63,8 @@ export function AdminGenerateWorkspaceApiKeyDialog({
         queryKey: ADMIN_WORKSPACE_DETAIL_QUERY_KEY(workspaceId),
       });
       setOpen(false);
-      setAccessMode('read_only');
+      setName('');
+      setNameError(null);
     },
     onError: (error) => {
       toast.error(
@@ -87,8 +73,28 @@ export function AdminGenerateWorkspaceApiKeyDialog({
     },
   });
 
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen);
+    if (!nextOpen) {
+      setName('');
+      setNameError(null);
+    }
+  }
+
+  function handleSubmit() {
+    const trimmedName = name.trim();
+
+    if (!trimmedName) {
+      setNameError('Key name is required.');
+      return;
+    }
+
+    setNameError(null);
+    mutation.mutate(trimmedName);
+  }
+
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger
         render={<Button size="sm">Generate new key</Button>}
       />
@@ -105,34 +111,34 @@ export function AdminGenerateWorkspaceApiKeyDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <fieldset className="grid gap-3">
-          <legend className="text-sm font-medium">Access</legend>
-          {ACCESS_MODE_OPTIONS.map((option) => {
-            const checked = accessMode === option.value;
-
-            return (
-              <label
-                key={option.value}
-                className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/40"
-              >
-                <input
-                  type="radio"
-                  name="workspace-api-key-access-mode"
-                  value={option.value}
-                  checked={checked}
-                  onChange={() => setAccessMode(option.value)}
-                  className="mt-1"
-                />
-                <span className="grid gap-1">
-                  <Label className="cursor-pointer">{option.label}</Label>
-                  <span className="text-sm text-muted-foreground">
-                    {option.description}
-                  </span>
-                </span>
-              </label>
-            );
-          })}
-        </fieldset>
+        <div className="grid gap-2">
+          <Label htmlFor="workspace-api-key-name">Key name</Label>
+          <Input
+            id="workspace-api-key-name"
+            value={name}
+            maxLength={WORKSPACE_API_KEY_NAME_MAX_LENGTH}
+            required
+            placeholder="Production support key"
+            aria-invalid={nameError ? true : undefined}
+            aria-describedby={
+              nameError ? 'workspace-api-key-name-error' : undefined
+            }
+            onChange={(event) => {
+              setName(event.target.value);
+              if (nameError && event.target.value.trim()) {
+                setNameError(null);
+              }
+            }}
+          />
+          {nameError ? (
+            <p
+              id="workspace-api-key-name-error"
+              className="text-sm text-destructive"
+            >
+              {nameError}
+            </p>
+          ) : null}
+        </div>
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={mutation.isPending}>
@@ -142,7 +148,7 @@ export function AdminGenerateWorkspaceApiKeyDialog({
             disabled={mutation.isPending}
             onClick={(event) => {
               event.preventDefault();
-              mutation.mutate();
+              handleSubmit();
             }}
           >
             {mutation.isPending ? (

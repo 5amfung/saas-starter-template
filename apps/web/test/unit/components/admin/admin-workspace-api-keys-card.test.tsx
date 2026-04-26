@@ -67,9 +67,9 @@ describe('AdminWorkspaceApiKeysCard', () => {
         apiKeys={[
           {
             id: 'key-1',
-            name: 'Read API Key',
+            name: 'Production support key',
             start: 'abcd',
-            prefix: 'r_',
+            prefix: 'sk_',
             configId: 'system-managed',
             createdAt: '2026-04-15T00:00:00.000Z',
           },
@@ -78,7 +78,7 @@ describe('AdminWorkspaceApiKeysCard', () => {
     );
 
     expect(screen.getByText('API Keys')).toBeInTheDocument();
-    expect(screen.getByText('Read API Key')).toBeInTheDocument();
+    expect(screen.getByText('Production support key')).toBeInTheDocument();
     expect(screen.getByText('system-managed')).toBeInTheDocument();
     expect(screen.getByText(/abcd\*{6}/i)).toBeInTheDocument();
     expect(screen.queryByRole('columnheader')).not.toBeInTheDocument();
@@ -109,9 +109,9 @@ describe('AdminWorkspaceApiKeysCard', () => {
         apiKeys={[
           {
             id: 'key-1',
-            name: 'Read API Key',
+            name: 'Production support key',
             start: 'abcd',
-            prefix: 'r_',
+            prefix: 'sk_',
             configId: 'system-managed',
             createdAt: '2026-04-15T00:00:00.000Z',
           },
@@ -122,9 +122,9 @@ describe('AdminWorkspaceApiKeysCard', () => {
     act(() => {
       generatedKeyDialogProps.current?.onKeyCreated({
         id: 'key-2',
-        key: 'r_secret_123',
+        key: 'sk_secret_123',
         start: 'secret',
-        prefix: 'r_',
+        prefix: 'sk_',
       });
     });
 
@@ -133,7 +133,7 @@ describe('AdminWorkspaceApiKeysCard', () => {
     );
 
     await waitFor(() => {
-      expect(writeTextMock).toHaveBeenCalledWith('r_secret_123');
+      expect(writeTextMock).toHaveBeenCalledWith('sk_secret_123');
     });
   });
 });
