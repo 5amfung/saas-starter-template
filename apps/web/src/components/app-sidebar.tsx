@@ -11,6 +11,7 @@ import {
   IconPlugConnected,
   IconSearch,
   IconSettings,
+  IconShield,
   IconStack2,
   IconUserCircle,
   IconUsers,
@@ -25,6 +26,7 @@ import {
 import { authClient } from '@/auth/client/auth-client';
 import { NavSecondary, NavUser, NavUserSkeleton } from '@/components/layout';
 import { NavMain } from '@/components/nav-main';
+import { useAdminAppCapabilities } from '@/policy/admin-app-capabilities';
 import { useWorkspaceCapabilitiesQuery } from '@/policy/workspace-capabilities';
 import {
   useWorkspaceDetailQuery,
@@ -77,6 +79,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const { data: activeWorkspaceCapabilities } =
     useWorkspaceCapabilitiesQuery(activeWorkspaceId);
+  const { capabilities: adminAppCapabilities } = useAdminAppCapabilities();
 
   const navMain = activeWorkspaceId
     ? [
@@ -144,6 +147,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }
     : null;
 
+  const userMenuItems = [
+    { label: 'Account', icon: <IconUserCircle />, href: '/account' },
+    { label: 'Billing', icon: <IconCreditCard />, href: '/billing' },
+    {
+      label: 'Notifications',
+      icon: <IconNotification />,
+      href: '/notifications',
+    },
+    ...(adminAppCapabilities.canAccessAdminApp
+      ? [{ label: 'Admin', icon: <IconShield />, href: '/admin' }]
+      : []),
+  ];
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -161,18 +177,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {isPending ? (
           <NavUserSkeleton />
         ) : user ? (
-          <NavUser
-            user={user}
-            menuItems={[
-              { label: 'Account', icon: <IconUserCircle />, href: '/account' },
-              { label: 'Billing', icon: <IconCreditCard />, href: '/billing' },
-              {
-                label: 'Notifications',
-                icon: <IconNotification />,
-                href: '/notifications',
-              },
-            ]}
-          />
+          <NavUser user={user} menuItems={userMenuItems} />
         ) : null}
       </SidebarFooter>
     </Sidebar>
