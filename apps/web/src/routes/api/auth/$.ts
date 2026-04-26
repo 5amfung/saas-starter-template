@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { requestLogger } from '@/observability/server';
-import { getAuth } from '@/init';
+import { getAuth } from '@/init.server';
 
 export const Route = createFileRoute('/api/auth/$')({
   server: {

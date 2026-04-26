@@ -5,7 +5,7 @@ import {
   revealWorkspaceIntegrationValue as revealWorkspaceIntegrationValueFromPackage,
   updateWorkspaceIntegrationValues as updateWorkspaceIntegrationValuesFromPackage,
 } from '@/integrations/core';
-import { getDb } from '@/init';
+import { getDb } from '@/init.server';
 import { requireWorkspaceCapabilityForUser } from '@/policy/workspace-capabilities.server';
 
 async function requireIntegrationCapability(

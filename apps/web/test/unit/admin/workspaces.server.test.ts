@@ -45,7 +45,7 @@ vi.mock('@/billing/core', () => ({
     clearAdminWorkspaceEntitlementOverridesMock,
 }));
 
-vi.mock('@/init', () => ({
+vi.mock('@/init.server', () => ({
   getAuth: getAuthMock,
   getDb: getDbMock,
 }));

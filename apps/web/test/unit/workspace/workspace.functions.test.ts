@@ -31,7 +31,7 @@ const {
 
 vi.mock('@tanstack/react-start', () => createServerFnMock());
 
-vi.mock('@/init', () => ({
+vi.mock('@/init.server', () => ({
   getAuth: getAuthMock,
 }));
 

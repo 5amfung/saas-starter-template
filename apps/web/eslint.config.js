@@ -9,6 +9,14 @@ const webEntryRouteFiles = [
   'src/routes/accept-invite.tsx',
 ];
 
+const browserFacingSourceFiles = [
+  'src/components/**/*.{ts,tsx}',
+  'src/hooks/**/*.{ts,tsx}',
+  'src/routes/**/*.{ts,tsx}',
+  'src/auth/client/**/*.{ts,tsx}',
+  'src/router.tsx',
+];
+
 export default [
   {
     ignores: [
@@ -40,6 +48,13 @@ export default [
           ],
         },
       ],
+    },
+  },
+  {
+    files: browserFacingSourceFiles,
+    ignores: ['src/**/*.server.{ts,tsx}', 'src/routes/api/**/*.{ts,tsx}'],
+    rules: {
+      '@workspace/no-browser-process-env': 'error',
     },
   },
   {

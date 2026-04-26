@@ -55,7 +55,7 @@ function collectTrackedImports(sourceCode) {
 
   for (const statement of statements) {
     if (statement.type !== 'ImportDeclaration') continue;
-    if (statement.source.value !== '@/init') continue;
+    if (statement.source.value !== '@/init.server') continue;
 
     for (const specifier of statement.specifiers) {
       if (

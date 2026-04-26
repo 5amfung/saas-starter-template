@@ -23,7 +23,7 @@ const {
   countWorkspaceMembersMock: vi.fn(),
 }));
 
-vi.mock('@/init', () => ({
+vi.mock('@/init.server', () => ({
   getAuth: getAuthMock,
 }));
 
