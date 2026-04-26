@@ -953,6 +953,9 @@ test.describe('Workspace Billing', () => {
     await expect(page.getByText('Current plan')).toBeVisible({
       timeout: 15000,
     });
+    await expect(
+      page.locator('[data-slot="card-title"]').getByText('Pro')
+    ).toBeVisible({ timeout: 15000 });
 
     await openWorkspacePageFromSidebar(page, workspaceId, 'Members', 'members');
     await setupInvitedMember(

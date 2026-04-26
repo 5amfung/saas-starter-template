@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./e2e-database-url": "./src/e2e-database-url.ts"
   },
   "scripts": {
     "test": "vitest run",

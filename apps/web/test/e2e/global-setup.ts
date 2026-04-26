@@ -1,3 +1,4 @@
+import { resolveE2EDatabaseUrl } from '@workspace/test-utils/e2e-database-url';
 import type { FullConfig } from '@playwright/test';
 import { seedE2EBaseline } from '@/db/seed/seed-e2e-baseline';
 
@@ -12,8 +13,6 @@ import { seedE2EBaseline } from '@/db/seed/seed-e2e-baseline';
  */
 export default async function globalSetup(config: FullConfig): Promise<void> {
   const baseURL = config.projects[0]?.use?.baseURL ?? 'http://localhost:3000';
-
-  process.loadEnvFile(new URL('../../.env', import.meta.url).pathname);
 
   const probeURL = `${baseURL}/api/test/emails?to=probe@test.local`;
 
@@ -38,5 +37,7 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
     );
   }
 
-  await seedE2EBaseline();
+  await seedE2EBaseline({
+    databaseUrl: resolveE2EDatabaseUrl('seedE2EBaseline'),
+  });
 }
