@@ -36,7 +36,7 @@ function renderDialog() {
         <AdminDeleteWorkspaceApiKeyDialog
           workspaceId="ws-1"
           apiKeyId="key-1"
-          apiKeyName="Read API Key"
+          apiKeyName="Production support key"
         />
       </QueryClientProvider>
     ),
@@ -55,7 +55,10 @@ describe('AdminDeleteWorkspaceApiKeyDialog', () => {
 
     await user.click(screen.getByRole('button', { name: /^delete$/i }));
 
-    expect(await screen.findByText(/read api key/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/production support key/i)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/read api key/i)).not.toBeInTheDocument();
     expect(
       screen.getByText(/hard delete cannot be undone/i)
     ).toBeInTheDocument();

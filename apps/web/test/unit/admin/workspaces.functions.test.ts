@@ -232,7 +232,7 @@ describe('createAdminWorkspaceApiKey', () => {
 
     await expect(
       createAdminWorkspaceApiKey({
-        data: { workspaceId: 'ws-1', accessMode: 'read_only' },
+        data: { workspaceId: 'ws-1', name: 'Production support key' },
       })
     ).rejects.toMatchObject({ message: 'Forbidden' });
 
@@ -252,13 +252,13 @@ describe('createAdminWorkspaceApiKey', () => {
     requireCurrentAdminAppCapabilityMock.mockResolvedValueOnce({});
     createWorkspaceApiKeyMock.mockResolvedValueOnce({
       id: 'key-1',
-      key: 'r_secret_123',
+      key: 'sk_secret_123',
       start: 'secret',
-      prefix: 'r_',
+      prefix: 'sk_',
     });
 
     const result = await createAdminWorkspaceApiKey({
-      data: { workspaceId: 'ws-1', accessMode: 'read_only' },
+      data: { workspaceId: 'ws-1', name: 'Production support key' },
     });
 
     expect(requireCurrentAdminAppCapabilityMock).toHaveBeenCalledWith(
@@ -266,7 +266,7 @@ describe('createAdminWorkspaceApiKey', () => {
     );
     expect(createWorkspaceApiKeyMock).toHaveBeenCalledWith({
       workspaceId: 'ws-1',
-      accessMode: 'read_only',
+      name: 'Production support key',
     });
     expect(loggerInfoMock).toHaveBeenCalledWith(
       'Admin workspace api key created',
@@ -281,9 +281,9 @@ describe('createAdminWorkspaceApiKey', () => {
     expect(result).toEqual({
       success: true,
       apiKeyId: 'key-1',
-      generatedKey: 'r_secret_123',
+      generatedKey: 'sk_secret_123',
       keyStart: 'secret',
-      keyPrefix: 'r_',
+      keyPrefix: 'sk_',
     });
   });
 });
