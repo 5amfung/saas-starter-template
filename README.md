@@ -123,11 +123,13 @@ A production-ready SaaS foundation with authentication, multi-tenant workspaces,
 3. **Set up environment variables**
 
 ```bash
- cp apps/web/.env.example apps/web/.env
+ cp apps/web/.env apps/web/.env.local
 ```
 
-Fill in the values for Neon, Resend, Stripe, Google OAuth, Better Auth,
-and any optional Sentry settings.
+The committed `apps/web/.env` file provides defaults and the list of
+supported variables. Fill in private local values in `apps/web/.env.local`
+for Neon, Resend, Stripe, Google OAuth, Better Auth, and any optional
+Sentry settings.
 
 4. **Push database schema**
 
