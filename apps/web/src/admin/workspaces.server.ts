@@ -18,7 +18,7 @@ import {
   listAdminWorkspaces,
   setAdminWorkspaceEntitlementOverrides,
 } from '@/billing/core';
-import { getAuth, getDb } from '@/init';
+import { getAuth, getDb } from '@/init.server';
 import { requireCurrentAdminAppEntry } from '@/policy/admin-app-capabilities.server';
 
 /** Verify the caller is an authenticated admin. Throws redirect otherwise. */

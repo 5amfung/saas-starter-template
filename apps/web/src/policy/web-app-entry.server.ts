@@ -6,7 +6,7 @@ import {
   resolveWebAppEntry,
 } from './web-app-entry.shared';
 import type { WebAppEntry, WebAppEntryAllowed } from './web-app-entry.shared';
-import { getAuth } from '@/init';
+import { getAuth } from '@/init.server';
 import {
   listAccessibleWorkspaces,
   resolvePreferredWorkspace,

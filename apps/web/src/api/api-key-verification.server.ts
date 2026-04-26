@@ -1,4 +1,4 @@
-import { getAuth } from '@/init';
+import { getAuth } from '@/init.server';
 
 const SYSTEM_MANAGED_API_KEY_CONFIG_ID = 'system-managed';
 

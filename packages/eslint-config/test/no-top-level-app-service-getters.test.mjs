@@ -18,7 +18,7 @@ test('no-top-level-app-service-getters rule', () => {
     valid: [
       {
         code: `
-          import { getAuth } from '@/init';
+          import { getAuth } from '@/init.server';
 
           export async function handler() {
             return getAuth();
@@ -27,7 +27,7 @@ test('no-top-level-app-service-getters rule', () => {
       },
       {
         code: `
-          import * as init from '@/init';
+          import * as init from '@/init.server';
 
           class Example {
             service = init.getDb();
@@ -38,7 +38,7 @@ test('no-top-level-app-service-getters rule', () => {
     invalid: [
       {
         code: `
-          import { getAuth } from '@/init';
+          import { getAuth } from '@/init.server';
 
           const auth = getAuth();
         `,
@@ -50,7 +50,7 @@ test('no-top-level-app-service-getters rule', () => {
       },
       {
         code: `
-          import * as init from '@/init';
+          import * as init from '@/init.server';
 
           const { getDb } = init;
           getDb();
@@ -63,7 +63,7 @@ test('no-top-level-app-service-getters rule', () => {
       },
       {
         code: `
-          import * as init from '@/init';
+          import * as init from '@/init.server';
 
           export const { getEmailClient = fallback } = init;
           getEmailClient();
@@ -76,7 +76,7 @@ test('no-top-level-app-service-getters rule', () => {
       },
       {
         code: `
-          import { getDb } from '@/init';
+          import { getDb } from '@/init.server';
 
           class Example {
             static {
@@ -92,7 +92,7 @@ test('no-top-level-app-service-getters rule', () => {
       },
       {
         code: `
-          import { getAuth } from '@/init';
+          import { getAuth } from '@/init.server';
 
           const auth = (() => getAuth())();
         `,

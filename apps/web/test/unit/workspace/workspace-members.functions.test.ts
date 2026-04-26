@@ -26,7 +26,7 @@ vi.mock('@tanstack/react-start/server', () => ({
   getRequestHeaders: getRequestHeadersMock,
 }));
 
-vi.mock('@/init', () => ({
+vi.mock('@/init.server', () => ({
   getAuth: getAuthMock,
   getDb: getDbMock,
 }));

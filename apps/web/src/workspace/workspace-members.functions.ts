@@ -4,7 +4,7 @@ import { createServerFn } from '@tanstack/react-start';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { redirect } from '@tanstack/react-router';
 import * as z from 'zod';
-import { getAuth, getDb } from '@/init';
+import { getAuth, getDb } from '@/init.server';
 import { requireWorkspaceCapabilityForUser } from '@/policy/workspace-capabilities.server';
 import {
   requireWorkspaceLeaveAllowedForUser,

@@ -17,7 +17,7 @@ import {
   requireVerifiedSession,
 } from '@/billing/billing.server';
 import { requireWorkspaceCapabilityForUser } from '@/policy/workspace-capabilities.server';
-import { getAuth } from '@/init';
+import { getAuth } from '@/init.server';
 
 type BillingCapability = 'canViewBilling' | 'canManageBilling';
 type BillingWorkflowOutcome = 'attempt' | 'success' | 'failure';

@@ -13,7 +13,7 @@ import type {
   AdminAppSessionLike,
 } from './admin-app-capabilities.shared';
 import { hasAdminAppCapability } from '@/policy/core';
-import { getAuth } from '@/init';
+import { getAuth } from '@/init.server';
 
 export async function getCurrentAdminAppSession(
   headers: Headers = getRequestHeaders()

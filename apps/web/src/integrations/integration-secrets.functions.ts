@@ -12,7 +12,7 @@ import {
   updateWorkspaceIntegrationSecretValues,
 } from './integration-secrets.server';
 import type { IntegrationFieldKey } from './integration-definitions';
-import { getAuth } from '@/init';
+import { getAuth } from '@/init.server';
 
 const workspaceIntegrationInput = z.object({
   workspaceId: z.string().min(1),

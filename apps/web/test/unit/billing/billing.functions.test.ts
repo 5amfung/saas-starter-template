@@ -92,7 +92,7 @@ vi.mock('@/policy/workspace-capabilities.server', () => ({
   requireWorkspaceCapabilityForUser: requireWorkspaceCapabilityForUserMock,
 }));
 
-vi.mock('@/init', () => ({
+vi.mock('@/init.server', () => ({
   getAuth: getAuthMock,
 }));
 

@@ -74,7 +74,7 @@ const {
 
 // ── Module mocks ───────────────────────────────────────────────────────────
 
-vi.mock('@/init', () => ({
+vi.mock('@/init.server', () => ({
   getAuth: getAuthMock.mockImplementation(() => ({
     api: {
       listActiveSubscriptions: listActiveSubscriptionsMock,

@@ -27,7 +27,7 @@ vi.mock('@/integrations/core', () => ({
   updateWorkspaceIntegrationValues: updateWorkspaceIntegrationValuesMock,
 }));
 
-vi.mock('@/init', () => ({
+vi.mock('@/init.server', () => ({
   getDb: getDbMock,
 }));
 

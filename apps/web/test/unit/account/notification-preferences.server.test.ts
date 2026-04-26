@@ -22,7 +22,7 @@ const {
   getRequestHeadersMock: vi.fn().mockReturnValue(new Headers()),
 }));
 
-vi.mock('@/init', () => ({
+vi.mock('@/init.server', () => ({
   getDb: getDbMock,
   getAuth: getAuthMock,
 }));

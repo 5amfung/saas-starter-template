@@ -33,7 +33,7 @@ describe('web init getters', () => {
 
   it('does not construct services at import time and memoizes getters', async () => {
     vi.resetModules();
-    const init = await import('@/init');
+    const init = await import('@/init.server');
 
     const db = { kind: 'db' };
     const emailClient = { kind: 'email-client' };
@@ -86,7 +86,7 @@ describe('web email test route', () => {
 
   it('returns 404 without constructing the email client in non-mock mode', async () => {
     vi.resetModules();
-    vi.doMock('@/init', () => ({
+    vi.doMock('@/init.server', () => ({
       getEmailClient: getEmailClientMock,
     }));
 

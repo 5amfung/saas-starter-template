@@ -50,7 +50,7 @@ vi.mock('@tanstack/react-router', () => ({
   }),
 }));
 
-vi.mock('@/init', () => ({
+vi.mock('@/init.server', () => ({
   getAuth: getAuthMock,
 }));
 
