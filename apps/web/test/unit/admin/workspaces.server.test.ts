@@ -94,9 +94,9 @@ describe('listWorkspaceApiKeys', () => {
       rows: [
         {
           id: 'key-2',
-          name: 'Read & Write API Key',
+          name: 'Production support key',
           start: 'abcd',
-          prefix: 'srw_',
+          prefix: 'sk_',
           configId: 'system-managed',
           createdAt: new Date('2026-04-15T00:00:00.000Z'),
         },
@@ -109,9 +109,9 @@ describe('listWorkspaceApiKeys', () => {
     expect(result).toEqual([
       {
         id: 'key-2',
-        name: 'Read & Write API Key',
+        name: 'Production support key',
         start: 'abcd',
-        prefix: 'srw_',
+        prefix: 'sk_',
         configId: 'system-managed',
         createdAt: new Date('2026-04-15T00:00:00.000Z'),
       },
@@ -157,9 +157,9 @@ describe('getWorkspaceDetail', () => {
       rows: [
         {
           id: 'key-1',
-          name: 'Read API Key',
+          name: 'Production support key',
           start: 'abcd',
-          prefix: 'sr_',
+          prefix: 'sk_',
           configId: 'system-managed',
           createdAt: new Date('2026-04-15T01:00:00.000Z'),
         },
@@ -173,9 +173,9 @@ describe('getWorkspaceDetail', () => {
       apiKeys: [
         {
           id: 'key-1',
-          name: 'Read API Key',
+          name: 'Production support key',
           start: 'abcd',
-          prefix: 'sr_',
+          prefix: 'sk_',
           configId: 'system-managed',
         },
       ],
@@ -195,20 +195,20 @@ describe('createWorkspaceApiKey', () => {
     getDbMock.mockReturnValue({ id: 'db' });
   });
 
-  it('creates a workspace-owned read-only api key via the workspace owner', async () => {
+  it('creates a named workspace-owned api key via the workspace owner', async () => {
     getAdminWorkspaceDetailMock.mockResolvedValueOnce({
       ownerUserId: 'owner-1',
     });
     createApiKeyMock.mockResolvedValueOnce({
       id: 'key-1',
-      key: 'sr_secret_123',
+      key: 'sk_secret_123',
       start: 'secret',
-      prefix: 'sr_',
+      prefix: 'sk_',
     });
 
     const result = await createWorkspaceApiKey({
       workspaceId: 'ws-1',
-      accessMode: 'read_only',
+      name: 'Production support key',
     });
 
     expect(createApiKeyMock).toHaveBeenCalledWith({
@@ -216,37 +216,16 @@ describe('createWorkspaceApiKey', () => {
         userId: 'owner-1',
         organizationId: 'ws-1',
         configId: 'system-managed',
-        name: 'Read API Key',
-        prefix: 'sr_',
+        name: 'Production support key',
+        prefix: 'sk_',
       },
     });
     expect(result).toEqual({
       id: 'key-1',
-      key: 'sr_secret_123',
+      key: 'sk_secret_123',
       start: 'secret',
-      prefix: 'sr_',
+      prefix: 'sk_',
     });
-  });
-
-  it('uses the read-write derived key name', async () => {
-    getAdminWorkspaceDetailMock.mockResolvedValueOnce({
-      ownerUserId: 'owner-1',
-    });
-    createApiKeyMock.mockResolvedValueOnce({ id: 'key-2' });
-
-    await createWorkspaceApiKey({
-      workspaceId: 'ws-1',
-      accessMode: 'read_write',
-    });
-
-    expect(createApiKeyMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        body: expect.objectContaining({
-          name: 'Read & Write API Key',
-          prefix: 'srw_',
-        }),
-      })
-    );
   });
 
   it('throws when the workspace owner is missing', async () => {
@@ -257,7 +236,7 @@ describe('createWorkspaceApiKey', () => {
     await expect(
       createWorkspaceApiKey({
         workspaceId: 'ws-1',
-        accessMode: 'read_only',
+        name: 'Production support key',
       })
     ).rejects.toMatchObject({ message: 'Workspace owner not found.' });
   });

@@ -48,40 +48,43 @@ describe('AdminGenerateWorkspaceApiKeyDialog', () => {
     createAdminWorkspaceApiKeyMock.mockResolvedValue({
       success: true,
       apiKeyId: 'key-1',
-      generatedKey: 'r_secret_123',
+      generatedKey: 'sk_secret_123',
       keyStart: 'secret',
-      keyPrefix: 'r_',
+      keyPrefix: 'sk_',
     });
   });
 
-  it('offers exactly the two access mode options and no freeform inputs', async () => {
+  it('renders a required key name field without access mode options', async () => {
     const user = userEvent.setup();
     renderDialog();
 
     await user.click(screen.getByRole('button', { name: /generate new key/i }));
 
-    expect(
-      screen.getByRole('radio', { name: /read only/i })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('radio', { name: /read and write/i })
-    ).toBeInTheDocument();
-    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/key name/i)).toBeRequired();
+    expect(screen.getByLabelText(/key name/i)).toHaveAttribute(
+      'maxlength',
+      '80'
+    );
+    expect(screen.queryByRole('radio', { name: /read only/i })).toBeNull();
+    expect(screen.queryByRole('radio', { name: /read and write/i })).toBeNull();
   });
 
-  it('submits the selected access mode and invalidates the workspace detail query', async () => {
+  it('submits the trimmed key name and invalidates the workspace detail query', async () => {
     const user = userEvent.setup();
     const { invalidateQueriesSpy } = renderDialog();
 
     await user.click(screen.getByRole('button', { name: /generate new key/i }));
-    await user.click(screen.getByRole('radio', { name: /read and write/i }));
+    await user.type(
+      screen.getByLabelText(/key name/i),
+      '  Production support key  '
+    );
     await user.click(screen.getByRole('button', { name: /^save$/i }));
 
     await waitFor(() => {
       expect(createAdminWorkspaceApiKeyMock).toHaveBeenCalledWith({
         data: {
           workspaceId: 'ws-1',
-          accessMode: 'read_write',
+          name: 'Production support key',
         },
       });
     });
@@ -93,20 +96,36 @@ describe('AdminGenerateWorkspaceApiKeyDialog', () => {
     });
   });
 
+  it('blocks whitespace-only key names', async () => {
+    const user = userEvent.setup();
+    renderDialog();
+
+    await user.click(screen.getByRole('button', { name: /generate new key/i }));
+    await user.type(screen.getByLabelText(/key name/i), '   ');
+    await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+    expect(createAdminWorkspaceApiKeyMock).not.toHaveBeenCalled();
+    expect(screen.getByText(/key name is required/i)).toBeInTheDocument();
+  });
+
   it('passes the one-time plaintext key to the success callback', async () => {
     const user = userEvent.setup();
     const onKeyCreated = vi.fn();
     renderDialog(onKeyCreated);
 
     await user.click(screen.getByRole('button', { name: /generate new key/i }));
+    await user.type(
+      screen.getByLabelText(/key name/i),
+      'Production support key'
+    );
     await user.click(screen.getByRole('button', { name: /^save$/i }));
 
     await waitFor(() => {
       expect(onKeyCreated).toHaveBeenCalledWith({
         id: 'key-1',
-        key: 'r_secret_123',
+        key: 'sk_secret_123',
         start: 'secret',
-        prefix: 'r_',
+        prefix: 'sk_',
       });
     });
   });

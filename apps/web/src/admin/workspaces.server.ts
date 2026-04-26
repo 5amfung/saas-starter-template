@@ -9,7 +9,6 @@ import type {
 } from '@/billing/core';
 import type {
   EntitlementOverrideInput,
-  WorkspaceApiKeyAccessMode,
   WorkspaceApiKeyCreateInput,
   WorkspaceApiKeyDeleteInput,
 } from './workspaces.schemas';
@@ -98,15 +97,7 @@ type WorkspaceApiKeySqlRow = Record<string, string | Date | null> &
   WorkspaceApiKeyRow;
 
 const SYSTEM_MANAGED_API_KEY_CONFIG_ID = 'system-managed';
-const API_KEY_NAME_BY_ACCESS_MODE: Record<WorkspaceApiKeyAccessMode, string> = {
-  read_only: 'Read API Key',
-  read_write: 'Read & Write API Key',
-};
-const API_KEY_PREFIX_BY_ACCESS_MODE: Record<WorkspaceApiKeyAccessMode, string> =
-  {
-    read_only: 'sr_',
-    read_write: 'srw_',
-  };
+const WORKSPACE_API_KEY_PREFIX = 'sk_';
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (error && typeof error === 'object' && 'message' in error) {
@@ -232,8 +223,8 @@ export async function createWorkspaceApiKey(
       userId: workspace.ownerUserId,
       organizationId: input.workspaceId,
       configId: SYSTEM_MANAGED_API_KEY_CONFIG_ID,
-      name: API_KEY_NAME_BY_ACCESS_MODE[input.accessMode],
-      prefix: API_KEY_PREFIX_BY_ACCESS_MODE[input.accessMode],
+      name: input.name,
+      prefix: WORKSPACE_API_KEY_PREFIX,
     },
   });
 

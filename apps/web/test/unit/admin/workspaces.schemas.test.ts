@@ -1,6 +1,5 @@
 import {
   entitlementOverrideSchema,
-  workspaceApiKeyAccessModeSchema,
   workspaceApiKeyCreateSchema,
   workspaceApiKeyDeleteSchema,
 } from '@/admin/workspaces.schemas';
@@ -99,38 +98,59 @@ describe('entitlementOverrideSchema', () => {
   });
 });
 
-describe('workspaceApiKeyAccessModeSchema', () => {
-  it('accepts read-only and read-write modes', () => {
-    expect(workspaceApiKeyAccessModeSchema.parse('read_only')).toBe(
-      'read_only'
-    );
-    expect(workspaceApiKeyAccessModeSchema.parse('read_write')).toBe(
-      'read_write'
-    );
-  });
-
-  it('rejects unknown access modes', () => {
-    expect(() => workspaceApiKeyAccessModeSchema.parse('admin')).toThrow();
-  });
-});
-
 describe('workspaceApiKeyCreateSchema', () => {
-  it('accepts a workspace id with a valid access mode', () => {
+  it('accepts a workspace id and trims the key name', () => {
     expect(
       workspaceApiKeyCreateSchema.parse({
         workspaceId: 'ws-1',
-        accessMode: 'read_only',
+        name: '  Production support key  ',
       })
     ).toEqual({
       workspaceId: 'ws-1',
-      accessMode: 'read_only',
+      name: 'Production support key',
     });
   });
 
   it('rejects missing workspace ids', () => {
     expect(() =>
       workspaceApiKeyCreateSchema.parse({
-        accessMode: 'read_write',
+        name: 'Production support key',
+      })
+    ).toThrow();
+  });
+
+  it('rejects missing key names', () => {
+    expect(() =>
+      workspaceApiKeyCreateSchema.parse({
+        workspaceId: 'ws-1',
+      })
+    ).toThrow();
+  });
+
+  it('rejects empty key names after trim', () => {
+    expect(() =>
+      workspaceApiKeyCreateSchema.parse({
+        workspaceId: 'ws-1',
+        name: '   ',
+      })
+    ).toThrow();
+  });
+
+  it('rejects key names longer than 80 characters', () => {
+    expect(() =>
+      workspaceApiKeyCreateSchema.parse({
+        workspaceId: 'ws-1',
+        name: 'a'.repeat(81),
+      })
+    ).toThrow();
+  });
+
+  it('rejects unknown create fields', () => {
+    expect(() =>
+      workspaceApiKeyCreateSchema.parse({
+        workspaceId: 'ws-1',
+        name: 'Production support key',
+        extraField: 'not allowed',
       })
     ).toThrow();
   });
