@@ -9,11 +9,15 @@ Thank you for your interest in contributing! This guide will help you get starte
    ```bash
    pnpm install
    ```
-3. Copy the environment file:
+3. Create a private local environment override:
    ```bash
-   cp .env.example .env
+   cp apps/web/.env apps/web/.env.local
    ```
-4. Configure environment variables in `.env`:
+4. Configure environment variables in `apps/web/.env.local`:
+
+   The committed `apps/web/.env` file contains safe defaults and the complete
+   variable list. Put real local secrets and machine-specific values in
+   `apps/web/.env.local`, which is ignored by Git.
 
    **Required** (app will not start without these):
    | Variable | Description |

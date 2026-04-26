@@ -18,7 +18,10 @@
     "paths": {
       "@/*": ["./src/*"],
       "@workspace/ui/*": ["../../packages/ui/src/*"],
-      "@workspace/test-utils": ["../../packages/test-utils/src/index.ts"]
+      "@workspace/test-utils": ["../../packages/test-utils/src/index.ts"],
+      "@workspace/test-utils/e2e-database-url": [
+        "../../packages/test-utils/src/e2e-database-url.ts"
+      ]
     }
   }
 }

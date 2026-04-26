@@ -18,12 +18,16 @@ async function waitForRedirect(
 }
 
 async function enterLinkVerificationCode(page: Page): Promise<void> {
-  const firstCodeInput = page.getByRole('textbox', {
-    name: 'one-time-code-input-0',
-  });
+  const firstCodeInput = getFirstLinkCodeInput(page);
   await expect(firstCodeInput).toBeVisible({ timeout: 10000 });
   await firstCodeInput.click();
   await page.keyboard.type('000000');
+}
+
+function getFirstLinkCodeInput(page: Page) {
+  return page.getByRole('textbox', {
+    name: /one-time-code-input-0|security code character 1/i,
+  });
 }
 
 async function dismissLinkDialogIfPossible(page: Page): Promise<boolean> {
@@ -67,9 +71,7 @@ export async function completeStripeCheckout(
 
   const confirmButton = page.getByRole('button', { name: 'Confirm' });
   const emailField = page.getByRole('textbox', { name: 'Email' });
-  const firstCodeInput = page.getByRole('textbox', {
-    name: 'one-time-code-input-0',
-  });
+  const firstCodeInput = getFirstLinkCodeInput(page);
   const subscribeButton = page.getByRole('button', { name: /subscribe/i });
 
   await Promise.race([
