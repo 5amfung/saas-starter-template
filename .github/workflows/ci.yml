@@ -48,6 +48,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Boundary check
+        run: pnpm run check:boundaries
+
       - name: Typecheck
         run: pnpm run typecheck
 
