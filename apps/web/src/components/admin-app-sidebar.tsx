@@ -113,6 +113,11 @@ export function AdminAppSidebar({
                 icon: <IconUserCircle />,
                 href: '/account',
               },
+              {
+                label: 'Customer View',
+                icon: <IconHome />,
+                href: '/',
+              },
             ]}
           />
         ) : null}
