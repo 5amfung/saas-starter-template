@@ -18,6 +18,8 @@
     "dev:api": "pnpm --filter @workspace/api-server dev",
     "db:generate": "pnpm --filter @workspace/web db:generate",
     "db:migrate": "pnpm --filter @workspace/web db:migrate",
+    "db:push": "pnpm --filter @workspace/web db:push",
+    "db:studio": "pnpm --filter @workspace/web db:studio",
     "build": "turbo run build",
     "start:api": "pnpm --filter @workspace/api-server start",
     "start:web": "pnpm --filter @workspace/web start",
