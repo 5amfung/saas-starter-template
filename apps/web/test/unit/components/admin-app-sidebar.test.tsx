@@ -121,7 +121,7 @@ describe('AdminAppSidebar', () => {
     render(<AdminAppSidebar />);
   }
 
-  it('passes customer view account menu item to NavUser', () => {
+  it('passes account menu item to NavUser', () => {
     renderSidebar();
 
     const links = within(screen.getByTestId('nav-user'))
@@ -131,10 +131,7 @@ describe('AdminAppSidebar', () => {
         href: link.getAttribute('href'),
       }));
 
-    expect(links).toEqual([
-      { label: 'Account', href: '/account' },
-      { label: 'Customer View', href: '/' },
-    ]);
+    expect(links).toEqual([{ label: 'Account', href: '/account' }]);
   });
 
   it('renders NavUserSkeleton while session is pending', () => {
