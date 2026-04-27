@@ -180,7 +180,6 @@ CREATE INDEX "invitation_organizationId_idx" ON "invitation" USING btree ("organ
 CREATE INDEX "invitation_email_idx" ON "invitation" USING btree ("email");--> statement-breakpoint
 CREATE INDEX "member_organizationId_idx" ON "member" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "member_userId_idx" ON "member" USING btree ("user_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "organization_slug_uidx" ON "organization" USING btree ("slug");--> statement-breakpoint
 CREATE INDEX "session_userId_idx" ON "session" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "subscription_referenceId_idx" ON "subscription" USING btree ("reference_id");--> statement-breakpoint
 CREATE INDEX "subscription_stripeCustomerId_idx" ON "subscription" USING btree ("stripe_customer_id");--> statement-breakpoint

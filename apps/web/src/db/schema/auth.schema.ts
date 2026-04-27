@@ -169,19 +169,15 @@ export const subscription = pgTable(
   ]
 );
 
-export const organization = pgTable(
-  'organization',
-  {
-    id: text('id').primaryKey(),
-    stripeCustomerId: text('stripe_customer_id'),
-    name: text('name').notNull(),
-    slug: text('slug').notNull().unique(),
-    logo: text('logo'),
-    createdAt: timestamp('created_at').notNull(),
-    metadata: text('metadata'),
-  },
-  (table) => [uniqueIndex('organization_slug_uidx').on(table.slug)]
-);
+export const organization = pgTable('organization', {
+  id: text('id').primaryKey(),
+  stripeCustomerId: text('stripe_customer_id'),
+  name: text('name').notNull(),
+  slug: text('slug').notNull().unique(),
+  logo: text('logo'),
+  createdAt: timestamp('created_at').notNull(),
+  metadata: text('metadata'),
+});
 
 export const member = pgTable(
   'member',

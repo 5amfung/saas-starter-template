@@ -1,5 +1,5 @@
 {
-  "id": "3912af99-2539-445d-ba84-a04290a9ea10",
+  "id": "678399dd-26f9-4640-bb4c-4d47c31c4a09",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -600,23 +600,7 @@
           "notNull": false
         }
       },
-      "indexes": {
-        "organization_slug_uidx": {
-          "name": "organization_slug_uidx",
-          "columns": [
-            {
-              "expression": "slug",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
