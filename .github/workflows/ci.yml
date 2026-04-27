@@ -6,15 +6,33 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  HUSKY: 0
+  TURBO_TELEMETRY_DISABLED: 1
+  DO_NOT_TRACK: 1
+
+permissions:
+  actions: read
+  contents: read
+  statuses: write
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   check:
-    name: Typecheck & Lint
+    name: Typecheck, Lint & Tests
     runs-on: ubuntu-latest
     steps:
+      # This action writes a pending status now, then its post step writes the
+      # final success/failure status after the remaining CI steps complete.
+      - name: Notify Vercel
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: vercel/repository-dispatch/actions/status@v1
+        with:
+          name: 'Vercel - saas-demo: Typecheck, Lint & Tests'
+
       - name: Checkout
         uses: actions/checkout@v5
 
@@ -29,39 +47,15 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        env:
-          HUSKY: 0
-          TURBO_TELEMETRY_DISABLED: 1
-          DO_NOT_TRACK: 1
+
+      - name: Boundary check
+        run: pnpm run check:boundaries
 
       - name: Typecheck
         run: pnpm run typecheck
 
       - name: Lint
         run: pnpm run lint
-
-  test:
-    name: Unit & Integration Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.node-version'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-        env:
-          HUSKY: 0
-          TURBO_TELEMETRY_DISABLED: 1
-          DO_NOT_TRACK: 1
 
       - name: Run tests
         run: pnpm test
