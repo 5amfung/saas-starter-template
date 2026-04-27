@@ -326,6 +326,11 @@ Recommended project settings:
 | Install Command  | Vercel default          |
 | Output Directory | Vercel default          |
 
+In Vercel, enable a production Deployment Check for the GitHub commit status
+named `Vercel - saas-demo: Typecheck, Lint & Tests`. Vercel will still create a
+production deployment when changes land on `main`, but the deployment should
+not be promoted to the production domain until that check passes.
+
 `apps/web/vercel.json` pins the build command:
 
 ```json
