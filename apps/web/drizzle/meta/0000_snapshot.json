@@ -1,5 +1,5 @@
 {
-  "id": "9679f214-f311-41c1-a09a-c58143e46ee7",
+  "id": "3912af99-2539-445d-ba84-a04290a9ea10",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -702,21 +702,6 @@
           "columns": [
             {
               "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "session_token_idx": {
-          "name": "session_token_idx",
-          "columns": [
-            {
-              "expression": "token",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

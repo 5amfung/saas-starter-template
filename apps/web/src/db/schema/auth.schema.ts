@@ -58,10 +58,7 @@ export const session = pgTable(
     activeOrganizationId: text('active_organization_id'),
     impersonatedBy: text('impersonated_by'),
   },
-  (table) => [
-    index('session_userId_idx').on(table.userId),
-    index('session_token_idx').on(table.token),
-  ]
+  (table) => [index('session_userId_idx').on(table.userId)]
 );
 
 export const account = pgTable(
