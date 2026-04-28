@@ -1,8 +1,7 @@
 import { useEffect } from 'react';
 import { Outlet, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { IconStack2 } from '@tabler/icons-react';
 import type { WebAppEntry } from '@/policy/web-app-entry.shared';
-import { AuthLayout } from '@/auth';
+import { AuthLayout, WebAuthLogo } from '@/auth';
 import { guestMiddleware } from '@/middleware/auth';
 import { getWebAppEntryRedirectTarget } from '@/policy/web-app-entry.shared';
 import { useWebAppEntry } from '@/policy/web-app-entry';
@@ -65,17 +64,8 @@ function AuthPage() {
     return null;
   }
 
-  const webLogo = (
-    <a href="/" className="flex items-center gap-2 self-center font-medium">
-      <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-        <IconStack2 className="size-4" />
-      </div>
-      Acme Inc.
-    </a>
-  );
-
   return (
-    <AuthLayout logo={webLogo}>
+    <AuthLayout logo={<WebAuthLogo />}>
       <Outlet />
     </AuthLayout>
   );

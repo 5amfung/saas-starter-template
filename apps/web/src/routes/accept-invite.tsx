@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { IconLoader2, IconStack2 } from '@tabler/icons-react';
+import { IconLoader2 } from '@tabler/icons-react';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
 import { z } from 'zod';
 import { Button } from '@workspace/ui/components/button';
@@ -19,7 +19,7 @@ import {
   workflowLogger,
 } from '@/observability/client';
 import { authClient } from '@/auth/client/auth-client';
-import { AuthLayout } from '@/auth';
+import { AuthLayout, WebAuthLogo } from '@/auth';
 import { useWebAppEntry } from '@/policy/web-app-entry';
 
 export const Route = createFileRoute('/accept-invite')({
@@ -160,17 +160,8 @@ function AcceptInvitePage() {
     void run();
   }, [entry, id, isPending, navigate]);
 
-  const webLogo = (
-    <a href="/" className="flex items-center gap-2 self-center font-medium">
-      <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-        <IconStack2 className="size-4" />
-      </div>
-      Acme Inc.
-    </a>
-  );
-
   return (
-    <AuthLayout logo={webLogo}>
+    <AuthLayout logo={<WebAuthLogo />}>
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Invitation</CardTitle>
