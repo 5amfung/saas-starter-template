@@ -138,7 +138,7 @@ Add these metric constants to `apps/web/src/observability/operations.ts`:
 ```ts
 export const METRICS = {
   AUTH_SIGNUP_CREATED: 'auth.signup.created',
-  AUTH_SIGNUP_VERIFIED: 'auth.signup.verified',
+  AUTH_EMAIL_VERIFIED: 'auth.email.verified',
   AUTH_PASSWORD_RESET_COMPLETED: 'auth.password_reset.completed',
   AUTH_SIGNIN_GOOGLE_COMPLETED: 'auth.signin.google.completed',
   BILLING_SUBSCRIPTION_STARTER_CREATED: 'billing.subscription.starter.created',
@@ -324,7 +324,7 @@ emailVerification?: {
 Add tests:
 
 ```ts
-it('records verified signup after Better Auth verifies email', async () => {
+it('records verified email after Better Auth verifies email', async () => {
   const createAuth = await importCreateAuth();
   createAuth(buildTestConfig());
   const config = betterAuthSpy.mock.calls[0][0] as BetterAuthConfig;
@@ -332,7 +332,7 @@ it('records verified signup after Better Auth verifies email', async () => {
   await config.emailVerification!.afterEmailVerification!({ id: 'user_1' });
 
   expect(emitCountMetricMock).toHaveBeenCalledWith(
-    METRICS.AUTH_SIGNUP_VERIFIED,
+    METRICS.AUTH_EMAIL_VERIFIED,
     { route: '/api/auth/$', result: 'success' }
   );
 });
@@ -389,7 +389,7 @@ Add to `emailVerification`:
 
 ```ts
 afterEmailVerification: async () => {
-  emitCountMetric(METRICS.AUTH_SIGNUP_VERIFIED, {
+  emitCountMetric(METRICS.AUTH_EMAIL_VERIFIED, {
     route: '/api/auth/$',
     result: 'success',
   });

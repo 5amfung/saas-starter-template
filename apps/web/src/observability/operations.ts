@@ -32,7 +32,7 @@ export type WorkflowOperationFamily =
 
 export const METRICS = {
   AUTH_SIGNUP_CREATED: 'auth.signup.created',
-  AUTH_SIGNUP_VERIFIED: 'auth.signup.verified',
+  AUTH_EMAIL_VERIFIED: 'auth.email.verified',
   AUTH_PASSWORD_RESET_COMPLETED: 'auth.password_reset.completed',
   AUTH_SIGNIN_GOOGLE_COMPLETED: 'auth.signin.google.completed',
   BILLING_SUBSCRIPTION_STARTER_CREATED: 'billing.subscription.starter.created',

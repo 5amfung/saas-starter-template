@@ -846,7 +846,7 @@ describe('createAuth', () => {
   });
 
   describe('auth confirmation callbacks', () => {
-    it('records verified signup after Better Auth verifies email', async () => {
+    it('records verified email after Better Auth verifies email', async () => {
       const createAuth = await importCreateAuth();
       createAuth(buildTestConfig());
       const config = betterAuthSpy.mock.calls[0][0] as BetterAuthConfig;
@@ -854,7 +854,7 @@ describe('createAuth', () => {
       await config.emailVerification!.afterEmailVerification!({ id: 'user_1' });
 
       expect(emitCountMetricMock).toHaveBeenCalledWith(
-        METRICS.AUTH_SIGNUP_VERIFIED,
+        METRICS.AUTH_EMAIL_VERIFIED,
         { route: '/api/auth/$', result: 'success' }
       );
     });

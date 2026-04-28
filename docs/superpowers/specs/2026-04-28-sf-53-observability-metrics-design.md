@@ -10,7 +10,7 @@ signals without adding a separate telemetry vendor or metrics pipeline.
 
 In scope:
 
-- Count confirmed sign-up, verified sign-up, completed password reset, and
+- Count confirmed sign-up, verified email, completed password reset, and
   Google sign-in events.
 - Count confirmed Starter and Pro subscriptions, confirmed downgrades to Free,
   and confirmed downgrades to Starter.
@@ -64,7 +64,7 @@ Metric dimensions must be limited to safe, low-cardinality values:
 The metric names are:
 
 - `auth.signup.created`
-- `auth.signup.verified`
+- `auth.email.verified`
 - `auth.password_reset.completed`
 - `auth.signin.google.completed`
 - `billing.subscription.starter.created`
@@ -83,8 +83,9 @@ Auth metrics must be emitted from Better Auth server-side confirmation points:
 
 - New sign-up: `databaseHooks.user.create.after`, after the hook finishes its
   existing default-workspace work without throwing.
-- Verified sign-up: `emailVerification.afterEmailVerification`, after Better
-  Auth updates `emailVerified`.
+- Verified email: `emailVerification.afterEmailVerification`, after Better
+  Auth updates `emailVerified`. This includes first-time verification and
+  change-email verification flows.
 - Completed password reset: `emailAndPassword.onPasswordReset`, after Better
   Auth updates or creates the credential password and deletes the reset token.
 - Google sign-in: existing `hooks.after` sign-in hook, only when
@@ -131,7 +132,7 @@ Use focused Vitest coverage around the helper and each boundary:
 
 - Metric helper tests verify the Sentry span shape, metric constants, attribute
   sanitization, and API path normalization.
-- Auth server tests verify signup, verified signup, password reset completion,
+- Auth server tests verify signup, verified email, password reset completion,
   and Google callback sign-in counters emit once on success and not for
   unrelated paths.
 - Billing tests verify Starter/Pro creation, Free downgrade, Starter downgrade,

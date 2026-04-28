@@ -230,7 +230,7 @@ export function createAuth(config: AuthConfig) {
       },
       sendVerificationEmail: authEmails.sendVerificationEmail,
       afterEmailVerification: () => {
-        emitCountMetric(METRICS.AUTH_SIGNUP_VERIFIED, {
+        emitCountMetric(METRICS.AUTH_EMAIL_VERIFIED, {
           route: AUTH_API_ROUTE,
           result: 'success',
         });
