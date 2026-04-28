@@ -247,7 +247,7 @@ Expected: PASS.
 - Modify: `apps/web/src/auth/server/auth.server.ts`
 - Modify: `apps/web/test/unit/auth/auth.server.test.ts`
 
-- [ ] **Step 1: Add failing auth server assertions**
+- [x] **Step 1: Add failing auth server assertions**
 
 In `apps/web/test/unit/auth/auth.server.test.ts`, extend the hoisted mocks:
 
@@ -353,13 +353,13 @@ it('records completed password reset from Better Auth onPasswordReset', async ()
 });
 ```
 
-- [ ] **Step 2: Run the failing auth tests**
+- [x] **Step 2: Run the failing auth tests**
 
 Run: `pnpm --filter @workspace/web test test/unit/auth/auth.server.test.ts`
 
 Expected: FAIL because auth callbacks do not emit metrics yet.
 
-- [ ] **Step 3: Implement auth metric emission**
+- [x] **Step 3: Implement auth metric emission**
 
 In `apps/web/src/auth/server/auth.server.ts`, import:
 
@@ -418,7 +418,7 @@ if (ctx.path === '/callback/google') {
 }
 ```
 
-- [ ] **Step 4: Run the auth tests**
+- [x] **Step 4: Run the auth tests**
 
 Run: `pnpm --filter @workspace/web test test/unit/auth/auth.server.test.ts`
 
@@ -572,7 +572,7 @@ Expected: PASS.
 - Modify: `apps/web/src/auth/server/auth.server.ts`
 - Modify: `apps/web/test/unit/auth/auth.server.test.ts`
 
-- [ ] **Step 1: Add billing callback test helpers**
+- [x] **Step 1: Add billing callback test helpers**
 
 In `apps/web/test/unit/auth/auth.server.test.ts`, add:
 
@@ -621,7 +621,7 @@ function getStripeSubscriptionOpts() {
 }
 ```
 
-- [ ] **Step 2: Write failing billing metric tests**
+- [x] **Step 2: Write failing billing metric tests**
 
 Add tests:
 
@@ -717,13 +717,13 @@ expect(emitCountMetricMock).toHaveBeenCalledWith(
 Add a negative test where `previous_attributes` is empty and assert the Starter
 downgrade metric is not emitted.
 
-- [ ] **Step 3: Run the failing billing tests**
+- [x] **Step 3: Run the failing billing tests**
 
 Run: `pnpm --filter @workspace/web test test/unit/auth/auth.server.test.ts`
 
 Expected: FAIL because the Stripe callbacks only log to console.
 
-- [ ] **Step 4: Implement confirmed billing metrics**
+- [x] **Step 4: Implement confirmed billing metrics**
 
 In `apps/web/src/auth/server/auth.server.ts`, add local helpers near
 `buildSubscriptionLogPayload`:
@@ -828,7 +828,7 @@ if (isPlanId(fromPlan) && fromPlan !== 'free') {
 }
 ```
 
-- [ ] **Step 5: Run the billing/auth tests**
+- [x] **Step 5: Run the billing/auth tests**
 
 Run: `pnpm --filter @workspace/web test test/unit/auth/auth.server.test.ts`
 
