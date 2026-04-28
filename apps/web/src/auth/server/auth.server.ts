@@ -130,7 +130,7 @@ function extractPreviousPriceIdsFromStripeEvent(event: unknown): Array<string> {
         };
       };
     }
-  )?.data?.previous_attributes;
+  ).data?.previous_attributes;
 
   return (
     previousAttributes?.items?.data
@@ -161,7 +161,7 @@ export function createAuth(config: AuthConfig) {
   });
 
   // Build reverse map from Stripe price IDs to plan IDs.
-  const priceToPlanMap: Record<string, PlanId> = {};
+  const priceToPlanMap: Partial<Record<string, PlanId>> = {};
   for (const sp of stripePlans) {
     if (sp.priceId) priceToPlanMap[sp.priceId] = sp.name;
     if (sp.annualDiscountPriceId)
@@ -213,11 +213,12 @@ export function createAuth(config: AuthConfig) {
       requireEmailVerification: true,
       resetPasswordTokenExpiresIn: 600,
       sendResetPassword: authEmails.sendResetPasswordEmail,
-      onPasswordReset: async () => {
+      onPasswordReset: () => {
         emitCountMetric(METRICS.AUTH_PASSWORD_RESET_COMPLETED, {
           route: AUTH_API_ROUTE,
           result: 'success',
         });
+        return Promise.resolve();
       },
     },
     emailVerification: {
@@ -228,11 +229,12 @@ export function createAuth(config: AuthConfig) {
         requireEmailVerification: true,
       },
       sendVerificationEmail: authEmails.sendVerificationEmail,
-      afterEmailVerification: async () => {
+      afterEmailVerification: () => {
         emitCountMetric(METRICS.AUTH_SIGNUP_VERIFIED, {
           route: AUTH_API_ROUTE,
           result: 'success',
         });
+        return Promise.resolve();
       },
     },
     socialProviders: {
