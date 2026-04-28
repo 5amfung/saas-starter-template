@@ -6,7 +6,6 @@ import viteTsConfigPaths from 'vite-tsconfig-paths';
 import tailwindcss from '@tailwindcss/vite';
 import { nitro } from 'nitro/vite';
 import { sentryTanstackStart } from '@sentry/tanstackstart-react/vite';
-import { sentryVitePlugin } from '@sentry/vite-plugin';
 
 const sentryBuildCredsPresent = Boolean(
   process.env.SENTRY_AUTH_TOKEN &&
@@ -62,11 +61,6 @@ const config = defineConfig({
     ...(sentryBuildEnabled
       ? [
           sentryTanstackStart({
-            authToken: process.env.SENTRY_AUTH_TOKEN,
-            org: process.env.SENTRY_ORG,
-            project: process.env.SENTRY_PROJECT,
-          }),
-          sentryVitePlugin({
             authToken: process.env.SENTRY_AUTH_TOKEN,
             org: process.env.SENTRY_ORG,
             project: process.env.SENTRY_PROJECT,
