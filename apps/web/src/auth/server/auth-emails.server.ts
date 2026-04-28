@@ -5,6 +5,7 @@ import { ChangeEmailApprovalEmail } from '@/email/templates/change-email-approva
 import { EmailVerificationEmail } from '@/email/templates/email-verification-email';
 import { ResetPasswordEmail } from '@/email/templates/reset-password-email';
 import { WorkspaceInvitationEmail } from '@/email/templates/workspace-invitation-email';
+import { METRICS, emitCountMetric } from '@/observability/server';
 
 const ensureTrailingSlashRemoved = (value: string): string =>
   value.endsWith('/') ? value.slice(0, -1) : value;
@@ -71,6 +72,7 @@ export function createAuthEmails(deps: AuthEmailDeps) {
         requestContext,
       }),
     });
+    emitCountMetric(METRICS.EMAIL_PASSWORD_RESET_SENT, { result: 'success' });
   };
 
   const sendVerificationEmail = async ({
@@ -90,6 +92,7 @@ export function createAuthEmails(deps: AuthEmailDeps) {
         requestContext,
       }),
     });
+    emitCountMetric(METRICS.EMAIL_VERIFICATION_SENT, { result: 'success' });
   };
 
   const sendInvitationEmail = async (data: {
@@ -107,6 +110,9 @@ export function createAuthEmails(deps: AuthEmailDeps) {
         inviterEmail: data.inviter.user.email,
         invitationUrl: buildAcceptInviteUrl(baseUrl, data.id),
       }),
+    });
+    emitCountMetric(METRICS.EMAIL_WORKSPACE_INVITATION_SENT, {
+      result: 'success',
     });
   };
 

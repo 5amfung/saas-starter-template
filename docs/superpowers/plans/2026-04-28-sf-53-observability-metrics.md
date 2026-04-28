@@ -433,7 +433,7 @@ Expected: PASS.
 - Modify: `apps/web/test/unit/email/resend.server.test.ts`
 - Modify: `apps/web/test/unit/auth/auth-emails.server.test.ts`
 
-- [ ] **Step 1: Write failing Resend assertions**
+- [x] **Step 1: Write failing Resend assertions**
 
 In `apps/web/test/unit/email/resend.server.test.ts`, mock observability:
 
@@ -463,7 +463,7 @@ Add to the error test:
 expect(emitCountMetricMock).not.toHaveBeenCalled();
 ```
 
-- [ ] **Step 2: Write failing auth email assertions**
+- [x] **Step 2: Write failing auth email assertions**
 
 In `apps/web/test/unit/auth/auth-emails.server.test.ts`, mock
 `@/observability/server`:
@@ -509,7 +509,7 @@ it('does not emit specific metrics when the email send fails', async () => {
 });
 ```
 
-- [ ] **Step 3: Run the failing email tests**
+- [x] **Step 3: Run the failing email tests**
 
 Run:
 
@@ -519,7 +519,7 @@ pnpm --filter @workspace/web test test/unit/email/resend.server.test.ts test/uni
 
 Expected: FAIL because email metrics are not emitted yet.
 
-- [ ] **Step 4: Implement email metrics**
+- [x] **Step 4: Implement email metrics**
 
 In `apps/web/src/email/resend.server.ts`, import:
 
@@ -555,7 +555,7 @@ emitCountMetric(METRICS.EMAIL_WORKSPACE_INVITATION_SENT, {
 Use the matching metric in each function. Do not emit a specific metric for
 `sendChangeEmailConfirmation`.
 
-- [ ] **Step 5: Run the email tests**
+- [x] **Step 5: Run the email tests**
 
 Run:
 
