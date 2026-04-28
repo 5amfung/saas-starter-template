@@ -1,5 +1,9 @@
-export { OPERATIONS } from './operations';
-export type { WorkflowOperation, WorkflowOperationFamily } from './operations';
+export { METRICS, OPERATIONS } from './operations';
+export type {
+  MetricName,
+  WorkflowOperation,
+  WorkflowOperationFamily,
+} from './operations';
 export {
   logger as workflowLogger,
   startSpan as startWorkflowSpan,
@@ -16,4 +20,9 @@ export type {
   WorkflowAttributesShape,
   WorkflowResult,
 } from './observability.shared';
+export {
+  emitCountMetric,
+  emitDistributionMetric,
+  normalizeApiMetricPath,
+} from './metrics.server';
 export { requestLogger } from './request-logger.server';

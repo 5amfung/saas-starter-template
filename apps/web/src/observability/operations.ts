@@ -29,3 +29,22 @@ export type WorkflowOperationFamily =
   | 'admin'
   | 'billing'
   | 'workspace';
+
+export const METRICS = {
+  AUTH_SIGNUP_CREATED: 'auth.signup.created',
+  AUTH_SIGNUP_VERIFIED: 'auth.signup.verified',
+  AUTH_PASSWORD_RESET_COMPLETED: 'auth.password_reset.completed',
+  AUTH_SIGNIN_GOOGLE_COMPLETED: 'auth.signin.google.completed',
+  BILLING_SUBSCRIPTION_STARTER_CREATED: 'billing.subscription.starter.created',
+  BILLING_SUBSCRIPTION_PRO_CREATED: 'billing.subscription.pro.created',
+  BILLING_SUBSCRIPTION_FREE_DOWNGRADED: 'billing.subscription.free.downgraded',
+  BILLING_SUBSCRIPTION_STARTER_DOWNGRADED:
+    'billing.subscription.starter.downgraded',
+  EMAIL_SENT: 'email.sent',
+  EMAIL_VERIFICATION_SENT: 'email.verification.sent',
+  EMAIL_PASSWORD_RESET_SENT: 'email.password_reset.sent',
+  EMAIL_WORKSPACE_INVITATION_SENT: 'email.workspace_invitation.sent',
+  API_REQUEST_LATENCY_MS: 'api.request.latency_ms',
+} as const;
+
+export type MetricName = (typeof METRICS)[keyof typeof METRICS];
