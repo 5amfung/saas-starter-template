@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // apps/web/test/unit/components/auth/auth-layout.test.tsx
 import { render, screen } from '@testing-library/react';
-import { AuthLayout } from '@/auth';
+import { AuthLayout, WebAuthLogo } from '@/auth';
 
 const webLogo = <a href="/">Acme Inc.</a>;
 
@@ -31,5 +31,33 @@ describe('AuthLayout', () => {
       </AuthLayout>
     );
     expect(screen.getByText('Admin Portal')).toBeInTheDocument();
+  });
+});
+
+describe('WebAuthLogo', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('renders VITE_APP_NAME as the web auth brand', () => {
+    vi.stubEnv('VITE_APP_NAME', 'Doughy');
+
+    render(<WebAuthLogo />);
+
+    expect(screen.getByRole('link', { name: /Doughy/i })).toHaveAttribute(
+      'href',
+      '/'
+    );
+  });
+
+  it('falls back to App when VITE_APP_NAME is not configured', () => {
+    vi.stubEnv('VITE_APP_NAME', '');
+
+    render(<WebAuthLogo />);
+
+    expect(screen.getByRole('link', { name: /^App$/i })).toHaveAttribute(
+      'href',
+      '/'
+    );
   });
 });
