@@ -995,7 +995,7 @@ Expected: PASS.
 
 - All files touched in Tasks 1-5.
 
-- [ ] **Step 1: Run targeted observability/auth/email tests**
+- [x] **Step 1: Run targeted observability/auth/email tests**
 
 Run:
 
@@ -1005,19 +1005,19 @@ pnpm --filter @workspace/web test test/unit/observability/metrics.server.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 2: Run web typecheck**
+- [x] **Step 2: Run web typecheck**
 
 Run: `pnpm --filter @workspace/web typecheck`
 
 Expected: PASS.
 
-- [ ] **Step 3: Run boundary check**
+- [x] **Step 3: Run boundary check**
 
 Run: `pnpm run check:boundaries`
 
 Expected: PASS.
 
-- [ ] **Step 4: Review metric safety**
+- [x] **Step 4: Review metric safety**
 
 Run:
 
@@ -1030,7 +1030,7 @@ passes `userId`, `workspaceId`, `email`, `subscriptionId`,
 `stripeCustomerId`, `stripeSubscriptionId`, tokens, raw request bodies, or raw
 query strings.
 
-- [ ] **Step 5: Stop before implementation closeout**
+- [x] **Step 5: Stop before implementation closeout**
 
 Do not close SF-53 yet. Leave the issue in `In Progress` until implementation
 is complete, verified, and a PR exists.
