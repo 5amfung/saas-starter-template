@@ -841,7 +841,7 @@ Expected: PASS.
 - Modify: `apps/web/src/observability/request-logger.server.ts`
 - Create: `apps/web/test/unit/observability/request-logger.server.test.ts`
 
-- [ ] **Step 1: Write failing latency tests**
+- [x] **Step 1: Write failing latency tests**
 
 Create `apps/web/test/unit/observability/request-logger.server.test.ts`:
 
@@ -913,13 +913,13 @@ describe('request logger API latency metric helper', () => {
 });
 ```
 
-- [ ] **Step 2: Run the failing latency tests**
+- [x] **Step 2: Run the failing latency tests**
 
 Run: `pnpm --filter @workspace/web test test/unit/observability/request-logger.server.test.ts`
 
 Expected: FAIL because `recordApiLatencyMetric` is not exported.
 
-- [ ] **Step 3: Implement latency recording**
+- [x] **Step 3: Implement latency recording**
 
 In `apps/web/src/observability/request-logger.server.ts`, import:
 
@@ -983,7 +983,7 @@ recordApiLatencyMetric({
 });
 ```
 
-- [ ] **Step 4: Run the latency tests**
+- [x] **Step 4: Run the latency tests**
 
 Run: `pnpm --filter @workspace/web test test/unit/observability/request-logger.server.test.ts`
 
