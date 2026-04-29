@@ -44,7 +44,6 @@ export const getRouter = () => {
       sendDefaultPii: true,
       tracePropagationTargets: ['localhost', /^\/api\//],
       tracesSampleRate: 1.0,
-      tunnel: '/tunnel',
     });
   }
 
