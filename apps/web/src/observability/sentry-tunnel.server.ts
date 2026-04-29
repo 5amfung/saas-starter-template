@@ -7,7 +7,7 @@ type SentryDsnConfig = {
 
 type BuildSentryEnvelopeUrlOptions = {
   configuredDsn: string;
-  envelope: string;
+  envelopeHeader: string;
 };
 
 type SentryEnvelopeHeader = {
@@ -34,14 +34,20 @@ export function parseSentryDsn(dsn: string): SentryDsnConfig {
   };
 }
 
-function parseEnvelopeDsn(envelope: string): string {
-  const [headerLine] = envelope.split('\n', 1);
+export function getSentryEnvelopeHeader(envelopeBytes: ArrayBuffer): string {
+  const bytes = new Uint8Array(envelopeBytes);
+  const headerEnd = bytes.indexOf(0x0a);
+  const headerBytes = headerEnd === -1 ? bytes : bytes.subarray(0, headerEnd);
 
-  if (!headerLine) {
+  return new TextDecoder().decode(headerBytes);
+}
+
+function parseEnvelopeDsn(envelopeHeader: string): string {
+  if (!envelopeHeader) {
     throw new Error('Sentry envelope must include a header');
   }
 
-  const header = JSON.parse(headerLine) as SentryEnvelopeHeader;
+  const header = JSON.parse(envelopeHeader) as SentryEnvelopeHeader;
 
   if (typeof header.dsn !== 'string' || !header.dsn) {
     throw new Error('Sentry envelope must include a DSN');
@@ -52,10 +58,10 @@ function parseEnvelopeDsn(envelope: string): string {
 
 export function buildSentryEnvelopeUrl({
   configuredDsn,
-  envelope,
+  envelopeHeader,
 }: BuildSentryEnvelopeUrlOptions): string {
   const configured = parseSentryDsn(configuredDsn);
-  const envelopeDsn = parseSentryDsn(parseEnvelopeDsn(envelope));
+  const envelopeDsn = parseSentryDsn(parseEnvelopeDsn(envelopeHeader));
   const projectId = envelopeDsn.projectIds[0];
 
   if (envelopeDsn.host !== configured.host) {

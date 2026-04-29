@@ -1,5 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { buildSentryEnvelopeUrl } from '@/observability/sentry-tunnel.server';
+import {
+  buildSentryEnvelopeUrl,
+  getSentryEnvelopeHeader,
+} from '@/observability/sentry-tunnel.server';
 import { requestLogger } from '@/observability/server';
 
 type SentryTunnelRouteArgs = {
@@ -21,13 +24,13 @@ async function handlePost(request: Request): Promise<Response> {
   }
 
   const envelopeBytes = await request.arrayBuffer();
-  const envelope = new TextDecoder().decode(envelopeBytes);
+  const envelopeHeader = getSentryEnvelopeHeader(envelopeBytes);
   let upstreamUrl: string;
 
   try {
     upstreamUrl = buildSentryEnvelopeUrl({
       configuredDsn,
-      envelope,
+      envelopeHeader,
     });
   } catch (error) {
     console.error('Invalid Sentry envelope', error);
