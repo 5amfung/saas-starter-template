@@ -6,6 +6,12 @@ import * as Sentry from '@sentry/tanstackstart-react';
 import { routeTree } from './routeTree.gen';
 import { isBrowserSentryRuntimeEnabled } from '@/observability/client';
 
+const getBrowserTracePropagationTargets = () => [
+  'localhost',
+  /^\/api\//,
+  ...(typeof window === 'undefined' ? [] : [window.location.origin]),
+];
+
 export const getRouter = () => {
   const queryClient = new QueryClient();
 
@@ -42,7 +48,7 @@ export const getRouter = () => {
       replaysSessionSampleRate: 0.1,
       replaysOnErrorSampleRate: 1.0,
       sendDefaultPii: true,
-      tracePropagationTargets: ['localhost', /^\/api\//],
+      tracePropagationTargets: getBrowserTracePropagationTargets(),
       tracesSampleRate: 1.0,
     });
   }
