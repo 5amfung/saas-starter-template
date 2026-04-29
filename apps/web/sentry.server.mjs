@@ -44,7 +44,6 @@ export function initializeServerSentry(env = process.env) {
     sendDefaultPii: true,
     tracePropagationTargets: ['localhost', /^\/api\//],
     tracesSampleRate: 1.0,
-    tunnel: '/tunnel',
   });
 
   state.initialized = true;
