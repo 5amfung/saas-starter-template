@@ -44,13 +44,13 @@ async function handlePost(request: Request): Promise<Response> {
       console.error(
         `Sentry tunnel upstream failed with status ${upstreamResponse.status}`
       );
-      return Response.json(
-        { error: 'Error tunneling to Sentry' },
-        { status: 502 }
-      );
     }
 
-    return Response.json({}, { status: 200 });
+    return new Response(upstreamResponse.body, {
+      headers: upstreamResponse.headers,
+      status: upstreamResponse.status,
+      statusText: upstreamResponse.statusText,
+    });
   } catch (error) {
     console.error('Error tunneling to Sentry', error);
     return Response.json(

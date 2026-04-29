@@ -99,6 +99,30 @@ describe('/api/tunnel route', () => {
     });
   });
 
+  it('forwards upstream Sentry error status and rate limit headers', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response('rate limited', {
+        headers: {
+          'retry-after': '60',
+          'x-sentry-rate-limits': '60:error:project:quota_exceeded',
+        },
+        status: 429,
+        statusText: 'Too Many Requests',
+      })
+    );
+
+    const handler = await getPostHandler();
+    const response = await handler!({ request: createEnvelopeRequest() });
+
+    expect(response.status).toBe(429);
+    expect(response.statusText).toBe('Too Many Requests');
+    expect(response.headers.get('retry-after')).toBe('60');
+    expect(response.headers.get('x-sentry-rate-limits')).toBe(
+      '60:error:project:quota_exceeded'
+    );
+    await expect(response.text()).resolves.toBe('rate limited');
+  });
+
   it('returns 503 when the tunnel is not configured', async () => {
     vi.resetModules();
     vi.stubEnv('VITE_SENTRY_DSN', '');
