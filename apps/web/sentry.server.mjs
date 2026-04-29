@@ -21,6 +21,38 @@ export function getServerSentryEnvironment(env = process.env) {
   return env.VERCEL_ENV ?? env.NODE_ENV ?? 'development';
 }
 
+function normalizeTraceOrigin(value) {
+  const trimmed = value?.trim();
+
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const originValue = /^[a-z][a-z\d+\-.]*:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+
+  try {
+    return new URL(originValue).origin;
+  } catch {
+    return undefined;
+  }
+}
+
+export function getServerTracePropagationTargets(env = process.env) {
+  return [
+    'localhost',
+    /^\/api\//,
+    ...new Set(
+      [
+        normalizeTraceOrigin(env.BETTER_AUTH_URL),
+        normalizeTraceOrigin(env.VERCEL_URL),
+        normalizeTraceOrigin(env.VERCEL_BRANCH_URL),
+      ].filter(Boolean)
+    ),
+  ];
+}
+
 export function initializeServerSentry(env = process.env) {
   if (!isServerSentryEnabled(env)) {
     return false;
@@ -42,7 +74,7 @@ export function initializeServerSentry(env = process.env) {
       Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
     ],
     sendDefaultPii: true,
-    tracePropagationTargets: ['localhost', /^\/api\//, 'https://saas.sfng.co'],
+    tracePropagationTargets: getServerTracePropagationTargets(env),
     tracesSampleRate: 1.0,
     tunnel: '/tunnel',
   });
