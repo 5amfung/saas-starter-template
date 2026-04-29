@@ -17,6 +17,7 @@ import { Route as HealthRouteRouteImport } from './routes/health/route';
 import { Route as IndexRouteImport } from './routes/index';
 import { Route as AdminIndexRouteImport } from './routes/admin/index';
 import { Route as VerifyEmailChangeEmailTokenRouteImport } from './routes/verify-email-change.$emailToken';
+import { Route as ApiTunnelRouteImport } from './routes/api/tunnel';
 import { Route as AdminAccessDeniedRouteImport } from './routes/admin/access-denied';
 import { Route as AdminProtectedRouteImport } from './routes/admin/_protected';
 import { Route as ProtectedWsRouteImport } from './routes/_protected/ws';
@@ -86,6 +87,11 @@ const VerifyEmailChangeEmailTokenRoute =
     path: '/verify-email-change/$emailToken',
     getParentRoute: () => rootRouteImport,
   } as any);
+const ApiTunnelRoute = ApiTunnelRouteImport.update({
+  id: '/api/tunnel',
+  path: '/api/tunnel',
+  getParentRoute: () => rootRouteImport,
+} as any);
 const AdminAccessDeniedRoute = AdminAccessDeniedRouteImport.update({
   id: '/admin/access-denied',
   path: '/admin/access-denied',
@@ -257,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/ws': typeof ProtectedWsRouteWithChildren;
   '/admin': typeof AdminProtectedRouteWithChildren;
   '/admin/access-denied': typeof AdminAccessDeniedRoute;
+  '/api/tunnel': typeof ApiTunnelRoute;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/admin/': typeof AdminIndexRoute;
   '/account': typeof ProtectedAccountAccountRoute;
@@ -293,6 +300,7 @@ export interface FileRoutesByTo {
   '/verify': typeof AuthVerifyRoute;
   '/admin': typeof AdminIndexRoute;
   '/admin/access-denied': typeof AdminAccessDeniedRoute;
+  '/api/tunnel': typeof ApiTunnelRoute;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/account': typeof ProtectedAccountAccountRoute;
   '/billing': typeof ProtectedAccountBillingRoute;
@@ -330,6 +338,7 @@ export interface FileRoutesById {
   '/_protected/ws': typeof ProtectedWsRouteWithChildren;
   '/admin/_protected': typeof AdminProtectedRouteWithChildren;
   '/admin/access-denied': typeof AdminAccessDeniedRoute;
+  '/api/tunnel': typeof ApiTunnelRoute;
   '/verify-email-change/$emailToken': typeof VerifyEmailChangeEmailTokenRoute;
   '/admin/': typeof AdminIndexRoute;
   '/_protected/_account/account': typeof ProtectedAccountAccountRoute;
@@ -369,6 +378,7 @@ export interface FileRouteTypes {
     | '/ws'
     | '/admin'
     | '/admin/access-denied'
+    | '/api/tunnel'
     | '/verify-email-change/$emailToken'
     | '/admin/'
     | '/account'
@@ -405,6 +415,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/admin'
     | '/admin/access-denied'
+    | '/api/tunnel'
     | '/verify-email-change/$emailToken'
     | '/account'
     | '/billing'
@@ -441,6 +452,7 @@ export interface FileRouteTypes {
     | '/_protected/ws'
     | '/admin/_protected'
     | '/admin/access-denied'
+    | '/api/tunnel'
     | '/verify-email-change/$emailToken'
     | '/admin/'
     | '/_protected/_account/account'
@@ -475,6 +487,7 @@ export interface RootRouteChildren {
   PingRoute: typeof PingRoute;
   AdminProtectedRoute: typeof AdminProtectedRouteWithChildren;
   AdminAccessDeniedRoute: typeof AdminAccessDeniedRoute;
+  ApiTunnelRoute: typeof ApiTunnelRoute;
   VerifyEmailChangeEmailTokenRoute: typeof VerifyEmailChangeEmailTokenRoute;
   AdminIndexRoute: typeof AdminIndexRoute;
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
@@ -538,6 +551,13 @@ declare module '@tanstack/react-router' {
       path: '/verify-email-change/$emailToken';
       fullPath: '/verify-email-change/$emailToken';
       preLoaderRoute: typeof VerifyEmailChangeEmailTokenRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/api/tunnel': {
+      id: '/api/tunnel';
+      path: '/api/tunnel';
+      fullPath: '/api/tunnel';
+      preLoaderRoute: typeof ApiTunnelRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     '/admin/access-denied': {
@@ -876,6 +896,7 @@ const rootRouteChildren: RootRouteChildren = {
   PingRoute: PingRoute,
   AdminProtectedRoute: AdminProtectedRouteWithChildren,
   AdminAccessDeniedRoute: AdminAccessDeniedRoute,
+  ApiTunnelRoute: ApiTunnelRoute,
   VerifyEmailChangeEmailTokenRoute: VerifyEmailChangeEmailTokenRoute,
   AdminIndexRoute: AdminIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
