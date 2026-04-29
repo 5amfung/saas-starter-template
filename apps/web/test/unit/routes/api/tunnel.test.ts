@@ -1,9 +1,9 @@
 describe('/api/tunnel route', () => {
   const sentryDsn = 'https://public@example.ingest.sentry.io/123456';
 
-  async function getPostHandler() {
+  async function getPostHandler(dsn = sentryDsn) {
     vi.resetModules();
-    vi.stubEnv('VITE_SENTRY_DSN', sentryDsn);
+    vi.stubEnv('VITE_SENTRY_DSN', dsn);
 
     const { Route } = await import('@/routes/api/tunnel');
     const handlers = Route.options.server?.handlers as
@@ -49,6 +49,23 @@ describe('/api/tunnel route', () => {
     expect(response.status).toBe(200);
     expect(fetch).toHaveBeenCalledWith(
       'https://example.ingest.sentry.io/api/123456/envelope/',
+      expect.objectContaining({
+        body: expect.any(ArrayBuffer),
+        method: 'POST',
+      })
+    );
+  });
+
+  it('forwards self-hosted Sentry envelopes without dropping the port or path prefix', async () => {
+    const selfHostedDsn =
+      'https://public@self-hosted.example.com:8443/sentry/123';
+    const handler = await getPostHandler(selfHostedDsn);
+    const request = createEnvelopeRequest(selfHostedDsn);
+    const response = await handler!({ request });
+
+    expect(response.status).toBe(200);
+    expect(fetch).toHaveBeenCalledWith(
+      'https://self-hosted.example.com:8443/sentry/api/123/envelope/',
       expect.objectContaining({
         body: expect.any(ArrayBuffer),
         method: 'POST',

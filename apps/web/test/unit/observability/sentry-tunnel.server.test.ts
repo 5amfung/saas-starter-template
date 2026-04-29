@@ -9,7 +9,20 @@ describe('Sentry tunnel helpers', () => {
       parseSentryDsn('https://public@example.ingest.sentry.io/123456')
     ).toEqual({
       host: 'example.ingest.sentry.io',
+      origin: 'https://example.ingest.sentry.io',
+      pathPrefix: '',
       projectIds: ['123456'],
+    });
+  });
+
+  it('parses the origin, path prefix, and project id from a self-hosted Sentry DSN', () => {
+    expect(
+      parseSentryDsn('https://public@self-hosted.example.com:8443/sentry/123')
+    ).toEqual({
+      host: 'self-hosted.example.com',
+      origin: 'https://self-hosted.example.com:8443',
+      pathPrefix: '/sentry',
+      projectIds: ['123'],
     });
   });
 
@@ -34,6 +47,36 @@ describe('Sentry tunnel helpers', () => {
         envelope,
       })
     ).toBe('https://example.ingest.sentry.io/api/123456/envelope/');
+  });
+
+  it('preserves the DSN origin and path prefix when building the upstream envelope URL', () => {
+    const envelope = [
+      JSON.stringify({
+        dsn: 'https://public@self-hosted.example.com:8443/sentry/123',
+      }),
+      JSON.stringify({ type: 'event' }),
+      JSON.stringify({ event_id: 'event_1' }),
+    ].join('\n');
+
+    expect(
+      buildSentryEnvelopeUrl({
+        configuredDsn: 'https://public@self-hosted.example.com:8443/sentry/123',
+        envelope,
+      })
+    ).toBe('https://self-hosted.example.com:8443/sentry/api/123/envelope/');
+  });
+
+  it('rejects envelopes for an unexpected Sentry path prefix', () => {
+    const envelope = JSON.stringify({
+      dsn: 'https://public@self-hosted.example.com:8443/other/123',
+    });
+
+    expect(() =>
+      buildSentryEnvelopeUrl({
+        configuredDsn: 'https://public@self-hosted.example.com:8443/sentry/123',
+        envelope,
+      })
+    ).toThrow('Invalid Sentry path prefix: /other');
   });
 
   it('rejects envelopes for an unexpected Sentry host', () => {
