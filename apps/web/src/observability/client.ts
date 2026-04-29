@@ -6,6 +6,7 @@ export {
 } from '@sentry/tanstackstart-react';
 export {
   buildWorkflowAttributes,
+  getBrowserSentryTunnel,
   getWorkflowOperationFamily,
   isBrowserSentryRuntimeEnabled,
   redactAuthWorkflowAttributes,

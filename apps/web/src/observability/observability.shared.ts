@@ -22,6 +22,7 @@ export type BrowserSentryRuntimeEnv = {
   MODE?: string;
   VITEST?: boolean;
   VITE_SENTRY_DISABLED?: string;
+  VITE_SENTRY_DSN?: string;
 };
 
 const AUTH_REDACTED_KEYS = new Set([
@@ -75,4 +76,14 @@ export function isBrowserSentryRuntimeEnabled(
   return (
     !env.VITEST && env.MODE !== 'test' && env.VITE_SENTRY_DISABLED !== 'true'
   );
+}
+
+export function getBrowserSentryTunnel(
+  env: BrowserSentryRuntimeEnv
+): string | undefined {
+  if (!env.VITE_SENTRY_DSN?.trim()) {
+    return undefined;
+  }
+
+  return '/api/tunnel';
 }

@@ -4,7 +4,10 @@ import { createRouter } from '@tanstack/react-router';
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query';
 import * as Sentry from '@sentry/tanstackstart-react';
 import { routeTree } from './routeTree.gen';
-import { isBrowserSentryRuntimeEnabled } from '@/observability/client';
+import {
+  getBrowserSentryTunnel,
+  isBrowserSentryRuntimeEnabled,
+} from '@/observability/client';
 
 const getBrowserTracePropagationTargets = () => [
   'localhost',
@@ -48,6 +51,7 @@ export const getRouter = () => {
       replaysSessionSampleRate: 0.1,
       replaysOnErrorSampleRate: 1.0,
       sendDefaultPii: true,
+      tunnel: getBrowserSentryTunnel(import.meta.env),
       tracePropagationTargets: getBrowserTracePropagationTargets(),
       tracesSampleRate: 1.0,
     });
