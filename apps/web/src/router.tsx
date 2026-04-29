@@ -50,7 +50,6 @@ export const getRouter = () => {
       sendDefaultPii: true,
       tracePropagationTargets: getBrowserTracePropagationTargets(),
       tracesSampleRate: 1.0,
-      tunnel: '/tunnel',
     });
   }
 
