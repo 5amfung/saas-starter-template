@@ -37,6 +37,7 @@ describe('BillingManagePlanDialog', () => {
     onUpgrade: vi.fn(),
     onDowngrade: vi.fn(),
     isProcessing: false,
+    upgradingPlanId: null,
     workspaceName: 'Test Workspace',
   };
 
@@ -171,5 +172,29 @@ describe('BillingManagePlanDialog', () => {
       name: /^downgrade$/i,
     });
     downgradeBtns.forEach((btn) => expect(btn).toBeDisabled());
+    expect(screen.getByRole('button', { name: /close/i })).toBeDisabled();
+  });
+
+  it('shows a spinner only on the pending upgrade button', () => {
+    renderWithProviders(
+      <BillingManagePlanDialog
+        {...defaultProps}
+        currentPlan={FREE_PLAN}
+        productPolicy={buildProductPolicy(FREE_PLAN)}
+        isProcessing={true}
+        upgradingPlanId="starter"
+      />
+    );
+
+    const upgradeBtns = screen.getAllByRole('button', {
+      name: /^upgrade$/i,
+    });
+
+    expect(upgradeBtns[0]).toBeDisabled();
+    expect(upgradeBtns[0].querySelector('.animate-spin')).toBeInTheDocument();
+    expect(upgradeBtns[1]).toBeDisabled();
+    expect(
+      upgradeBtns[1].querySelector('.animate-spin')
+    ).not.toBeInTheDocument();
   });
 });
