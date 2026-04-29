@@ -4,405 +4,269 @@ Operational guide for AI coding agents working in this repository.
 
 ## 1. Instruction Priority
 
-Resolve instruction conflicts in this order:
+Resolve conflicts in this order:
 
 1. Direct user request in the current conversation.
 2. This repository `AGENTS.md`.
 3. Explicitly invoked skills and tool-specific instructions.
 4. Default agent behavior.
 
-If the task becomes unclear or the current approach stops making technical sense, stop and re-plan before continuing.
+If the task becomes unclear or the current approach stops making technical
+sense, stop and re-plan before continuing.
 
-## 2. Execution Profile
-
-### Plan First
-
-- Use a plan-first workflow for any non-trivial task.
-- Treat work as non-trivial if it has 3 or more meaningful steps, crosses package/app boundaries, changes behavior across layers, or has non-obvious tradeoffs.
-- Use the repo planning/brainstorming workflow before implementing non-trivial changes.
-- If something goes sideways, stop, restate the problem, and re-plan instead of stacking ad hoc fixes.
-
-### Fix Root Causes
-
-- Solve root causes, not symptoms.
-- Avoid workaround-only patches unless the user explicitly asks for a temporary mitigation.
-- Prefer framework/library-native solutions over compensating logic.
-- Keep single sources of truth. Do not introduce parallel state or duplicate ownership casually.
-
-### Verify Before Declaring Done
-
-- Do not mark work complete without concrete verification.
-- Start with the smallest meaningful verification for the changed area, then widen scope if needed.
-- Compare expected behavior versus actual behavior; do not rely only on command exit status.
-- When Playwright end-to-end verification is required, run it outside the Codex sandbox. If sandbox limits block browser-based verification, request escalation immediately instead of skipping or downgrading the check.
-- If you cannot run verification, say exactly what was not verified and why.
-
-### Keep Changes Tight
-
-- Minimize blast radius.
-- Follow existing boundaries, naming, and architecture.
-- Avoid unrelated refactors unless they are required to make the requested change correct.
-- Never revert user changes you did not make unless explicitly asked.
-
-### Use Repository-Native Tooling
-
-- Use `pnpm` only. Never use `npm`, `yarn`, `bun`, or `npx`.
-- Prefer `rg` / `rg --files` for search.
-- Anchor multi-step work to the repository root with `git rev-parse --show-toplevel`.
-- Be consistent with CLI invocation patterns during a task.
-- Use Conventional Commits when asked to commit.
-
-### Use Subagents Deliberately
-
-- Use subagents for independent research, exploration, or parallelizable analysis.
-- Give each subagent one focused responsibility.
-- Subagents must follow this same repository policy.
-- Keep urgent blocking implementation work on the main path unless the delegated work is truly independent.
-
-## 3. Start / Implement / Verify / Finish
+## 2. Operating Loop
 
 ### Start
 
-- Confirm repository root and branch/worktree context.
-- Inspect local changes before editing anything substantial.
-- Identify the correct app or package before writing code.
-- Preflight important CLIs when availability or permissions are uncertain.
+- Anchor at the repository root with `git rev-parse --show-toplevel`.
+- Inspect `git status --short --branch` before editing.
+- Identify the owning app, package, and layer before changing files.
+- Prefer `rg` and `rg --files` for search.
+- Use `pnpm` only. Do not use `npm`, `yarn`, `bun`, or `npx`.
+
+### Plan
+
+- Use a plan-first workflow for non-trivial work.
+- Treat work as non-trivial when it has 3 or more meaningful steps, crosses app
+  or package boundaries, changes behavior across layers, or has unclear
+  tradeoffs.
+- If something goes sideways, stop, restate the problem, and re-plan instead of
+  stacking ad hoc fixes.
 
 ### Implement
 
-- Follow existing file/module boundaries.
-- Keep client/server imports legal.
-- Reuse existing helpers and package APIs before introducing new abstractions.
-- Add comments only when they explain non-obvious intent or tradeoffs.
+- Fix root causes, not symptoms.
+- Keep changes tight and avoid unrelated refactors.
+- Follow existing file names, imports, package boundaries, and route patterns.
+- Prefer framework-native and repo-native helpers over new abstractions.
+- Never revert user changes you did not make unless explicitly asked.
 
 ### Verify
 
-- Run targeted tests/checks first.
-- Run broader validation when the change affects shared or cross-cutting behavior.
-- Run boundary checks when import relationships or architectural layering changed.
-- Sanity-check generated files, route behavior, schema ownership, and server/client boundaries when relevant.
+- Run the smallest meaningful verification first, then widen scope when the
+  change touches shared behavior.
+- Compare expected behavior with actual behavior; do not rely only on command
+  exit status.
+- Run `pnpm run check:boundaries` when imports, layers, policy, billing, DB,
+  integration, or server/client boundaries change.
+- Run Playwright outside the Codex sandbox when browser-based E2E verification
+  is required. If sandbox limits block the run, request escalation instead of
+  downgrading the check.
+- If verification cannot run, state exactly what was not verified and why.
 
 ### Finish
 
 - Summarize what changed and why.
-- Call out residual risks, constraints, and follow-up work.
 - State the exact verification performed.
+- Call out residual risks or follow-up work.
+- Use Conventional Commits when asked to commit.
 
-## 4. Definition of Done
+## 3. Current Repository Shape
 
-Work is complete only when all are true:
-
-- The requested behavior or documentation change is implemented.
-- Relevant validation ran successfully, or any verification gap is explicitly stated.
-- The change is scoped, readable, and consistent with repository conventions.
-- No known instruction conflicts remain unresolved.
-
-## 5. Monorepo Overview
-
-This repository is a multi-app Turborepo SaaS starter, not a single-app codebase.
+This is a pnpm + Turborepo workspace.
 
 ### Apps
 
-- `apps/web`: main customer-facing SaaS app
-- `apps/admin`: separate admin web application
-- `apps/api-server`: Hono-based API/server app
+- `apps/web`: main TanStack Start SaaS app. It owns customer routes, workspace
+  routes, admin routes, auth endpoints, billing flows, database schema, email
+  templates, policy wrappers, observability, and most product-domain logic.
+- `apps/api-server`: optional standalone Hono API/server app.
 
-### Shared Packages
+There is no separate `apps/admin` app in this checkout. Admin UX and admin
+server functions live inside `apps/web`.
 
-- `packages/auth`: Better Auth configuration, auth helpers, validators, billing/auth glue
-- `packages/billing`: billing domain logic and public billing APIs
-- `packages/components`: shared feature-level React components and app-facing composition
-- `packages/db`: database client/runtime access
-- `packages/db-schema`: schema source, auth schema generation, Drizzle config/scripts
-- `packages/email`: email provider integration and React Email templates
-- `packages/logging`: shared logger and server request logging
-- `packages/policy`: shared authorization capability contracts and evaluators
-- `packages/test-utils`: shared testing helpers
-- `packages/ui`: low-level shared UI primitives, hooks, and styles
-- `packages/eslint-config`: shared lint configuration
+### Packages
 
-### Key Repo Facts
+- `packages/ui`: low-level shared UI primitives, hooks, and global styles.
+- `packages/test-utils`: shared Vitest, Testing Library, database, auth, and E2E
+  test helpers.
+- `packages/eslint-config`: shared ESLint configuration and custom rules.
 
-- Package manager: `pnpm@10`
+There are no separate `packages/auth`, `packages/billing`, `packages/db`,
+`packages/db-schema`, `packages/email`, `packages/policy`, or
+`packages/components` packages in this checkout. Those concerns are currently
+app-owned under `apps/web/src/`.
+
+### Key Facts
+
+- Package manager: `pnpm@10.33.1`
 - Node: `>=20`
-- Build/task orchestration: Turborepo
-- Framework: TanStack Start + TanStack Router + React 19 for `web` and `admin`
+- App framework: TanStack Start + TanStack Router + React 19
 - API server: Hono in `apps/api-server`
-- Database: Neon + Drizzle ORM
+- Database: Neon Postgres + Drizzle ORM
 - Auth: Better Auth
-- Payments: Stripe
+- Billing: Stripe
 - Email: Resend + React Email
-- Styling: Tailwind CSS v4
+- Styling: Tailwind CSS v4 + shadcn/ui + Base UI
 - Testing: Vitest, Testing Library, Playwright
 
-## 6. Where Changes Belong
-
-This section exists to improve first-pass edit accuracy.
+## 4. Where Changes Belong
 
 ### `apps/web`
 
-Use `apps/web` for:
+Use `apps/web` for almost all product behavior.
 
-- customer-facing product routes and pages
-- workspace/member/project/account UX
-- customer billing UI and customer-side billing flows
-- web-specific middleware, route loaders, and server functions
+Important directories:
 
-Important live structure:
-
-- `apps/web/src/routes/`
-- `apps/web/src/middleware/auth.ts`
-- `apps/web/src/init.ts`
-- `apps/web/src/account/`
-- `apps/web/src/workspace/`
-- `apps/web/src/billing/`
-- `apps/web/src/policy/`
-- `apps/web/src/components/`
-- `apps/web/src/hooks/`
-
-### `apps/admin`
-
-Use `apps/admin` for:
-
-- admin-only routes and dashboards
-- user/workspace administration UI
-- admin-side metrics and workspace management
-- admin-specific middleware, loaders, server functions, and policy wiring
-
-Important live structure:
-
-- `apps/admin/src/routes/`
-- `apps/admin/src/middleware/auth.ts`
-- `apps/admin/src/init.ts`
-- `apps/admin/src/admin/`
-- `apps/admin/src/auth/`
-- `apps/admin/src/policy/`
-- `apps/admin/src/components/`
+- `src/routes/`: TanStack Router file routes.
+- `src/account/`: account settings schemas, UI helpers, and server functions.
+- `src/admin/`: admin queries, schemas, server functions, and privileged logic.
+- `src/api/`: app-owned API service helpers and middleware.
+- `src/auth/`: Better Auth client/server setup, validators, email hooks, billing
+  glue, permissions, and auth plans.
+- `src/billing/`: billing UI, server functions, and billing core contracts,
+  domain, application, and infrastructure logic.
+- `src/components/`: app-specific product components.
+- `src/db/`: Drizzle client, schema source, seed helpers, and local DB scripts.
+- `src/email/`: Resend adapter, mock email client, request context, and React
+  Email templates.
+- `src/integrations/`: workspace integration definitions, encrypted secrets,
+  server functions, and repository logic.
+- `src/observability/`: Sentry and request logging helpers.
+- `src/policy/`: capability evaluators, app-facing policy functions, and
+  server-only policy fact loaders.
+- `src/workspace/`: workspace queries, mutations, selectors, server functions,
+  and membership flows.
+- `test/`: web unit, integration, and Playwright E2E tests.
 
 ### `apps/api-server`
 
-Use `apps/api-server` for:
+Use `apps/api-server` for standalone Hono service concerns that should not be
+TanStack Start route handlers:
 
-- standalone API/server concerns not owned by TanStack Start route handlers
-- Hono routes and middleware
-- request ID, error handling, and API-server-specific request logging
+- `src/app.ts`: Hono app composition.
+- `src/index.ts`: server entrypoint.
+- `src/routes/`: Hono routes.
+- `src/middleware/`: Hono middleware.
+- `src/lib/`: API-server utilities.
 
-Important live structure:
+### `packages/ui`
 
-- `apps/api-server/src/app.ts`
-- `apps/api-server/src/index.ts`
-- `apps/api-server/src/routes/`
-- `apps/api-server/src/middleware/`
-- `apps/api-server/src/lib/`
+Use `packages/ui` for generic UI primitives, design-system components, shared
+hooks, and global styles. Product-specific components should usually stay in
+`apps/web/src/components/`.
 
-### `packages/auth`
+### `packages/test-utils`
 
-Use `packages/auth` for:
+Use `packages/test-utils` for reusable test factories, auth helpers, E2E DB
+helpers, seeded users, isolated workspaces, and shared render helpers.
 
-- Better Auth server/client setup
-- auth validators/schemas
-- auth-related billing glue
-- permission scaffolding and shared auth utilities
+### `packages/eslint-config`
 
-### `packages/billing`
+Use `packages/eslint-config` for shared lint presets and custom lint rules.
 
-Use `packages/billing` for:
-
-- billing business rules
-- plan definitions, entitlement logic, subscription logic
-- public billing application APIs consumed by apps/auth
-- infrastructure adapters that persist/fetch billing state
-
-Live internal layering:
-
-- `src/contracts/`
-- `src/domain/`
-- `src/application/`
-- `src/infrastructure/`
-
-### `packages/db` vs `packages/db-schema`
-
-This split matters.
-
-- `packages/db-schema`: schema source of truth, auth schema generation, Drizzle config/scripts
-- `packages/db`: database client/runtime database access exports
-
-If the task changes tables, schema shape, generated auth schema, or Drizzle generation flow, start in `packages/db-schema`.
-If the task changes how code connects to or consumes the database at runtime, start in `packages/db`.
-
-### `packages/components` vs `packages/ui`
-
-This split also matters.
-
-- `packages/ui`: low-level design-system primitives and shared styles
-- `packages/components`: higher-level shared app components, layout pieces, forms, auth/account UI composition exposed through package subpaths such as `@workspace/components/account`, `@workspace/components/auth`, `@workspace/components/form`, and `@workspace/components/layout`
-
-If a component is a reusable primitive, style primitive, or generic UI building block, it likely belongs in `packages/ui`.
-If it is a product-level shared component that composes business-facing behavior, it likely belongs in `packages/components`.
-
-### `packages/logging`
-
-Use `packages/logging` for:
-
-- shared logger implementation
-- shared server-side request logging helpers
-
-### `packages/policy`
-
-Use `packages/policy` for:
-
-- shared authorization capability types and policy evaluators
-- workspace/admin capability contracts reused across apps
-- pure policy logic that should not depend on app runtime concerns
-
-Keep app-specific context loading, server lookups, and route-facing wrappers in each app's `src/policy/` directory.
-
-## 7. Routing, Middleware, and Server Functions
-
-### Authorization and Capability Rules
-
-- UI does not authorize actions; UI renders capabilities derived from server-evaluated policy.
-- Routes and middleware guard page-level access.
-- Server functions guard action-level access.
-- Roles are inputs to policy evaluation, not business decisions by themselves.
-- Policy evaluation should be centralized, typed, and reusable across apps.
-- `packages/policy` owns shared capability contracts and pure evaluators.
-- App-local `src/policy/` modules own loading contextual facts and exposing app-facing wrappers/functions.
-- New protected features should define required capabilities before UI implementation begins.
-- Do not duplicate business semantics across packages; extend the existing owning package instead.
+## 5. Routing, Server Functions, and Boundaries
 
 ### File-Based Routing
 
-Both `apps/web` and `apps/admin` use file-based routing under `src/routes/`.
+`apps/web/src/routes/` uses TanStack Router file routing.
 
-- layout routes use `_` prefixes
-- public auth routes live under `_auth/`
-- protected routes live under `_protected/`
-- API routes live under `routes/api/`
+- Layout routes use `_` prefixes.
+- Public auth routes live under `_auth/`.
+- Customer protected routes live under `_protected/`.
+- Admin routes live under `admin/`.
+- API routes live under `routes/api/`.
 
-Generated route trees exist in both apps:
-
-- `apps/web/src/routeTree.gen.ts`
-- `apps/admin/src/routeTree.gen.ts`
-
-Never edit generated route tree files manually.
-
-### Middleware
-
-Both web apps currently use auth middleware modules:
-
-- `apps/web/src/middleware/auth.ts`
-- `apps/admin/src/middleware/auth.ts`
-
-Prefer enforcing access with middleware/server-side guards, not UI-only checks.
+Never edit `apps/web/src/routeTree.gen.ts` manually.
 
 ### Server Function Conventions
 
-Current code uses `createServerFn()` wrappers in app-level `*.functions.ts` files and server-only helpers in `*.server.ts` files.
+Current code uses these conventions:
 
-Examples that exist now:
+- `*.functions.ts`: app-facing server function wrappers.
+- `*.server.ts`: server-only internals, privileged helpers, DB logic, secrets,
+  and request-sensitive behavior.
+- Plain `*.ts` / `*.tsx`: client-safe or shared code unless the surrounding
+  module clearly marks it server-only.
 
-- `apps/web/src/workspace/workspace.functions.ts`
-- `apps/web/src/billing/billing.functions.ts`
-- `apps/web/src/account/notification-preferences.functions.ts`
-- `apps/admin/src/admin/admin.functions.ts`
-- `apps/admin/src/admin/workspaces.functions.ts`
+Do not import `*.server.ts` modules into route components, client components, or
+other client-safe modules. Prefer calling server behavior through
+`*.functions.ts`.
 
-Use this split consistently:
+### Authorization and Policy
 
-- `*.functions.ts`: app-facing server function wrappers
-- `*.server.ts`: server-only internals, privileged helpers, DB logic, secrets
-- plain `*.ts` / `*.tsx`: shared or client-safe unless clearly server-only by context
+- UI does not authorize actions. It renders capabilities derived from
+  server-evaluated policy.
+- Routes and middleware guard page-level access.
+- Server functions guard action-level access.
+- Roles are inputs to policy evaluation, not business decisions by themselves.
+- Shared pure policy logic lives under `apps/web/src/policy/core/`.
+- App-facing policy wrappers and server fact loading live under
+  `apps/web/src/policy/`.
 
-Rules:
+### Database
 
-- Never import `*.server.ts` into client-safe modules or route components.
-- Prefer calling server behavior through `*.functions.ts` from routes/components.
-- Keep privileged logic on the server.
+- Schema source lives in `apps/web/src/db/schema/`.
+- Migration output lives in `apps/web/drizzle/`.
+- Runtime DB access lives under `apps/web/src/db/client/` and server-only app
+  modules.
+- UI and client-safe code must use server functions or app-safe query APIs, not
+  DB clients or schema modules.
 
-## 8. Auth, Workspace, and Billing Context
+`apps/web/src/db/schema/auth.schema.ts` is repo-owned. Do not blindly overwrite
+it with generated Better Auth output; use generated output as a temporary
+reference during upgrades and manually port intended changes.
 
-### Auth / Workspace Model
+### Billing
 
-Current code shows:
+Billing is app-owned but internally layered:
 
-- Better Auth organization support is active
-- workspaces are modeled via organizations
-- active workspace state is tracked through `activeOrganizationId`
-- workspace-aware behavior spans `packages/auth`, `apps/web/src/workspace`, and admin workspace management code
+- `apps/web/src/billing/core/contracts/`
+- `apps/web/src/billing/core/domain/`
+- `apps/web/src/billing/core/application/`
+- `apps/web/src/billing/core/infrastructure/`
 
-Do not re-implement workspace ownership or membership rules in random app files if shared auth/workspace code already owns that behavior.
+Routes, components, hooks, admin modules, and workspace modules must not import
+billing infrastructure internals directly. Use public billing core exports or
+app server wrappers.
 
-### Billing Context
+### Integrations
 
-Billing is no longer just app-local UI logic.
+Integration UI should use integration server functions and route-safe types. Do
+not import repository internals or `*.server.ts` integration modules directly
+from components, routes, or hooks.
 
-- customer billing UI/server functions exist in `apps/web/src/billing`
-- admin billing/workspace controls exist in `apps/admin`
-- billing domain logic lives in `packages/billing`
-- auth and billing integration also touches `packages/auth`
+### Observability and Email
 
-Before changing billing behavior, decide whether the change is:
+- Browser-safe code can use client observability helpers.
+- Server workflow logging belongs in server observability modules.
+- UI and client-safe code must not import the Resend server adapter.
+- Keep secrets, tokens, DB access, and request-sensitive operations on the
+  server.
 
-- UI only
-- app orchestration
-- shared billing domain logic
-- persistence/schema
+## 6. Dependency-Cruiser Rules
 
-Put the change in the lowest correct layer.
+`.dependency-cruiser.cjs` currently enforces the most important architecture
+boundaries under `apps/web/src/`.
 
-## 9. Hard Architecture Constraints
+Important active rules include:
 
-These constraints are real and enforced by tooling or code structure.
+- UI/route code cannot import billing infrastructure.
+- Billing contracts, domain, and application layers cannot import DB schema.
+- Billing core cannot depend on app route, component, admin, workspace, auth,
+  policy, email, or observability layers.
+- UI and client-safe code cannot import `src/db/`.
+- DB code cannot import route, component, or hook code.
+- Components cannot import server-only policy modules.
+- Pure policy core cannot import app runtime, persistence, UI, auth-server,
+  observability, or email layers.
+- Integration UI cannot import integration repository or server-only modules.
+- The auth barrel must remain client-safe.
+- UI and client-safe code cannot import server observability or Resend server
+  modules.
 
-### Generated / Managed Files
+If you need new behavior across one of these boundaries, expose a small public
+server function, route-safe type, or application-layer API instead of reaching
+through the boundary.
 
-Do not manually edit:
+## 7. Commands
 
-- `apps/web/src/routeTree.gen.ts`
-- `apps/admin/src/routeTree.gen.ts`
-- generated schema output that should instead be regenerated by the proper script
-- managed UI component files if the task should be handled through the component generator/workflow already used by the repo
-
-### Dependency Cruiser Boundaries
-
-The repo has boundary enforcement in `.dependency-cruiser.cjs`.
-
-Important active rules:
-
-- app code must not import `packages/billing/src/infrastructure` or other billing internals directly
-- `packages/billing` domain/application/contracts must not depend on app code
-- billing core layers must not depend directly on `packages/db-schema`
-- new app imports from `packages/db-schema/src/` are forbidden outside a narrow allow-list
-- components must not import app-local `src/policy/*.server.ts` modules directly
-- apps must consume `@workspace/policy` through its public entry, not internal source files
-
-Practical rule:
-
-- apps should consume public package APIs, not package internals
-- if you need new behavior, expose it through the package’s public surface instead of reaching into internals
-
-### Database Ownership
-
-- Schema source lives in `packages/db-schema`
-- runtime DB exports live in `packages/db`
-- avoid creating new direct app-to-`db-schema` coupling unless you have confirmed it is allowed
-
-### Security / Server Ownership
-
-- keep secrets, privileged auth logic, DB access, and request-sensitive operations on the server
-- do not replace middleware or server checks with client-only checks
-
-## 10. Testing and Verification Strategy
+Run from the repository root unless using a package filter.
 
 ### Root Commands
 
-Run from repo root unless there is a reason not to:
-
 - `pnpm dev`
-- `pnpm dev:admin`
 - `pnpm dev:api`
-- `pnpm dev:web`
 - `pnpm run build`
 - `pnpm run lint`
 - `pnpm run lint:fix`
@@ -415,100 +279,105 @@ Run from repo root unless there is a reason not to:
 - `pnpm run test:integration`
 - `pnpm run coverage`
 - `pnpm test:e2e`
-- `pnpm run test:e2e:admin`
-- `pnpm run test:e2e:ui:admin`
-- `pnpm run test:e2e:report:admin`
-- `pnpm run test:e2e:web`
-- `pnpm run test:e2e:ui:web`
-- `pnpm run test:e2e:report:web`
 
-### App-Specific Commands
+### Web Commands
 
-- `pnpm --filter @workspace/web <script>`
-- `pnpm --filter @workspace/admin-web <script>`
-- `pnpm --filter @workspace/api-server <script>`
+- `pnpm --filter @workspace/web dev`
+- `pnpm --filter @workspace/web dev:email`
+- `pnpm --filter @workspace/web dev:stripe-webhook`
+- `pnpm --filter @workspace/web build`
+- `pnpm --filter @workspace/web start`
+- `pnpm --filter @workspace/web test`
+- `pnpm --filter @workspace/web test:unit`
+- `pnpm --filter @workspace/web test:integration`
+- `pnpm --filter @workspace/web test:e2e`
+- `pnpm --filter @workspace/web test:e2e:ui`
+- `pnpm --filter @workspace/web test:e2e:report`
 
-Useful current examples:
+### Database Commands
 
-- `pnpm --filter @workspace/web test test/unit/...`
-- `pnpm --filter @workspace/web test:e2e test/e2e/...`
-- `pnpm --filter @workspace/admin-web test`
+- `pnpm run db:generate`
+- `pnpm run db:migrate`
+- `pnpm run db:push`
+- `pnpm run db:studio`
 
-### Database / Schema Commands
+These delegate to `@workspace/web`.
 
-Schema generation commands currently live under `@workspace/db-schema`:
+### API Server Commands
 
-- `pnpm --filter @workspace/db-schema db:generate`
-- `pnpm --filter @workspace/db-schema db:migrate`
-- `pnpm --filter @workspace/db-schema db:push`
-- `pnpm --filter @workspace/db-schema db:studio`
-- `pnpm --filter @workspace/db-schema gen-schema`
-- `pnpm --filter @workspace/db-schema gen-auth-schema`
+- `pnpm --filter @workspace/api-server dev`
+- `pnpm --filter @workspace/api-server build`
+- `pnpm --filter @workspace/api-server start`
+- `pnpm --filter @workspace/api-server test`
 
-### Verification Guidance
+## 8. Verification Strategy
 
-- Use the smallest relevant package/app command first.
-- If imports or layering changed, run `pnpm run check:boundaries`.
-- If shared types or package exports changed, run at least typecheck for affected packages/apps.
-- If route behavior changed, run the most targeted route- or app-level tests available.
-- If schema or auth generation changed, verify the generated artifacts and the consuming code path.
+- Documentation-only changes: inspect rendered Markdown-sensitive structure and
+  run a focused stale-reference search.
+- Import or layering changes: run `pnpm run check:boundaries`.
+- Shared types or package exports: run affected package typechecks and consider
+  root `pnpm run typecheck`.
+- Route behavior: run targeted route/component tests, then the relevant E2E
+  slice when user-facing behavior changes.
+- DB schema changes: run the relevant Drizzle command and verify consuming code.
+- Auth changes: verify server auth behavior and relevant UI flows.
+- Billing changes: verify unit/integration coverage around plans, entitlements,
+  checkout, portal, and webhook behavior.
 
-## 11. Testing Layout
+Do not declare work complete without evidence.
+
+## 9. Testing Layout
 
 Current test locations include:
 
-- `apps/web/test/`
-- `apps/admin/test/`
+- `apps/web/test/unit/`
+- `apps/web/test/integration/`
+- `apps/web/test/e2e/`
 - `apps/api-server/test/`
-- `packages/auth/test/`
-- `packages/billing/test/`
-- `packages/db-schema/test/`
-- `packages/email/test/`
 - `packages/eslint-config/test/`
-- `packages/policy/test/`
+- `packages/test-utils/test/`
 - `packages/ui/test/`
 
 Prefer the smallest matching test scope before broad repo-wide runs.
 
-## 12. Repository Conventions That Matter
-
-### General
+## 10. Repository Conventions
 
 - Use path aliases and workspace imports consistently.
 - Keep import ordering aligned with existing file style.
 - Prefer meaningful names and extracted constants over magic values.
 - Avoid `any`; narrow `unknown` properly.
+- Add comments only for non-obvious intent or tradeoffs.
+- Keep generated files generated; do not hand-edit route trees or generated
+  artifacts that should be produced by a repo command.
+- Put generic UI primitives in `packages/ui`; keep product-specific UI in
+  `apps/web/src/components/` unless there is clear reuse.
+- Keep server-only modules server-only.
+- Keep deployment and migration guidance anchored to current scripts and
+  platform configuration.
 
-### UI
-
-- Reuse the existing UI stack before introducing new component patterns.
-- Follow the repo’s Tailwind/shadcn/Base UI conventions.
-- Put primitives in `packages/ui`, shared business-facing composition in `packages/components`, and app-specific UX inside the app unless genuine reuse exists.
-
-### Architecture
-
-- Respect package public APIs.
-- Do not mix route logic, DB logic, and domain logic arbitrarily.
-- Follow the existing layer split before adding new modules.
-
-## 13. Do Not
+## 11. Do Not
 
 - Do not use `npm`, `yarn`, `bun`, or `npx`.
-- Do not manually edit generated route tree files.
-- Do not assume `web` is the only app.
+- Do not manually edit `apps/web/src/routeTree.gen.ts`.
+- Do not assume there is a separate admin app.
+- Do not assume auth, billing, DB schema, email, or policy live in separate
+  workspace packages.
 - Do not import server-only modules into client-safe code.
-- Do not reach into package internals when a public API is the correct boundary.
-- Do not bypass middleware/server checks with UI-only logic.
-- Do not declare work complete without evidence.
+- Do not import DB modules from UI or client-safe code.
+- Do not bypass middleware, route guards, server functions, or server policy
+  checks with UI-only logic.
+- Do not reach through dependency-cruiser boundaries to make a quick fix.
+- Do not declare work complete without verification.
 
-## 14. Preferred Outcome
+## 12. Definition of Done
 
-The best change in this repository is:
+Work is complete only when all are true:
 
-- correct
-- minimal
-- verified
-- aligned with the current package/app boundaries
-- explicit about tradeoffs when tradeoffs exist
+- The requested behavior or documentation change is implemented.
+- The change is scoped, readable, and aligned with current boundaries.
+- Relevant validation ran successfully, or any verification gap is explicitly
+  stated.
+- No known instruction conflicts remain unresolved.
 
-If a solution is fast but brittle, keep working until it is both correct and structurally defensible.
+The best change in this repository is correct, minimal, verified, and
+structurally defensible.

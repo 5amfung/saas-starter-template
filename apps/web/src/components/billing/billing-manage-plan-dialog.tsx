@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { IconLoader2 } from '@tabler/icons-react';
 
 import {
   AlertDialog,
@@ -27,6 +28,7 @@ interface BillingManagePlanDialogProps {
   onUpgrade: (planId: PlanId, annual: boolean) => void;
   onDowngrade: (targetPlan: PlanDefinition, annual: boolean) => void;
   isProcessing: boolean;
+  upgradingPlanId: PlanId | null;
   /** Workspace name for enterprise mailto link subject. */
   workspaceName: string;
 }
@@ -41,12 +43,19 @@ export function BillingManagePlanDialog({
   onUpgrade,
   onDowngrade,
   isProcessing,
+  upgradingPlanId,
   workspaceName,
 }: BillingManagePlanDialogProps) {
   const [isAnnual, setIsAnnual] = useState(false);
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (isProcessing && !nextOpen) return;
+        onOpenChange(nextOpen);
+      }}
+    >
       <AlertDialogContent className="h-full! max-w-none! gap-0 overflow-y-auto rounded-none! p-0 sm:h-auto! sm:max-w-4xl! sm:rounded-xl!">
         <AlertDialogTitle className="sr-only">
           Manage your plan
@@ -108,6 +117,8 @@ export function BillingManagePlanDialog({
             const action = productPolicy.planChanges[plan.id].action;
             const config = PLAN_ACTION_CONFIG[action];
             const isCurrent = action === 'current';
+            const isUpgradeLoading =
+              action === 'upgrade' && upgradingPlanId === plan.id;
             const isDowngradeOrCancel =
               action === 'downgrade' || action === 'cancel';
             const isDisabled =
@@ -150,6 +161,12 @@ export function BillingManagePlanDialog({
                       }
                     }}
                   >
+                    {isUpgradeLoading && (
+                      <IconLoader2
+                        aria-hidden="true"
+                        className="size-4 animate-spin"
+                      />
+                    )}
                     {config.label}
                   </Button>
                 )}
@@ -160,7 +177,11 @@ export function BillingManagePlanDialog({
 
         {/* Close button */}
         <div className="flex justify-end px-7 pb-7">
-          <AlertDialogCancel variant="outline" size="sm">
+          <AlertDialogCancel
+            variant="outline"
+            size="sm"
+            disabled={isProcessing}
+          >
             Close
           </AlertDialogCancel>
         </div>
