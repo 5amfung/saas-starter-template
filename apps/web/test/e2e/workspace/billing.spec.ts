@@ -926,10 +926,21 @@ test.describe('Workspace Billing', () => {
     const workspaceId = await signInAndGoToWorkspacePage(
       page,
       fixture.owner,
-      'members'
+      'billing'
     );
 
-    for (let i = 0; i < 4; i++) {
+    await expect(page.getByText('Current plan')).toBeVisible({
+      timeout: 15000,
+    });
+
+    await clickUpgradeInManagePlanDialog(page, 'Pro');
+    await completeStripeCheckout(page, {
+      redirectPattern: new RegExp(`/ws/${workspaceId}/(?:billing|overview)`),
+    });
+
+    await openWorkspacePageFromSidebar(page, workspaceId, 'Members', 'members');
+
+    for (let i = 0; i < 5; i++) {
       await setupInvitedMember(
         page,
         baseURL!,
@@ -944,33 +955,9 @@ test.describe('Workspace Billing', () => {
     await expect(page.getByText('Current plan')).toBeVisible({
       timeout: 15000,
     });
-
-    await clickUpgradeInManagePlanDialog(page, 'Pro');
-    await completeStripeCheckout(page, {
-      redirectPattern: new RegExp(`/ws/${workspaceId}/(?:billing|overview)`),
-    });
-    await navigateToWorkspaceBilling(page, workspaceId);
-    await expect(page.getByText('Current plan')).toBeVisible({
-      timeout: 15000,
-    });
     await expect(
       page.locator('[data-slot="card-title"]').getByText('Pro')
     ).toBeVisible({ timeout: 15000 });
-
-    await openWorkspacePageFromSidebar(page, workspaceId, 'Members', 'members');
-    await setupInvitedMember(
-      page,
-      baseURL!,
-      workspaceId,
-      'billing-downgrade-over-limit'
-    );
-    await resetToSignedOutState(page);
-    await signInAndGoToWorkspacePage(page, fixture.owner, 'billing');
-
-    await navigateToWorkspaceBilling(page, workspaceId);
-    await expect(page.getByText('Current plan')).toBeVisible({
-      timeout: 15000,
-    });
 
     const manageDialog = await openManagePlanDialog(page);
     await manageDialog

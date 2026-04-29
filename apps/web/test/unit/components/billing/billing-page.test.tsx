@@ -361,6 +361,55 @@ describe('BillingPage', () => {
     });
   });
 
+  it('keeps manage dialog open and shows loading on the clicked upgrade while checkout is pending', async () => {
+    getWorkspaceBillingData.mockResolvedValue(
+      buildBillingData({ plan: FREE_PLAN })
+    );
+
+    let resolveCheckout!: (value: { url: string }) => void;
+    createWorkspaceCheckoutSession.mockReturnValue(
+      new Promise<{ url: string }>((resolve) => {
+        resolveCheckout = resolve;
+      })
+    );
+
+    const user = userEvent.setup();
+    renderWithProviders(
+      <BillingPage
+        workspaceId={TEST_WORKSPACE_ID}
+        workspaceName="Test Workspace"
+      />
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /manage plan/i })
+      ).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /manage plan/i }));
+    await user.click(screen.getAllByRole('button', { name: /^upgrade$/i })[0]);
+
+    await waitFor(() => {
+      expect(createWorkspaceCheckoutSession).toHaveBeenCalled();
+    });
+
+    expect(screen.getByRole('button', { name: /close/i })).toBeDisabled();
+
+    const upgradeBtns = screen.getAllByRole('button', { name: /^upgrade$/i });
+    expect(upgradeBtns[0].querySelector('.animate-spin')).toBeInTheDocument();
+    expect(
+      upgradeBtns[1].querySelector('.animate-spin')
+    ).not.toBeInTheDocument();
+    upgradeBtns.forEach((button) => expect(button).toBeDisabled());
+
+    resolveCheckout({ url: 'https://checkout.stripe.com/test123' });
+
+    await waitFor(() => {
+      expect(window.location.href).toBe('https://checkout.stripe.com/test123');
+    });
+  });
+
   it('redirects via window.location.href on billing portal click', async () => {
     getWorkspaceBillingData.mockResolvedValue(
       buildBillingData({

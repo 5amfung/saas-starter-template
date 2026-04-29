@@ -135,13 +135,13 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
     onSuccess: (result) => {
       if (result.url) {
         window.location.href = result.url;
+        return;
       }
+      setUpgradingPlanId(null);
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to start checkout.');
-    },
-    onSettled: () => {
       setUpgradingPlanId(null);
+      toast.error(error.message || 'Failed to start checkout.');
     },
   });
 
@@ -331,7 +331,6 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
         isPendingCancel={productPolicy.lifecycle.isPendingCancel}
         isPendingDowngrade={productPolicy.lifecycle.isPendingDowngrade}
         onUpgrade={(planId, annual) => {
-          setManagePlanOpen(false);
           upgradeMutation.mutate({
             planId,
             annual,
@@ -343,6 +342,7 @@ export function BillingPage({ workspaceId, workspaceName }: BillingPageProps) {
           setDowngradeAnnual(annual);
         }}
         isProcessing={upgradingPlanId !== null}
+        upgradingPlanId={upgradingPlanId}
         workspaceName={workspaceName}
       />
 
