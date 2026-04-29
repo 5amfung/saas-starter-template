@@ -42,7 +42,11 @@ export const getRouter = () => {
       replaysSessionSampleRate: 0.1,
       replaysOnErrorSampleRate: 1.0,
       sendDefaultPii: true,
-      tracePropagationTargets: ['localhost', /^\/api\//],
+      tracePropagationTargets: [
+        'localhost',
+        /^\/api\//,
+        'https://saas.sfng.co',
+      ],
       tracesSampleRate: 1.0,
       tunnel: '/tunnel',
     });

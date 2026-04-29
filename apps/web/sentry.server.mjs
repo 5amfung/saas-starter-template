@@ -42,7 +42,7 @@ export function initializeServerSentry(env = process.env) {
       Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
     ],
     sendDefaultPii: true,
-    tracePropagationTargets: ['localhost', /^\/api\//],
+    tracePropagationTargets: ['localhost', /^\/api\//, 'https://saas.sfng.co'],
     tracesSampleRate: 1.0,
     tunnel: '/tunnel',
   });
