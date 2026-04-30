@@ -5,31 +5,81 @@
 [![pnpm](https://img.shields.io/badge/pnpm-10.33.1-orange)](https://pnpm.io/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)](https://www.typescriptlang.org/)
 
-A production-ready SaaS starter built with TanStack Start, React 19, Better Auth,
-Neon Postgres, Drizzle ORM, Stripe, Resend, and shadcn/ui.
+## About
 
-The main app lives in `apps/web`. It serves customer routes, workspace routes,
-account settings, admin routes, auth endpoints, billing flows, email templates,
-database schema, and most product-domain logic. `apps/api-server` is an optional
-standalone Hono service.
+A production-ready SaaS foundation with authentication, multi-tenant workspaces,
+Stripe billing, and an admin dashboard, built on TanStack Start, React 19, and
+shadcn/ui.
 
-## What You Get
+## Features
 
-- Email/password auth, Google OAuth, email verification, password reset, session
-  management, impersonation, and user bans.
-- Multi-tenant workspaces backed by Better Auth organizations, including member
-  roles, invitations, active workspace state, and workspace switching.
-- Stripe subscriptions with checkout, billing portal, invoices, lifecycle
-  webhooks, plan limits, entitlement checks, and upgrade prompts.
-- Admin routes under `/admin` for user, workspace, entitlement, and analytics
-  workflows.
-- Account settings for profile, email, password, linked accounts, sessions,
-  billing, and notification preferences.
-- Resend + React Email templates for auth, security, and workspace invitation
-  emails.
-- Shared UI primitives in `packages/ui`, shared test helpers in
-  `packages/test-utils`, and shared ESLint rules in `packages/eslint-config`.
-- Vitest unit/integration coverage and Playwright end-to-end coverage.
+### Authentication
+
+- ✅ Email & password with email verification
+- ✅ Google OAuth with account linking
+- ✅ Password reset flow
+- ✅ Email change with confirmation
+- ✅ Session management (view & revoke active sessions)
+- ✅ Admin user impersonation
+- ✅ User banning with optional expiration
+
+### Multi-Tenant Workspaces
+
+- ✅ Personal workspace auto-created on signup
+- ✅ Team workspaces with member management
+- ✅ Role-based access (owner, admin, member)
+- ✅ Email invitations with expiration
+- ✅ Workspace switcher in sidebar
+- ✅ Active workspace tracked on session
+
+### Stripe Billing
+
+- ✅ Starter and Pro plans (monthly & annual)
+- ✅ Checkout session creation
+- ✅ Billing portal for self-serve management
+- ✅ Invoice history
+- ✅ Subscription lifecycle webhooks
+- ✅ Plan-based feature gating (workspace limits, member limits)
+- ✅ Upgrade prompts when limits are reached
+
+### Admin Dashboard
+
+- ✅ User count metrics (total, verified, unverified)
+- ✅ Signup analytics chart (configurable time range)
+- ✅ Monthly active users chart
+- ✅ User management table (search, filter, paginate)
+- ✅ Ban/unban users with reason
+- ✅ Edit and delete users
+
+### Account Settings
+
+- ✅ Edit profile (name, email, avatar)
+- ✅ Change password / set password for OAuth accounts
+- ✅ Linked accounts display
+- ✅ Active sessions list
+- ✅ Billing management (plan, invoices, billing portal)
+- ✅ Notification preferences (marketing email opt-in/out)
+
+### Email Templates
+
+- ✅ Email verification
+- ✅ Password reset
+- ✅ Email change approval
+- ✅ Workspace invitation
+- ✅ Security notice
+- ✅ React Email components with dev preview server
+
+### UI & Developer Experience
+
+- ✅ 25+ shadcn/ui components
+- ✅ Dark mode support
+- ✅ Mobile-first responsive design
+- ✅ Interactive charts and data tables
+- ✅ Dynamic breadcrumb navigation
+- ✅ File-based routing
+- ✅ TanStack Start server functions
+- ✅ Strict TypeScript
+- ✅ ESLint + Prettier
 
 ## Tech Stack
 
