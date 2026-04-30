@@ -1,4 +1,9 @@
-import { Outlet, createFileRoute, notFound } from '@tanstack/react-router';
+import {
+  Outlet,
+  createFileRoute,
+  notFound,
+  redirect,
+} from '@tanstack/react-router';
 import { getWorkspaceRouteAccess } from '@/workspace/workspace.functions';
 import { workspaceDetailQueryOptions } from '@/workspace/workspace.queries';
 
@@ -24,13 +29,19 @@ export const Route = createFileRoute('/_protected/ws/$workspaceId')({
   staleTime: 30_000,
   loader: async ({ context, params }) => {
     try {
+      const access = await getWorkspaceRouteAccess({
+        data: { workspaceId: params.workspaceId },
+      });
+
+      if (access.kind === 'redirect') {
+        throw redirect({ to: access.to });
+      }
+
       await context.queryClient.ensureQueryData(
         workspaceDetailQueryOptions(params.workspaceId)
       );
 
-      return await getWorkspaceRouteAccess({
-        data: { workspaceId: params.workspaceId },
-      });
+      return access;
     } catch (error) {
       if (isWorkspaceNotFoundError(error)) {
         throw notFound({ routeId: '__root__' });

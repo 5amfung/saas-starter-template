@@ -6,8 +6,8 @@ import {
 import { createServerFnMock } from '../../mocks/server-fn';
 import {
   ensureWorkspaceRouteAccess,
-  getActiveWorkspaceId,
   getWorkspaceById,
+  getWorkspaceIndexRouteTarget,
   getWorkspaceRouteAccess,
 } from '@/workspace/workspace.functions';
 
@@ -17,7 +17,7 @@ const {
   getRequestHeadersMock,
   ensureWorkspaceMembershipMock,
   setActiveOrganizationMock,
-  requireWebAppEntryMock,
+  resolveWebAppEntryAccessMock,
   getActiveMemberRoleMock,
 } = vi.hoisted(() => ({
   getAuthMock: vi.fn(),
@@ -25,7 +25,7 @@ const {
   getRequestHeadersMock: vi.fn().mockReturnValue(new Headers()),
   ensureWorkspaceMembershipMock: vi.fn(),
   setActiveOrganizationMock: vi.fn(),
-  requireWebAppEntryMock: vi.fn(),
+  resolveWebAppEntryAccessMock: vi.fn(),
   getActiveMemberRoleMock: vi.fn(),
 }));
 
@@ -54,7 +54,7 @@ vi.mock('@/workspace/workspace.server', () => ({
 }));
 
 vi.mock('@/policy/web-app-entry.server', () => ({
-  requireWebAppEntry: requireWebAppEntryMock,
+  resolveWebAppEntryAccess: resolveWebAppEntryAccessMock,
 }));
 
 vi.mock('@tanstack/react-router', () => ({
@@ -155,7 +155,7 @@ describe('resolveWorkspaceRouteAccess (via getWorkspaceById)', () => {
   });
 });
 
-describe('getActiveWorkspaceId', () => {
+describe('getWorkspaceIndexRouteTarget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getRequestHeadersMock.mockReturnValue(new Headers());
@@ -167,16 +167,26 @@ describe('getActiveWorkspaceId', () => {
     });
   });
 
-  it('redirects to /signin when no session', async () => {
-    requireWebAppEntryMock.mockRejectedValueOnce({ to: '/signin' });
+  it('returns a redirect target when no session', async () => {
+    resolveWebAppEntryAccessMock.mockResolvedValueOnce({
+      kind: 'redirect',
+      to: '/signin',
+      capabilities: {
+        canEnterWebApp: false,
+        mustSignIn: true,
+        mustVerifyEmail: false,
+        mustResolveWorkspace: false,
+      },
+    });
 
-    await expect(getActiveWorkspaceId()).rejects.toMatchObject({
+    await expect(getWorkspaceIndexRouteTarget()).resolves.toMatchObject({
+      kind: 'redirect',
       to: '/signin',
     });
   });
 
   it('returns activeOrganizationId when already set', async () => {
-    requireWebAppEntryMock.mockResolvedValueOnce({
+    resolveWebAppEntryAccessMock.mockResolvedValueOnce({
       kind: 'canEnterWebApp',
       activeWorkspaceId: 'ws-active',
       capabilities: {
@@ -187,14 +197,16 @@ describe('getActiveWorkspaceId', () => {
       },
     });
 
-    const result = await getActiveWorkspaceId();
+    const result = await getWorkspaceIndexRouteTarget();
 
-    expect(result).toBe('ws-active');
-    expect(requireWebAppEntryMock).toHaveBeenCalledWith(expect.any(Headers));
+    expect(result).toEqual({ kind: 'workspace', workspaceId: 'ws-active' });
+    expect(resolveWebAppEntryAccessMock).toHaveBeenCalledWith(
+      expect.any(Headers)
+    );
   });
 
-  it('uses requireWebAppEntry to resolve and return the active workspace id', async () => {
-    requireWebAppEntryMock.mockResolvedValueOnce({
+  it('uses resolveWebAppEntryAccess to resolve and return the active workspace id', async () => {
+    resolveWebAppEntryAccessMock.mockResolvedValueOnce({
       kind: 'canEnterWebApp',
       activeWorkspaceId: 'ws-fallback',
       capabilities: {
@@ -205,10 +217,12 @@ describe('getActiveWorkspaceId', () => {
       },
     });
 
-    const result = await getActiveWorkspaceId();
+    const result = await getWorkspaceIndexRouteTarget();
 
-    expect(result).toBe('ws-fallback');
-    expect(requireWebAppEntryMock).toHaveBeenCalledWith(expect.any(Headers));
+    expect(result).toEqual({ kind: 'workspace', workspaceId: 'ws-fallback' });
+    expect(resolveWebAppEntryAccessMock).toHaveBeenCalledWith(
+      expect.any(Headers)
+    );
   });
 });
 
@@ -267,7 +281,11 @@ describe('getWorkspaceRouteAccess', () => {
       data: { workspaceId: 'ws-1' },
     });
 
-    expect(result).toEqual({ workspaceId: 'ws-1', role: 'owner' });
+    expect(result).toEqual({
+      kind: 'workspace',
+      workspaceId: 'ws-1',
+      role: 'owner',
+    });
     expect(result).not.toHaveProperty('workspace');
   });
 });

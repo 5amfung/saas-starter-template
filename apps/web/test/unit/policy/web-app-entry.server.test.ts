@@ -6,6 +6,7 @@ import {
 import {
   getCurrentWebAppEntry,
   requireWebAppEntry,
+  resolveWebAppEntryAccess,
 } from '@/policy/web-app-entry.server';
 
 const {
@@ -203,6 +204,16 @@ describe('web-app-entry.server', () => {
         canEnterWebApp: true,
       },
     });
+  });
+
+  it('returns redirect entries from resolveWebAppEntryAccess without throwing', async () => {
+    mockGetSession.mockResolvedValueOnce(null);
+
+    await expect(resolveWebAppEntryAccess(headers)).resolves.toMatchObject({
+      kind: 'redirect',
+      to: '/signin',
+    });
+    expect(mockSetActiveOrganization).not.toHaveBeenCalled();
   });
 
   it('throws a forbidden APIError from requireWebAppEntry when no accessible workspaces exist', async () => {
