@@ -5,7 +5,12 @@ import {
   createEnteredWebAppEntry,
   resolveWebAppEntry,
 } from './web-app-entry.shared';
-import type { WebAppEntry, WebAppEntryAllowed } from './web-app-entry.shared';
+import type {
+  WebAppEntry,
+  WebAppEntryAllowed,
+  WebAppEntryBlocked,
+  WebAppEntryRedirect,
+} from './web-app-entry.shared';
 import { getAuth } from '@/init.server';
 import {
   listAccessibleWorkspaces,
@@ -74,7 +79,7 @@ export async function getCurrentWebAppEntry(
 export async function requireWebAppEntry(
   headers: Headers = getRequestHeaders()
 ): Promise<WebAppEntryAllowed> {
-  const entry = await getCurrentWebAppEntry(headers);
+  const entry = await resolveWebAppEntryAccess(headers);
 
   if (entry.kind === 'redirect') {
     throw redirect({ to: entry.to });
@@ -85,6 +90,14 @@ export async function requireWebAppEntry(
       message: 'No accessible workspaces found for this user.',
     });
   }
+
+  return entry;
+}
+
+export async function resolveWebAppEntryAccess(
+  headers: Headers = getRequestHeaders()
+): Promise<WebAppEntryAllowed | WebAppEntryRedirect | WebAppEntryBlocked> {
+  const entry = await getCurrentWebAppEntry(headers);
 
   if (entry.kind === 'mustResolveWorkspace') {
     await getAuth().api.setActiveOrganization({
