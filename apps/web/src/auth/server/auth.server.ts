@@ -29,14 +29,23 @@ import {
 } from '@/db/schema';
 import { assertInviteAllowed } from '@/billing/core';
 import {
+  METRICS,
   OPERATIONS,
   buildWorkflowAttributes,
+  emitCountMetric,
   startWorkflowSpan,
   workflowLogger,
 } from '@/observability/server';
 
 const DEFAULT_WORKSPACE_NAME = 'My Workspace';
 const DEFAULT_WORKSPACE_SLUG_ATTEMPTS = 3;
+const AUTH_API_ROUTE = '/api/auth/$';
+const PLAN_TIERS: Record<PlanId, number> = {
+  free: 0,
+  starter: 1,
+  pro: 2,
+  enterprise: 3,
+};
 
 export interface AuthConfig {
   db: Database;
@@ -87,6 +96,49 @@ function buildSubscriptionLogPayload(subscription: {
   };
 }
 
+function isPlanId(value: string): value is PlanId {
+  return (
+    value === 'free' ||
+    value === 'starter' ||
+    value === 'pro' ||
+    value === 'enterprise'
+  );
+}
+
+function getCreatedSubscriptionMetric(plan: string) {
+  if (plan === 'starter') return METRICS.BILLING_SUBSCRIPTION_STARTER_CREATED;
+  if (plan === 'pro') return METRICS.BILLING_SUBSCRIPTION_PRO_CREATED;
+  return null;
+}
+
+function emitCreatedSubscriptionMetric(plan: string) {
+  const metric = getCreatedSubscriptionMetric(plan);
+  if (!metric) return;
+
+  emitCountMetric(metric, {
+    plan,
+    result: 'success',
+  });
+}
+
+function extractPreviousPriceIdsFromStripeEvent(event: unknown): Array<string> {
+  const previousAttributes = (
+    event as {
+      data?: {
+        previous_attributes?: {
+          items?: { data?: Array<{ price?: { id?: string } }> };
+        };
+      };
+    }
+  ).data?.previous_attributes;
+
+  return (
+    previousAttributes?.items?.data
+      ?.map((item) => item.price?.id)
+      .filter((value): value is string => typeof value === 'string') ?? []
+  );
+}
+
 export function createAuth(config: AuthConfig) {
   const stripeClient = new Stripe(config.stripe.secretKey);
 
@@ -109,7 +161,7 @@ export function createAuth(config: AuthConfig) {
   });
 
   // Build reverse map from Stripe price IDs to plan IDs.
-  const priceToPlanMap: Record<string, PlanId> = {};
+  const priceToPlanMap: Partial<Record<string, PlanId>> = {};
   for (const sp of stripePlans) {
     if (sp.priceId) priceToPlanMap[sp.priceId] = sp.name;
     if (sp.annualDiscountPriceId)
@@ -161,6 +213,13 @@ export function createAuth(config: AuthConfig) {
       requireEmailVerification: true,
       resetPasswordTokenExpiresIn: 600,
       sendResetPassword: authEmails.sendResetPasswordEmail,
+      onPasswordReset: () => {
+        emitCountMetric(METRICS.AUTH_PASSWORD_RESET_COMPLETED, {
+          route: AUTH_API_ROUTE,
+          result: 'success',
+        });
+        return Promise.resolve();
+      },
     },
     emailVerification: {
       sendOnSignIn: true,
@@ -170,6 +229,13 @@ export function createAuth(config: AuthConfig) {
         requireEmailVerification: true,
       },
       sendVerificationEmail: authEmails.sendVerificationEmail,
+      afterEmailVerification: () => {
+        emitCountMetric(METRICS.AUTH_EMAIL_VERIFIED, {
+          route: AUTH_API_ROUTE,
+          result: 'success',
+        });
+        return Promise.resolve();
+      },
     },
     socialProviders: {
       google: {
@@ -208,6 +274,14 @@ export function createAuth(config: AuthConfig) {
                 result: 'success',
               }),
             });
+
+            if (ctx.path === '/callback/google') {
+              emitCountMetric(METRICS.AUTH_SIGNIN_GOOGLE_COMPLETED, {
+                provider: 'google',
+                route: AUTH_API_ROUTE,
+                result: 'success',
+              });
+            }
           }
         );
       }),
@@ -289,6 +363,10 @@ export function createAuth(config: AuthConfig) {
                 }
               }
             );
+            emitCountMetric(METRICS.AUTH_SIGNUP_CREATED, {
+              route: AUTH_API_ROUTE,
+              result: 'success',
+            });
           },
         },
       },
@@ -328,6 +406,7 @@ export function createAuth(config: AuthConfig) {
               ...buildSubscriptionLogPayload(subscription),
               planName: plan.name,
             });
+            emitCreatedSubscriptionMetric(subscription.plan);
             return Promise.resolve();
           },
           onSubscriptionCreated: async ({ subscription, plan }) => {
@@ -335,13 +414,36 @@ export function createAuth(config: AuthConfig) {
               ...buildSubscriptionLogPayload(subscription),
               planName: plan.name,
             });
+            emitCreatedSubscriptionMetric(subscription.plan);
             return Promise.resolve();
           },
-          onSubscriptionUpdate: async ({ subscription }) => {
+          onSubscriptionUpdate: async ({ event, subscription }) => {
             console.log(
               'subscription updated',
               buildSubscriptionLogPayload(subscription)
             );
+            const toPlan = subscription.plan;
+            const fromPlan = (() => {
+              for (const priceId of extractPreviousPriceIdsFromStripeEvent(
+                event
+              )) {
+                const planId = priceToPlanMap[priceId];
+                if (planId) return planId;
+              }
+              return null;
+            })();
+
+            if (
+              toPlan === 'starter' &&
+              fromPlan &&
+              PLAN_TIERS[fromPlan] > PLAN_TIERS.starter
+            ) {
+              emitCountMetric(METRICS.BILLING_SUBSCRIPTION_STARTER_DOWNGRADED, {
+                fromPlan,
+                toPlan,
+                result: 'success',
+              });
+            }
             return Promise.resolve();
           },
           onSubscriptionCancel: async ({
@@ -360,6 +462,14 @@ export function createAuth(config: AuthConfig) {
               'subscription deleted',
               buildSubscriptionLogPayload(subscription)
             );
+            const fromPlan = subscription.plan;
+            if (isPlanId(fromPlan) && fromPlan !== 'free') {
+              emitCountMetric(METRICS.BILLING_SUBSCRIPTION_FREE_DOWNGRADED, {
+                fromPlan,
+                toPlan: 'free',
+                result: 'success',
+              });
+            }
             return Promise.resolve();
           },
         },

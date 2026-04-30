@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import type { ReactElement } from 'react';
+import { METRICS, emitCountMetric } from '@/observability/server';
 
 export interface EmailConfig {
   apiKey: string;
@@ -44,6 +45,11 @@ export function createEmailClient(config: EmailConfig): EmailClient {
       if (error) {
         throw new Error(`Failed to send email: ${error.message}`);
       }
+
+      emitCountMetric(METRICS.EMAIL_SENT, {
+        provider: 'resend',
+        result: 'success',
+      });
 
       return data;
     },
