@@ -2,7 +2,7 @@ import { redirect } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import * as z from 'zod';
-import { requireWebAppEntry } from '@/policy/web-app-entry.server';
+import { resolveWebAppEntryAccess } from '@/policy/web-app-entry.server';
 import { getAuth } from '@/init.server';
 import {
   ensureWorkspaceMembership,
@@ -16,6 +16,30 @@ const workspaceRouteInput = z.object({
 
 const workspaceSwitcherTriggerDetailInput = workspaceRouteInput;
 
+type WorkspaceRouteRedirect = {
+  kind: 'redirect';
+  to: '/signin' | '/verify';
+};
+
+type WorkspaceIndexRouteTarget =
+  | WorkspaceRouteRedirect
+  | {
+      kind: 'blocked';
+      reason: 'noAccessibleWorkspaces';
+    }
+  | {
+      kind: 'workspace';
+      workspaceId: string;
+    };
+
+type WorkspaceRouteAccess =
+  | WorkspaceRouteRedirect
+  | {
+      kind: 'workspace';
+      workspaceId: string;
+      role: Awaited<ReturnType<typeof getActiveMemberRole>>;
+    };
+
 type VerifiedSession = NonNullable<
   Awaited<ReturnType<ReturnType<typeof getAuth>['api']['getSession']>>
 >;
@@ -27,6 +51,19 @@ const requireVerifiedSession = async (headers: Headers) => {
   }
 
   return session as VerifiedSession;
+};
+
+const getVerifiedSessionResult = async (
+  headers: Headers
+): Promise<
+  WorkspaceRouteRedirect | { kind: 'session'; session: VerifiedSession }
+> => {
+  const session = await getAuth().api.getSession({ headers });
+  if (!session || !session.user.emailVerified) {
+    return { kind: 'redirect', to: '/signin' };
+  }
+
+  return { kind: 'session', session: session as VerifiedSession };
 };
 
 const resolveWorkspaceRouteAccess = async (
@@ -84,17 +121,29 @@ export const getWorkspaceRouteAccess = createServerFn()
   .inputValidator(workspaceRouteInput)
   .handler(async ({ data }) => {
     const headers = getRequestHeaders();
-    const session = await requireVerifiedSession(headers);
+    const sessionResult = await getVerifiedSessionResult(headers);
+    if (sessionResult.kind === 'redirect') {
+      return sessionResult satisfies WorkspaceRouteRedirect;
+    }
 
     const [workspace, role] = await Promise.all([
-      resolveWorkspaceRouteAccess(headers, data.workspaceId, session),
-      getActiveMemberRole(headers, data.workspaceId, session.user.id),
+      resolveWorkspaceRouteAccess(
+        headers,
+        data.workspaceId,
+        sessionResult.session
+      ),
+      getActiveMemberRole(
+        headers,
+        data.workspaceId,
+        sessionResult.session.user.id
+      ),
     ]);
 
     return {
+      kind: 'workspace',
       workspaceId: workspace.id,
       role,
-    };
+    } satisfies WorkspaceRouteAccess;
   });
 
 export const ensureWorkspaceRouteAccess = createServerFn()
@@ -110,11 +159,31 @@ export const ensureWorkspaceRouteAccess = createServerFn()
     return { workspaceId: workspace.id };
   });
 
-export const getActiveWorkspaceId = createServerFn().handler(async () => {
-  const headers = getRequestHeaders();
-  const entry = await requireWebAppEntry(headers);
-  return entry.activeWorkspaceId;
-});
+export const getWorkspaceIndexRouteTarget = createServerFn().handler(
+  async () => {
+    const headers = getRequestHeaders();
+    const entry = await resolveWebAppEntryAccess(headers);
+
+    if (entry.kind === 'redirect') {
+      return {
+        kind: 'redirect',
+        to: entry.to,
+      } satisfies WorkspaceIndexRouteTarget;
+    }
+
+    if (entry.kind === 'blocked') {
+      return {
+        kind: 'blocked',
+        reason: entry.reason,
+      } satisfies WorkspaceIndexRouteTarget;
+    }
+
+    return {
+      kind: 'workspace',
+      workspaceId: entry.activeWorkspaceId,
+    } satisfies WorkspaceIndexRouteTarget;
+  }
+);
 
 export const getWorkspaceSwitcherTriggerDetail = createServerFn()
   .inputValidator(workspaceSwitcherTriggerDetailInput)
