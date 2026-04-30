@@ -1,6 +1,6 @@
 import type * as LoggingServer from '@/observability/server';
 import type { AuthConfig } from '@/auth/server/auth.server';
-import { OPERATIONS } from '@/observability/server';
+import { METRICS, OPERATIONS } from '@/observability/server';
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks — references used inside vi.mock() definitions.
@@ -21,6 +21,7 @@ const {
   startSpanMock,
   loggerInfoMock,
   loggerErrorMock,
+  emitCountMetricMock,
 } = vi.hoisted(() => {
   const createOrganizationFn = vi.fn();
   const billingHelpers = {
@@ -64,6 +65,7 @@ const {
     startSpanMock: startSpanFn,
     loggerInfoMock: vi.fn(),
     loggerErrorMock: vi.fn(),
+    emitCountMetricMock: vi.fn(),
   };
 });
 
@@ -157,6 +159,7 @@ vi.mock('@/observability/server', async (importActual) => {
       info: loggerInfoMock,
       error: loggerErrorMock,
     },
+    emitCountMetric: emitCountMetricMock,
   };
 });
 
@@ -192,6 +195,12 @@ function buildTestConfig(overrides?: Partial<AuthConfig>): AuthConfig {
 }
 
 interface BetterAuthConfig {
+  emailAndPassword?: {
+    onPasswordReset?: (data: { user: { id: string } }) => Promise<void>;
+  };
+  emailVerification?: {
+    afterEmailVerification?: (user: { id: string }) => Promise<void>;
+  };
   databaseHooks?: {
     user?: {
       create?: {
@@ -204,6 +213,49 @@ interface BetterAuthConfig {
       path: string;
       context: { newSession?: { user: { id: string } } };
     }) => Promise<void>;
+  };
+}
+
+function getStripeSubscriptionOpts() {
+  const call = stripeMock.mock.calls[0];
+  return call[0] as {
+    subscription: {
+      onSubscriptionComplete: (data: {
+        subscription: {
+          id: string;
+          plan: string;
+          referenceId: string;
+          status: string;
+        };
+        plan: { name: string };
+      }) => Promise<void>;
+      onSubscriptionCreated: (data: {
+        subscription: {
+          id: string;
+          plan: string;
+          referenceId: string;
+          status: string;
+        };
+        plan: { name: string };
+      }) => Promise<void>;
+      onSubscriptionUpdate: (data: {
+        event: unknown;
+        subscription: {
+          id: string;
+          plan: string;
+          referenceId: string;
+          status: string;
+        };
+      }) => Promise<void>;
+      onSubscriptionDeleted: (data: {
+        subscription: {
+          id: string;
+          plan: string;
+          referenceId: string;
+          status: string;
+        };
+      }) => Promise<void>;
+    };
   };
 }
 
@@ -288,6 +340,10 @@ describe('createAuth', () => {
           userId: 'user_new',
           result: 'success',
         })
+      );
+      expect(emitCountMetricMock).toHaveBeenCalledWith(
+        METRICS.AUTH_SIGNUP_CREATED,
+        { route: '/api/auth/$', result: 'success' }
       );
     });
 
@@ -753,6 +809,70 @@ describe('createAuth', () => {
 
       expect(dbUpdateMock).not.toHaveBeenCalled();
     });
+
+    it('records a Google sign-in metric only for successful Google callbacks', async () => {
+      const createAuth = await importCreateAuth();
+      createAuth(buildTestConfig());
+      const config = betterAuthSpy.mock.calls[0][0] as BetterAuthConfig;
+      const afterHook = config.hooks!.after!;
+
+      await afterHook({
+        path: '/callback/google',
+        context: { newSession: { user: { id: 'user_google' } } },
+      });
+
+      expect(emitCountMetricMock).toHaveBeenCalledWith(
+        METRICS.AUTH_SIGNIN_GOOGLE_COMPLETED,
+        { provider: 'google', route: '/api/auth/$', result: 'success' }
+      );
+    });
+
+    it('does not record a Google sign-in metric for email sign-in', async () => {
+      const createAuth = await importCreateAuth();
+      createAuth(buildTestConfig());
+      const config = betterAuthSpy.mock.calls[0][0] as BetterAuthConfig;
+      const afterHook = config.hooks!.after!;
+
+      await afterHook({
+        path: '/sign-in/email',
+        context: { newSession: { user: { id: 'user_email' } } },
+      });
+
+      expect(emitCountMetricMock).not.toHaveBeenCalledWith(
+        METRICS.AUTH_SIGNIN_GOOGLE_COMPLETED,
+        expect.anything()
+      );
+    });
+  });
+
+  describe('auth confirmation callbacks', () => {
+    it('records verified email after Better Auth verifies email', async () => {
+      const createAuth = await importCreateAuth();
+      createAuth(buildTestConfig());
+      const config = betterAuthSpy.mock.calls[0][0] as BetterAuthConfig;
+
+      await config.emailVerification!.afterEmailVerification!({ id: 'user_1' });
+
+      expect(emitCountMetricMock).toHaveBeenCalledWith(
+        METRICS.AUTH_EMAIL_VERIFIED,
+        { route: '/api/auth/$', result: 'success' }
+      );
+    });
+
+    it('records completed password reset from Better Auth onPasswordReset', async () => {
+      const createAuth = await importCreateAuth();
+      createAuth(buildTestConfig());
+      const config = betterAuthSpy.mock.calls[0][0] as BetterAuthConfig;
+
+      await config.emailAndPassword!.onPasswordReset!({
+        user: { id: 'user_1' },
+      });
+
+      expect(emitCountMetricMock).toHaveBeenCalledWith(
+        METRICS.AUTH_PASSWORD_RESET_COMPLETED,
+        { route: '/api/auth/$', result: 'success' }
+      );
+    });
   });
 
   // ─── Stripe plan config wiring ──────────────────────────────────────
@@ -767,6 +887,119 @@ describe('createAuth', () => {
         expect.anything(),
         'sk_test',
         expect.any(Object)
+      );
+    });
+
+    it('records confirmed Starter and Pro subscription creation from Stripe callbacks', async () => {
+      const createAuth = await importCreateAuth();
+      createAuth(buildTestConfig());
+      const opts = getStripeSubscriptionOpts();
+
+      await opts.subscription.onSubscriptionComplete({
+        subscription: {
+          id: 'sub_1',
+          plan: 'starter',
+          referenceId: 'org_1',
+          status: 'active',
+        },
+        plan: { name: 'starter' },
+      });
+      await opts.subscription.onSubscriptionCreated({
+        subscription: {
+          id: 'sub_2',
+          plan: 'pro',
+          referenceId: 'org_1',
+          status: 'active',
+        },
+        plan: { name: 'pro' },
+      });
+
+      expect(emitCountMetricMock).toHaveBeenCalledWith(
+        METRICS.BILLING_SUBSCRIPTION_STARTER_CREATED,
+        { plan: 'starter', result: 'success' }
+      );
+      expect(emitCountMetricMock).toHaveBeenCalledWith(
+        METRICS.BILLING_SUBSCRIPTION_PRO_CREATED,
+        { plan: 'pro', result: 'success' }
+      );
+    });
+
+    it('records confirmed downgrade to Free from subscription deletion', async () => {
+      const createAuth = await importCreateAuth();
+      createAuth(buildTestConfig());
+      const opts = getStripeSubscriptionOpts();
+
+      await opts.subscription.onSubscriptionDeleted({
+        subscription: {
+          id: 'sub_1',
+          plan: 'pro',
+          referenceId: 'org_1',
+          status: 'active',
+        },
+      });
+
+      expect(emitCountMetricMock).toHaveBeenCalledWith(
+        METRICS.BILLING_SUBSCRIPTION_FREE_DOWNGRADED,
+        { fromPlan: 'pro', toPlan: 'free', result: 'success' }
+      );
+    });
+
+    it('records confirmed downgrade to Starter when previous Stripe price resolves to a higher plan', async () => {
+      process.env.STRIPE_PRO_MONTHLY_PRICE_ID = 'price_pro_monthly';
+      const createAuth = await importCreateAuth();
+      createAuth(buildTestConfig());
+      const opts = getStripeSubscriptionOpts();
+
+      await opts.subscription.onSubscriptionUpdate({
+        event: {
+          data: {
+            previous_attributes: {
+              items: {
+                data: [
+                  {
+                    price: { id: 'price_pro_monthly' },
+                  },
+                ],
+              },
+            },
+          },
+        },
+        subscription: {
+          id: 'sub_1',
+          plan: 'starter',
+          referenceId: 'org_1',
+          status: 'active',
+        },
+      });
+
+      expect(emitCountMetricMock).toHaveBeenCalledWith(
+        METRICS.BILLING_SUBSCRIPTION_STARTER_DOWNGRADED,
+        { fromPlan: 'pro', toPlan: 'starter', result: 'success' }
+      );
+    });
+
+    it('does not record downgrade to Starter when previous plan cannot be resolved', async () => {
+      const createAuth = await importCreateAuth();
+      createAuth(buildTestConfig());
+      const opts = getStripeSubscriptionOpts();
+
+      await opts.subscription.onSubscriptionUpdate({
+        event: {
+          data: {
+            previous_attributes: {},
+          },
+        },
+        subscription: {
+          id: 'sub_1',
+          plan: 'starter',
+          referenceId: 'org_1',
+          status: 'active',
+        },
+      });
+
+      expect(emitCountMetricMock).not.toHaveBeenCalledWith(
+        METRICS.BILLING_SUBSCRIPTION_STARTER_DOWNGRADED,
+        expect.anything()
       );
     });
   });

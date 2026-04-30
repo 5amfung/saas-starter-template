@@ -1,15 +1,29 @@
 import { createElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { sendEmailMock, buildEmailRequestContextMock, getRequestHeadersMock } =
-  vi.hoisted(() => ({
-    sendEmailMock: vi.fn(),
-    buildEmailRequestContextMock: vi.fn(),
-    getRequestHeadersMock: vi.fn(),
-  }));
+const {
+  sendEmailMock,
+  buildEmailRequestContextMock,
+  getRequestHeadersMock,
+  emitCountMetricMock,
+} = vi.hoisted(() => ({
+  sendEmailMock: vi.fn(),
+  buildEmailRequestContextMock: vi.fn(),
+  getRequestHeadersMock: vi.fn(),
+  emitCountMetricMock: vi.fn(),
+}));
 
 vi.mock('@/email', () => ({
   buildEmailRequestContext: buildEmailRequestContextMock,
+}));
+
+vi.mock('@/observability/server', () => ({
+  METRICS: {
+    EMAIL_VERIFICATION_SENT: 'email.verification.sent',
+    EMAIL_PASSWORD_RESET_SENT: 'email.password_reset.sent',
+    EMAIL_WORKSPACE_INVITATION_SENT: 'email.workspace_invitation.sent',
+  },
+  emitCountMetric: emitCountMetricMock,
 }));
 
 // Mock email template components to simple strings for assertion simplicity.
@@ -107,6 +121,23 @@ describe('auth-emails', () => {
           requestContext: MOCK_REQUEST_CONTEXT,
         }),
       });
+      expect(emitCountMetricMock).toHaveBeenCalledWith(
+        'email.password_reset.sent',
+        { result: 'success' }
+      );
+    });
+
+    it('does not emit specific metrics when the email send fails', async () => {
+      sendEmailMock.mockRejectedValueOnce(new Error('send failed'));
+
+      await expect(
+        emails.sendResetPasswordEmail({
+          user: { email: 'user@example.com' },
+          url: 'https://app.example.com/reset',
+        })
+      ).rejects.toMatchObject({ message: 'send failed' });
+
+      expect(emitCountMetricMock).not.toHaveBeenCalled();
     });
   });
 
@@ -128,6 +159,10 @@ describe('auth-emails', () => {
           requestContext: MOCK_REQUEST_CONTEXT,
         }),
       });
+      expect(emitCountMetricMock).toHaveBeenCalledWith(
+        'email.verification.sent',
+        { result: 'success' }
+      );
     });
   });
 
@@ -151,6 +186,10 @@ describe('auth-emails', () => {
           invitationUrl: 'http://localhost:3000/accept-invite?id=inv_456',
         }),
       });
+      expect(emitCountMetricMock).toHaveBeenCalledWith(
+        'email.workspace_invitation.sent',
+        { result: 'success' }
+      );
     });
 
     it('does not call buildEmailRequestContext', async () => {

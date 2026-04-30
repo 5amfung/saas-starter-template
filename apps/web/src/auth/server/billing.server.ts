@@ -16,7 +16,7 @@ import {
 export function createBillingHelpers(
   db: Database,
   stripeSecretKey: string,
-  priceToPlanMap: Record<string, PlanId> = {}
+  priceToPlanMap: Partial<Record<string, PlanId>> = {}
 ) {
   const stripeClient = new Stripe(stripeSecretKey);
 

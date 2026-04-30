@@ -2,6 +2,7 @@ import { createElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockSend = vi.fn();
+const mockEmitCountMetric = vi.fn();
 
 /** Helper: reset modules, re-register resend mock, dynamically import createEmailClient. */
 async function importCreateEmailClient() {
@@ -11,6 +12,12 @@ async function importCreateEmailClient() {
       emails = { send: mockSend };
     },
   }));
+  vi.doMock('@/observability/server', () => ({
+    METRICS: {
+      EMAIL_SENT: 'email.sent',
+    },
+    emitCountMetric: mockEmitCountMetric,
+  }));
   const mod = await import('@/email/resend.server');
   return mod.createEmailClient;
 }
@@ -18,6 +25,7 @@ async function importCreateEmailClient() {
 describe('createEmailClient', () => {
   beforeEach(() => {
     mockSend.mockReset();
+    mockEmitCountMetric.mockReset();
   });
 
   it('sends email with correct params and [DEV] prefix when devPrefix is true', async () => {
@@ -46,6 +54,10 @@ describe('createEmailClient', () => {
       })
     );
     expect(result).toEqual({ id: 'email-1' });
+    expect(mockEmitCountMetric).toHaveBeenCalledWith('email.sent', {
+      provider: 'resend',
+      result: 'success',
+    });
   });
 
   it('does not prefix subject when devPrefix is false', async () => {
@@ -113,6 +125,7 @@ describe('createEmailClient', () => {
         'Failed to send email: Rate limit exceeded'
       ),
     });
+    expect(mockEmitCountMetric).not.toHaveBeenCalled();
   });
 
   it('includes replyTo when replyToEmail is set', async () => {
