@@ -73,6 +73,6 @@
     "ignoredBuiltDependencies": []
   },
   "engines": {
-    "node": ">=22 <23"
+    "node": ">=22"
   }
 }
