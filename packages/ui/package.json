@@ -13,7 +13,7 @@
     "coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@base-ui/react": "^1.3.0",
+    "@base-ui/react": "^1.4.1",
     "@fontsource-variable/inter": "^5.2.8",
     "@tabler/icons-react": "^3.41.1",
     "class-variance-authority": "^0.7.1",
